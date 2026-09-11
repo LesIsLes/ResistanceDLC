@@ -1,0 +1,30 @@
+{
+  "custom_hit_1": {
+    "sounds": ["resistancedlc:hit_1"],
+    "subtitle": "subtitles.resistancedlc.custom_hit"
+  },
+  "custom_hit_2": {
+    "sounds": ["resistancedlc:hit_2"],
+    "subtitle": "subtitles.resistancedlc.custom_hit"
+  },
+  "custom_hit_3": {
+    "sounds": ["resistancedlc:hit_3"],
+    "subtitle": "subtitles.resistancedlc.custom_hit"
+  },
+  "custom_hit_4": {
+    "sounds": ["resistancedlc:hit_4"],
+    "subtitle": "subtitles.resistancedlc.custom_hit"
+  },
+  "custom_hit_5": {
+    "sounds": ["resistancedlc:hit_5"],
+    "subtitle": "subtitles.resistancedlc.custom_hit"
+  },
+  "custom_hit_6": {
+    "sounds": ["resistancedlc:hit_6"],
+    "subtitle": "subtitles.resistancedlc.custom_hit"
+  },
+  "custom_hit_7": {
+    "sounds": ["resistancedlc:hit_7"],
+    "subtitle": "subtitles.resistancedlc.custom_hit"
+  }
+}
