@@ -17,15 +17,24 @@ public class HitSoundMixin {
 
     @Inject(method = "attack", at = @At("HEAD"))
     private void onAttack(Entity target, CallbackInfo ci) {
-        if (!MyCustomScreen.customHitSoundsEnabled) return;
-
         Player self = (Player) (Object) this;
         Minecraft client = Minecraft.getInstance();
 
         if (client.player == null || self != client.player) return;
         if (client.level == null) return;
 
-        // Используем выбранный пресет (1–7)
+        // ===== COMBO COUNTER =====
+        if (MyCustomScreen.comboEnabled) {
+            // Считаем только полноценный удар (полный замах)
+            if (client.player != null && client.player.getAttackStrengthScale(0.0f) >= 1.0f) {
+                MyCustomScreen.currentCombo++;
+                MyCustomScreen.lastComboTime = System.currentTimeMillis();
+            }
+        }
+
+        // ===== CUSTOM HIT SOUNDS =====
+        if (!MyCustomScreen.customHitSoundsEnabled) return;
+
         int preset = MyCustomScreen.customHitSoundPreset;
         if (preset < 1 || preset > 7) preset = 1;
 

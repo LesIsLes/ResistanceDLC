@@ -102,6 +102,13 @@ public class ConfigManager {
             json.addProperty("fastExpRussian", MyCustomScreen.fastExpRussian);
             json.addProperty("autoSprintRussian", MyCustomScreen.autoSprintRussian);
             json.addProperty("shiftTapRussian", MyCustomScreen.shiftTapRussian);
+            json.addProperty("comboEnabled", MyCustomScreen.comboEnabled);
+            json.addProperty("comboX", MyCustomScreen.comboX);
+            json.addProperty("comboY", MyCustomScreen.comboY);
+            json.addProperty("comboColor", MyCustomScreen.comboColor);
+            json.addProperty("comboResetTime", MyCustomScreen.comboResetTime);
+            json.addProperty("comboFontSize", MyCustomScreen.comboFontSize);
+            json.addProperty("comboRussian", MyCustomScreen.comboRussian);
 
             // === TAPEMOUSE ===
             json.addProperty("tapeMouseEnabled", MyCustomScreen.tapeMouseEnabled);
@@ -244,6 +251,13 @@ public class ConfigManager {
             if (json.has("fastExpRussian")) MyCustomScreen.fastExpRussian = json.get("fastExpRussian").getAsBoolean();
             if (json.has("autoSprintRussian")) MyCustomScreen.autoSprintRussian = json.get("autoSprintRussian").getAsBoolean();
             if (json.has("shiftTapRussian")) MyCustomScreen.shiftTapRussian = json.get("shiftTapRussian").getAsBoolean();
+            if (json.has("comboEnabled")) MyCustomScreen.comboEnabled = json.get("comboEnabled").getAsBoolean();
+            if (json.has("comboX")) MyCustomScreen.comboX = json.get("comboX").getAsInt();
+            if (json.has("comboY")) MyCustomScreen.comboY = json.get("comboY").getAsInt();
+            if (json.has("comboColor")) MyCustomScreen.comboColor = json.get("comboColor").getAsInt();
+            if (json.has("comboResetTime")) MyCustomScreen.comboResetTime = json.get("comboResetTime").getAsInt();
+            if (json.has("comboFontSize")) MyCustomScreen.comboFontSize = json.get("comboFontSize").getAsInt();
+            if (json.has("comboRussian")) MyCustomScreen.comboRussian = json.get("comboRussian").getAsBoolean();
 
             // === TAPEMOUSE ===
             if (json.has("tapeMouseEnabled")) MyCustomScreen.tapeMouseEnabled = json.get("tapeMouseEnabled").getAsBoolean();

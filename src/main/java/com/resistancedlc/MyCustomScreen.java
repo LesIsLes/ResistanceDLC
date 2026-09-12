@@ -110,6 +110,28 @@ public class MyCustomScreen extends Screen {
     public static boolean fastExpEnabled = false;
     public static boolean fastExpRussian = false;
 
+    // ===== COMBO COUNTER =====
+    public static boolean comboEnabled = false;
+    public static int comboX = 10, comboY = 185;
+    public static int comboColor = 0xFFFFFF00;
+    public static int comboResetTime = 3;
+    public static int comboFontSize = 1; // 0=малый, 1=средний, 2=крупный
+    public static boolean comboRussian = false;
+
+    // Состояние (не сохраняется)
+    public static int currentCombo = 0;
+    public static long lastComboTime = 0;
+
+    // ===== EFFECT WARNINGS =====
+    public static boolean effectWarningsEnabled = false;
+    public static int effectWarningsX = 300, effectWarningsY = 200;
+    public static int effectWarningsColor = 0xFFFF0000;
+    public static int effectWarningsThreshold = 10;
+    public static int effectWarningsAlpha = 255;
+    public static boolean effectWarningsShowName = true;
+    public static boolean effectWarningsShowIcon = true;
+    public static boolean effectWarningsRussian = false;
+
     // ===== AUTOSPRINT =====
     public static boolean autoSprintEnabled = false;
     public static boolean autoSprintRussian = false;
@@ -218,7 +240,13 @@ public class MyCustomScreen extends Screen {
             { "sprint", "AutoSprint", "13" },
             { "бег", "AutoSprint", "13" },
             { "shifttap", "ShiftTap", "13" },
-            { "шифт", "ShiftTap", "13" }
+            { "шифт", "ShiftTap", "13" },
+            { "комбо", "Счётчик комбо", "14" },
+            { "combo", "Счётчик комбо", "14" },
+            { "combo counter", "Счётчик комбо", "14" },
+            { "эффект предупреждение", "Effect Warnings", "15" },
+            { "warnings", "Effect Warnings", "15" },
+            { "предупреждение", "Effect Warnings", "15" }
     };
 
     public MyCustomScreen() {
@@ -311,7 +339,7 @@ public class MyCustomScreen extends Screen {
         this.addRenderableWidget(prevPageBtn);
 
         Button nextPageBtn = Button.builder(Component.literal("→"), (btn) -> {
-            if (currentPage < 13) { currentPage++; this.rebuildWidgets(); }
+            if (currentPage < 15) { currentPage++; this.rebuildWidgets(); }
         }).bounds(panelX + panelWidth - 30, panelY + 385, 20, 20).build();
         this.addRenderableWidget(nextPageBtn);
 
@@ -333,6 +361,8 @@ public class MyCustomScreen extends Screen {
         else if (currentPage == 11) { initPage11(panelX + panelWidth / 2, panelY); }
         else if (currentPage == 12) { initPage12(panelX + panelWidth / 2, panelY); }
         else if (currentPage == 13) { initPage13(panelX + panelWidth / 2, panelY); }
+        else if (currentPage == 14) { initPage14(panelX + panelWidth / 2, panelY); }
+        else if (currentPage == 15) { initPage15(panelX + panelWidth / 2, panelY); }
     }
 
     private static void addSearchHistory(String query) {
@@ -587,6 +617,7 @@ public class MyCustomScreen extends Screen {
             potionEffectsX = 10; potionEffectsY = 170;
             equipmentHudX = 4; equipmentHudY = -44;
             modLogoX = 10; modLogoY = 5;
+            comboX = 10; comboY = 185;
             ConfigManager.save();
             this.rebuildWidgets();
         }).bounds(centerX - 100, panelY + 375, 200, 18).build();
@@ -1199,7 +1230,182 @@ public class MyCustomScreen extends Screen {
         }).bounds(centerX + 120, panelY + 125, 25, 20).build();
         this.addRenderableWidget(shiftTranslate);
     }
+    private void initPage14(int centerX, int panelY) {
+        // ===== ВКЛЮЧЕНИЕ =====
+        Checkbox comboCheckbox = Checkbox.builder(
+                        Component.literal(comboRussian ? "Включить Combo Counter" : "Enable Combo Counter"), this.font)
+                .pos(centerX - 100, panelY + 80)
+                .selected(comboEnabled)
+                .onValueChange((c, v) -> { comboEnabled = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(comboCheckbox);
 
+        Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
+            comboRussian = !comboRussian; ConfigManager.save(); this.rebuildWidgets();
+        }).bounds(centerX + 120, panelY + 80, 25, 20).build();
+        this.addRenderableWidget(translateBtn);
+
+        // ===== ПОЗИЦИЯ =====
+        makePosEditor(centerX, panelY, 125,
+                () -> comboX, () -> comboY,
+                (x, y) -> { comboX = x; comboY = y; },
+                10, 185);
+
+        // ===== ВРЕМЯ СБРОСА =====
+        AbstractSliderButton resetSlider = new AbstractSliderButton(
+                centerX - 100, panelY + 165, 200, 20,
+                Component.literal(comboRussian ? ("Время сброса: " + comboResetTime + " сек") : ("Reset time: " + comboResetTime + " sec")),
+                (comboResetTime - 1) / 4.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(comboRussian ? ("Время сброса: " + comboResetTime + " сек") : ("Reset time: " + comboResetTime + " sec")));
+            }
+            @Override protected void applyValue() {
+                comboResetTime = 1 + (int)(this.value * 4);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        };
+        this.addRenderableWidget(resetSlider);
+
+        // ===== РАЗМЕР ШРИФТА =====
+        String sizeText = comboRussian ? "Размер: " : "Size: ";
+        String[] sizesRu = {"Малый", "Средний", "Крупный"};
+        String[] sizesEn = {"Small", "Medium", "Large"};
+        Button sizeBtn = Button.builder(
+                Component.literal(sizeText + (comboRussian ? sizesRu[comboFontSize] : sizesEn[comboFontSize])),
+                (b) -> {
+                    comboFontSize = (comboFontSize + 1) % 3;
+                    ConfigManager.save();
+                    this.rebuildWidgets();
+                }
+        ).bounds(centerX - 100, panelY + 200, 200, 20).build();
+        this.addRenderableWidget(sizeBtn);
+
+        // ===== ЦВЕТ =====
+        EditBox colorField = new EditBox(this.font, centerX - 130, panelY + 240, 80, 18,
+                Component.literal("#RRGGBB"));
+        colorField.setMaxLength(7);
+        colorField.setValue(String.format("#%06X", comboColor & 0xFFFFFF));
+        this.addRenderableWidget(colorField);
+
+        Button applyColorBtn = Button.builder(Component.literal("ОК"), (btn) -> {
+            String hex = colorField.getValue().replace("#", "").trim();
+            try {
+                comboColor = 0xFF000000 | Integer.parseInt(hex, 16);
+                ConfigManager.save();
+            } catch (NumberFormatException ignored) {}
+        }).bounds(centerX - 45, panelY + 240, 40, 18).build();
+        this.addRenderableWidget(applyColorBtn);
+
+        Button colorYellow = Button.builder(Component.literal("Жёлт"), (b) -> { colorField.setValue("#FFFF00"); comboColor = 0xFFFFFF00; ConfigManager.save(); })
+                .bounds(centerX + 5, panelY + 240, 45, 18).build();
+        this.addRenderableWidget(colorYellow);
+        Button colorRed = Button.builder(Component.literal("Крас"), (b) -> { colorField.setValue("#FF0000"); comboColor = 0xFFFF0000; ConfigManager.save(); })
+                .bounds(centerX + 55, panelY + 240, 45, 18).build();
+        this.addRenderableWidget(colorRed);
+        Button colorGreen = Button.builder(Component.literal("Зел"), (b) -> { colorField.setValue("#00FF00"); comboColor = 0xFF00FF00; ConfigManager.save(); })
+                .bounds(centerX + 105, panelY + 240, 45, 18).build();
+        this.addRenderableWidget(colorGreen);
+    }
+    private void initPage15(int centerX, int panelY) {
+        // ===== ВКЛЮЧЕНИЕ =====
+        Checkbox enableCheckbox = Checkbox.builder(
+                        Component.literal(effectWarningsRussian ? "Включить Effect Warnings" : "Enable Effect Warnings"), this.font)
+                .pos(centerX - 100, panelY + 60)
+                .selected(effectWarningsEnabled)
+                .onValueChange((c, v) -> { effectWarningsEnabled = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(enableCheckbox);
+
+        Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
+            effectWarningsRussian = !effectWarningsRussian; ConfigManager.save(); this.rebuildWidgets();
+        }).bounds(centerX + 120, panelY + 60, 25, 20).build();
+        this.addRenderableWidget(translateBtn);
+
+        // ===== ПОРОГ =====
+        AbstractSliderButton thresholdSlider = new AbstractSliderButton(
+                centerX - 100, panelY + 95, 200, 20,
+                Component.literal(effectWarningsRussian ? ("Порог: " + effectWarningsThreshold + " сек") : ("Threshold: " + effectWarningsThreshold + " sec")),
+                (effectWarningsThreshold - 3) / 12.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(effectWarningsRussian ? ("Порог: " + effectWarningsThreshold + " сек") : ("Threshold: " + effectWarningsThreshold + " sec")));
+            }
+            @Override protected void applyValue() {
+                effectWarningsThreshold = 3 + (int)(this.value * 12);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        };
+        this.addRenderableWidget(thresholdSlider);
+
+        // ===== ПОЗИЦИЯ =====
+        makePosEditor(centerX, panelY, 135,
+                () -> effectWarningsX, () -> effectWarningsY,
+                (x, y) -> { effectWarningsX = x; effectWarningsY = y; },
+                300, 200);
+
+        // ===== ПРОЗРАЧНОСТЬ =====
+        AbstractSliderButton alphaSlider = new AbstractSliderButton(
+                centerX - 100, panelY + 175, 200, 20,
+                Component.literal(effectWarningsRussian ? ("Прозрачность: " + effectWarningsAlpha) : ("Alpha: " + effectWarningsAlpha)),
+                effectWarningsAlpha / 255.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(effectWarningsRussian ? ("Прозрачность: " + effectWarningsAlpha) : ("Alpha: " + effectWarningsAlpha)));
+            }
+            @Override protected void applyValue() {
+                effectWarningsAlpha = (int)(this.value * 255);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        };
+        this.addRenderableWidget(alphaSlider);
+
+        // ===== ЦВЕТ =====
+        EditBox colorField = new EditBox(this.font, centerX - 130, panelY + 215, 80, 18,
+                Component.literal("#RRGGBB"));
+        colorField.setMaxLength(7);
+        colorField.setValue(String.format("#%06X", effectWarningsColor & 0xFFFFFF));
+        this.addRenderableWidget(colorField);
+
+        Button applyColorBtn = Button.builder(Component.literal("ОК"), (btn) -> {
+            String hex = colorField.getValue().replace("#", "").trim();
+            try {
+                effectWarningsColor = 0xFF000000 | Integer.parseInt(hex, 16);
+                ConfigManager.save();
+            } catch (NumberFormatException ignored) {}
+        }).bounds(centerX - 45, panelY + 215, 40, 18).build();
+        this.addRenderableWidget(applyColorBtn);
+
+        Button colorRed = Button.builder(Component.literal("Крас"), (b) -> { colorField.setValue("#FF0000"); effectWarningsColor = 0xFFFF0000; ConfigManager.save(); })
+                .bounds(centerX + 5, panelY + 215, 45, 18).build();
+        this.addRenderableWidget(colorRed);
+        Button colorYellow = Button.builder(Component.literal("Жёлт"), (b) -> { colorField.setValue("#FFFF00"); effectWarningsColor = 0xFFFFFF00; ConfigManager.save(); })
+                .bounds(centerX + 55, panelY + 215, 45, 18).build();
+        this.addRenderableWidget(colorYellow);
+        Button colorWhite = Button.builder(Component.literal("Бел"), (b) -> { colorField.setValue("#FFFFFF"); effectWarningsColor = 0xFFFFFFFF; ConfigManager.save(); })
+                .bounds(centerX + 105, panelY + 215, 45, 18).build();
+        this.addRenderableWidget(colorWhite);
+
+        // ===== ПОКАЗЫВАТЬ ИМЯ / ИКОНКУ =====
+        Checkbox showNameCheckbox = Checkbox.builder(
+                        Component.literal(effectWarningsRussian ? "Показывать название" : "Show name"), this.font)
+                .pos(centerX - 100, panelY + 250)
+                .selected(effectWarningsShowName)
+                .onValueChange((c, v) -> { effectWarningsShowName = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(showNameCheckbox);
+
+        Checkbox showIconCheckbox = Checkbox.builder(
+                        Component.literal(effectWarningsRussian ? "Показывать иконку" : "Show icon"), this.font)
+                .pos(centerX + 20, panelY + 250)
+                .selected(effectWarningsShowIcon)
+                .onValueChange((c, v) -> { effectWarningsShowIcon = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(showIconCheckbox);
+    }
     private String getTargetName(int target, boolean russian) {
         if (russian) {
             switch (target) {
@@ -1291,13 +1497,17 @@ public class MyCustomScreen extends Screen {
             title = "Resistance DLC — Автосвап";
         } else if (currentPage == 12) {
             title = "Resistance DLC — FastExp";
-        } else {
+        } else if (currentPage == 13) {
             title = "Resistance DLC — AutoSprint / ShiftTap";
+        } else if (currentPage == 14) {
+            title = "Resistance DLC — Combo Counter";
+        } else {
+            title = "Resistance DLC — Effect Warnings";
         }
         graphics.drawCenteredString(this.font, "§l" + title,
                 panelX + panelWidth / 2, panelY + 15, guiColor);
 
-        graphics.drawCenteredString(this.font, "§7Страница " + (currentPage + 1) + " / 14",
+        graphics.drawCenteredString(this.font, "§7Страница " + (currentPage + 1) + " / 16",
                 panelX + panelWidth / 2, panelY + 405, 0xFFFFFFFF);
 
         if (currentPage == 0) {
@@ -1444,6 +1654,26 @@ public class MyCustomScreen extends Screen {
 
             graphics.drawString(this.font, "§7Авто-бег и авто-отпускание Shift",
                     panelX + 20, panelY + 60, 0xFFAAAAAA);
+
+        } else if (currentPage == 14) {
+            graphics.drawString(this.font, "§l▸ Combo Counter",
+                    panelX + 20, panelY + 35, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 47, panelX + panelWidth - 20, panelY + 48, guiColor);
+
+            graphics.drawString(this.font, "§7Счётчик ударов подряд",
+                    panelX + 20, panelY + 60, 0xFFAAAAAA);
+
+        } else if (currentPage == 15) {
+            graphics.drawString(this.font, "§l▸ Effect Warnings",
+                    panelX + 20, panelY + 35, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 47, panelX + panelWidth - 20, panelY + 48, guiColor);
+
+            graphics.drawString(this.font, "§7Предупреждение о скором конце эффекта",
+                    panelX + 20, panelY + 60, 0xFFAAAAAA);
+
+            graphics.drawString(this.font, "§l▸ Настройки",
+                    panelX + 20, panelY + 85, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 97, panelX + panelWidth - 20, panelY + 98, guiColor);
         }
     }
 
