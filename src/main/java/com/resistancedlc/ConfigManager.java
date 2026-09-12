@@ -94,6 +94,10 @@ public class ConfigManager {
             json.addProperty("equipmentHudRussian", MyCustomScreen.equipmentHudRussian);
             json.addProperty("lowFireShieldRussian", MyCustomScreen.lowFireShieldRussian);
             json.addProperty("zoomRussian", MyCustomScreen.zoomRussian);
+            json.addProperty("autoSwapRussian", MyCustomScreen.autoSwapRussian);
+            json.addProperty("fastExpRussian", MyCustomScreen.fastExpRussian);
+            json.addProperty("autoSprintRussian", MyCustomScreen.autoSprintRussian);
+            json.addProperty("shiftTapRussian", MyCustomScreen.shiftTapRussian);
 
             // === TAPEMOUSE ===
             json.addProperty("tapeMouseEnabled", MyCustomScreen.tapeMouseEnabled);
@@ -101,6 +105,20 @@ public class ConfigManager {
             json.addProperty("tapeMouseDelay", MyCustomScreen.tapeMouseDelay);
             json.addProperty("tapeMouseRussian", MyCustomScreen.tapeMouseRussian);
             json.addProperty("tapeMouseRequireTarget", MyCustomScreen.tapeMouseRequireTarget);
+            json.addProperty("tapeMouseRequireFullAttack", MyCustomScreen.tapeMouseRequireFullAttack);
+
+            // === AUTOSWAP ===
+            json.addProperty("autoSwapEnabled", MyCustomScreen.autoSwapEnabled);
+            json.addProperty("autoSwapMode", MyCustomScreen.autoSwapMode);
+            json.addProperty("autoSwapOpenDelay", MyCustomScreen.autoSwapOpenDelay);
+            json.addProperty("autoSwapCooldown", MyCustomScreen.autoSwapCooldown);
+
+            // === FASTEXP ===
+            json.addProperty("fastExpEnabled", MyCustomScreen.fastExpEnabled);
+
+            // === AUTOSPRINT / SHIFTTAP ===
+            json.addProperty("autoSprintEnabled", MyCustomScreen.autoSprintEnabled);
+            json.addProperty("shiftTapEnabled", MyCustomScreen.shiftTapEnabled);
 
             // === ZOOM ===
             json.addProperty("zoomEnabled", MyCustomScreen.zoomEnabled);
@@ -214,6 +232,10 @@ public class ConfigManager {
             if (json.has("equipmentHudRussian")) MyCustomScreen.equipmentHudRussian = json.get("equipmentHudRussian").getAsBoolean();
             if (json.has("lowFireShieldRussian")) MyCustomScreen.lowFireShieldRussian = json.get("lowFireShieldRussian").getAsBoolean();
             if (json.has("zoomRussian")) MyCustomScreen.zoomRussian = json.get("zoomRussian").getAsBoolean();
+            if (json.has("autoSwapRussian")) MyCustomScreen.autoSwapRussian = json.get("autoSwapRussian").getAsBoolean();
+            if (json.has("fastExpRussian")) MyCustomScreen.fastExpRussian = json.get("fastExpRussian").getAsBoolean();
+            if (json.has("autoSprintRussian")) MyCustomScreen.autoSprintRussian = json.get("autoSprintRussian").getAsBoolean();
+            if (json.has("shiftTapRussian")) MyCustomScreen.shiftTapRussian = json.get("shiftTapRussian").getAsBoolean();
 
             // === TAPEMOUSE ===
             if (json.has("tapeMouseEnabled")) MyCustomScreen.tapeMouseEnabled = json.get("tapeMouseEnabled").getAsBoolean();
@@ -221,6 +243,20 @@ public class ConfigManager {
             if (json.has("tapeMouseDelay")) MyCustomScreen.tapeMouseDelay = json.get("tapeMouseDelay").getAsFloat();
             if (json.has("tapeMouseRussian")) MyCustomScreen.tapeMouseRussian = json.get("tapeMouseRussian").getAsBoolean();
             if (json.has("tapeMouseRequireTarget")) MyCustomScreen.tapeMouseRequireTarget = json.get("tapeMouseRequireTarget").getAsBoolean();
+            if (json.has("tapeMouseRequireFullAttack")) MyCustomScreen.tapeMouseRequireFullAttack = json.get("tapeMouseRequireFullAttack").getAsBoolean();
+
+            // === AUTOSWAP ===
+            if (json.has("autoSwapEnabled")) MyCustomScreen.autoSwapEnabled = json.get("autoSwapEnabled").getAsBoolean();
+            if (json.has("autoSwapMode")) MyCustomScreen.autoSwapMode = json.get("autoSwapMode").getAsInt();
+            if (json.has("autoSwapOpenDelay")) MyCustomScreen.autoSwapOpenDelay = json.get("autoSwapOpenDelay").getAsInt();
+            if (json.has("autoSwapCooldown")) MyCustomScreen.autoSwapCooldown = json.get("autoSwapCooldown").getAsInt();
+
+            // === FASTEXP ===
+            if (json.has("fastExpEnabled")) MyCustomScreen.fastExpEnabled = json.get("fastExpEnabled").getAsBoolean();
+
+            // === AUTOSPRINT / SHIFTTAP ===
+            if (json.has("autoSprintEnabled")) MyCustomScreen.autoSprintEnabled = json.get("autoSprintEnabled").getAsBoolean();
+            if (json.has("shiftTapEnabled")) MyCustomScreen.shiftTapEnabled = json.get("shiftTapEnabled").getAsBoolean();
 
             // === ZOOM ===
             if (json.has("zoomEnabled")) MyCustomScreen.zoomEnabled = json.get("zoomEnabled").getAsBoolean();

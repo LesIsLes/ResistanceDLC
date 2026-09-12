@@ -1,5 +1,6 @@
 package com.resistancedlc;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
@@ -12,6 +13,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -26,6 +28,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -154,11 +157,131 @@ public class ResistanceDLCClient implements ClientModInitializer {
             }
         });
 
+        // 4.6. TAPEMOUSE — toggle-клавиша
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (KeyBindings.tapeMouseKey == null) return;
+            while (KeyBindings.tapeMouseKey.consumeClick()) {
+                MyCustomScreen.tapeMouseEnabled = !MyCustomScreen.tapeMouseEnabled;
+                ConfigManager.save();
+                if (client.player != null) {
+                    String state = MyCustomScreen.tapeMouseEnabled ? "§aвключён" : "§cвыключен";
+                    client.player.displayClientMessage(Component.literal("§6TapeMouse " + state), true);
+                }
+            }
+        });
+
+        // 4.7. AUTOSWAP — нажатие клавиши
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (KeyBindings.autoSwapKey == null) return;
+            while (KeyBindings.autoSwapKey.consumeClick()) {
+                if (!MyCustomScreen.autoSwapEnabled) return;
+                if (client.player == null || client.level == null) return;
+                if (client.screen != null) return;
+                if (MyCustomScreen.autoSwapInProgress) return;
+
+                long now = System.currentTimeMillis();
+                if (now - MyCustomScreen.autoSwapLastTime < MyCustomScreen.autoSwapCooldown) return;
+
+                int slotToSwap = findAutoSwapSlot(client.player);
+                if (slotToSwap < 0) return;
+
+                MyCustomScreen.autoSwapInProgress = true;
+                MyCustomScreen.autoSwapStage = 0;
+                MyCustomScreen.autoSwapSlotToSwap = slotToSwap;
+                MyCustomScreen.autoSwapNextActionTime = now;
+            }
+        });
+
+        // 4.8. AUTOSWAP — этапы
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (!MyCustomScreen.autoSwapInProgress) return;
+            if (client.player == null) return;
+
+            long now = System.currentTimeMillis();
+            if (now < MyCustomScreen.autoSwapNextActionTime) return;
+
+            if (MyCustomScreen.autoSwapStage == 0) {
+                client.setScreen(new InventoryScreen(client.player));
+                MyCustomScreen.autoSwapStage = 1;
+                MyCustomScreen.autoSwapNextActionTime = now + 50;
+
+            } else if (MyCustomScreen.autoSwapStage == 1) {
+                swapOffhandWithSlot(client.player, MyCustomScreen.autoSwapSlotToSwap);
+                MyCustomScreen.autoSwapStage = 2;
+                MyCustomScreen.autoSwapNextActionTime = now + MyCustomScreen.autoSwapOpenDelay;
+
+            } else if (MyCustomScreen.autoSwapStage == 2) {
+                client.setScreen(null);
+                MyCustomScreen.autoSwapInProgress = false;
+                MyCustomScreen.autoSwapStage = 0;
+                MyCustomScreen.autoSwapSlotToSwap = -1;
+                MyCustomScreen.autoSwapLastTime = now;
+            }
+        });
+
+        // 4.9. FASTEXP
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (!MyCustomScreen.fastExpEnabled) return;
+            if (client.player == null || client.level == null) return;
+            if (client.screen != null) return;
+
+            ItemStack mainHand = client.player.getMainHandItem();
+            boolean holdingBottle = mainHand.is(Items.EXPERIENCE_BOTTLE);
+            if (!holdingBottle) return;
+
+            if (client.options.keyUse.isDown()) {
+                if (client.gameMode != null) {
+                    client.gameMode.useItem(client.player, InteractionHand.MAIN_HAND);
+                }
+            }
+        });
+
+        // 4.10. AUTOSPRINT
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (!MyCustomScreen.autoSprintEnabled) return;
+            if (client.player == null) return;
+            if (client.screen != null) return;
+
+            if (client.options.keyUp.isDown()) {
+                client.player.setSprinting(true);
+            }
+        });
+
+        // 4.11. SHIFTTAP — отпускает Shift при ударе на 50 мс, потом возвращает
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (!MyCustomScreen.shiftTapEnabled) return;
+            if (client.player == null) return;
+            if (client.screen != null) return;
+
+            long now = System.currentTimeMillis();
+
+            // Если сейчас идёт shift-tap — проверяем, пора ли вернуть Shift
+            if (MyCustomScreen.shiftTapActive) {
+                if (now - MyCustomScreen.shiftTapReleaseTime >= 50) {
+                    // Возвращаем Shift (без проверки физической клавиши)
+                    client.options.keyShift.setDown(true);
+                    MyCustomScreen.shiftTapActive = false;
+                }
+                return;
+            }
+
+            // Если игрок бьёт (ЛКМ) и зажат Shift — запускаем shift-tap
+            if (client.options.keyAttack.isDown() && client.options.keyShift.isDown()) {
+                client.options.keyShift.setDown(false);
+                MyCustomScreen.shiftTapActive = true;
+                MyCustomScreen.shiftTapReleaseTime = now;
+            }
+        });
+
         // 5. TAPEMOUSE (автокликер)
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!MyCustomScreen.tapeMouseEnabled) return;
             if (client.player == null || client.level == null) return;
             if (client.screen != null) return;
+
+            if (MyCustomScreen.tapeMouseRequireFullAttack) {
+                if (client.player.getAttackStrengthScale(0.0f) < 1.0f) return;
+            }
 
             Entity target = client.crosshairPickEntity;
 
@@ -390,7 +513,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                 }
                             }
 
-                            // === EQUIPMENT HUD (у хотбара) ===
+                            // === EQUIPMENT HUD ===
                             if (MyCustomScreen.showEquipmentHud) {
                                 int guiW = client.getWindow().getGuiScaledWidth();
                                 int guiH = client.getWindow().getGuiScaledHeight();
@@ -434,6 +557,71 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     }
                 }
         );
+    }
+
+    // ===== AUTOSWAP: поиск подходящего слота в инвентаре (9..35) =====
+    private static int findAutoSwapSlot(Player player) {
+        ItemStack offhand = player.getOffhandItem();
+
+        boolean offhandIsHead = offhand.is(Items.PLAYER_HEAD);
+        boolean offhandIsTotem = offhand.is(Items.TOTEM_OF_UNDYING);
+
+        boolean offhandAllowedHead = false;
+        boolean offhandAllowedTotem = false;
+        boolean searchHead = false;
+        boolean searchTotem = false;
+
+        switch (MyCustomScreen.autoSwapMode) {
+            case 0:
+                offhandAllowedHead = true;
+                searchHead = true;
+                break;
+            case 1:
+                offhandAllowedTotem = true;
+                searchTotem = true;
+                break;
+            case 2:
+                offhandAllowedHead = true;
+                offhandAllowedTotem = true;
+                searchHead = true;
+                searchTotem = true;
+                break;
+            case 3:
+                offhandAllowedHead = true;
+                offhandAllowedTotem = true;
+                searchHead = true;
+                searchTotem = true;
+                break;
+        }
+
+        boolean offhandMatches = (offhandAllowedHead && offhandIsHead)
+                || (offhandAllowedTotem && offhandIsTotem);
+        if (!offhandMatches) return -1;
+
+        for (int i = 9; i < 36; i++) {
+            ItemStack stack = player.getInventory().getItem(i);
+            if (stack.isEmpty()) continue;
+
+            if (MyCustomScreen.autoSwapMode == 0) {
+                if (stack.is(Items.PLAYER_HEAD)) return i;
+            } else if (MyCustomScreen.autoSwapMode == 1) {
+                if (stack.is(Items.TOTEM_OF_UNDYING)) return i;
+            } else {
+                if (offhandIsHead && stack.is(Items.TOTEM_OF_UNDYING)) return i;
+                if (offhandIsTotem && stack.is(Items.PLAYER_HEAD)) return i;
+            }
+        }
+
+        return -1;
+    }
+
+    // ===== AUTOSWAP: свап offhand и слота инвентаря =====
+    private static void swapOffhandWithSlot(Player player, int slotIndex) {
+        ItemStack offhandItem = player.getOffhandItem().copy();
+        ItemStack inventoryItem = player.getInventory().getItem(slotIndex).copy();
+
+        player.getInventory().setItem(slotIndex, offhandItem);
+        player.setItemSlot(EquipmentSlot.OFFHAND, inventoryItem);
     }
 
     private static void drawHudString(GuiGraphics graphics, Font font, String text, int x, int y, int color) {

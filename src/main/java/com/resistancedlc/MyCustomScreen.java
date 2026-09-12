@@ -77,7 +77,41 @@ public class MyCustomScreen extends Screen {
     public static float zoomSmoothness = 0.25f;
     public static boolean zoomRussian = false;
     public static float currentZoom = 1.0f;
-    public static boolean isZoomKeyDown = false;
+
+    // ===== TAPEMOUSE =====
+    public static boolean tapeMouseEnabled = false;
+    public static int tapeMouseTarget = 0;
+    public static float tapeMouseDelay = 1.0f;
+    public static boolean tapeMouseRussian = false;
+    public static boolean tapeMouseRequireTarget = true;
+    public static boolean tapeMouseRequireFullAttack = false;
+
+    // ===== AUTOSWAP =====
+    public static boolean autoSwapEnabled = false;
+    public static int autoSwapMode = 2;
+    public static int autoSwapOpenDelay = 150;
+    public static int autoSwapCooldown = 500;
+    public static boolean autoSwapRussian = false;
+
+    public static boolean autoSwapInProgress = false;
+    public static int autoSwapStage = 0;
+    public static long autoSwapNextActionTime = 0;
+    public static long autoSwapLastTime = 0;
+    public static int autoSwapSlotToSwap = -1;
+
+    // ===== FASTEXP =====
+    public static boolean fastExpEnabled = false;
+    public static boolean fastExpRussian = false;
+
+    // ===== AUTOSPRINT =====
+    public static boolean autoSprintEnabled = false;
+    public static boolean autoSprintRussian = false;
+
+    // ===== SHIFTTAP =====
+    public static boolean shiftTapEnabled = false;
+    public static boolean shiftTapRussian = false;
+    public static long shiftTapReleaseTime = 0;
+    public static boolean shiftTapActive = false;
 
     // ===== CUSTOM HIT SOUNDS =====
     public static boolean customHitSoundsEnabled = false;
@@ -93,13 +127,6 @@ public class MyCustomScreen extends Screen {
     public static boolean bpsRussian = false;
     public static boolean directionRussian = false;
 
-    // ===== TAPEMOUSE =====
-    public static boolean tapeMouseEnabled = false;
-    public static int tapeMouseTarget = 0;
-    public static float tapeMouseDelay = 1.0f;
-    public static boolean tapeMouseRussian = false;
-    public static boolean tapeMouseRequireTarget = true;
-
     // ===== FOV / ASPECT RATIO =====
     public static boolean aspectRatioEnabled = false;
     public static float aspectRatio = 1.0f;
@@ -113,6 +140,7 @@ public class MyCustomScreen extends Screen {
     public static boolean showPet = true;
     public static int hudAlpha = 255;
     public static boolean isBindingKey = false;
+    public static int bindingTarget = 0;
 
     public static double lastPlayerX = 0, lastPlayerY = 0, lastPlayerZ = 0;
     public static double currentBps = 0;
@@ -149,6 +177,7 @@ public class MyCustomScreen extends Screen {
             { "клавиша", "Привязка клавиши", "2" },
             { "tape", "TapeMouse", "4" },
             { "наведение", "TapeMouse: бить только при наведении", "4" },
+            { "заряд", "TapeMouse: бить при заряженной атаке", "4" },
             { "fov", "FOV (Угол обзора)", "5" },
             { "звук", "Custom Hit Sounds", "6" },
             { "sound", "Custom Hit Sounds", "6" },
@@ -168,7 +197,18 @@ public class MyCustomScreen extends Screen {
             { "shield", "Низкий щит", "9" },
             { "зум", "Zoom (Приближение)", "10" },
             { "zoom", "Zoom (Приближение)", "10" },
-            { "приближение", "Zoom (Приближение)", "10" }
+            { "приближение", "Zoom (Приближение)", "10" },
+            { "автосвап", "Автосвап", "11" },
+            { "autoswap", "Автосвап", "11" },
+            { "свап", "Автосвап", "11" },
+            { "fast", "FastExp", "12" },
+            { "фаст", "FastExp", "12" },
+            { "опыт", "FastExp", "12" },
+            { "exp", "FastExp", "12" },
+            { "sprint", "AutoSprint", "13" },
+            { "бег", "AutoSprint", "13" },
+            { "shifttap", "ShiftTap", "13" },
+            { "шифт", "ShiftTap", "13" }
     };
 
     public MyCustomScreen() {
@@ -190,11 +230,21 @@ public class MyCustomScreen extends Screen {
             int keyCode = keyEvent.key();
             if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
                 isBindingKey = false;
+                bindingTarget = 0;
                 this.rebuildWidgets();
                 return false;
             }
-            KeyBindings.setKey(keyCode);
+            if (bindingTarget == 0) {
+                KeyBindings.setKey(keyCode);
+            } else if (bindingTarget == 1) {
+                KeyBindings.setZoomKey(keyCode);
+            } else if (bindingTarget == 2) {
+                KeyBindings.setTapeMouseKey(keyCode);
+            } else if (bindingTarget == 3) {
+                KeyBindings.setAutoSwapKey(keyCode);
+            }
             isBindingKey = false;
+            bindingTarget = 0;
             this.rebuildWidgets();
             return false;
         });
@@ -203,7 +253,6 @@ public class MyCustomScreen extends Screen {
             double mouseX = mouseEvent.x();
             double mouseY = mouseEvent.y();
 
-            // Клик по результатам поиска
             if (searchResults != null && !searchResults.isEmpty()) {
                 for (int i = 0; i < searchResults.size(); i++) {
                     int y = searchResultY + i * searchResultHeight;
@@ -220,7 +269,6 @@ public class MyCustomScreen extends Screen {
                 }
             }
 
-            // Клик по истории (если поле пустое и в фокусе)
             if (this.searchField != null && this.searchField.getValue().isEmpty()
                     && this.searchField.isFocused()) {
                 List<String> history = getSearchHistory();
@@ -253,7 +301,7 @@ public class MyCustomScreen extends Screen {
         this.addRenderableWidget(prevPageBtn);
 
         Button nextPageBtn = Button.builder(Component.literal("→"), (btn) -> {
-            if (currentPage < 10) { currentPage++; this.rebuildWidgets(); }
+            if (currentPage < 13) { currentPage++; this.rebuildWidgets(); }
         }).bounds(panelX + panelWidth - 30, panelY + 385, 20, 20).build();
         this.addRenderableWidget(nextPageBtn);
 
@@ -272,9 +320,11 @@ public class MyCustomScreen extends Screen {
         else if (currentPage == 8) { initPage8(panelX + panelWidth / 2, panelY); }
         else if (currentPage == 9) { initPage9(panelX + panelWidth / 2, panelY); }
         else if (currentPage == 10) { initPage10(panelX + panelWidth / 2, panelY); }
+        else if (currentPage == 11) { initPage11(panelX + panelWidth / 2, panelY); }
+        else if (currentPage == 12) { initPage12(panelX + panelWidth / 2, panelY); }
+        else if (currentPage == 13) { initPage13(panelX + panelWidth / 2, panelY); }
     }
 
-    // ===== История поиска =====
     private static void addSearchHistory(String query) {
         if (query == null) return;
         query = query.trim().toLowerCase();
@@ -517,8 +567,8 @@ public class MyCustomScreen extends Screen {
                 ? KeyBindings.openGuiKey.getTranslatedKeyMessage().getString() : "G";
 
         Button keyBindButton = Button.builder(
-                        Component.literal(isBindingKey ? "Нажмите клавишу..." : "Клавиша: " + keyName),
-                        (b) -> { isBindingKey = true; b.setMessage(Component.literal("Нажмите клавишу...")); })
+                        Component.literal(isBindingKey && bindingTarget == 0 ? "Нажмите клавишу..." : "Клавиша: " + keyName),
+                        (b) -> { isBindingKey = true; bindingTarget = 0; b.setMessage(Component.literal("Нажмите клавишу...")); })
                 .bounds(centerX - 100, panelY + 100, 200, 20).build();
         this.addRenderableWidget(keyBindButton);
 
@@ -619,7 +669,7 @@ public class MyCustomScreen extends Screen {
     private void initPage4(int centerX, int panelY) {
         Checkbox tapeMouseCheckbox = Checkbox.builder(
                         Component.literal(tapeMouseRussian ? "Включить TapeMouse" : "Enable TapeMouse"), this.font)
-                .pos(centerX - 100, panelY + 70)
+                .pos(centerX - 100, panelY + 65)
                 .selected(tapeMouseEnabled)
                 .onValueChange((c, v) -> { tapeMouseEnabled = v; ConfigManager.save(); })
                 .build();
@@ -629,7 +679,7 @@ public class MyCustomScreen extends Screen {
             tapeMouseRussian = !tapeMouseRussian;
             ConfigManager.save();
             this.rebuildWidgets();
-        }).bounds(centerX + 120, panelY + 70, 25, 20).build();
+        }).bounds(centerX + 120, panelY + 65, 25, 20).build();
         this.addRenderableWidget(tapeMouseTranslate);
 
         Button targetBtn = Button.builder(
@@ -639,19 +689,36 @@ public class MyCustomScreen extends Screen {
                     ConfigManager.save();
                     this.rebuildWidgets();
                 }
-        ).bounds(centerX - 100, panelY + 110, 200, 20).build();
+        ).bounds(centerX - 100, panelY + 95, 200, 20).build();
         this.addRenderableWidget(targetBtn);
 
         Checkbox requireTargetCheckbox = Checkbox.builder(
                         Component.literal(tapeMouseRussian ? "Бить только при наведении" : "Only when aiming at target"), this.font)
-                .pos(centerX - 100, panelY + 140)
+                .pos(centerX - 100, panelY + 125)
                 .selected(tapeMouseRequireTarget)
                 .onValueChange((c, v) -> { tapeMouseRequireTarget = v; ConfigManager.save(); })
                 .build();
         this.addRenderableWidget(requireTargetCheckbox);
 
+        Checkbox requireFullAttackCheckbox = Checkbox.builder(
+                        Component.literal(tapeMouseRussian ? "Бить только при заряженной атаке" : "Only on full attack charge"), this.font)
+                .pos(centerX - 100, panelY + 150)
+                .selected(tapeMouseRequireFullAttack)
+                .onValueChange((c, v) -> { tapeMouseRequireFullAttack = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(requireFullAttackCheckbox);
+
+        String tmKeyName = KeyBindings.tapeMouseKey != null
+                ? KeyBindings.tapeMouseKey.getTranslatedKeyMessage().getString() : "R";
+
+        Button tapeMouseKeyBindButton = Button.builder(
+                        Component.literal(isBindingKey && bindingTarget == 2 ? "Нажмите клавишу..." : "Клавиша TapeMouse: " + tmKeyName),
+                        (b) -> { isBindingKey = true; bindingTarget = 2; b.setMessage(Component.literal("Нажмите клавишу...")); })
+                .bounds(centerX - 100, panelY + 180, 200, 20).build();
+        this.addRenderableWidget(tapeMouseKeyBindButton);
+
         AbstractSliderButton delaySlider = new AbstractSliderButton(
-                centerX - 100, panelY + 175, 200, 20,
+                centerX - 100, panelY + 220, 200, 20,
                 Component.literal(getDelayText()),
                 (tapeMouseDelay - 0.1f) / 4.9f
         ) {
@@ -907,8 +974,6 @@ public class MyCustomScreen extends Screen {
         };
         this.addRenderableWidget(shieldSlider);
     }
-
-    // СТРАНИЦА 11 — ZOOM
     private void initPage10(int centerX, int panelY) {
         Checkbox zoomCheckbox = Checkbox.builder(
                         Component.literal(zoomRussian ? "Включить Zoom" : "Enable Zoom"), this.font)
@@ -927,8 +992,8 @@ public class MyCustomScreen extends Screen {
                 ? KeyBindings.zoomKey.getTranslatedKeyMessage().getString() : "C";
 
         Button zoomKeyBindButton = Button.builder(
-                        Component.literal(isBindingKey ? "Нажмите клавишу..." : "Клавиша зума: " + keyName),
-                        (b) -> { isBindingKey = true; b.setMessage(Component.literal("Нажмите клавишу...")); })
+                        Component.literal(isBindingKey && bindingTarget == 1 ? "Нажмите клавишу..." : "Клавиша зума: " + keyName),
+                        (b) -> { isBindingKey = true; bindingTarget = 1; b.setMessage(Component.literal("Нажмите клавишу...")); })
                 .bounds(centerX - 100, panelY + 120, 200, 20).build();
         this.addRenderableWidget(zoomKeyBindButton);
 
@@ -963,6 +1028,126 @@ public class MyCustomScreen extends Screen {
             }
         };
         this.addRenderableWidget(smoothSlider);
+    }
+
+    // СТРАНИЦА 12 — AUTOSWAP
+    private void initPage11(int centerX, int panelY) {
+        Checkbox swapCheckbox = Checkbox.builder(
+                        Component.literal(autoSwapRussian ? "Включить Автосвап" : "Enable AutoSwap"), this.font)
+                .pos(centerX - 100, panelY + 80)
+                .selected(autoSwapEnabled)
+                .onValueChange((c, v) -> { autoSwapEnabled = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(swapCheckbox);
+
+        Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
+            autoSwapRussian = !autoSwapRussian; ConfigManager.save(); this.rebuildWidgets();
+        }).bounds(centerX + 120, panelY + 80, 25, 20).build();
+        this.addRenderableWidget(translateBtn);
+
+        int modeW = 95;
+        Button mode0 = Button.builder(Component.literal("Шар ↔ Шар"),
+                        (b) -> { autoSwapMode = 0; ConfigManager.save(); this.rebuildWidgets(); })
+                .bounds(centerX - 100, panelY + 120, modeW, 20).build();
+        this.addRenderableWidget(mode0);
+        Button mode1 = Button.builder(Component.literal("Тотем ↔ Тотем"),
+                        (b) -> { autoSwapMode = 1; ConfigManager.save(); this.rebuildWidgets(); })
+                .bounds(centerX - 5, panelY + 120, modeW, 20).build();
+        this.addRenderableWidget(mode1);
+        Button mode2 = Button.builder(Component.literal("Шар ↔ Тотем"),
+                        (b) -> { autoSwapMode = 2; ConfigManager.save(); this.rebuildWidgets(); })
+                .bounds(centerX - 100, panelY + 145, modeW, 20).build();
+        this.addRenderableWidget(mode2);
+        Button mode3 = Button.builder(Component.literal("Тотем ↔ Шар"),
+                        (b) -> { autoSwapMode = 3; ConfigManager.save(); this.rebuildWidgets(); })
+                .bounds(centerX - 5, panelY + 145, modeW, 20).build();
+        this.addRenderableWidget(mode3);
+
+        String swapKeyName = KeyBindings.autoSwapKey != null
+                ? KeyBindings.autoSwapKey.getTranslatedKeyMessage().getString() : "H";
+
+        Button swapKeyBindButton = Button.builder(
+                        Component.literal(isBindingKey && bindingTarget == 3 ? "Нажмите клавишу..." : "Клавиша Автосвапа: " + swapKeyName),
+                        (b) -> { isBindingKey = true; bindingTarget = 3; b.setMessage(Component.literal("Нажмите клавишу...")); })
+                .bounds(centerX - 100, panelY + 185, 200, 20).build();
+        this.addRenderableWidget(swapKeyBindButton);
+
+        AbstractSliderButton openDelaySlider = new AbstractSliderButton(
+                centerX - 100, panelY + 220, 200, 20,
+                Component.literal(String.format(autoSwapRussian ? "Задержка открытия: %d мс" : "Open delay: %d ms", autoSwapOpenDelay)),
+                (autoSwapOpenDelay - 50) / 450.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(String.format(autoSwapRussian ? "Задержка открытия: %d мс" : "Open delay: %d ms", autoSwapOpenDelay)));
+            }
+            @Override protected void applyValue() {
+                autoSwapOpenDelay = 50 + (int)(this.value * 450);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        };
+        this.addRenderableWidget(openDelaySlider);
+
+        AbstractSliderButton cooldownSlider = new AbstractSliderButton(
+                centerX - 100, panelY + 250, 200, 20,
+                Component.literal(String.format(autoSwapRussian ? "Cooldown: %d мс" : "Cooldown: %d ms", autoSwapCooldown)),
+                (autoSwapCooldown - 100) / 1900.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(String.format(autoSwapRussian ? "Cooldown: %d мс" : "Cooldown: %d ms", autoSwapCooldown)));
+            }
+            @Override protected void applyValue() {
+                autoSwapCooldown = 100 + (int)(this.value * 1900);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        };
+        this.addRenderableWidget(cooldownSlider);
+    }
+
+    // СТРАНИЦА 13 — FASTEXP
+    private void initPage12(int centerX, int panelY) {
+        Checkbox fastExpCheckbox = Checkbox.builder(
+                        Component.literal(fastExpRussian ? "Включить FastExp" : "Enable FastExp"), this.font)
+                .pos(centerX - 100, panelY + 80)
+                .selected(fastExpEnabled)
+                .onValueChange((c, v) -> { fastExpEnabled = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(fastExpCheckbox);
+
+        Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
+            fastExpRussian = !fastExpRussian; ConfigManager.save(); this.rebuildWidgets();
+        }).bounds(centerX + 120, panelY + 80, 25, 20).build();
+        this.addRenderableWidget(translateBtn);
+    }
+
+    // СТРАНИЦА 14 — AUTOSPRINT / SHIFTTAP
+    private void initPage13(int centerX, int panelY) {
+        Checkbox autoSprintCheckbox = Checkbox.builder(
+                        Component.literal(autoSprintRussian ? "Включить AutoSprint" : "Enable AutoSprint"), this.font)
+                .pos(centerX - 100, panelY + 80)
+                .selected(autoSprintEnabled)
+                .onValueChange((c, v) -> { autoSprintEnabled = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(autoSprintCheckbox);
+
+        Button sprintTranslate = Button.builder(Component.literal("RU"), (b) -> {
+            autoSprintRussian = !autoSprintRussian; ConfigManager.save(); this.rebuildWidgets();
+        }).bounds(centerX + 120, panelY + 80, 25, 20).build();
+        this.addRenderableWidget(sprintTranslate);
+
+        Checkbox shiftTapCheckbox = Checkbox.builder(
+                        Component.literal(shiftTapRussian ? "Включить ShiftTap" : "Enable ShiftTap"), this.font)
+                .pos(centerX - 100, panelY + 125)
+                .selected(shiftTapEnabled)
+                .onValueChange((c, v) -> { shiftTapEnabled = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(shiftTapCheckbox);
+
+        Button shiftTranslate = Button.builder(Component.literal("RU"), (b) -> {
+            shiftTapRussian = !shiftTapRussian; ConfigManager.save(); this.rebuildWidgets();
+        }).bounds(centerX + 120, panelY + 125, 25, 20).build();
+        this.addRenderableWidget(shiftTranslate);
     }
 
     private String getTargetName(int target, boolean russian) {
@@ -1050,13 +1235,19 @@ public class MyCustomScreen extends Screen {
             title = "Resistance DLC — Equipment";
         } else if (currentPage == 9) {
             title = "Resistance DLC — Low Fire / Low Shield";
-        } else {
+        } else if (currentPage == 10) {
             title = "Resistance DLC — Zoom";
+        } else if (currentPage == 11) {
+            title = "Resistance DLC — Автосвап";
+        } else if (currentPage == 12) {
+            title = "Resistance DLC — FastExp";
+        } else {
+            title = "Resistance DLC — AutoSprint / ShiftTap";
         }
         graphics.drawCenteredString(this.font, "§l" + title,
                 panelX + panelWidth / 2, panelY + 15, guiColor);
 
-        graphics.drawCenteredString(this.font, "§7Страница " + (currentPage + 1) + " / 11",
+        graphics.drawCenteredString(this.font, "§7Страница " + (currentPage + 1) + " / 14",
                 panelX + panelWidth / 2, panelY + 405, 0xFFFFFFFF);
 
         if (currentPage == 0) {
@@ -1113,7 +1304,7 @@ public class MyCustomScreen extends Screen {
             graphics.fill(panelX + 20, panelY + 47, panelX + panelWidth - 20, panelY + 48, guiColor);
 
             graphics.drawString(this.font, "§7Автоматически наносит удары",
-                    panelX + 20, panelY + 58, 0xFFAAAAAA);
+                    panelX + 20, panelY + 50, 0xFFAAAAAA);
 
         } else if (currentPage == 5) {
             graphics.drawString(this.font, "§l▸ FOV (Угол обзора)",
@@ -1173,6 +1364,40 @@ public class MyCustomScreen extends Screen {
             graphics.fill(panelX + 20, panelY + 47, panelX + panelWidth - 20, panelY + 48, guiColor);
 
             graphics.drawString(this.font, "§7Приближение при зажатии клавиши",
+                    panelX + 20, panelY + 60, 0xFFAAAAAA);
+
+        } else if (currentPage == 11) {
+            graphics.drawString(this.font, "§l▸ Автосвап",
+                    panelX + 20, panelY + 35, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 47, panelX + panelWidth - 20, panelY + 48, guiColor);
+
+            graphics.drawString(this.font, "§7Свап offhand ↔ инвентарь (с открытием)",
+                    panelX + 20, panelY + 60, 0xFFAAAAAA);
+
+            String modeText = "";
+            switch (autoSwapMode) {
+                case 0: modeText = "Текущий режим: Шар ↔ Шар"; break;
+                case 1: modeText = "Текущий режим: Тотем ↔ Тотем"; break;
+                case 2: modeText = "Текущий режим: Шар ↔ Тотем"; break;
+                case 3: modeText = "Текущий режим: Тотем ↔ Шар"; break;
+            }
+            graphics.drawCenteredString(this.font, "§e" + modeText,
+                    panelX + panelWidth / 2, panelY + 172, 0xFFFFFF00);
+
+        } else if (currentPage == 12) {
+            graphics.drawString(this.font, "§l▸ FastExp",
+                    panelX + 20, panelY + 35, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 47, panelX + panelWidth - 20, panelY + 48, guiColor);
+
+            graphics.drawString(this.font, "§7Быстрое использование бутылочек опыта",
+                    panelX + 20, panelY + 60, 0xFFAAAAAA);
+
+        } else if (currentPage == 13) {
+            graphics.drawString(this.font, "§l▸ AutoSprint / ShiftTap",
+                    panelX + 20, panelY + 35, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 47, panelX + panelWidth - 20, panelY + 48, guiColor);
+
+            graphics.drawString(this.font, "§7Авто-бег и авто-отпускание Shift",
                     panelX + 20, panelY + 60, 0xFFAAAAAA);
         }
     }

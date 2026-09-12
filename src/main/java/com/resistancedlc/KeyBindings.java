@@ -12,6 +12,8 @@ public class KeyBindings {
 
     public static KeyMapping openGuiKey;
     public static KeyMapping zoomKey;
+    public static KeyMapping tapeMouseKey;
+    public static KeyMapping autoSwapKey;
     private static KeyMapping.Category category;
 
     public static void register() {
@@ -35,6 +37,20 @@ public class KeyBindings {
                 category
         ));
 
+        tapeMouseKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.resistancedlc.tape_mouse",
+                InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_R,
+                category
+        ));
+
+        autoSwapKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.resistancedlc.auto_swap",
+                InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_H,
+                category
+        ));
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (openGuiKey.consumeClick()) {
                 Minecraft.getInstance().setScreen(new MyCustomScreen());
@@ -53,6 +69,22 @@ public class KeyBindings {
     public static void setZoomKey(int keyCode) {
         if (zoomKey != null) {
             zoomKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            Minecraft.getInstance().options.save();
+            Minecraft.getInstance().options.load();
+        }
+    }
+
+    public static void setTapeMouseKey(int keyCode) {
+        if (tapeMouseKey != null) {
+            tapeMouseKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            Minecraft.getInstance().options.save();
+            Minecraft.getInstance().options.load();
+        }
+    }
+
+    public static void setAutoSwapKey(int keyCode) {
+        if (autoSwapKey != null) {
+            autoSwapKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
             Minecraft.getInstance().options.save();
             Minecraft.getInstance().options.load();
         }
