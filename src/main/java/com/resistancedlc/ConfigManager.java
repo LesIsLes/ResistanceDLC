@@ -40,6 +40,7 @@ public class ConfigManager {
             json.addProperty("guiTextColor", MyCustomScreen.guiTextColor);
             json.addProperty("hudAlpha", MyCustomScreen.hudAlpha);
             json.addProperty("showPet", MyCustomScreen.showPet);
+            json.addProperty("searchHistoryRaw", MyCustomScreen.searchHistoryRaw);
 
             // === ВИДИМОСТЬ ЭЛЕМЕНТОВ ===
             json.addProperty("showCoords", MyCustomScreen.showCoords);
@@ -52,6 +53,11 @@ public class ConfigManager {
             json.addProperty("showDirection", MyCustomScreen.showDirection);
             json.addProperty("showHitCounter", MyCustomScreen.showHitCounter);
             json.addProperty("showPotionEffects", MyCustomScreen.showPotionEffects);
+            json.addProperty("potionEffectsIcons", MyCustomScreen.potionEffectsIcons);
+            json.addProperty("showEquipmentHud", MyCustomScreen.showEquipmentHud);
+            json.addProperty("equipmentShowDurability", MyCustomScreen.equipmentShowDurability);
+            json.addProperty("lowFireEnabled", MyCustomScreen.lowFireEnabled);
+            json.addProperty("lowShieldEnabled", MyCustomScreen.lowShieldEnabled);
 
             // === ПОЗИЦИИ ===
             json.addProperty("coordsX", MyCustomScreen.coordsX);
@@ -74,6 +80,8 @@ public class ConfigManager {
             json.addProperty("hitCounterY", MyCustomScreen.hitCounterY);
             json.addProperty("potionEffectsX", MyCustomScreen.potionEffectsX);
             json.addProperty("potionEffectsY", MyCustomScreen.potionEffectsY);
+            json.addProperty("equipmentHudX", MyCustomScreen.equipmentHudX);
+            json.addProperty("equipmentHudY", MyCustomScreen.equipmentHudY);
 
             // === ПЕРЕВОД ===
             json.addProperty("fpsRussian", MyCustomScreen.fpsRussian);
@@ -83,12 +91,21 @@ public class ConfigManager {
             json.addProperty("directionRussian", MyCustomScreen.directionRussian);
             json.addProperty("hitCounterRussian", MyCustomScreen.hitCounterRussian);
             json.addProperty("potionEffectsRussian", MyCustomScreen.potionEffectsRussian);
+            json.addProperty("equipmentHudRussian", MyCustomScreen.equipmentHudRussian);
+            json.addProperty("lowFireShieldRussian", MyCustomScreen.lowFireShieldRussian);
+            json.addProperty("zoomRussian", MyCustomScreen.zoomRussian);
 
             // === TAPEMOUSE ===
             json.addProperty("tapeMouseEnabled", MyCustomScreen.tapeMouseEnabled);
             json.addProperty("tapeMouseTarget", MyCustomScreen.tapeMouseTarget);
             json.addProperty("tapeMouseDelay", MyCustomScreen.tapeMouseDelay);
             json.addProperty("tapeMouseRussian", MyCustomScreen.tapeMouseRussian);
+            json.addProperty("tapeMouseRequireTarget", MyCustomScreen.tapeMouseRequireTarget);
+
+            // === ZOOM ===
+            json.addProperty("zoomEnabled", MyCustomScreen.zoomEnabled);
+            json.addProperty("zoomFactor", MyCustomScreen.zoomFactor);
+            json.addProperty("zoomSmoothness", MyCustomScreen.zoomSmoothness);
 
             // === ASPECT RATIO ===
             json.addProperty("aspectRatioEnabled", MyCustomScreen.aspectRatioEnabled);
@@ -101,6 +118,10 @@ public class ConfigManager {
             json.addProperty("customHitSoundPitch", MyCustomScreen.customHitSoundPitch);
             json.addProperty("customHitSoundsRussian", MyCustomScreen.customHitSoundsRussian);
             json.addProperty("customHitSoundPreset", MyCustomScreen.customHitSoundPreset);
+
+            // === LOW FIRE / LOW SHIELD ===
+            json.addProperty("lowFireOffset", MyCustomScreen.lowFireOffset);
+            json.addProperty("lowShieldOffset", MyCustomScreen.lowShieldOffset);
 
             Path file = CONFIG_DIR.resolve(name + ".json");
             Files.writeString(file, GSON.toJson(json));
@@ -139,6 +160,7 @@ public class ConfigManager {
             if (json.has("guiTextColor")) MyCustomScreen.guiTextColor = json.get("guiTextColor").getAsInt();
             if (json.has("hudAlpha")) MyCustomScreen.hudAlpha = json.get("hudAlpha").getAsInt();
             if (json.has("showPet")) MyCustomScreen.showPet = json.get("showPet").getAsBoolean();
+            if (json.has("searchHistoryRaw")) MyCustomScreen.searchHistoryRaw = json.get("searchHistoryRaw").getAsString();
 
             // === ВИДИМОСТЬ ЭЛЕМЕНТОВ ===
             if (json.has("showCoords")) MyCustomScreen.showCoords = json.get("showCoords").getAsBoolean();
@@ -151,6 +173,11 @@ public class ConfigManager {
             if (json.has("showDirection")) MyCustomScreen.showDirection = json.get("showDirection").getAsBoolean();
             if (json.has("showHitCounter")) MyCustomScreen.showHitCounter = json.get("showHitCounter").getAsBoolean();
             if (json.has("showPotionEffects")) MyCustomScreen.showPotionEffects = json.get("showPotionEffects").getAsBoolean();
+            if (json.has("potionEffectsIcons")) MyCustomScreen.potionEffectsIcons = json.get("potionEffectsIcons").getAsBoolean();
+            if (json.has("showEquipmentHud")) MyCustomScreen.showEquipmentHud = json.get("showEquipmentHud").getAsBoolean();
+            if (json.has("equipmentShowDurability")) MyCustomScreen.equipmentShowDurability = json.get("equipmentShowDurability").getAsBoolean();
+            if (json.has("lowFireEnabled")) MyCustomScreen.lowFireEnabled = json.get("lowFireEnabled").getAsBoolean();
+            if (json.has("lowShieldEnabled")) MyCustomScreen.lowShieldEnabled = json.get("lowShieldEnabled").getAsBoolean();
 
             // === ПОЗИЦИИ ===
             if (json.has("coordsX")) MyCustomScreen.coordsX = json.get("coordsX").getAsInt();
@@ -173,6 +200,8 @@ public class ConfigManager {
             if (json.has("hitCounterY")) MyCustomScreen.hitCounterY = json.get("hitCounterY").getAsInt();
             if (json.has("potionEffectsX")) MyCustomScreen.potionEffectsX = json.get("potionEffectsX").getAsInt();
             if (json.has("potionEffectsY")) MyCustomScreen.potionEffectsY = json.get("potionEffectsY").getAsInt();
+            if (json.has("equipmentHudX")) MyCustomScreen.equipmentHudX = json.get("equipmentHudX").getAsInt();
+            if (json.has("equipmentHudY")) MyCustomScreen.equipmentHudY = json.get("equipmentHudY").getAsInt();
 
             // === ПЕРЕВОД ===
             if (json.has("fpsRussian")) MyCustomScreen.fpsRussian = json.get("fpsRussian").getAsBoolean();
@@ -182,12 +211,21 @@ public class ConfigManager {
             if (json.has("directionRussian")) MyCustomScreen.directionRussian = json.get("directionRussian").getAsBoolean();
             if (json.has("hitCounterRussian")) MyCustomScreen.hitCounterRussian = json.get("hitCounterRussian").getAsBoolean();
             if (json.has("potionEffectsRussian")) MyCustomScreen.potionEffectsRussian = json.get("potionEffectsRussian").getAsBoolean();
+            if (json.has("equipmentHudRussian")) MyCustomScreen.equipmentHudRussian = json.get("equipmentHudRussian").getAsBoolean();
+            if (json.has("lowFireShieldRussian")) MyCustomScreen.lowFireShieldRussian = json.get("lowFireShieldRussian").getAsBoolean();
+            if (json.has("zoomRussian")) MyCustomScreen.zoomRussian = json.get("zoomRussian").getAsBoolean();
 
             // === TAPEMOUSE ===
             if (json.has("tapeMouseEnabled")) MyCustomScreen.tapeMouseEnabled = json.get("tapeMouseEnabled").getAsBoolean();
             if (json.has("tapeMouseTarget")) MyCustomScreen.tapeMouseTarget = json.get("tapeMouseTarget").getAsInt();
             if (json.has("tapeMouseDelay")) MyCustomScreen.tapeMouseDelay = json.get("tapeMouseDelay").getAsFloat();
             if (json.has("tapeMouseRussian")) MyCustomScreen.tapeMouseRussian = json.get("tapeMouseRussian").getAsBoolean();
+            if (json.has("tapeMouseRequireTarget")) MyCustomScreen.tapeMouseRequireTarget = json.get("tapeMouseRequireTarget").getAsBoolean();
+
+            // === ZOOM ===
+            if (json.has("zoomEnabled")) MyCustomScreen.zoomEnabled = json.get("zoomEnabled").getAsBoolean();
+            if (json.has("zoomFactor")) MyCustomScreen.zoomFactor = json.get("zoomFactor").getAsFloat();
+            if (json.has("zoomSmoothness")) MyCustomScreen.zoomSmoothness = json.get("zoomSmoothness").getAsFloat();
 
             // === ASPECT RATIO ===
             if (json.has("aspectRatioEnabled")) MyCustomScreen.aspectRatioEnabled = json.get("aspectRatioEnabled").getAsBoolean();
@@ -200,6 +238,10 @@ public class ConfigManager {
             if (json.has("customHitSoundPitch")) MyCustomScreen.customHitSoundPitch = json.get("customHitSoundPitch").getAsFloat();
             if (json.has("customHitSoundsRussian")) MyCustomScreen.customHitSoundsRussian = json.get("customHitSoundsRussian").getAsBoolean();
             if (json.has("customHitSoundPreset")) MyCustomScreen.customHitSoundPreset = json.get("customHitSoundPreset").getAsInt();
+
+            // === LOW FIRE / LOW SHIELD ===
+            if (json.has("lowFireOffset")) MyCustomScreen.lowFireOffset = json.get("lowFireOffset").getAsFloat();
+            if (json.has("lowShieldOffset")) MyCustomScreen.lowShieldOffset = json.get("lowShieldOffset").getAsFloat();
 
             return true;
 

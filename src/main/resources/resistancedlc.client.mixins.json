@@ -5,7 +5,9 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "AspectRatioMixin",
-    "HitSoundMixin"
+    "HitSoundMixin",
+    "LowFireMixin",
+    "LowShieldMixin"
   ],
   "injectors": {
     "defaultRequire": 1

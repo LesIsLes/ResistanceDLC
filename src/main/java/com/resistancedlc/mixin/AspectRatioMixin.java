@@ -11,12 +11,20 @@ import com.resistancedlc.MyCustomScreen;
 @Mixin(GameRenderer.class)
 public class AspectRatioMixin {
 
-    // getFov возвращает Float в 1.21.11, а не Double
     @Inject(method = "getFov", at = @At("RETURN"), cancellable = true)
     private void onGetFov(Camera camera, float tickDelta, boolean changingFov, CallbackInfoReturnable<Float> cir) {
+        float originalFov = cir.getReturnValue();
+
+        // Aspect Ratio (растяг)
         if (MyCustomScreen.aspectRatioEnabled) {
-            float originalFov = cir.getReturnValue();
-            cir.setReturnValue(originalFov * MyCustomScreen.aspectRatio);
+            originalFov = originalFov * MyCustomScreen.aspectRatio;
         }
+
+        // Zoom
+        if (MyCustomScreen.zoomEnabled) {
+            originalFov = originalFov * MyCustomScreen.currentZoom;
+        }
+
+        cir.setReturnValue(originalFov);
     }
 }

@@ -11,6 +11,7 @@ import org.lwjgl.glfw.GLFW;
 public class KeyBindings {
 
     public static KeyMapping openGuiKey;
+    public static KeyMapping zoomKey;
     private static KeyMapping.Category category;
 
     public static void register() {
@@ -27,6 +28,13 @@ public class KeyBindings {
                 category
         ));
 
+        zoomKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.resistancedlc.zoom",
+                InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_C,
+                category
+        ));
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (openGuiKey.consumeClick()) {
                 Minecraft.getInstance().setScreen(new MyCustomScreen());
@@ -37,6 +45,14 @@ public class KeyBindings {
     public static void setKey(int keyCode) {
         if (openGuiKey != null) {
             openGuiKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            Minecraft.getInstance().options.save();
+            Minecraft.getInstance().options.load();
+        }
+    }
+
+    public static void setZoomKey(int keyCode) {
+        if (zoomKey != null) {
+            zoomKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
             Minecraft.getInstance().options.save();
             Minecraft.getInstance().options.load();
         }

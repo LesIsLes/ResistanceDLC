@@ -12,16 +12,22 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -32,16 +38,11 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // 1. Загружаем конфиг при запуске
         ConfigManager.load();
-
-        // 2. Регистрируем привязку клавиш
         KeyBindings.register();
 
-        // 3. Регистрируем клиентские команды
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
 
-            // Команда /resistancedlc gui
             dispatcher.register(
                     ClientCommandManager.literal("resistancedlc")
                             .then(ClientCommandManager.literal("gui")
@@ -52,7 +53,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
                             )
             );
 
-            // Команда /cfg
             dispatcher.register(
                     ClientCommandManager.literal("cfg")
                             .then(ClientCommandManager.literal("dir")
@@ -135,6 +135,25 @@ public class ResistanceDLCClient implements ClientModInitializer {
             }
         });
 
+        // 4.5. ZOOM (плавный)
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.player == null) return;
+
+            boolean keyDown = KeyBindings.zoomKey != null && KeyBindings.zoomKey.isDown();
+            float targetZoom = 1.0f;
+
+            if (MyCustomScreen.zoomEnabled && keyDown) {
+                targetZoom = 1.0f / MyCustomScreen.zoomFactor;
+            }
+
+            float smooth = MyCustomScreen.zoomSmoothness;
+            if (Math.abs(MyCustomScreen.currentZoom - targetZoom) < 0.001f) {
+                MyCustomScreen.currentZoom = targetZoom;
+            } else {
+                MyCustomScreen.currentZoom += (targetZoom - MyCustomScreen.currentZoom) * smooth;
+            }
+        });
+
         // 5. TAPEMOUSE (автокликер)
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!MyCustomScreen.tapeMouseEnabled) return;
@@ -142,21 +161,36 @@ public class ResistanceDLCClient implements ClientModInitializer {
             if (client.screen != null) return;
 
             Entity target = client.crosshairPickEntity;
-            if (target == null) return;
 
-            boolean isPlayer = target instanceof Player;
-            boolean isMob = target instanceof LivingEntity && !isPlayer;
+            if (MyCustomScreen.tapeMouseRequireTarget) {
+                if (target == null) return;
 
-            switch (MyCustomScreen.tapeMouseTarget) {
-                case 1: if (!isMob) return; break;
-                case 2: if (!isPlayer) return; break;
+                boolean isPlayer = target instanceof Player;
+                boolean isMob = target instanceof LivingEntity && !isPlayer;
+
+                switch (MyCustomScreen.tapeMouseTarget) {
+                    case 1: if (!isMob) return; break;
+                    case 2: if (!isPlayer) return; break;
+                }
+            } else {
+                if (target != null) {
+                    boolean isPlayer = target instanceof Player;
+                    boolean isMob = target instanceof LivingEntity && !isPlayer;
+
+                    switch (MyCustomScreen.tapeMouseTarget) {
+                        case 1: if (!isMob) return; break;
+                        case 2: if (!isPlayer) return; break;
+                    }
+                }
             }
 
             long currentTime = System.currentTimeMillis();
             if (currentTime - lastAttackTime < (long)(MyCustomScreen.tapeMouseDelay * 1000)) return;
 
             if (client.gameMode != null) {
-                client.gameMode.attack(client.player, target);
+                if (target != null) {
+                    client.gameMode.attack(client.player, target);
+                }
                 client.player.swing(InteractionHand.MAIN_HAND);
                 lastAttackTime = currentTime;
             }
@@ -175,7 +209,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
                             int baseColor = MyCustomScreen.hudColor;
                             int color = (baseColor & 0x00FFFFFF) | (alpha << 24);
 
-                            // Координаты
                             if (MyCustomScreen.showCoords) {
                                 drawHudString(graphics, client.font,
                                         String.format("XYZ: %d / %d / %d",
@@ -185,7 +218,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                         MyCustomScreen.coordsX, MyCustomScreen.coordsY, color);
                             }
 
-                            // Биом
                             if (MyCustomScreen.showBiome) {
                                 String biome = client.level.getBiome(client.player.blockPosition())
                                         .unwrapKey()
@@ -195,7 +227,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                         MyCustomScreen.biomeX, MyCustomScreen.biomeY, color);
                             }
 
-                            // Время
                             if (MyCustomScreen.showTime) {
                                 long time = client.level.getDayTime() % 24000;
                                 String timeStr = time < 12000 ? "День" : "Ночь";
@@ -203,14 +234,12 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                         MyCustomScreen.timeX, MyCustomScreen.timeY, color);
                             }
 
-                            // FPS
                             if (MyCustomScreen.showFps) {
                                 String label = MyCustomScreen.fpsRussian ? "КВС" : "FPS";
                                 drawHudString(graphics, client.font, label + ": " + client.getFps(),
                                         MyCustomScreen.fpsX, MyCustomScreen.fpsY, color);
                             }
 
-                            // Ping
                             if (MyCustomScreen.showPing) {
                                 int ping = 0;
                                 if (client.getConnection() != null
@@ -222,7 +251,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                         MyCustomScreen.pingX, MyCustomScreen.pingY, color);
                             }
 
-                            // TPS
                             if (MyCustomScreen.showTps) {
                                 float tps = 20.0f;
                                 if (client.getSingleplayerServer() != null) {
@@ -237,7 +265,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                         MyCustomScreen.tpsX, MyCustomScreen.tpsY, color);
                             }
 
-                            // BPS
                             if (MyCustomScreen.showBps) {
                                 String label = MyCustomScreen.bpsRussian ? "БВС" : "BPS";
                                 drawHudString(graphics, client.font,
@@ -245,7 +272,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                         MyCustomScreen.bpsX, MyCustomScreen.bpsY, color);
                             }
 
-                            // Направление
                             if (MyCustomScreen.showDirection) {
                                 float yaw = client.player.getYRot();
                                 yaw = ((yaw % 360) + 360) % 360;
@@ -268,7 +294,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                         MyCustomScreen.directionX, MyCustomScreen.directionY, color);
                             }
 
-                            // Hits (счётчик ударов)
                             if (MyCustomScreen.showHitCounter) {
                                 Entity target = client.crosshairPickEntity;
                                 if (target instanceof LivingEntity living) {
@@ -297,26 +322,111 @@ public class ResistanceDLCClient implements ClientModInitializer {
                             if (MyCustomScreen.showPotionEffects) {
                                 Collection<MobEffectInstance> effects = client.player.getActiveEffects();
                                 if (!effects.isEmpty()) {
-                                    String label = MyCustomScreen.potionEffectsRussian ? "Эффекты:" : "Effects:";
-                                    drawHudString(graphics, client.font, label,
-                                            MyCustomScreen.potionEffectsX, MyCustomScreen.potionEffectsY, color);
 
-                                    int yOffset = 12;
-                                    for (MobEffectInstance effect : effects) {
-                                        MobEffect type = effect.getEffect().value();
-                                        String name = type.getDisplayName().getString();
-                                        int duration = effect.getDuration();
+                                    if (MyCustomScreen.potionEffectsIcons) {
+                                        int yOffset = 0;
+                                        for (MobEffectInstance effect : effects) {
+                                            MobEffect type = effect.getEffect().value();
+                                            Identifier effectId = BuiltInRegistries.MOB_EFFECT.getKey(type);
+                                            if (effectId == null) continue;
 
-                                        int totalSeconds = duration / 20;
-                                        int minutes = totalSeconds / 60;
-                                        int seconds = totalSeconds % 60;
-                                        String timeStr = String.format("%d:%02d", minutes, seconds);
+                                            int iconX = MyCustomScreen.potionEffectsX;
+                                            int iconY = MyCustomScreen.potionEffectsY + yOffset;
 
-                                        String text = " " + name + " " + timeStr;
-                                        drawHudString(graphics, client.font, text,
-                                                MyCustomScreen.potionEffectsX, MyCustomScreen.potionEffectsY + yOffset, color);
-                                        yOffset += 10;
+                                            Identifier iconId = Identifier.fromNamespaceAndPath(
+                                                    effectId.getNamespace(),
+                                                    "textures/mob_effect/" + effectId.getPath() + ".png"
+                                            );
+                                            graphics.blit(
+                                                    RenderPipelines.GUI_TEXTURED,
+                                                    iconId,
+                                                    iconX, iconY,
+                                                    0, 0,
+                                                    18, 18,
+                                                    18, 18
+                                            );
+
+                                            String name = type.getDisplayName().getString();
+                                            int amp = effect.getAmplifier();
+                                            if (amp > 0) {
+                                                name = name + " " + toRoman(amp + 1);
+                                            }
+
+                                            int duration = effect.getDuration();
+                                            int totalSeconds = duration / 20;
+                                            int minutes = totalSeconds / 60;
+                                            int seconds = totalSeconds % 60;
+                                            String timeStr = String.format("%d:%02d", minutes, seconds);
+
+                                            String fullText = name + " " + timeStr;
+
+                                            drawHudString(graphics, client.font, fullText,
+                                                    iconX + 21, iconY + 5, color);
+
+                                            yOffset += 20;
+                                        }
+                                    } else {
+                                        String label = MyCustomScreen.potionEffectsRussian ? "Эффекты:" : "Effects:";
+                                        drawHudString(graphics, client.font, label,
+                                                MyCustomScreen.potionEffectsX, MyCustomScreen.potionEffectsY, color);
+
+                                        int textOffset = 12;
+                                        for (MobEffectInstance effect : effects) {
+                                            MobEffect type = effect.getEffect().value();
+                                            String name = type.getDisplayName().getString();
+                                            int duration = effect.getDuration();
+
+                                            int totalSeconds = duration / 20;
+                                            int minutes = totalSeconds / 60;
+                                            int seconds = totalSeconds % 60;
+                                            String timeStr = String.format("%d:%02d", minutes, seconds);
+
+                                            String text = " " + name + " " + timeStr;
+                                            drawHudString(graphics, client.font, text,
+                                                    MyCustomScreen.potionEffectsX, MyCustomScreen.potionEffectsY + textOffset, color);
+                                            textOffset += 10;
+                                        }
                                     }
+                                }
+                            }
+
+                            // === EQUIPMENT HUD (у хотбара) ===
+                            if (MyCustomScreen.showEquipmentHud) {
+                                int guiW = client.getWindow().getGuiScaledWidth();
+                                int guiH = client.getWindow().getGuiScaledHeight();
+
+                                int hotbarRight = (guiW + 182) / 2;
+                                int hotbarBottom = guiH - 22;
+
+                                int slotX = hotbarRight + MyCustomScreen.equipmentHudX;
+                                int slotY = hotbarBottom + MyCustomScreen.equipmentHudY;
+
+                                List<ItemStack> items = new ArrayList<>();
+                                ItemStack[] armor = {
+                                        client.player.getItemBySlot(EquipmentSlot.FEET),
+                                        client.player.getItemBySlot(EquipmentSlot.LEGS),
+                                        client.player.getItemBySlot(EquipmentSlot.CHEST),
+                                        client.player.getItemBySlot(EquipmentSlot.HEAD),
+                                        client.player.getItemBySlot(EquipmentSlot.OFFHAND),
+                                        client.player.getItemBySlot(EquipmentSlot.MAINHAND)
+                                };
+                                for (ItemStack s : armor) {
+                                    if (!s.isEmpty()) items.add(s);
+                                }
+
+                                int renderY = slotY;
+                                for (ItemStack stack : items) {
+                                    drawEquipmentSlot(graphics, stack, slotX, renderY);
+                                    renderY -= 20;
+                                }
+
+                                int arrowCount = 0;
+                                for (int i = 0; i < client.player.getInventory().getContainerSize(); i++) {
+                                    ItemStack stack = client.player.getInventory().getItem(i);
+                                    if (stack.is(Items.ARROW)) arrowCount += stack.getCount();
+                                }
+                                if (arrowCount > 0) {
+                                    drawHudString(graphics, client.font, "➤ " + arrowCount, slotX, renderY + 4, color);
                                 }
                             }
 
@@ -326,7 +436,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
         );
     }
 
-    // ===== Вспомогательный метод: рисует фон под текстом (если включено) и сам текст =====
     private static void drawHudString(GuiGraphics graphics, Font font, String text, int x, int y, int color) {
         if (MyCustomScreen.hudBackgroundEnabled) {
             int textWidth = font.width(text);
@@ -337,6 +446,35 @@ public class ResistanceDLCClient implements ClientModInitializer {
             graphics.fill(x - 1, y - 1, x + textWidth + 1, y - 1 + height, bgColor);
         }
         graphics.drawString(font, text, x, y, color, true);
+    }
+
+    private static void drawEquipmentSlot(GuiGraphics graphics, ItemStack stack, int x, int y) {
+        graphics.renderItem(stack, x, y);
+
+        if (MyCustomScreen.equipmentShowDurability && stack.isDamageableItem()) {
+            int damage = stack.getDamageValue();
+            int maxDamage = stack.getMaxDamage();
+            if (damage > 0 && maxDamage > 0) {
+                float percent = 1.0f - (float) damage / maxDamage;
+                int barWidth = 16;
+                int filled = (int) (barWidth * percent);
+
+                graphics.fill(x, y + 17, x + barWidth, y + 18, 0xFF400000);
+
+                int barColor;
+                if (percent > 0.75f) barColor = 0xFF00FF00;
+                else if (percent > 0.50f) barColor = 0xFFFFFF00;
+                else if (percent > 0.25f) barColor = 0xFFFF8800;
+                else barColor = 0xFFFF0000;
+                graphics.fill(x, y + 17, x + filled, y + 18, barColor);
+            }
+        }
+    }
+
+    private static String toRoman(int num) {
+        String[] roman = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"};
+        if (num >= 0 && num < roman.length) return roman[num];
+        return String.valueOf(num);
     }
 
     private void sendMessage(String message) {
