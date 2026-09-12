@@ -21,6 +21,12 @@ public class MyCustomScreen extends Screen {
     // ===== HUD =====
     public static boolean showHud = false;
     public static int hudColor = 0xFF00FF00;
+
+    // ===== ИКОНКА МОДА =====
+    public static boolean showModLogo = false;
+    public static int modLogoX = 10, modLogoY = 5;
+    public static boolean modLogoRussian = false;
+
     public static boolean hudBackgroundEnabled = false;
     public static int hudBackgroundAlpha = 128;
     public static int hudBackgroundColor = 0xFF000000;
@@ -28,9 +34,10 @@ public class MyCustomScreen extends Screen {
     public static int guiColor = 0xFF00FF00;
     public static int guiTextColor = 0xFFFFFFFF;
 
-    public static int coordsX = 10, coordsY = 10;
-    public static int biomeX = 10, biomeY = 25;
-    public static int timeX = 10, timeY = 40;
+    // ===== ПОЗИЦИИ HUD =====
+    public static int coordsX = 10, coordsY = 35;
+    public static int biomeX = 10, biomeY = 50;
+    public static int timeX = 10, timeY = 65;
 
     public static boolean showCoords = true;
     public static boolean showBiome = true;
@@ -42,19 +49,19 @@ public class MyCustomScreen extends Screen {
     public static boolean showBps = false;
     public static boolean showDirection = false;
 
-    public static int fpsX = 10, fpsY = 55;
-    public static int pingX = 10, pingY = 70;
-    public static int tpsX = 10, tpsY = 85;
-    public static int bpsX = 10, bpsY = 100;
-    public static int directionX = 10, directionY = 115;
+    public static int fpsX = 10, fpsY = 80;
+    public static int pingX = 10, pingY = 95;
+    public static int tpsX = 10, tpsY = 110;
+    public static int bpsX = 10, bpsY = 125;
+    public static int directionX = 10, directionY = 140;
 
     public static boolean showHitCounter = false;
-    public static int hitCounterX = 10, hitCounterY = 130;
+    public static int hitCounterX = 10, hitCounterY = 155;
     public static boolean hitCounterRussian = false;
 
     // ===== POTION EFFECTS HUD =====
     public static boolean showPotionEffects = false;
-    public static int potionEffectsX = 10, potionEffectsY = 145;
+    public static int potionEffectsX = 10, potionEffectsY = 170;
     public static boolean potionEffectsRussian = false;
     public static boolean potionEffectsIcons = true;
 
@@ -154,6 +161,9 @@ public class MyCustomScreen extends Screen {
 
     private static final String[][] SEARCH_INDEX = {
             { "hud", "Показывать HUD", "0" },
+            { "иконка", "Иконка мода", "1" },
+            { "лого", "Иконка мода", "1" },
+            { "logo", "Иконка мода", "1" },
             { "фон", "Фон HUD", "0" },
             { "цвет", "Цвет HUD", "0" },
             { "цвет фона", "Цвет фона HUD", "0" },
@@ -306,7 +316,7 @@ public class MyCustomScreen extends Screen {
         this.addRenderableWidget(nextPageBtn);
 
         Button closeButton = Button.builder(Component.literal("Закрыть"), (btn) -> this.onClose())
-                .bounds(panelX + panelWidth / 2 - 60, panelY + 360, 120, 20).build();
+                .bounds(panelX + panelWidth - 90, panelY + 360, 70, 18).build();
         this.addRenderableWidget(closeButton);
 
         if (currentPage == 0) { initPage0(panelX + panelWidth / 2, panelY); }
@@ -363,7 +373,75 @@ public class MyCustomScreen extends Screen {
         return history;
     }
 
+    // ===== ХЕЛПЕР: EditBox для ввода "X, Y" + ОК + Сброс + 4 стрелки =====
+    private void makePosEditor(int centerX, int panelY, int rowY,
+                               java.util.function.IntSupplier getX,
+                               java.util.function.IntSupplier getY,
+                               java.util.function.BiConsumer<Integer, Integer> setXY,
+                               int defaultX, int defaultY) {
+        EditBox posField = new EditBox(this.font, centerX - 100, panelY + rowY, 90, 18,
+                Component.literal("X, Y"));
+        posField.setMaxLength(20);
+        posField.setValue(getX.getAsInt() + ", " + getY.getAsInt());
+        this.addRenderableWidget(posField);
+
+        Button okBtn = Button.builder(Component.literal("ОК"), (b) -> {
+            try {
+                String[] parts = posField.getValue().split(",");
+                if (parts.length == 2) {
+                    int nx = Integer.parseInt(parts[0].trim());
+                    int ny = Integer.parseInt(parts[1].trim());
+                    setXY.accept(nx, ny);
+                    ConfigManager.save();
+                }
+            } catch (Exception ignored) {}
+        }).bounds(centerX - 5, panelY + rowY, 35, 18).build();
+        this.addRenderableWidget(okBtn);
+
+        Button resetBtn = Button.builder(Component.literal("↺"), (b) -> {
+            setXY.accept(defaultX, defaultY);
+            posField.setValue(defaultX + ", " + defaultY);
+            ConfigManager.save();
+        }).bounds(centerX + 35, panelY + rowY, 20, 18).build();
+        this.addRenderableWidget(resetBtn);
+
+        int arrowSize = 14;
+        int arrowY = panelY + rowY + 20;
+        Button upBtn = Button.builder(Component.literal("↑"), (b) -> {
+            int newY = getY.getAsInt() - 5;
+            setXY.accept(getX.getAsInt(), newY);
+            posField.setValue(getX.getAsInt() + ", " + newY);
+            ConfigManager.save();
+        }).bounds(centerX - 100, arrowY, arrowSize, arrowSize).build();
+        this.addRenderableWidget(upBtn);
+
+        Button downBtn = Button.builder(Component.literal("↓"), (b) -> {
+            int newY = getY.getAsInt() + 5;
+            setXY.accept(getX.getAsInt(), newY);
+            posField.setValue(getX.getAsInt() + ", " + newY);
+            ConfigManager.save();
+        }).bounds(centerX - 100 + arrowSize + 2, arrowY, arrowSize, arrowSize).build();
+        this.addRenderableWidget(downBtn);
+
+        Button leftBtn = Button.builder(Component.literal("←"), (b) -> {
+            int newX = getX.getAsInt() - 5;
+            setXY.accept(newX, getY.getAsInt());
+            posField.setValue(newX + ", " + getY.getAsInt());
+            ConfigManager.save();
+        }).bounds(centerX - 100 + (arrowSize + 2) * 2, arrowY, arrowSize, arrowSize).build();
+        this.addRenderableWidget(leftBtn);
+
+        Button rightBtn = Button.builder(Component.literal("→"), (b) -> {
+            int newX = getX.getAsInt() + 5;
+            setXY.accept(newX, getY.getAsInt());
+            posField.setValue(newX + ", " + getY.getAsInt());
+            ConfigManager.save();
+        }).bounds(centerX - 100 + (arrowSize + 2) * 3, arrowY, arrowSize, arrowSize).build();
+        this.addRenderableWidget(rightBtn);
+    }
+
     private void initPage0(int centerX, int panelY) {
+        // ===== ЧЕКБОКСЫ HUD (Y=45) =====
         Checkbox hudCheckbox = Checkbox.builder(Component.literal("Показывать HUD"), this.font)
                 .pos(centerX - 100, panelY + 45).selected(showHud)
                 .onValueChange((c, v) -> { showHud = v; ConfigManager.save(); }).build();
@@ -374,6 +452,7 @@ public class MyCustomScreen extends Screen {
                 .onValueChange((c, v) -> { hudBackgroundEnabled = v; ConfigManager.save(); }).build();
         this.addRenderableWidget(hudBgCheckbox);
 
+        // ===== ЦВЕТ HUD (заголовок +62, поле +78) =====
         this.hexField = new EditBox(this.font, centerX - 130, panelY + 78, 80, 18,
                 Component.literal("#RRGGBB"));
         this.hexField.setMaxLength(7);
@@ -402,7 +481,8 @@ public class MyCustomScreen extends Screen {
                 .bounds(centerX + 140, panelY + 78, 40, 18).build();
         this.addRenderableWidget(whiteBtn);
 
-        EditBox hudBgColorField = new EditBox(this.font, centerX - 130, panelY + 118, 80, 18,
+        // ===== ЦВЕТ ФОНА HUD (заголовок +110, поле +126) =====
+        EditBox hudBgColorField = new EditBox(this.font, centerX - 130, panelY + 126, 80, 18,
                 Component.literal("#RRGGBB"));
         hudBgColorField.setMaxLength(7);
         hudBgColorField.setValue(String.format("#%06X", hudBackgroundColor & 0xFFFFFF));
@@ -414,23 +494,24 @@ public class MyCustomScreen extends Screen {
                 hudBackgroundColor = 0xFF000000 | Integer.parseInt(hex, 16);
                 ConfigManager.save();
             } catch (NumberFormatException ignored) {}
-        }).bounds(centerX - 45, panelY + 118, 40, 18).build();
+        }).bounds(centerX - 45, panelY + 126, 40, 18).build();
         this.addRenderableWidget(applyHudBgColorBtn);
 
         Button hudBgGreenBtn = Button.builder(Component.literal("Зел"), (b) -> { hudBgColorField.setValue("#00FF00"); hudBackgroundColor = 0xFF00FF00; ConfigManager.save(); })
-                .bounds(centerX + 5, panelY + 118, 40, 18).build();
+                .bounds(centerX + 5, panelY + 126, 40, 18).build();
         this.addRenderableWidget(hudBgGreenBtn);
         Button hudBgRedBtn = Button.builder(Component.literal("Крас"), (b) -> { hudBgColorField.setValue("#FF0000"); hudBackgroundColor = 0xFFFF0000; ConfigManager.save(); })
-                .bounds(centerX + 50, panelY + 118, 40, 18).build();
+                .bounds(centerX + 50, panelY + 126, 40, 18).build();
         this.addRenderableWidget(hudBgRedBtn);
         Button hudBgBlueBtn = Button.builder(Component.literal("Син"), (b) -> { hudBgColorField.setValue("#0000FF"); hudBackgroundColor = 0xFF0000FF; ConfigManager.save(); })
-                .bounds(centerX + 95, panelY + 118, 40, 18).build();
+                .bounds(centerX + 95, panelY + 126, 40, 18).build();
         this.addRenderableWidget(hudBgBlueBtn);
         Button hudBgBlackBtn = Button.builder(Component.literal("Чёрн"), (b) -> { hudBgColorField.setValue("#000000"); hudBackgroundColor = 0xFF000000; ConfigManager.save(); })
-                .bounds(centerX + 140, panelY + 118, 40, 18).build();
+                .bounds(centerX + 140, panelY + 126, 40, 18).build();
         this.addRenderableWidget(hudBgBlackBtn);
 
-        EditBox guiColorField = new EditBox(this.font, centerX - 130, panelY + 158, 80, 18,
+        // ===== ЦВЕТ GUI (заголовок +158, поле +174) =====
+        EditBox guiColorField = new EditBox(this.font, centerX - 130, panelY + 174, 80, 18,
                 Component.literal("#RRGGBB"));
         guiColorField.setMaxLength(7);
         guiColorField.setValue(String.format("#%06X", guiColor & 0xFFFFFF));
@@ -442,20 +523,21 @@ public class MyCustomScreen extends Screen {
                 guiColor = 0xFF000000 | Integer.parseInt(hex, 16);
                 ConfigManager.save();
             } catch (NumberFormatException ignored) {}
-        }).bounds(centerX - 45, panelY + 158, 40, 18).build();
+        }).bounds(centerX - 45, panelY + 174, 40, 18).build();
         this.addRenderableWidget(applyGuiColorBtn);
 
         Button guiGreenBtn = Button.builder(Component.literal("Зел"), (b) -> { guiColorField.setValue("#00FF00"); guiColor = 0xFF00FF00; ConfigManager.save(); })
-                .bounds(centerX + 5, panelY + 158, 40, 18).build();
+                .bounds(centerX + 5, panelY + 174, 40, 18).build();
         this.addRenderableWidget(guiGreenBtn);
         Button guiRedBtn = Button.builder(Component.literal("Крас"), (b) -> { guiColorField.setValue("#FF0000"); guiColor = 0xFFFF0000; ConfigManager.save(); })
-                .bounds(centerX + 50, panelY + 158, 40, 18).build();
+                .bounds(centerX + 50, panelY + 174, 40, 18).build();
         this.addRenderableWidget(guiRedBtn);
         Button guiBlueBtn = Button.builder(Component.literal("Син"), (b) -> { guiColorField.setValue("#0000FF"); guiColor = 0xFF0000FF; ConfigManager.save(); })
-                .bounds(centerX + 95, panelY + 158, 40, 18).build();
+                .bounds(centerX + 95, panelY + 174, 40, 18).build();
         this.addRenderableWidget(guiBlueBtn);
 
-        EditBox guiTextColorField = new EditBox(this.font, centerX - 130, panelY + 198, 80, 18,
+        // ===== ЦВЕТ ТЕКСТА GUI (заголовок +206, поле +222) =====
+        EditBox guiTextColorField = new EditBox(this.font, centerX - 130, panelY + 222, 80, 18,
                 Component.literal("#RRGGBB"));
         guiTextColorField.setMaxLength(7);
         guiTextColorField.setValue(String.format("#%06X", guiTextColor & 0xFFFFFF));
@@ -467,77 +549,82 @@ public class MyCustomScreen extends Screen {
                 guiTextColor = 0xFF000000 | Integer.parseInt(hex, 16);
                 ConfigManager.save();
             } catch (NumberFormatException ignored) {}
-        }).bounds(centerX - 45, panelY + 198, 40, 18).build();
+        }).bounds(centerX - 45, panelY + 222, 40, 18).build();
         this.addRenderableWidget(applyGuiTextColorBtn);
 
         Button textGreenBtn = Button.builder(Component.literal("Зел"), (b) -> { guiTextColorField.setValue("#00FF00"); guiTextColor = 0xFF00FF00; ConfigManager.save(); })
-                .bounds(centerX + 5, panelY + 198, 40, 18).build();
+                .bounds(centerX + 5, panelY + 222, 40, 18).build();
         this.addRenderableWidget(textGreenBtn);
         Button textRedBtn = Button.builder(Component.literal("Крас"), (b) -> { guiTextColorField.setValue("#FF0000"); guiTextColor = 0xFFFF0000; ConfigManager.save(); })
-                .bounds(centerX + 50, panelY + 198, 40, 18).build();
+                .bounds(centerX + 50, panelY + 222, 40, 18).build();
         this.addRenderableWidget(textRedBtn);
         Button textBlueBtn = Button.builder(Component.literal("Син"), (b) -> { guiTextColorField.setValue("#0000FF"); guiTextColor = 0xFF0000FF; ConfigManager.save(); })
-                .bounds(centerX + 95, panelY + 198, 40, 18).build();
+                .bounds(centerX + 95, panelY + 222, 40, 18).build();
         this.addRenderableWidget(textBlueBtn);
 
-        int upY = panelY + 250, midY = panelY + 273, downY = panelY + 296, size = 18;
+        // ===== ПОЛОЖЕНИЕ ЭЛЕМЕНТОВ (заголовок +248, первая строка +268) =====
+        makePosEditor(centerX, panelY, 268,
+                () -> coordsX, () -> coordsY,
+                (x, y) -> { coordsX = x; coordsY = y; },
+                10, 35);
 
-        Button coordsUp = Button.builder(Component.literal("↑"), (b) -> { coordsY -= 5; ConfigManager.save(); }).bounds(centerX - 107, upY, size, size).build();
-        this.addRenderableWidget(coordsUp);
-        Button coordsLeft = Button.builder(Component.literal("←"), (b) -> { coordsX -= 5; ConfigManager.save(); }).bounds(centerX - 130, midY, size, size).build();
-        this.addRenderableWidget(coordsLeft);
-        Button coordsRight = Button.builder(Component.literal("→"), (b) -> { coordsX += 5; ConfigManager.save(); }).bounds(centerX - 84, midY, size, size).build();
-        this.addRenderableWidget(coordsRight);
-        Button coordsDown = Button.builder(Component.literal("↓"), (b) -> { coordsY += 5; ConfigManager.save(); }).bounds(centerX - 107, downY, size, size).build();
-        this.addRenderableWidget(coordsDown);
+        makePosEditor(centerX, panelY, 305,
+                () -> biomeX, () -> biomeY,
+                (x, y) -> { biomeX = x; biomeY = y; },
+                10, 50);
 
-        Button biomeUp = Button.builder(Component.literal("↑"), (b) -> { biomeY -= 5; ConfigManager.save(); }).bounds(centerX - 17, upY, size, size).build();
-        this.addRenderableWidget(biomeUp);
-        Button biomeLeft = Button.builder(Component.literal("←"), (b) -> { biomeX -= 5; ConfigManager.save(); }).bounds(centerX - 40, midY, size, size).build();
-        this.addRenderableWidget(biomeLeft);
-        Button biomeRight = Button.builder(Component.literal("→"), (b) -> { biomeX += 5; ConfigManager.save(); }).bounds(centerX + 6, midY, size, size).build();
-        this.addRenderableWidget(biomeRight);
-        Button biomeDown = Button.builder(Component.literal("↓"), (b) -> { biomeY += 5; ConfigManager.save(); }).bounds(centerX - 17, downY, size, size).build();
-        this.addRenderableWidget(biomeDown);
+        makePosEditor(centerX, panelY, 342,
+                () -> timeX, () -> timeY,
+                (x, y) -> { timeX = x; timeY = y; },
+                10, 65);
 
-        Button timeUp = Button.builder(Component.literal("↑"), (b) -> { timeY -= 5; ConfigManager.save(); }).bounds(centerX + 73, upY, size, size).build();
-        this.addRenderableWidget(timeUp);
-        Button timeLeft = Button.builder(Component.literal("←"), (b) -> { timeX -= 5; ConfigManager.save(); }).bounds(centerX + 50, midY, size, size).build();
-        this.addRenderableWidget(timeLeft);
-        Button timeRight = Button.builder(Component.literal("→"), (b) -> { timeX += 5; ConfigManager.save(); }).bounds(centerX + 96, midY, size, size).build();
-        this.addRenderableWidget(timeRight);
-        Button timeDown = Button.builder(Component.literal("↓"), (b) -> { timeY += 5; ConfigManager.save(); }).bounds(centerX + 73, downY, size, size).build();
-        this.addRenderableWidget(timeDown);
-
-        Button resetBtn = Button.builder(Component.literal("Сбросить позиции"), (b) -> {
-            coordsX = 10; coordsY = 10; biomeX = 10; biomeY = 25; timeX = 10; timeY = 40;
-            fpsX = 10; fpsY = 55; pingX = 10; pingY = 70; tpsX = 10; tpsY = 85;
-            bpsX = 10; bpsY = 100; directionX = 10; directionY = 115;
-            hitCounterX = 10; hitCounterY = 130;
-            potionEffectsX = 10; potionEffectsY = 145;
+        // ===== Кнопка сброса =====
+        Button resetAllBtn = Button.builder(Component.literal("Сбросить всё"), (b) -> {
+            coordsX = 10; coordsY = 35; biomeX = 10; biomeY = 50; timeX = 10; timeY = 65;
+            fpsX = 10; fpsY = 80; pingX = 10; pingY = 95; tpsX = 10; tpsY = 110;
+            bpsX = 10; bpsY = 125; directionX = 10; directionY = 140;
+            hitCounterX = 10; hitCounterY = 155;
+            potionEffectsX = 10; potionEffectsY = 170;
             equipmentHudX = 4; equipmentHudY = -44;
+            modLogoX = 10; modLogoY = 5;
             ConfigManager.save();
-        }).bounds(centerX - 100, panelY + 330, 200, 20).build();
-        this.addRenderableWidget(resetBtn);
+            this.rebuildWidgets();
+        }).bounds(centerX - 100, panelY + 375, 200, 18).build();
+        this.addRenderableWidget(resetAllBtn);
     }
     private void initPage1(int centerX, int panelY) {
+        // ===== ЧЕКБОКСЫ ЭЛЕМЕНТОВ HUD =====
         Checkbox coordsCheckbox = Checkbox.builder(Component.literal("Показывать координаты"), this.font)
-                .pos(centerX - 100, panelY + 70).selected(showCoords)
+                .pos(centerX - 100, panelY + 60).selected(showCoords)
                 .onValueChange((c, v) -> { showCoords = v; ConfigManager.save(); }).build();
         this.addRenderableWidget(coordsCheckbox);
 
         Checkbox biomeCheckbox = Checkbox.builder(Component.literal("Показывать биом"), this.font)
-                .pos(centerX - 100, panelY + 100).selected(showBiome)
+                .pos(centerX - 100, panelY + 82).selected(showBiome)
                 .onValueChange((c, v) -> { showBiome = v; ConfigManager.save(); }).build();
         this.addRenderableWidget(biomeCheckbox);
 
         Checkbox timeCheckbox = Checkbox.builder(Component.literal("Показывать время"), this.font)
-                .pos(centerX - 100, panelY + 130).selected(showTime)
+                .pos(centerX - 100, panelY + 104).selected(showTime)
                 .onValueChange((c, v) -> { showTime = v; ConfigManager.save(); }).build();
         this.addRenderableWidget(timeCheckbox);
 
+        Checkbox modLogoCheckbox = Checkbox.builder(
+                        Component.literal(modLogoRussian ? "Показывать иконку мода" : "Show mod logo"), this.font)
+                .pos(centerX - 100, panelY + 126).selected(showModLogo)
+                .onValueChange((c, v) -> { showModLogo = v; ConfigManager.save(); }).build();
+        this.addRenderableWidget(modLogoCheckbox);
+
+        Button modLogoTranslate = Button.builder(Component.literal("RU"), (b) -> {
+            modLogoRussian = !modLogoRussian;
+            ConfigManager.save();
+            this.rebuildWidgets();
+        }).bounds(centerX + 120, panelY + 126, 25, 20).build();
+        this.addRenderableWidget(modLogoTranslate);
+
+        // ===== СЛАЙДЕРЫ (заголовок "Настройки" на +158) =====
         AbstractSliderButton alphaSlider = new AbstractSliderButton(
-                centerX - 100, panelY + 170, 200, 20,
+                centerX - 100, panelY + 178, 200, 20,
                 Component.literal("Прозрачность текста HUD: " + hudAlpha), hudAlpha / 255.0) {
             @Override protected void updateMessage() { this.setMessage(Component.literal("Прозрачность текста HUD: " + hudAlpha)); }
             @Override protected void applyValue() { hudAlpha = (int)(this.value * 255); this.updateMessage(); ConfigManager.save(); }
@@ -545,7 +632,7 @@ public class MyCustomScreen extends Screen {
         this.addRenderableWidget(alphaSlider);
 
         AbstractSliderButton bgAlphaSlider = new AbstractSliderButton(
-                centerX - 100, panelY + 200, 200, 20,
+                centerX - 100, panelY + 208, 200, 20,
                 Component.literal("Прозрачность фона HUD: " + hudBackgroundAlpha), hudBackgroundAlpha / 255.0) {
             @Override protected void updateMessage() { this.setMessage(Component.literal("Прозрачность фона HUD: " + hudBackgroundAlpha)); }
             @Override protected void applyValue() { hudBackgroundAlpha = (int)(this.value * 255); this.updateMessage(); ConfigManager.save(); }
@@ -553,7 +640,7 @@ public class MyCustomScreen extends Screen {
         this.addRenderableWidget(bgAlphaSlider);
 
         AbstractSliderButton bgHeightSlider = new AbstractSliderButton(
-                centerX - 100, panelY + 230, 200, 20,
+                centerX - 100, panelY + 238, 200, 20,
                 Component.literal("Высота фона HUD: " + hudBackgroundHeight),
                 (hudBackgroundHeight - 6) / 24.0) {
             @Override protected void updateMessage() { this.setMessage(Component.literal("Высота фона HUD: " + hudBackgroundHeight)); }
@@ -581,95 +668,78 @@ public class MyCustomScreen extends Screen {
     }
 
     private void initPage3(int centerX, int panelY) {
-        int size = 20;
-        int leftCol = centerX - 150;
-        int rightCol = centerX + 50;
+        // ===== ПОЛОЖЕНИЕ ДОП. ЭЛЕМЕНТОВ (6 строк через makePosEditor) =====
 
+        // FPS (с галочкой и переводом)
         Checkbox fpsCheckbox = Checkbox.builder(Component.literal(fpsRussian ? "КВС" : "FPS"), this.font)
-                .pos(leftCol, panelY + 60).selected(showFps)
+                .pos(centerX - 100, panelY + 50).selected(showFps)
                 .onValueChange((c, v) -> { showFps = v; ConfigManager.save(); }).build();
         this.addRenderableWidget(fpsCheckbox);
         Button fpsTranslate = Button.builder(Component.literal("RU"), (b) -> { fpsRussian = !fpsRussian; ConfigManager.save(); this.rebuildWidgets(); })
-                .bounds(leftCol + 85, panelY + 60, 25, 20).build();
+                .bounds(centerX + 120, panelY + 50, 25, 20).build();
         this.addRenderableWidget(fpsTranslate);
-        Button fpsUp = Button.builder(Component.literal("↑"), (b) -> { fpsY -= 5; ConfigManager.save(); }).bounds(leftCol + 40, panelY + 85, size, size).build();
-        this.addRenderableWidget(fpsUp);
-        Button fpsLeft = Button.builder(Component.literal("←"), (b) -> { fpsX -= 5; ConfigManager.save(); }).bounds(leftCol, panelY + 110, size, size).build();
-        this.addRenderableWidget(fpsLeft);
-        Button fpsRight = Button.builder(Component.literal("→"), (b) -> { fpsX += 5; ConfigManager.save(); }).bounds(leftCol + 80, panelY + 110, size, size).build();
-        this.addRenderableWidget(fpsRight);
-        Button fpsDown = Button.builder(Component.literal("↓"), (b) -> { fpsY += 5; ConfigManager.save(); }).bounds(leftCol + 40, panelY + 135, size, size).build();
-        this.addRenderableWidget(fpsDown);
 
-        Checkbox tpsCheckbox = Checkbox.builder(Component.literal(tpsRussian ? "ТВС" : "TPS"), this.font)
-                .pos(leftCol, panelY + 170).selected(showTps)
-                .onValueChange((c, v) -> { showTps = v; ConfigManager.save(); }).build();
-        this.addRenderableWidget(tpsCheckbox);
-        Button tpsTranslate = Button.builder(Component.literal("RU"), (b) -> { tpsRussian = !tpsRussian; ConfigManager.save(); this.rebuildWidgets(); })
-                .bounds(leftCol + 85, panelY + 170, 25, 20).build();
-        this.addRenderableWidget(tpsTranslate);
-        Button tpsUp = Button.builder(Component.literal("↑"), (b) -> { tpsY -= 5; ConfigManager.save(); }).bounds(leftCol + 40, panelY + 195, size, size).build();
-        this.addRenderableWidget(tpsUp);
-        Button tpsLeft = Button.builder(Component.literal("←"), (b) -> { tpsX -= 5; ConfigManager.save(); }).bounds(leftCol, panelY + 220, size, size).build();
-        this.addRenderableWidget(tpsLeft);
-        Button tpsRight = Button.builder(Component.literal("→"), (b) -> { tpsX += 5; ConfigManager.save(); }).bounds(leftCol + 80, panelY + 220, size, size).build();
-        this.addRenderableWidget(tpsRight);
-        Button tpsDown = Button.builder(Component.literal("↓"), (b) -> { tpsY += 5; ConfigManager.save(); }).bounds(leftCol + 40, panelY + 245, size, size).build();
-        this.addRenderableWidget(tpsDown);
+        makePosEditor(centerX, panelY, 75,
+                () -> fpsX, () -> fpsY,
+                (x, y) -> { fpsX = x; fpsY = y; },
+                10, 80);
 
-        Checkbox dirCheckbox = Checkbox.builder(Component.literal(directionRussian ? "Направление" : "Direction"), this.font)
-                .pos(leftCol, panelY + 280).selected(showDirection)
-                .onValueChange((c, v) -> { showDirection = v; ConfigManager.save(); }).build();
-        this.addRenderableWidget(dirCheckbox);
-        Button dirTranslate = Button.builder(Component.literal("RU"), (b) -> { directionRussian = !directionRussian; ConfigManager.save(); this.rebuildWidgets(); })
-                .bounds(leftCol + 125, panelY + 280, 25, 20).build();
-        this.addRenderableWidget(dirTranslate);
-
+        // Ping
         Checkbox pingCheckbox = Checkbox.builder(Component.literal(pingRussian ? "Пинг" : "Ping"), this.font)
-                .pos(rightCol, panelY + 60).selected(showPing)
+                .pos(centerX - 100, panelY + 120).selected(showPing)
                 .onValueChange((c, v) -> { showPing = v; ConfigManager.save(); }).build();
         this.addRenderableWidget(pingCheckbox);
         Button pingTranslate = Button.builder(Component.literal("RU"), (b) -> { pingRussian = !pingRussian; ConfigManager.save(); this.rebuildWidgets(); })
-                .bounds(rightCol + 85, panelY + 60, 25, 20).build();
+                .bounds(centerX + 120, panelY + 120, 25, 20).build();
         this.addRenderableWidget(pingTranslate);
-        Button pingUp = Button.builder(Component.literal("↑"), (b) -> { pingY -= 5; ConfigManager.save(); }).bounds(rightCol + 40, panelY + 85, size, size).build();
-        this.addRenderableWidget(pingUp);
-        Button pingLeft = Button.builder(Component.literal("←"), (b) -> { pingX -= 5; ConfigManager.save(); }).bounds(rightCol, panelY + 110, size, size).build();
-        this.addRenderableWidget(pingLeft);
-        Button pingRight = Button.builder(Component.literal("→"), (b) -> { pingX += 5; ConfigManager.save(); }).bounds(rightCol + 80, panelY + 110, size, size).build();
-        this.addRenderableWidget(pingRight);
-        Button pingDown = Button.builder(Component.literal("↓"), (b) -> { pingY += 5; ConfigManager.save(); }).bounds(rightCol + 40, panelY + 135, size, size).build();
-        this.addRenderableWidget(pingDown);
 
+        makePosEditor(centerX, panelY, 145,
+                () -> pingX, () -> pingY,
+                (x, y) -> { pingX = x; pingY = y; },
+                10, 95);
+
+        // TPS
+        Checkbox tpsCheckbox = Checkbox.builder(Component.literal(tpsRussian ? "ТВС" : "TPS"), this.font)
+                .pos(centerX - 100, panelY + 190).selected(showTps)
+                .onValueChange((c, v) -> { showTps = v; ConfigManager.save(); }).build();
+        this.addRenderableWidget(tpsCheckbox);
+        Button tpsTranslate = Button.builder(Component.literal("RU"), (b) -> { tpsRussian = !tpsRussian; ConfigManager.save(); this.rebuildWidgets(); })
+                .bounds(centerX + 120, panelY + 190, 25, 20).build();
+        this.addRenderableWidget(tpsTranslate);
+
+        makePosEditor(centerX, panelY, 215,
+                () -> tpsX, () -> tpsY,
+                (x, y) -> { tpsX = x; tpsY = y; },
+                10, 110);
+
+        // BPS
         Checkbox bpsCheckbox = Checkbox.builder(Component.literal(bpsRussian ? "БВС" : "BPS"), this.font)
-                .pos(rightCol, panelY + 170).selected(showBps)
+                .pos(centerX - 100, panelY + 260).selected(showBps)
                 .onValueChange((c, v) -> { showBps = v; ConfigManager.save(); }).build();
         this.addRenderableWidget(bpsCheckbox);
         Button bpsTranslate = Button.builder(Component.literal("RU"), (b) -> { bpsRussian = !bpsRussian; ConfigManager.save(); this.rebuildWidgets(); })
-                .bounds(rightCol + 85, panelY + 170, 25, 20).build();
+                .bounds(centerX + 120, panelY + 260, 25, 20).build();
         this.addRenderableWidget(bpsTranslate);
-        Button bpsUp = Button.builder(Component.literal("↑"), (b) -> { bpsY -= 5; ConfigManager.save(); }).bounds(rightCol + 40, panelY + 195, size, size).build();
-        this.addRenderableWidget(bpsUp);
-        Button bpsLeft = Button.builder(Component.literal("←"), (b) -> { bpsX -= 5; ConfigManager.save(); }).bounds(rightCol, panelY + 220, size, size).build();
-        this.addRenderableWidget(bpsLeft);
-        Button bpsRight = Button.builder(Component.literal("→"), (b) -> { bpsX += 5; ConfigManager.save(); }).bounds(rightCol + 80, panelY + 220, size, size).build();
-        this.addRenderableWidget(bpsRight);
-        Button bpsDown = Button.builder(Component.literal("↓"), (b) -> { bpsY += 5; ConfigManager.save(); }).bounds(rightCol + 40, panelY + 245, size, size).build();
-        this.addRenderableWidget(bpsDown);
 
-        Checkbox hitCounterCheckbox = Checkbox.builder(Component.literal(hitCounterRussian ? "Удары" : "Hits"), this.font)
-                .pos(rightCol, panelY + 280).selected(showHitCounter)
-                .onValueChange((c, v) -> { showHitCounter = v; ConfigManager.save(); }).build();
-        this.addRenderableWidget(hitCounterCheckbox);
-        Button hitCounterTranslate = Button.builder(Component.literal("RU"), (b) -> { hitCounterRussian = !hitCounterRussian; ConfigManager.save(); this.rebuildWidgets(); })
-                .bounds(rightCol + 85, panelY + 280, 25, 20).build();
-        this.addRenderableWidget(hitCounterTranslate);
+        makePosEditor(centerX, panelY, 285,
+                () -> bpsX, () -> bpsY,
+                (x, y) -> { bpsX = x; bpsY = y; },
+                10, 125);
+
+        // Direction
+        Checkbox dirCheckbox = Checkbox.builder(Component.literal(directionRussian ? "Направление" : "Direction"), this.font)
+                .pos(centerX - 100, panelY + 330).selected(showDirection)
+                .onValueChange((c, v) -> { showDirection = v; ConfigManager.save(); }).build();
+        this.addRenderableWidget(dirCheckbox);
+        Button dirTranslate = Button.builder(Component.literal("RU"), (b) -> { directionRussian = !directionRussian; ConfigManager.save(); this.rebuildWidgets(); })
+                .bounds(centerX + 120, panelY + 330, 25, 20).build();
+        this.addRenderableWidget(dirTranslate);
     }
 
     private void initPage4(int centerX, int panelY) {
         Checkbox tapeMouseCheckbox = Checkbox.builder(
                         Component.literal(tapeMouseRussian ? "Включить TapeMouse" : "Enable TapeMouse"), this.font)
-                .pos(centerX - 100, panelY + 65)
+                .pos(centerX - 100, panelY + 60)
                 .selected(tapeMouseEnabled)
                 .onValueChange((c, v) -> { tapeMouseEnabled = v; ConfigManager.save(); })
                 .build();
@@ -679,7 +749,7 @@ public class MyCustomScreen extends Screen {
             tapeMouseRussian = !tapeMouseRussian;
             ConfigManager.save();
             this.rebuildWidgets();
-        }).bounds(centerX + 120, panelY + 65, 25, 20).build();
+        }).bounds(centerX + 120, panelY + 60, 25, 20).build();
         this.addRenderableWidget(tapeMouseTranslate);
 
         Button targetBtn = Button.builder(
@@ -689,12 +759,12 @@ public class MyCustomScreen extends Screen {
                     ConfigManager.save();
                     this.rebuildWidgets();
                 }
-        ).bounds(centerX - 100, panelY + 95, 200, 20).build();
+        ).bounds(centerX - 100, panelY + 90, 200, 20).build();
         this.addRenderableWidget(targetBtn);
 
         Checkbox requireTargetCheckbox = Checkbox.builder(
                         Component.literal(tapeMouseRussian ? "Бить только при наведении" : "Only when aiming at target"), this.font)
-                .pos(centerX - 100, panelY + 125)
+                .pos(centerX - 100, panelY + 120)
                 .selected(tapeMouseRequireTarget)
                 .onValueChange((c, v) -> { tapeMouseRequireTarget = v; ConfigManager.save(); })
                 .build();
@@ -702,7 +772,7 @@ public class MyCustomScreen extends Screen {
 
         Checkbox requireFullAttackCheckbox = Checkbox.builder(
                         Component.literal(tapeMouseRussian ? "Бить только при заряженной атаке" : "Only on full attack charge"), this.font)
-                .pos(centerX - 100, panelY + 150)
+                .pos(centerX - 100, panelY + 143)
                 .selected(tapeMouseRequireFullAttack)
                 .onValueChange((c, v) -> { tapeMouseRequireFullAttack = v; ConfigManager.save(); })
                 .build();
@@ -714,11 +784,11 @@ public class MyCustomScreen extends Screen {
         Button tapeMouseKeyBindButton = Button.builder(
                         Component.literal(isBindingKey && bindingTarget == 2 ? "Нажмите клавишу..." : "Клавиша TapeMouse: " + tmKeyName),
                         (b) -> { isBindingKey = true; bindingTarget = 2; b.setMessage(Component.literal("Нажмите клавишу...")); })
-                .bounds(centerX - 100, panelY + 180, 200, 20).build();
+                .bounds(centerX - 100, panelY + 175, 200, 20).build();
         this.addRenderableWidget(tapeMouseKeyBindButton);
 
         AbstractSliderButton delaySlider = new AbstractSliderButton(
-                centerX - 100, panelY + 220, 200, 20,
+                centerX - 100, panelY + 215, 200, 20,
                 Component.literal(getDelayText()),
                 (tapeMouseDelay - 0.1f) / 4.9f
         ) {
@@ -845,9 +915,11 @@ public class MyCustomScreen extends Screen {
     }
 
     private void initPage7(int centerX, int panelY) {
+        // ===== Заголовок "▸ Potion Effects HUD" в render на +35, подпись на +60 =====
+        // Чекбокс Show Effects сдвигаем на +80, чтобы не налезал на подпись
         Checkbox potionCheckbox = Checkbox.builder(
                         Component.literal(potionEffectsRussian ? "Показывать эффекты" : "Show Effects"), this.font)
-                .pos(centerX - 100, panelY + 75)
+                .pos(centerX - 100, panelY + 80)
                 .selected(showPotionEffects)
                 .onValueChange((c, v) -> { showPotionEffects = v; ConfigManager.save(); })
                 .build();
@@ -855,31 +927,22 @@ public class MyCustomScreen extends Screen {
 
         Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
             potionEffectsRussian = !potionEffectsRussian; ConfigManager.save(); this.rebuildWidgets();
-        }).bounds(centerX + 120, panelY + 75, 25, 20).build();
+        }).bounds(centerX + 120, panelY + 80, 25, 20).build();
         this.addRenderableWidget(translateBtn);
 
         Checkbox iconsCheckbox = Checkbox.builder(
                         Component.literal(potionEffectsRussian ? "Показывать иконки" : "Show icons"), this.font)
-                .pos(centerX - 100, panelY + 105)
+                .pos(centerX - 100, panelY + 110)
                 .selected(potionEffectsIcons)
                 .onValueChange((c, v) -> { potionEffectsIcons = v; ConfigManager.save(); })
                 .build();
         this.addRenderableWidget(iconsCheckbox);
 
-        int size = 20;
-        int upY   = panelY + 155;
-        int midY  = panelY + 180;
-        int downY = panelY + 205;
-
-        Button upBtn    = Button.builder(Component.literal("↑"), (b) -> { potionEffectsY -= 5; ConfigManager.save(); }).bounds(centerX - 10, upY,   size, size).build();
-        Button leftBtn  = Button.builder(Component.literal("←"), (b) -> { potionEffectsX -= 5; ConfigManager.save(); }).bounds(centerX - 35, midY, size, size).build();
-        Button rightBtn = Button.builder(Component.literal("→"), (b) -> { potionEffectsX += 5; ConfigManager.save(); }).bounds(centerX + 15, midY, size, size).build();
-        Button downBtn  = Button.builder(Component.literal("↓"), (b) -> { potionEffectsY += 5; ConfigManager.save(); }).bounds(centerX - 10, downY, size, size).build();
-
-        this.addRenderableWidget(upBtn);
-        this.addRenderableWidget(leftBtn);
-        this.addRenderableWidget(rightBtn);
-        this.addRenderableWidget(downBtn);
+        // Позиция эффектов — EditBox + OK + ↺ + компактные стрелки
+        makePosEditor(centerX, panelY, 150,
+                () -> potionEffectsX, () -> potionEffectsY,
+                (x, y) -> { potionEffectsX = x; potionEffectsY = y; },
+                10, 170);
     }
 
     private void initPage8(int centerX, int panelY) {
@@ -898,26 +961,16 @@ public class MyCustomScreen extends Screen {
 
         Checkbox durabilityCheckbox = Checkbox.builder(
                         Component.literal(equipmentHudRussian ? "Показывать прочность" : "Show durability"), this.font)
-                .pos(centerX - 100, panelY + 115)
+                .pos(centerX - 100, panelY + 110)
                 .selected(equipmentShowDurability)
                 .onValueChange((c, v) -> { equipmentShowDurability = v; ConfigManager.save(); })
                 .build();
         this.addRenderableWidget(durabilityCheckbox);
 
-        int size = 20;
-        int upY   = panelY + 165;
-        int midY  = panelY + 190;
-        int downY = panelY + 215;
-
-        Button upBtn    = Button.builder(Component.literal("↑"), (b) -> { equipmentHudY -= 5; ConfigManager.save(); }).bounds(centerX - 10, upY,   size, size).build();
-        Button leftBtn  = Button.builder(Component.literal("←"), (b) -> { equipmentHudX -= 5; ConfigManager.save(); }).bounds(centerX - 35, midY, size, size).build();
-        Button rightBtn = Button.builder(Component.literal("→"), (b) -> { equipmentHudX += 5; ConfigManager.save(); }).bounds(centerX + 15, midY, size, size).build();
-        Button downBtn  = Button.builder(Component.literal("↓"), (b) -> { equipmentHudY += 5; ConfigManager.save(); }).bounds(centerX - 10, downY, size, size).build();
-
-        this.addRenderableWidget(upBtn);
-        this.addRenderableWidget(leftBtn);
-        this.addRenderableWidget(rightBtn);
-        this.addRenderableWidget(downBtn);
+        makePosEditor(centerX, panelY, 155,
+                () -> equipmentHudX, () -> equipmentHudY,
+                (x, y) -> { equipmentHudX = x; equipmentHudY = y; },
+                4, -44);
     }
 
     private void initPage9(int centerX, int panelY) {
@@ -1030,7 +1083,6 @@ public class MyCustomScreen extends Screen {
         this.addRenderableWidget(smoothSlider);
     }
 
-    // СТРАНИЦА 12 — AUTOSWAP
     private void initPage11(int centerX, int panelY) {
         Checkbox swapCheckbox = Checkbox.builder(
                         Component.literal(autoSwapRussian ? "Включить Автосвап" : "Enable AutoSwap"), this.font)
@@ -1105,7 +1157,6 @@ public class MyCustomScreen extends Screen {
         this.addRenderableWidget(cooldownSlider);
     }
 
-    // СТРАНИЦА 13 — FASTEXP
     private void initPage12(int centerX, int panelY) {
         Checkbox fastExpCheckbox = Checkbox.builder(
                         Component.literal(fastExpRussian ? "Включить FastExp" : "Enable FastExp"), this.font)
@@ -1121,7 +1172,6 @@ public class MyCustomScreen extends Screen {
         this.addRenderableWidget(translateBtn);
     }
 
-    // СТРАНИЦА 14 — AUTOSPRINT / SHIFTTAP
     private void initPage13(int centerX, int panelY) {
         Checkbox autoSprintCheckbox = Checkbox.builder(
                         Component.literal(autoSprintRussian ? "Включить AutoSprint" : "Enable AutoSprint"), this.font)
@@ -1256,25 +1306,20 @@ public class MyCustomScreen extends Screen {
             graphics.fill(panelX + 20, panelY + 72, panelX + panelWidth - 20, panelY + 73, guiColor);
 
             graphics.drawString(this.font, "§l▸ Цвет фона HUD",
-                    panelX + 20, panelY + 102, guiTextColor);
-            graphics.fill(panelX + 20, panelY + 112, panelX + panelWidth - 20, panelY + 113, guiColor);
+                    panelX + 20, panelY + 110, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 120, panelX + panelWidth - 20, panelY + 121, guiColor);
 
             graphics.drawString(this.font, "§l▸ Цвет GUI",
-                    panelX + 20, panelY + 142, guiTextColor);
-            graphics.fill(panelX + 20, panelY + 152, panelX + panelWidth - 20, panelY + 153, guiColor);
+                    panelX + 20, panelY + 158, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 168, panelX + panelWidth - 20, panelY + 169, guiColor);
 
             graphics.drawString(this.font, "§l▸ Цвет текста GUI",
-                    panelX + 20, panelY + 182, guiTextColor);
-            graphics.fill(panelX + 20, panelY + 192, panelX + panelWidth - 20, panelY + 193, guiColor);
+                    panelX + 20, panelY + 206, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 216, panelX + panelWidth - 20, panelY + 217, guiColor);
 
-            graphics.drawString(this.font, "§l▸ Положение элементов",
-                    panelX + 20, panelY + 232, guiTextColor);
-            graphics.fill(panelX + 20, panelY + 242, panelX + panelWidth - 20, panelY + 243, guiColor);
-
-            int labelY = panelY + 247;
-            graphics.drawCenteredString(this.font, "§lКоординаты", panelX + panelWidth / 2 - 107, labelY, guiTextColor);
-            graphics.drawCenteredString(this.font, "§lБиом", panelX + panelWidth / 2 - 17, labelY, guiTextColor);
-            graphics.drawCenteredString(this.font, "§lВремя", panelX + panelWidth / 2 + 72, labelY, guiTextColor);
+            graphics.drawString(this.font, "§l▸ Положение элементов (X, Y)",
+                    panelX + 20, panelY + 248, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 258, panelX + panelWidth - 20, panelY + 259, guiColor);
 
         } else if (currentPage == 1) {
             graphics.drawString(this.font, "§l▸ Элементы HUD",
@@ -1282,8 +1327,8 @@ public class MyCustomScreen extends Screen {
             graphics.fill(panelX + 20, panelY + 52, panelX + panelWidth - 20, panelY + 53, guiColor);
 
             graphics.drawString(this.font, "§l▸ Настройки",
-                    panelX + 20, panelY + 155, guiTextColor);
-            graphics.fill(panelX + 20, panelY + 167, panelX + panelWidth - 20, panelY + 168, guiColor);
+                    panelX + 20, panelY + 162, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 174, panelX + panelWidth - 20, panelY + 175, guiColor);
 
         } else if (currentPage == 2) {
             graphics.drawString(this.font, "§l▸ Привязка клавиш",

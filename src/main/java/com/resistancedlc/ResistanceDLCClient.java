@@ -247,7 +247,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
             }
         });
 
-        // 4.11. SHIFTTAP — отпускает Shift при ударе на 50 мс, потом возвращает
+        // 4.11. SHIFTTAP
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!MyCustomScreen.shiftTapEnabled) return;
             if (client.player == null) return;
@@ -255,17 +255,14 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
             long now = System.currentTimeMillis();
 
-            // Если сейчас идёт shift-tap — проверяем, пора ли вернуть Shift
             if (MyCustomScreen.shiftTapActive) {
                 if (now - MyCustomScreen.shiftTapReleaseTime >= 50) {
-                    // Возвращаем Shift (без проверки физической клавиши)
                     client.options.keyShift.setDown(true);
                     MyCustomScreen.shiftTapActive = false;
                 }
                 return;
             }
 
-            // Если игрок бьёт (ЛКМ) и зажат Shift — запускаем shift-tap
             if (client.options.keyAttack.isDown() && client.options.keyShift.isDown()) {
                 client.options.keyShift.setDown(false);
                 MyCustomScreen.shiftTapActive = true;
@@ -331,6 +328,31 @@ public class ResistanceDLCClient implements ClientModInitializer {
                             int alpha = MyCustomScreen.hudAlpha;
                             int baseColor = MyCustomScreen.hudColor;
                             int color = (baseColor & 0x00FFFFFF) | (alpha << 24);
+
+                            // === ИКОНКА МОДА ===
+                            if (MyCustomScreen.showModLogo) {
+                                int logoX = MyCustomScreen.modLogoX;
+                                int logoY = MyCustomScreen.modLogoY;
+
+                                Identifier logoId = Identifier.fromNamespaceAndPath(
+                                        "resistancedlc", "textures/gui/icon.png"
+                                );
+
+                                // Принудительно регистрируем текстуру через TextureManager
+                                Minecraft.getInstance().getTextureManager().getTexture(logoId);
+
+                                graphics.blit(
+                                        RenderPipelines.GUI_TEXTURED,
+                                        logoId,
+                                        logoX, logoY,
+                                        0, 0,
+                                        16, 16,
+                                        16, 16
+                                );
+
+                                drawHudString(graphics, client.font, "ResistanceDLC",
+                                        logoX + 20, logoY + 4, color);
+                            }
 
                             if (MyCustomScreen.showCoords) {
                                 drawHudString(graphics, client.font,
@@ -458,7 +480,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
                                             Identifier iconId = Identifier.fromNamespaceAndPath(
                                                     effectId.getNamespace(),
-                                                    "textures/mob_effect/" + effectId.getPath() + ".png"
+                                                    "textures/mob_effect/" + effectId.getPath()
                                             );
                                             graphics.blit(
                                                     RenderPipelines.GUI_TEXTURED,
@@ -568,30 +590,12 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
         boolean offhandAllowedHead = false;
         boolean offhandAllowedTotem = false;
-        boolean searchHead = false;
-        boolean searchTotem = false;
 
         switch (MyCustomScreen.autoSwapMode) {
-            case 0:
-                offhandAllowedHead = true;
-                searchHead = true;
-                break;
-            case 1:
-                offhandAllowedTotem = true;
-                searchTotem = true;
-                break;
-            case 2:
-                offhandAllowedHead = true;
-                offhandAllowedTotem = true;
-                searchHead = true;
-                searchTotem = true;
-                break;
-            case 3:
-                offhandAllowedHead = true;
-                offhandAllowedTotem = true;
-                searchHead = true;
-                searchTotem = true;
-                break;
+            case 0: offhandAllowedHead = true; break;
+            case 1: offhandAllowedTotem = true; break;
+            case 2: offhandAllowedHead = true; offhandAllowedTotem = true; break;
+            case 3: offhandAllowedHead = true; offhandAllowedTotem = true; break;
         }
 
         boolean offhandMatches = (offhandAllowedHead && offhandIsHead)

@@ -32,6 +32,10 @@ public class ConfigManager {
             // === ОСНОВНЫЕ НАСТРОЙКИ ===
             json.addProperty("showHud", MyCustomScreen.showHud);
             json.addProperty("hudColor", MyCustomScreen.hudColor);
+            json.addProperty("showModLogo", MyCustomScreen.showModLogo);
+            json.addProperty("modLogoX", MyCustomScreen.modLogoX);
+            json.addProperty("modLogoY", MyCustomScreen.modLogoY);
+            json.addProperty("modLogoRussian", MyCustomScreen.modLogoRussian);
             json.addProperty("hudBackgroundEnabled", MyCustomScreen.hudBackgroundEnabled);
             json.addProperty("hudBackgroundAlpha", MyCustomScreen.hudBackgroundAlpha);
             json.addProperty("hudBackgroundColor", MyCustomScreen.hudBackgroundColor);
@@ -170,6 +174,10 @@ public class ConfigManager {
             // === ОСНОВНЫЕ НАСТРОЙКИ ===
             if (json.has("showHud")) MyCustomScreen.showHud = json.get("showHud").getAsBoolean();
             if (json.has("hudColor")) MyCustomScreen.hudColor = json.get("hudColor").getAsInt();
+            if (json.has("showModLogo")) MyCustomScreen.showModLogo = json.get("showModLogo").getAsBoolean();
+            if (json.has("modLogoX")) MyCustomScreen.modLogoX = json.get("modLogoX").getAsInt();
+            if (json.has("modLogoY")) MyCustomScreen.modLogoY = json.get("modLogoY").getAsInt();
+            if (json.has("modLogoRussian")) MyCustomScreen.modLogoRussian = json.get("modLogoRussian").getAsBoolean();
             if (json.has("hudBackgroundEnabled")) MyCustomScreen.hudBackgroundEnabled = json.get("hudBackgroundEnabled").getAsBoolean();
             if (json.has("hudBackgroundAlpha")) MyCustomScreen.hudBackgroundAlpha = json.get("hudBackgroundAlpha").getAsInt();
             if (json.has("hudBackgroundColor")) MyCustomScreen.hudBackgroundColor = json.get("hudBackgroundColor").getAsInt();
