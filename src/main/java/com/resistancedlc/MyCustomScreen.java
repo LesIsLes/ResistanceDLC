@@ -202,7 +202,7 @@ public class MyCustomScreen extends Screen {
     private final int panelWidth = 400;
     private final int panelHeight = 420;
 
-    // ⚠️ ФИКС #1: флаг — события Screen'а уже зарегистрированы
+    // ⚠️ ФИКС: флаг — события Screen'а уже зарегистрированы (защита от краша)
     private boolean eventsRegistered = false;
 
     private static final String[][] SEARCH_INDEX = {
@@ -275,15 +275,15 @@ public class MyCustomScreen extends Screen {
             { "crosshair", "Кастомный прицел", "16" },
             { "точка", "Кастомный прицел", "16" }
     };
-    // ⚠️ ФИКС #2: конструктор НЕ регистрирует события
+    // ⚠️ ФИКС: конструктор НЕ регистрирует события — только super()
     public MyCustomScreen() {
         super(Component.literal("Resistance DLC — Настройки"));
     }
 
     /**
      * Регистрируется РОВНО ОДИН РАЗ на экземпляр Screen'а.
-     * Вызывается из init() (см. ⚠️ ФИКС #3), а не из конструктора —
-     * Fabric Screen API требует, чтобы Screen был уже инициализирован.
+     * Вызывается из init(), а НЕ из конструктора — Fabric Screen API
+     * требует, чтобы Screen уже был инициализирован.
      */
     private void registerScreenEvents() {
         ScreenKeyboardEvents.allowKeyPress(this).register((screen, keyEvent) -> {
@@ -360,8 +360,8 @@ public class MyCustomScreen extends Screen {
         this.panelX = (this.width - panelWidth) / 2 + 80;
         this.panelY = (this.height - panelHeight) / 2;
 
-        // ⚠️ ФИКС #3: регистрируем события РОВНО ОДИН РАЗ на экземпляр.
-        // Fabric Screen API запрещает регистрацию из конструктора.
+        // ⚠️ ФИКС: регистрация событий ТОЛЬКО здесь, и ТОЛЬКО один раз.
+        // При rebuildWidgets() init() вызывается снова, но флаг уже true — пропускаем.
         if (!eventsRegistered) {
             eventsRegistered = true;
             registerScreenEvents();
@@ -825,7 +825,6 @@ public class MyCustomScreen extends Screen {
                 .bounds(centerX + 120, panelY + 380, 25, 20).build();
         this.addRenderableWidget(hitTranslate);
     }
-
     private void initPage4(int centerX, int panelY) {
         Checkbox tapeMouseCheckbox = Checkbox.builder(
                         Component.literal(tapeMouseRussian ? "Включить TapeMouse" : "Enable TapeMouse"), this.font)
@@ -1004,6 +1003,7 @@ public class MyCustomScreen extends Screen {
         };
         this.addRenderableWidget(pitchSlider);
     }
+
     private void initPage7(int centerX, int panelY) {
         Checkbox potionCheckbox = Checkbox.builder(
                         Component.literal(potionEffectsRussian ? "Показывать эффекты" : "Show Effects"), this.font)
@@ -1363,7 +1363,7 @@ public class MyCustomScreen extends Screen {
     }
 
     private void initPage15(int centerX, int panelY) {
-        // ===== ВКЛЮЧЕНИЕ (сдвинуто на +75, чтобы не налезать на заголовок §7 на +60) =====
+        // Сдвинуто на +75, чтобы не налезать на заголовок §7 на +60
         Checkbox enableCheckbox = Checkbox.builder(
                         Component.literal(effectWarningsRussian ? "Включить Effect Warnings" : "Enable Effect Warnings"), this.font)
                 .pos(centerX - 100, panelY + 75)
@@ -1458,7 +1458,7 @@ public class MyCustomScreen extends Screen {
     }
 
     private void initPage16(int centerX, int panelY) {
-        // ===== ВКЛЮЧЕНИЕ (сдвинуто на +75, чтобы не налезать на заголовок §7 на +60) =====
+        // Сдвинуто на +75, чтобы не налезать на заголовок §7 на +60
         Checkbox enableCheckbox = Checkbox.builder(
                         Component.literal(crosshairRussian ? "Включить кастомный прицел" : "Enable custom crosshair"), this.font)
                 .pos(centerX - 100, panelY + 75)
@@ -1472,7 +1472,6 @@ public class MyCustomScreen extends Screen {
         }).bounds(centerX + 120, panelY + 75, 25, 20).build();
         this.addRenderableWidget(translateBtn);
 
-        // ===== РАЗМЕР =====
         AbstractSliderButton sizeSlider = new AbstractSliderButton(
                 centerX - 100, panelY + 110, 200, 20,
                 Component.literal(crosshairRussian ? ("Размер: " + crosshairSize + " px") : ("Size: " + crosshairSize + " px")),
@@ -1489,7 +1488,6 @@ public class MyCustomScreen extends Screen {
         };
         this.addRenderableWidget(sizeSlider);
 
-        // ===== ТОЛЩИНА =====
         AbstractSliderButton thicknessSlider = new AbstractSliderButton(
                 centerX - 100, panelY + 140, 200, 20,
                 Component.literal(crosshairRussian ? ("Толщина: " + crosshairThickness + " px") : ("Thickness: " + crosshairThickness + " px")),
@@ -1506,7 +1504,6 @@ public class MyCustomScreen extends Screen {
         };
         this.addRenderableWidget(thicknessSlider);
 
-        // ===== ЗАЗОР =====
         AbstractSliderButton gapSlider = new AbstractSliderButton(
                 centerX - 100, panelY + 170, 200, 20,
                 Component.literal(crosshairRussian ? ("Зазор: " + crosshairGap + " px") : ("Gap: " + crosshairGap + " px")),
@@ -1523,7 +1520,6 @@ public class MyCustomScreen extends Screen {
         };
         this.addRenderableWidget(gapSlider);
 
-        // ===== ПРОЗРАЧНОСТЬ =====
         AbstractSliderButton alphaSlider = new AbstractSliderButton(
                 centerX - 100, panelY + 200, 200, 20,
                 Component.literal(crosshairRussian ? ("Прозрачность: " + crosshairAlpha) : ("Alpha: " + crosshairAlpha)),
@@ -1611,9 +1607,9 @@ public class MyCustomScreen extends Screen {
 
         super.render(graphics, mouseX, mouseY, delta);
 
-        // ⚠️ ФИКС: Пет-иконка сидит на верхнем ПРАВОМ углу поля поиска.
-        // Поле поиска: X = panelX-180 … panelX-20, Y = panelY+50 … panelY+68.
-        // Пет 24×24, petY = panelY+30 → нижние 4 px пета перекрывают верх поля.
+        // Пет-иконка — сидит на верхнем правом углу поля поиска.
+        // Поле: X = panelX-180 … panelX-20, Y = panelY+50 … panelY+68.
+        // Пет 24×24, petY = panelY+30 → нижние 4 px перекрывают верх поля.
         if (showPet) {
             int petSize = 24;
             int petX = panelX - 45;
@@ -1698,8 +1694,8 @@ public class MyCustomScreen extends Screen {
 
         } else if (currentPage == 3) {
             graphics.drawString(this.font, "§l▸ Дополнительные элементы",
-                    panelX + 20, panelY + 35, guiTextColor);
-            graphics.fill(panelX + 20, panelY + 47, panelX + panelWidth - 20, panelY + 48, guiColor);
+                    panelX + 20, panelY + 25, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 37, panelX + panelWidth - 20, panelY + 38, guiColor);
 
         } else if (currentPage == 4) {
             graphics.drawString(this.font, "§l▸ TapeMouse (Автокликер)",
