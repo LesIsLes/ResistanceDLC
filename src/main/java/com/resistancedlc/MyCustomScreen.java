@@ -2,6 +2,7 @@ package com.resistancedlc;
 
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
@@ -115,10 +116,9 @@ public class MyCustomScreen extends Screen {
     public static int comboX = 10, comboY = 185;
     public static int comboColor = 0xFFFFFF00;
     public static int comboResetTime = 3;
-    public static int comboFontSize = 1; // 0=малый, 1=средний, 2=крупный
+    public static int comboFontSize = 1;
     public static boolean comboRussian = false;
 
-    // Состояние (не сохраняется)
     public static int currentCombo = 0;
     public static long lastComboTime = 0;
 
@@ -131,6 +131,15 @@ public class MyCustomScreen extends Screen {
     public static boolean effectWarningsShowName = true;
     public static boolean effectWarningsShowIcon = true;
     public static boolean effectWarningsRussian = false;
+
+    // ===== CROSSHAIR =====
+    public static boolean crosshairEnabled = false;
+    public static int crosshairColor = 0xFFFFFFFF;
+    public static int crosshairSize = 10;
+    public static int crosshairThickness = 2;
+    public static int crosshairGap = 3;
+    public static int crosshairAlpha = 255;
+    public static boolean crosshairRussian = false;
 
     // ===== AUTOSPRINT =====
     public static boolean autoSprintEnabled = false;
@@ -174,12 +183,27 @@ public class MyCustomScreen extends Screen {
     public static double lastPlayerX = 0, lastPlayerY = 0, lastPlayerZ = 0;
     public static double currentBps = 0;
 
+    // ===== ПАГИНАЦИЯ =====
+    private static final int MAX_PAGE = 16;
     private int currentPage = 0;
-    private EditBox hexField;
 
+    private EditBox hexField;
     private EditBox searchField;
+
     private List<String[]> searchResults = new ArrayList<>();
-    private int searchResultX, searchResultY, searchResultWidth, searchResultHeight;
+    private int searchResultX = -1;
+    private int searchResultY = -1;
+    private int searchResultWidth = 0;
+    private int searchResultHeight = 0;
+
+    // ===== ГЕОМЕТРИЯ ПАНЕЛИ =====
+    private int panelX;
+    private int panelY;
+    private final int panelWidth = 400;
+    private final int panelHeight = 420;
+
+    // ⚠️ ФИКС #1: флаг — события Screen'а уже зарегистрированы
+    private boolean eventsRegistered = false;
 
     private static final String[][] SEARCH_INDEX = {
             { "hud", "Показывать HUD", "0" },
@@ -246,20 +270,22 @@ public class MyCustomScreen extends Screen {
             { "combo counter", "Счётчик комбо", "14" },
             { "эффект предупреждение", "Effect Warnings", "15" },
             { "warnings", "Effect Warnings", "15" },
-            { "предупреждение", "Effect Warnings", "15" }
+            { "предупреждение", "Effect Warnings", "15" },
+            { "прицел", "Кастомный прицел", "16" },
+            { "crosshair", "Кастомный прицел", "16" },
+            { "точка", "Кастомный прицел", "16" }
     };
-
+    // ⚠️ ФИКС #2: конструктор НЕ регистрирует события
     public MyCustomScreen() {
         super(Component.literal("Resistance DLC — Настройки"));
     }
-    @Override
-    protected void init() {
-        int centerX = this.width / 2;
-        int panelWidth = 400;
-        int panelHeight = 420;
-        int panelX = (this.width - panelWidth) / 2 + 80;
-        int panelY = (this.height - panelHeight) / 2;
 
+    /**
+     * Регистрируется РОВНО ОДИН РАЗ на экземпляр Screen'а.
+     * Вызывается из init() (см. ⚠️ ФИКС #3), а не из конструктора —
+     * Fabric Screen API требует, чтобы Screen был уже инициализирован.
+     */
+    private void registerScreenEvents() {
         ScreenKeyboardEvents.allowKeyPress(this).register((screen, keyEvent) -> {
             if (this.searchField != null && this.searchField.isFocused()) return true;
             if (this.hexField != null && this.hexField.isFocused()) return true;
@@ -291,7 +317,8 @@ public class MyCustomScreen extends Screen {
             double mouseX = mouseEvent.x();
             double mouseY = mouseEvent.y();
 
-            if (searchResults != null && !searchResults.isEmpty()) {
+            if (searchResults != null && !searchResults.isEmpty()
+                    && searchResultX >= 0 && searchResultY >= 0) {
                 for (int i = 0; i < searchResults.size(); i++) {
                     int y = searchResultY + i * searchResultHeight;
                     if (mouseX >= searchResultX && mouseX <= searchResultX + searchResultWidth
@@ -326,6 +353,22 @@ public class MyCustomScreen extends Screen {
 
             return true;
         });
+    }
+
+    @Override
+    protected void init() {
+        this.panelX = (this.width - panelWidth) / 2 + 80;
+        this.panelY = (this.height - panelHeight) / 2;
+
+        // ⚠️ ФИКС #3: регистрируем события РОВНО ОДИН РАЗ на экземпляр.
+        // Fabric Screen API запрещает регистрацию из конструктора.
+        if (!eventsRegistered) {
+            eventsRegistered = true;
+            registerScreenEvents();
+        }
+
+        int centerX = this.panelX + panelWidth / 2;
+        int panelY = this.panelY;
 
         this.searchField = new EditBox(this.font, panelX - 180, panelY + 50, 160, 18,
                 Component.literal("Поиск..."));
@@ -339,7 +382,7 @@ public class MyCustomScreen extends Screen {
         this.addRenderableWidget(prevPageBtn);
 
         Button nextPageBtn = Button.builder(Component.literal("→"), (btn) -> {
-            if (currentPage < 15) { currentPage++; this.rebuildWidgets(); }
+            if (currentPage < MAX_PAGE) { currentPage++; this.rebuildWidgets(); }
         }).bounds(panelX + panelWidth - 30, panelY + 385, 20, 20).build();
         this.addRenderableWidget(nextPageBtn);
 
@@ -347,22 +390,25 @@ public class MyCustomScreen extends Screen {
                 .bounds(panelX + panelWidth - 90, panelY + 360, 70, 18).build();
         this.addRenderableWidget(closeButton);
 
-        if (currentPage == 0) { initPage0(panelX + panelWidth / 2, panelY); }
-        else if (currentPage == 1) { initPage1(panelX + panelWidth / 2, panelY); }
-        else if (currentPage == 2) { initPage2(panelX + panelWidth / 2, panelY); }
-        else if (currentPage == 3) { initPage3(panelX + panelWidth / 2, panelY); }
-        else if (currentPage == 4) { initPage4(panelX + panelWidth / 2, panelY); }
-        else if (currentPage == 5) { initPage5(panelX + panelWidth / 2, panelY); }
-        else if (currentPage == 6) { initPage6(panelX + panelWidth / 2, panelY); }
-        else if (currentPage == 7) { initPage7(panelX + panelWidth / 2, panelY); }
-        else if (currentPage == 8) { initPage8(panelX + panelWidth / 2, panelY); }
-        else if (currentPage == 9) { initPage9(panelX + panelWidth / 2, panelY); }
-        else if (currentPage == 10) { initPage10(panelX + panelWidth / 2, panelY); }
-        else if (currentPage == 11) { initPage11(panelX + panelWidth / 2, panelY); }
-        else if (currentPage == 12) { initPage12(panelX + panelWidth / 2, panelY); }
-        else if (currentPage == 13) { initPage13(panelX + panelWidth / 2, panelY); }
-        else if (currentPage == 14) { initPage14(panelX + panelWidth / 2, panelY); }
-        else if (currentPage == 15) { initPage15(panelX + panelWidth / 2, panelY); }
+        switch (currentPage) {
+            case 0 -> initPage0(centerX, panelY);
+            case 1 -> initPage1(centerX, panelY);
+            case 2 -> initPage2(centerX, panelY);
+            case 3 -> initPage3(centerX, panelY);
+            case 4 -> initPage4(centerX, panelY);
+            case 5 -> initPage5(centerX, panelY);
+            case 6 -> initPage6(centerX, panelY);
+            case 7 -> initPage7(centerX, panelY);
+            case 8 -> initPage8(centerX, panelY);
+            case 9 -> initPage9(centerX, panelY);
+            case 10 -> initPage10(centerX, panelY);
+            case 11 -> initPage11(centerX, panelY);
+            case 12 -> initPage12(centerX, panelY);
+            case 13 -> initPage13(centerX, panelY);
+            case 14 -> initPage14(centerX, panelY);
+            case 15 -> initPage15(centerX, panelY);
+            case 16 -> initPage16(centerX, panelY);
+        }
     }
 
     private static void addSearchHistory(String query) {
@@ -402,8 +448,7 @@ public class MyCustomScreen extends Screen {
         }
         return history;
     }
-
-    // ===== ХЕЛПЕР: EditBox для ввода "X, Y" + ОК + Сброс + 4 стрелки =====
+    // ===== ХЕЛПЕР: EditBox "X, Y" + ОК + Сброс + 4 стрелки =====
     private void makePosEditor(int centerX, int panelY, int rowY,
                                java.util.function.IntSupplier getX,
                                java.util.function.IntSupplier getY,
@@ -471,7 +516,6 @@ public class MyCustomScreen extends Screen {
     }
 
     private void initPage0(int centerX, int panelY) {
-        // ===== ЧЕКБОКСЫ HUD (Y=45) =====
         Checkbox hudCheckbox = Checkbox.builder(Component.literal("Показывать HUD"), this.font)
                 .pos(centerX - 100, panelY + 45).selected(showHud)
                 .onValueChange((c, v) -> { showHud = v; ConfigManager.save(); }).build();
@@ -482,7 +526,7 @@ public class MyCustomScreen extends Screen {
                 .onValueChange((c, v) -> { hudBackgroundEnabled = v; ConfigManager.save(); }).build();
         this.addRenderableWidget(hudBgCheckbox);
 
-        // ===== ЦВЕТ HUD (заголовок +62, поле +78) =====
+        // ===== ЦВЕТ HUD =====
         this.hexField = new EditBox(this.font, centerX - 130, panelY + 78, 80, 18,
                 Component.literal("#RRGGBB"));
         this.hexField.setMaxLength(7);
@@ -511,7 +555,7 @@ public class MyCustomScreen extends Screen {
                 .bounds(centerX + 140, panelY + 78, 40, 18).build();
         this.addRenderableWidget(whiteBtn);
 
-        // ===== ЦВЕТ ФОНА HUD (заголовок +110, поле +126) =====
+        // ===== ЦВЕТ ФОНА HUD =====
         EditBox hudBgColorField = new EditBox(this.font, centerX - 130, panelY + 126, 80, 18,
                 Component.literal("#RRGGBB"));
         hudBgColorField.setMaxLength(7);
@@ -540,7 +584,7 @@ public class MyCustomScreen extends Screen {
                 .bounds(centerX + 140, panelY + 126, 40, 18).build();
         this.addRenderableWidget(hudBgBlackBtn);
 
-        // ===== ЦВЕТ GUI (заголовок +158, поле +174) =====
+        // ===== ЦВЕТ GUI =====
         EditBox guiColorField = new EditBox(this.font, centerX - 130, panelY + 174, 80, 18,
                 Component.literal("#RRGGBB"));
         guiColorField.setMaxLength(7);
@@ -566,7 +610,7 @@ public class MyCustomScreen extends Screen {
                 .bounds(centerX + 95, panelY + 174, 40, 18).build();
         this.addRenderableWidget(guiBlueBtn);
 
-        // ===== ЦВЕТ ТЕКСТА GUI (заголовок +206, поле +222) =====
+        // ===== ЦВЕТ ТЕКСТА GUI =====
         EditBox guiTextColorField = new EditBox(this.font, centerX - 130, panelY + 222, 80, 18,
                 Component.literal("#RRGGBB"));
         guiTextColorField.setMaxLength(7);
@@ -592,7 +636,7 @@ public class MyCustomScreen extends Screen {
                 .bounds(centerX + 95, panelY + 222, 40, 18).build();
         this.addRenderableWidget(textBlueBtn);
 
-        // ===== ПОЛОЖЕНИЕ ЭЛЕМЕНТОВ (заголовок +248, первая строка +268) =====
+        // ===== ПОЛОЖЕНИЕ ЭЛЕМЕНТОВ =====
         makePosEditor(centerX, panelY, 268,
                 () -> coordsX, () -> coordsY,
                 (x, y) -> { coordsX = x; coordsY = y; },
@@ -608,7 +652,7 @@ public class MyCustomScreen extends Screen {
                 (x, y) -> { timeX = x; timeY = y; },
                 10, 65);
 
-        // ===== Кнопка сброса =====
+        // ===== КНОПКА СБРОСА =====
         Button resetAllBtn = Button.builder(Component.literal("Сбросить всё"), (b) -> {
             coordsX = 10; coordsY = 35; biomeX = 10; biomeY = 50; timeX = 10; timeY = 65;
             fpsX = 10; fpsY = 80; pingX = 10; pingY = 95; tpsX = 10; tpsY = 110;
@@ -618,13 +662,15 @@ public class MyCustomScreen extends Screen {
             equipmentHudX = 4; equipmentHudY = -44;
             modLogoX = 10; modLogoY = 5;
             comboX = 10; comboY = 185;
+            effectWarningsX = 300; effectWarningsY = 200;
+            crosshairSize = 10; crosshairThickness = 2; crosshairGap = 3; crosshairAlpha = 255;
             ConfigManager.save();
             this.rebuildWidgets();
         }).bounds(centerX - 100, panelY + 375, 200, 18).build();
         this.addRenderableWidget(resetAllBtn);
     }
+
     private void initPage1(int centerX, int panelY) {
-        // ===== ЧЕКБОКСЫ ЭЛЕМЕНТОВ HUD =====
         Checkbox coordsCheckbox = Checkbox.builder(Component.literal("Показывать координаты"), this.font)
                 .pos(centerX - 100, panelY + 60).selected(showCoords)
                 .onValueChange((c, v) -> { showCoords = v; ConfigManager.save(); }).build();
@@ -653,7 +699,7 @@ public class MyCustomScreen extends Screen {
         }).bounds(centerX + 120, panelY + 126, 25, 20).build();
         this.addRenderableWidget(modLogoTranslate);
 
-        // ===== СЛАЙДЕРЫ (заголовок "Настройки" на +158) =====
+        // ===== СЛАЙДЕРЫ =====
         AbstractSliderButton alphaSlider = new AbstractSliderButton(
                 centerX - 100, panelY + 178, 200, 20,
                 Component.literal("Прозрачность текста HUD: " + hudAlpha), hudAlpha / 255.0) {
@@ -699,72 +745,85 @@ public class MyCustomScreen extends Screen {
     }
 
     private void initPage3(int centerX, int panelY) {
-        // ===== ПОЛОЖЕНИЕ ДОП. ЭЛЕМЕНТОВ (6 строк через makePosEditor) =====
-
-        // FPS (с галочкой и переводом)
+        // ===== FPS =====
         Checkbox fpsCheckbox = Checkbox.builder(Component.literal(fpsRussian ? "КВС" : "FPS"), this.font)
-                .pos(centerX - 100, panelY + 50).selected(showFps)
+                .pos(centerX - 100, panelY + 45).selected(showFps)
                 .onValueChange((c, v) -> { showFps = v; ConfigManager.save(); }).build();
         this.addRenderableWidget(fpsCheckbox);
         Button fpsTranslate = Button.builder(Component.literal("RU"), (b) -> { fpsRussian = !fpsRussian; ConfigManager.save(); this.rebuildWidgets(); })
-                .bounds(centerX + 120, panelY + 50, 25, 20).build();
+                .bounds(centerX + 120, panelY + 45, 25, 20).build();
         this.addRenderableWidget(fpsTranslate);
 
-        makePosEditor(centerX, panelY, 75,
+        makePosEditor(centerX, panelY, 70,
                 () -> fpsX, () -> fpsY,
                 (x, y) -> { fpsX = x; fpsY = y; },
                 10, 80);
 
-        // Ping
+        // ===== PING =====
         Checkbox pingCheckbox = Checkbox.builder(Component.literal(pingRussian ? "Пинг" : "Ping"), this.font)
-                .pos(centerX - 100, panelY + 120).selected(showPing)
+                .pos(centerX - 100, panelY + 112).selected(showPing)
                 .onValueChange((c, v) -> { showPing = v; ConfigManager.save(); }).build();
         this.addRenderableWidget(pingCheckbox);
         Button pingTranslate = Button.builder(Component.literal("RU"), (b) -> { pingRussian = !pingRussian; ConfigManager.save(); this.rebuildWidgets(); })
-                .bounds(centerX + 120, panelY + 120, 25, 20).build();
+                .bounds(centerX + 120, panelY + 112, 25, 20).build();
         this.addRenderableWidget(pingTranslate);
 
-        makePosEditor(centerX, panelY, 145,
+        makePosEditor(centerX, panelY, 137,
                 () -> pingX, () -> pingY,
                 (x, y) -> { pingX = x; pingY = y; },
                 10, 95);
 
-        // TPS
+        // ===== TPS =====
         Checkbox tpsCheckbox = Checkbox.builder(Component.literal(tpsRussian ? "ТВС" : "TPS"), this.font)
-                .pos(centerX - 100, panelY + 190).selected(showTps)
+                .pos(centerX - 100, panelY + 179).selected(showTps)
                 .onValueChange((c, v) -> { showTps = v; ConfigManager.save(); }).build();
         this.addRenderableWidget(tpsCheckbox);
         Button tpsTranslate = Button.builder(Component.literal("RU"), (b) -> { tpsRussian = !tpsRussian; ConfigManager.save(); this.rebuildWidgets(); })
-                .bounds(centerX + 120, panelY + 190, 25, 20).build();
+                .bounds(centerX + 120, panelY + 179, 25, 20).build();
         this.addRenderableWidget(tpsTranslate);
 
-        makePosEditor(centerX, panelY, 215,
+        makePosEditor(centerX, panelY, 204,
                 () -> tpsX, () -> tpsY,
                 (x, y) -> { tpsX = x; tpsY = y; },
                 10, 110);
 
-        // BPS
+        // ===== BPS =====
         Checkbox bpsCheckbox = Checkbox.builder(Component.literal(bpsRussian ? "БВС" : "BPS"), this.font)
-                .pos(centerX - 100, panelY + 260).selected(showBps)
+                .pos(centerX - 100, panelY + 246).selected(showBps)
                 .onValueChange((c, v) -> { showBps = v; ConfigManager.save(); }).build();
         this.addRenderableWidget(bpsCheckbox);
         Button bpsTranslate = Button.builder(Component.literal("RU"), (b) -> { bpsRussian = !bpsRussian; ConfigManager.save(); this.rebuildWidgets(); })
-                .bounds(centerX + 120, panelY + 260, 25, 20).build();
+                .bounds(centerX + 120, panelY + 246, 25, 20).build();
         this.addRenderableWidget(bpsTranslate);
 
-        makePosEditor(centerX, panelY, 285,
+        makePosEditor(centerX, panelY, 271,
                 () -> bpsX, () -> bpsY,
                 (x, y) -> { bpsX = x; bpsY = y; },
                 10, 125);
 
-        // Direction
+        // ===== DIRECTION =====
         Checkbox dirCheckbox = Checkbox.builder(Component.literal(directionRussian ? "Направление" : "Direction"), this.font)
-                .pos(centerX - 100, panelY + 330).selected(showDirection)
+                .pos(centerX - 100, panelY + 313).selected(showDirection)
                 .onValueChange((c, v) -> { showDirection = v; ConfigManager.save(); }).build();
         this.addRenderableWidget(dirCheckbox);
         Button dirTranslate = Button.builder(Component.literal("RU"), (b) -> { directionRussian = !directionRussian; ConfigManager.save(); this.rebuildWidgets(); })
-                .bounds(centerX + 120, panelY + 330, 25, 20).build();
+                .bounds(centerX + 120, panelY + 313, 25, 20).build();
         this.addRenderableWidget(dirTranslate);
+
+        makePosEditor(centerX, panelY, 338,
+                () -> directionX, () -> directionY,
+                (x, y) -> { directionX = x; directionY = y; },
+                10, 140);
+
+        // ===== HITS (счётчик ударов до смерти) =====
+        Checkbox hitCheckbox = Checkbox.builder(
+                        Component.literal(hitCounterRussian ? "Удары до смерти" : "Hits to kill"), this.font)
+                .pos(centerX - 100, panelY + 380).selected(showHitCounter)
+                .onValueChange((c, v) -> { showHitCounter = v; ConfigManager.save(); }).build();
+        this.addRenderableWidget(hitCheckbox);
+        Button hitTranslate = Button.builder(Component.literal("RU"), (b) -> { hitCounterRussian = !hitCounterRussian; ConfigManager.save(); this.rebuildWidgets(); })
+                .bounds(centerX + 120, panelY + 380, 25, 20).build();
+        this.addRenderableWidget(hitTranslate);
     }
 
     private void initPage4(int centerX, int panelY) {
@@ -834,6 +893,7 @@ public class MyCustomScreen extends Screen {
         };
         this.addRenderableWidget(delaySlider);
     }
+
     private void initPage5(int centerX, int panelY) {
         Checkbox aspectCheckbox = Checkbox.builder(
                         Component.literal(aspectRatioRussian ? "Включить растяг" : "Enable stretch"), this.font)
@@ -944,10 +1004,7 @@ public class MyCustomScreen extends Screen {
         };
         this.addRenderableWidget(pitchSlider);
     }
-
     private void initPage7(int centerX, int panelY) {
-        // ===== Заголовок "▸ Potion Effects HUD" в render на +35, подпись на +60 =====
-        // Чекбокс Show Effects сдвигаем на +80, чтобы не налезал на подпись
         Checkbox potionCheckbox = Checkbox.builder(
                         Component.literal(potionEffectsRussian ? "Показывать эффекты" : "Show Effects"), this.font)
                 .pos(centerX - 100, panelY + 80)
@@ -969,7 +1026,6 @@ public class MyCustomScreen extends Screen {
                 .build();
         this.addRenderableWidget(iconsCheckbox);
 
-        // Позиция эффектов — EditBox + OK + ↺ + компактные стрелки
         makePosEditor(centerX, panelY, 150,
                 () -> potionEffectsX, () -> potionEffectsY,
                 (x, y) -> { potionEffectsX = x; potionEffectsY = y; },
@@ -1058,6 +1114,7 @@ public class MyCustomScreen extends Screen {
         };
         this.addRenderableWidget(shieldSlider);
     }
+
     private void initPage10(int centerX, int panelY) {
         Checkbox zoomCheckbox = Checkbox.builder(
                         Component.literal(zoomRussian ? "Включить Zoom" : "Enable Zoom"), this.font)
@@ -1231,7 +1288,6 @@ public class MyCustomScreen extends Screen {
         this.addRenderableWidget(shiftTranslate);
     }
     private void initPage14(int centerX, int panelY) {
-        // ===== ВКЛЮЧЕНИЕ =====
         Checkbox comboCheckbox = Checkbox.builder(
                         Component.literal(comboRussian ? "Включить Combo Counter" : "Enable Combo Counter"), this.font)
                 .pos(centerX - 100, panelY + 80)
@@ -1245,13 +1301,11 @@ public class MyCustomScreen extends Screen {
         }).bounds(centerX + 120, panelY + 80, 25, 20).build();
         this.addRenderableWidget(translateBtn);
 
-        // ===== ПОЗИЦИЯ =====
         makePosEditor(centerX, panelY, 125,
                 () -> comboX, () -> comboY,
                 (x, y) -> { comboX = x; comboY = y; },
                 10, 185);
 
-        // ===== ВРЕМЯ СБРОСА =====
         AbstractSliderButton resetSlider = new AbstractSliderButton(
                 centerX - 100, panelY + 165, 200, 20,
                 Component.literal(comboRussian ? ("Время сброса: " + comboResetTime + " сек") : ("Reset time: " + comboResetTime + " sec")),
@@ -1268,7 +1322,6 @@ public class MyCustomScreen extends Screen {
         };
         this.addRenderableWidget(resetSlider);
 
-        // ===== РАЗМЕР ШРИФТА =====
         String sizeText = comboRussian ? "Размер: " : "Size: ";
         String[] sizesRu = {"Малый", "Средний", "Крупный"};
         String[] sizesEn = {"Small", "Medium", "Large"};
@@ -1308,11 +1361,12 @@ public class MyCustomScreen extends Screen {
                 .bounds(centerX + 105, panelY + 240, 45, 18).build();
         this.addRenderableWidget(colorGreen);
     }
+
     private void initPage15(int centerX, int panelY) {
-        // ===== ВКЛЮЧЕНИЕ =====
+        // ===== ВКЛЮЧЕНИЕ (сдвинуто на +75, чтобы не налезать на заголовок §7 на +60) =====
         Checkbox enableCheckbox = Checkbox.builder(
                         Component.literal(effectWarningsRussian ? "Включить Effect Warnings" : "Enable Effect Warnings"), this.font)
-                .pos(centerX - 100, panelY + 60)
+                .pos(centerX - 100, panelY + 75)
                 .selected(effectWarningsEnabled)
                 .onValueChange((c, v) -> { effectWarningsEnabled = v; ConfigManager.save(); })
                 .build();
@@ -1320,12 +1374,11 @@ public class MyCustomScreen extends Screen {
 
         Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
             effectWarningsRussian = !effectWarningsRussian; ConfigManager.save(); this.rebuildWidgets();
-        }).bounds(centerX + 120, panelY + 60, 25, 20).build();
+        }).bounds(centerX + 120, panelY + 75, 25, 20).build();
         this.addRenderableWidget(translateBtn);
 
-        // ===== ПОРОГ =====
         AbstractSliderButton thresholdSlider = new AbstractSliderButton(
-                centerX - 100, panelY + 95, 200, 20,
+                centerX - 100, panelY + 110, 200, 20,
                 Component.literal(effectWarningsRussian ? ("Порог: " + effectWarningsThreshold + " сек") : ("Threshold: " + effectWarningsThreshold + " sec")),
                 (effectWarningsThreshold - 3) / 12.0
         ) {
@@ -1340,15 +1393,13 @@ public class MyCustomScreen extends Screen {
         };
         this.addRenderableWidget(thresholdSlider);
 
-        // ===== ПОЗИЦИЯ =====
-        makePosEditor(centerX, panelY, 135,
+        makePosEditor(centerX, panelY, 150,
                 () -> effectWarningsX, () -> effectWarningsY,
                 (x, y) -> { effectWarningsX = x; effectWarningsY = y; },
                 300, 200);
 
-        // ===== ПРОЗРАЧНОСТЬ =====
         AbstractSliderButton alphaSlider = new AbstractSliderButton(
-                centerX - 100, panelY + 175, 200, 20,
+                centerX - 100, panelY + 190, 200, 20,
                 Component.literal(effectWarningsRussian ? ("Прозрачность: " + effectWarningsAlpha) : ("Alpha: " + effectWarningsAlpha)),
                 effectWarningsAlpha / 255.0
         ) {
@@ -1364,7 +1415,7 @@ public class MyCustomScreen extends Screen {
         this.addRenderableWidget(alphaSlider);
 
         // ===== ЦВЕТ =====
-        EditBox colorField = new EditBox(this.font, centerX - 130, panelY + 215, 80, 18,
+        EditBox colorField = new EditBox(this.font, centerX - 130, panelY + 230, 80, 18,
                 Component.literal("#RRGGBB"));
         colorField.setMaxLength(7);
         colorField.setValue(String.format("#%06X", effectWarningsColor & 0xFFFFFF));
@@ -1376,23 +1427,22 @@ public class MyCustomScreen extends Screen {
                 effectWarningsColor = 0xFF000000 | Integer.parseInt(hex, 16);
                 ConfigManager.save();
             } catch (NumberFormatException ignored) {}
-        }).bounds(centerX - 45, panelY + 215, 40, 18).build();
+        }).bounds(centerX - 45, panelY + 230, 40, 18).build();
         this.addRenderableWidget(applyColorBtn);
 
         Button colorRed = Button.builder(Component.literal("Крас"), (b) -> { colorField.setValue("#FF0000"); effectWarningsColor = 0xFFFF0000; ConfigManager.save(); })
-                .bounds(centerX + 5, panelY + 215, 45, 18).build();
+                .bounds(centerX + 5, panelY + 230, 45, 18).build();
         this.addRenderableWidget(colorRed);
         Button colorYellow = Button.builder(Component.literal("Жёлт"), (b) -> { colorField.setValue("#FFFF00"); effectWarningsColor = 0xFFFFFF00; ConfigManager.save(); })
-                .bounds(centerX + 55, panelY + 215, 45, 18).build();
+                .bounds(centerX + 55, panelY + 230, 45, 18).build();
         this.addRenderableWidget(colorYellow);
         Button colorWhite = Button.builder(Component.literal("Бел"), (b) -> { colorField.setValue("#FFFFFF"); effectWarningsColor = 0xFFFFFFFF; ConfigManager.save(); })
-                .bounds(centerX + 105, panelY + 215, 45, 18).build();
+                .bounds(centerX + 105, panelY + 230, 45, 18).build();
         this.addRenderableWidget(colorWhite);
 
-        // ===== ПОКАЗЫВАТЬ ИМЯ / ИКОНКУ =====
         Checkbox showNameCheckbox = Checkbox.builder(
                         Component.literal(effectWarningsRussian ? "Показывать название" : "Show name"), this.font)
-                .pos(centerX - 100, panelY + 250)
+                .pos(centerX - 100, panelY + 265)
                 .selected(effectWarningsShowName)
                 .onValueChange((c, v) -> { effectWarningsShowName = v; ConfigManager.save(); })
                 .build();
@@ -1400,27 +1450,140 @@ public class MyCustomScreen extends Screen {
 
         Checkbox showIconCheckbox = Checkbox.builder(
                         Component.literal(effectWarningsRussian ? "Показывать иконку" : "Show icon"), this.font)
-                .pos(centerX + 20, panelY + 250)
+                .pos(centerX + 20, panelY + 265)
                 .selected(effectWarningsShowIcon)
                 .onValueChange((c, v) -> { effectWarningsShowIcon = v; ConfigManager.save(); })
                 .build();
         this.addRenderableWidget(showIconCheckbox);
     }
+
+    private void initPage16(int centerX, int panelY) {
+        // ===== ВКЛЮЧЕНИЕ (сдвинуто на +75, чтобы не налезать на заголовок §7 на +60) =====
+        Checkbox enableCheckbox = Checkbox.builder(
+                        Component.literal(crosshairRussian ? "Включить кастомный прицел" : "Enable custom crosshair"), this.font)
+                .pos(centerX - 100, panelY + 75)
+                .selected(crosshairEnabled)
+                .onValueChange((c, v) -> { crosshairEnabled = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(enableCheckbox);
+
+        Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
+            crosshairRussian = !crosshairRussian; ConfigManager.save(); this.rebuildWidgets();
+        }).bounds(centerX + 120, panelY + 75, 25, 20).build();
+        this.addRenderableWidget(translateBtn);
+
+        // ===== РАЗМЕР =====
+        AbstractSliderButton sizeSlider = new AbstractSliderButton(
+                centerX - 100, panelY + 110, 200, 20,
+                Component.literal(crosshairRussian ? ("Размер: " + crosshairSize + " px") : ("Size: " + crosshairSize + " px")),
+                (crosshairSize - 4) / 16.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(crosshairRussian ? ("Размер: " + crosshairSize + " px") : ("Size: " + crosshairSize + " px")));
+            }
+            @Override protected void applyValue() {
+                crosshairSize = 4 + (int)(this.value * 16);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        };
+        this.addRenderableWidget(sizeSlider);
+
+        // ===== ТОЛЩИНА =====
+        AbstractSliderButton thicknessSlider = new AbstractSliderButton(
+                centerX - 100, panelY + 140, 200, 20,
+                Component.literal(crosshairRussian ? ("Толщина: " + crosshairThickness + " px") : ("Thickness: " + crosshairThickness + " px")),
+                (crosshairThickness - 1) / 4.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(crosshairRussian ? ("Толщина: " + crosshairThickness + " px") : ("Thickness: " + crosshairThickness + " px")));
+            }
+            @Override protected void applyValue() {
+                crosshairThickness = 1 + (int)(this.value * 4);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        };
+        this.addRenderableWidget(thicknessSlider);
+
+        // ===== ЗАЗОР =====
+        AbstractSliderButton gapSlider = new AbstractSliderButton(
+                centerX - 100, panelY + 170, 200, 20,
+                Component.literal(crosshairRussian ? ("Зазор: " + crosshairGap + " px") : ("Gap: " + crosshairGap + " px")),
+                crosshairGap / 10.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(crosshairRussian ? ("Зазор: " + crosshairGap + " px") : ("Gap: " + crosshairGap + " px")));
+            }
+            @Override protected void applyValue() {
+                crosshairGap = (int)(this.value * 10);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        };
+        this.addRenderableWidget(gapSlider);
+
+        // ===== ПРОЗРАЧНОСТЬ =====
+        AbstractSliderButton alphaSlider = new AbstractSliderButton(
+                centerX - 100, panelY + 200, 200, 20,
+                Component.literal(crosshairRussian ? ("Прозрачность: " + crosshairAlpha) : ("Alpha: " + crosshairAlpha)),
+                crosshairAlpha / 255.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(crosshairRussian ? ("Прозрачность: " + crosshairAlpha) : ("Alpha: " + crosshairAlpha)));
+            }
+            @Override protected void applyValue() {
+                crosshairAlpha = (int)(this.value * 255);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        };
+        this.addRenderableWidget(alphaSlider);
+
+        // ===== ЦВЕТ =====
+        EditBox colorField = new EditBox(this.font, centerX - 130, panelY + 240, 80, 18,
+                Component.literal("#RRGGBB"));
+        colorField.setMaxLength(7);
+        colorField.setValue(String.format("#%06X", crosshairColor & 0xFFFFFF));
+        this.addRenderableWidget(colorField);
+
+        Button applyColorBtn = Button.builder(Component.literal("ОК"), (btn) -> {
+            String hex = colorField.getValue().replace("#", "").trim();
+            try {
+                crosshairColor = 0xFF000000 | Integer.parseInt(hex, 16);
+                ConfigManager.save();
+            } catch (NumberFormatException ignored) {}
+        }).bounds(centerX - 45, panelY + 240, 40, 18).build();
+        this.addRenderableWidget(applyColorBtn);
+
+        Button colorGreen = Button.builder(Component.literal("Зел"), (b) -> { colorField.setValue("#00FF00"); crosshairColor = 0xFF00FF00; ConfigManager.save(); })
+                .bounds(centerX + 5, panelY + 240, 40, 18).build();
+        this.addRenderableWidget(colorGreen);
+        Button colorRed = Button.builder(Component.literal("Крас"), (b) -> { colorField.setValue("#FF0000"); crosshairColor = 0xFFFF0000; ConfigManager.save(); })
+                .bounds(centerX + 50, panelY + 240, 40, 18).build();
+        this.addRenderableWidget(colorRed);
+        Button colorBlue = Button.builder(Component.literal("Син"), (b) -> { colorField.setValue("#0000FF"); crosshairColor = 0xFF0000FF; ConfigManager.save(); })
+                .bounds(centerX + 95, panelY + 240, 40, 18).build();
+        this.addRenderableWidget(colorBlue);
+        Button colorWhite = Button.builder(Component.literal("Бел"), (b) -> { colorField.setValue("#FFFFFF"); crosshairColor = 0xFFFFFFFF; ConfigManager.save(); })
+                .bounds(centerX + 140, panelY + 240, 40, 18).build();
+        this.addRenderableWidget(colorWhite);
+    }
+
     private String getTargetName(int target, boolean russian) {
         if (russian) {
-            switch (target) {
-                case 0: return "Цель: Все";
-                case 1: return "Цель: Только мобы";
-                case 2: return "Цель: Только игроки";
-            }
+            return switch (target) {
+                case 1 -> "Цель: Только мобы";
+                case 2 -> "Цель: Только игроки";
+                default -> "Цель: Все";
+            };
         } else {
-            switch (target) {
-                case 0: return "Target: All";
-                case 1: return "Target: Mobs only";
-                case 2: return "Target: Players only";
-            }
+            return switch (target) {
+                case 1 -> "Target: Mobs only";
+                case 2 -> "Target: Players only";
+                default -> "Target: All";
+            };
         }
-        return "Target: All";
     }
 
     private String getDelayText() {
@@ -1433,11 +1596,7 @@ public class MyCustomScreen extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-        int panelWidth = 400;
-        int panelHeight = 420;
-        int panelX = (this.width - panelWidth) / 2 + 80;
-        int panelY = (this.height - panelHeight) / 2;
-
+        // Панель
         graphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xC0000000);
 
         graphics.fill(panelX, panelY, panelX + panelWidth, panelY + 2, guiColor);
@@ -1448,18 +1607,21 @@ public class MyCustomScreen extends Screen {
         graphics.drawString(this.font, "§lПоиск:",
                 panelX - 180, panelY + 35, guiTextColor);
 
-        drawSearchResults(graphics, panelX, panelY, panelWidth);
+        drawSearchResults(graphics);
 
         super.render(graphics, mouseX, mouseY, delta);
 
+        // ⚠️ ФИКС: Пет-иконка сидит на верхнем ПРАВОМ углу поля поиска.
+        // Поле поиска: X = panelX-180 … panelX-20, Y = panelY+50 … panelY+68.
+        // Пет 24×24, petY = panelY+30 → нижние 4 px пета перекрывают верх поля.
         if (showPet) {
-            int petSize = 48;
-            int petX = panelX - 55;
-            int petY = panelY + 8;
+            int petSize = 24;
+            int petX = panelX - 45;
+            int petY = panelY + 30;
             Identifier petId = Identifier.fromNamespaceAndPath(
                     "resistancedlc", "textures/gui/pet/pet_idle.png"
             );
-
+            Minecraft.getInstance().getTextureManager().getTexture(petId);
             graphics.blit(
                     RenderPipelines.GUI_TEXTURED,
                     petId,
@@ -1471,43 +1633,29 @@ public class MyCustomScreen extends Screen {
         }
 
         String title;
-        if (currentPage == 0) {
-            title = "Resistance DLC — Настройки";
-        } else if (currentPage == 1) {
-            title = "Resistance DLC — Основные настройки HUD";
-        } else if (currentPage == 2) {
-            title = "Resistance DLC — Привязка";
-        } else if (currentPage == 3) {
-            title = "Resistance DLC — Доп. настройки";
-        } else if (currentPage == 4) {
-            title = "Resistance DLC — TapeMouse";
-        } else if (currentPage == 5) {
-            title = "Resistance DLC — FOV";
-        } else if (currentPage == 6) {
-            title = "Resistance DLC — Custom Hit Sounds";
-        } else if (currentPage == 7) {
-            title = "Resistance DLC — Potion Effects";
-        } else if (currentPage == 8) {
-            title = "Resistance DLC — Equipment";
-        } else if (currentPage == 9) {
-            title = "Resistance DLC — Low Fire / Low Shield";
-        } else if (currentPage == 10) {
-            title = "Resistance DLC — Zoom";
-        } else if (currentPage == 11) {
-            title = "Resistance DLC — Автосвап";
-        } else if (currentPage == 12) {
-            title = "Resistance DLC — FastExp";
-        } else if (currentPage == 13) {
-            title = "Resistance DLC — AutoSprint / ShiftTap";
-        } else if (currentPage == 14) {
-            title = "Resistance DLC — Combo Counter";
-        } else {
-            title = "Resistance DLC — Effect Warnings";
+        switch (currentPage) {
+            case 0 -> title = "Resistance DLC — Настройки";
+            case 1 -> title = "Resistance DLC — Основные настройки HUD";
+            case 2 -> title = "Resistance DLC — Привязка";
+            case 3 -> title = "Resistance DLC — Доп. настройки";
+            case 4 -> title = "Resistance DLC — TapeMouse";
+            case 5 -> title = "Resistance DLC — FOV";
+            case 6 -> title = "Resistance DLC — Custom Hit Sounds";
+            case 7 -> title = "Resistance DLC — Potion Effects";
+            case 8 -> title = "Resistance DLC — Equipment";
+            case 9 -> title = "Resistance DLC — Low Fire / Low Shield";
+            case 10 -> title = "Resistance DLC — Zoom";
+            case 11 -> title = "Resistance DLC — Автосвап";
+            case 12 -> title = "Resistance DLC — FastExp";
+            case 13 -> title = "Resistance DLC — AutoSprint / ShiftTap";
+            case 14 -> title = "Resistance DLC — Combo Counter";
+            case 15 -> title = "Resistance DLC — Effect Warnings";
+            default -> title = "Resistance DLC — Crosshair";
         }
         graphics.drawCenteredString(this.font, "§l" + title,
                 panelX + panelWidth / 2, panelY + 15, guiColor);
 
-        graphics.drawCenteredString(this.font, "§7Страница " + (currentPage + 1) + " / 16",
+        graphics.drawCenteredString(this.font, "§7Страница " + (currentPage + 1) + " / " + (MAX_PAGE + 1),
                 panelX + panelWidth / 2, panelY + 405, 0xFFFFFFFF);
 
         if (currentPage == 0) {
@@ -1629,13 +1777,12 @@ public class MyCustomScreen extends Screen {
             graphics.drawString(this.font, "§7Свап offhand ↔ инвентарь (с открытием)",
                     panelX + 20, panelY + 60, 0xFFAAAAAA);
 
-            String modeText = "";
-            switch (autoSwapMode) {
-                case 0: modeText = "Текущий режим: Шар ↔ Шар"; break;
-                case 1: modeText = "Текущий режим: Тотем ↔ Тотем"; break;
-                case 2: modeText = "Текущий режим: Шар ↔ Тотем"; break;
-                case 3: modeText = "Текущий режим: Тотем ↔ Шар"; break;
-            }
+            String modeText = switch (autoSwapMode) {
+                case 0 -> "Текущий режим: Шар ↔ Шар";
+                case 1 -> "Текущий режим: Тотем ↔ Тотем";
+                case 2 -> "Текущий режим: Шар ↔ Тотем";
+                default -> "Текущий режим: Тотем ↔ Шар";
+            };
             graphics.drawCenteredString(this.font, "§e" + modeText,
                     panelX + panelWidth / 2, panelY + 172, 0xFFFFFF00);
 
@@ -1671,13 +1818,17 @@ public class MyCustomScreen extends Screen {
             graphics.drawString(this.font, "§7Предупреждение о скором конце эффекта",
                     panelX + 20, panelY + 60, 0xFFAAAAAA);
 
-            graphics.drawString(this.font, "§l▸ Настройки",
-                    panelX + 20, panelY + 85, guiTextColor);
-            graphics.fill(panelX + 20, panelY + 97, panelX + panelWidth - 20, panelY + 98, guiColor);
+        } else if (currentPage == 16) {
+            graphics.drawString(this.font, "§l▸ Crosshair",
+                    panelX + 20, panelY + 35, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 47, panelX + panelWidth - 20, panelY + 48, guiColor);
+
+            graphics.drawString(this.font, "§7Настройки прицела",
+                    panelX + 20, panelY + 60, 0xFFAAAAAA);
         }
     }
 
-    private void drawSearchResults(GuiGraphics graphics, int panelX, int panelY, int panelWidth) {
+    private void drawSearchResults(GuiGraphics graphics) {
         if (this.searchField == null) return;
         String query = this.searchField.getValue().toLowerCase().trim();
 
@@ -1688,6 +1839,8 @@ public class MyCustomScreen extends Screen {
 
         if (query.isEmpty()) {
             this.searchResults = new ArrayList<>();
+            this.searchResultX = -1;
+            this.searchResultY = -1;
 
             List<String> history = getSearchHistory();
             if (history.isEmpty() || !this.searchField.isFocused()) return;
@@ -1723,6 +1876,8 @@ public class MyCustomScreen extends Screen {
 
         if (matches.isEmpty()) {
             this.searchResults = new ArrayList<>();
+            this.searchResultX = -1;
+            this.searchResultY = -1;
             return;
         }
 

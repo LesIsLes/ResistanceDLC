@@ -17,7 +17,36 @@ public class ConfigManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path CONFIG_DIR = FabricLoader.getInstance().getConfigDir().resolve("resistancedlc");
 
+    // ===== ДЕБАУНС =====
+    private static final long SAVE_DEBOUNCE_MS = 500;
+    private static boolean savePending = false;
+    private static long lastSaveRequest = 0;
+
+    /**
+     * Планирует сохранение. Реальная запись произойдёт через 500 мс
+     * после последнего вызова (см. tick() — вызывается из ClientTickEvents).
+     */
     public static void save() {
+        savePending = true;
+        lastSaveRequest = System.currentTimeMillis();
+    }
+
+    /**
+     * Принудительное немедленное сохранение (без дебаунса).
+     * Используется при закрытии экрана / выключении игры.
+     */
+    public static void saveNow() {
+        savePending = false;
+        saveAs("default");
+    }
+
+    /**
+     * Вызывается каждый клиентский тик. Если запрос на сохранение висит > 500 мс — пишем.
+     */
+    public static void tick() {
+        if (!savePending) return;
+        if (System.currentTimeMillis() - lastSaveRequest < SAVE_DEBOUNCE_MS) return;
+        savePending = false;
         saveAs("default");
     }
 
@@ -102,13 +131,6 @@ public class ConfigManager {
             json.addProperty("fastExpRussian", MyCustomScreen.fastExpRussian);
             json.addProperty("autoSprintRussian", MyCustomScreen.autoSprintRussian);
             json.addProperty("shiftTapRussian", MyCustomScreen.shiftTapRussian);
-            json.addProperty("comboEnabled", MyCustomScreen.comboEnabled);
-            json.addProperty("comboX", MyCustomScreen.comboX);
-            json.addProperty("comboY", MyCustomScreen.comboY);
-            json.addProperty("comboColor", MyCustomScreen.comboColor);
-            json.addProperty("comboResetTime", MyCustomScreen.comboResetTime);
-            json.addProperty("comboFontSize", MyCustomScreen.comboFontSize);
-            json.addProperty("comboRussian", MyCustomScreen.comboRussian);
 
             // === TAPEMOUSE ===
             json.addProperty("tapeMouseEnabled", MyCustomScreen.tapeMouseEnabled);
@@ -152,8 +174,39 @@ public class ConfigManager {
             json.addProperty("lowFireOffset", MyCustomScreen.lowFireOffset);
             json.addProperty("lowShieldOffset", MyCustomScreen.lowShieldOffset);
 
+            // === COMBO COUNTER ===
+            json.addProperty("comboEnabled", MyCustomScreen.comboEnabled);
+            json.addProperty("comboX", MyCustomScreen.comboX);
+            json.addProperty("comboY", MyCustomScreen.comboY);
+            json.addProperty("comboColor", MyCustomScreen.comboColor);
+            json.addProperty("comboResetTime", MyCustomScreen.comboResetTime);
+            json.addProperty("comboFontSize", MyCustomScreen.comboFontSize);
+            json.addProperty("comboRussian", MyCustomScreen.comboRussian);
+
+            // === EFFECT WARNINGS ===
+            json.addProperty("effectWarningsEnabled", MyCustomScreen.effectWarningsEnabled);
+            json.addProperty("effectWarningsX", MyCustomScreen.effectWarningsX);
+            json.addProperty("effectWarningsY", MyCustomScreen.effectWarningsY);
+            json.addProperty("effectWarningsColor", MyCustomScreen.effectWarningsColor);
+            json.addProperty("effectWarningsThreshold", MyCustomScreen.effectWarningsThreshold);
+            json.addProperty("effectWarningsAlpha", MyCustomScreen.effectWarningsAlpha);
+            json.addProperty("effectWarningsShowName", MyCustomScreen.effectWarningsShowName);
+            json.addProperty("effectWarningsShowIcon", MyCustomScreen.effectWarningsShowIcon);
+            json.addProperty("effectWarningsRussian", MyCustomScreen.effectWarningsRussian);
+
+            // === CROSSHAIR ===
+            json.addProperty("crosshairEnabled", MyCustomScreen.crosshairEnabled);
+            json.addProperty("crosshairColor", MyCustomScreen.crosshairColor);
+            json.addProperty("crosshairSize", MyCustomScreen.crosshairSize);
+            json.addProperty("crosshairThickness", MyCustomScreen.crosshairThickness);
+            json.addProperty("crosshairGap", MyCustomScreen.crosshairGap);
+            json.addProperty("crosshairAlpha", MyCustomScreen.crosshairAlpha);
+            json.addProperty("crosshairRussian", MyCustomScreen.crosshairRussian);
+
             Path file = CONFIG_DIR.resolve(name + ".json");
-            Files.writeString(file, GSON.toJson(json));
+            synchronized (GSON) {
+                Files.writeString(file, GSON.toJson(json));
+            }
             return true;
 
         } catch (IOException e) {
@@ -161,6 +214,7 @@ public class ConfigManager {
             return false;
         }
     }
+
     public static void load() {
         loadFrom("default");
     }
@@ -179,127 +233,149 @@ public class ConfigManager {
             if (json == null) return false;
 
             // === ОСНОВНЫЕ НАСТРОЙКИ ===
-            if (json.has("showHud")) MyCustomScreen.showHud = json.get("showHud").getAsBoolean();
-            if (json.has("hudColor")) MyCustomScreen.hudColor = json.get("hudColor").getAsInt();
-            if (json.has("showModLogo")) MyCustomScreen.showModLogo = json.get("showModLogo").getAsBoolean();
-            if (json.has("modLogoX")) MyCustomScreen.modLogoX = json.get("modLogoX").getAsInt();
-            if (json.has("modLogoY")) MyCustomScreen.modLogoY = json.get("modLogoY").getAsInt();
-            if (json.has("modLogoRussian")) MyCustomScreen.modLogoRussian = json.get("modLogoRussian").getAsBoolean();
-            if (json.has("hudBackgroundEnabled")) MyCustomScreen.hudBackgroundEnabled = json.get("hudBackgroundEnabled").getAsBoolean();
-            if (json.has("hudBackgroundAlpha")) MyCustomScreen.hudBackgroundAlpha = json.get("hudBackgroundAlpha").getAsInt();
-            if (json.has("hudBackgroundColor")) MyCustomScreen.hudBackgroundColor = json.get("hudBackgroundColor").getAsInt();
-            if (json.has("hudBackgroundHeight")) MyCustomScreen.hudBackgroundHeight = json.get("hudBackgroundHeight").getAsInt();
-            if (json.has("guiColor")) MyCustomScreen.guiColor = json.get("guiColor").getAsInt();
-            if (json.has("guiTextColor")) MyCustomScreen.guiTextColor = json.get("guiTextColor").getAsInt();
-            if (json.has("hudAlpha")) MyCustomScreen.hudAlpha = json.get("hudAlpha").getAsInt();
-            if (json.has("showPet")) MyCustomScreen.showPet = json.get("showPet").getAsBoolean();
-            if (json.has("searchHistoryRaw")) MyCustomScreen.searchHistoryRaw = json.get("searchHistoryRaw").getAsString();
+            MyCustomScreen.showHud = getBool(json, "showHud", MyCustomScreen.showHud);
+            MyCustomScreen.hudColor = getInt(json, "hudColor", MyCustomScreen.hudColor);
+            MyCustomScreen.showModLogo = getBool(json, "showModLogo", MyCustomScreen.showModLogo);
+            MyCustomScreen.modLogoX = getInt(json, "modLogoX", MyCustomScreen.modLogoX);
+            MyCustomScreen.modLogoY = getInt(json, "modLogoY", MyCustomScreen.modLogoY);
+            MyCustomScreen.modLogoRussian = getBool(json, "modLogoRussian", MyCustomScreen.modLogoRussian);
+            MyCustomScreen.hudBackgroundEnabled = getBool(json, "hudBackgroundEnabled", MyCustomScreen.hudBackgroundEnabled);
+            MyCustomScreen.hudBackgroundAlpha = getInt(json, "hudBackgroundAlpha", MyCustomScreen.hudBackgroundAlpha);
+            MyCustomScreen.hudBackgroundColor = getInt(json, "hudBackgroundColor", MyCustomScreen.hudBackgroundColor);
+            MyCustomScreen.hudBackgroundHeight = getInt(json, "hudBackgroundHeight", MyCustomScreen.hudBackgroundHeight);
+            MyCustomScreen.guiColor = getInt(json, "guiColor", MyCustomScreen.guiColor);
+            MyCustomScreen.guiTextColor = getInt(json, "guiTextColor", MyCustomScreen.guiTextColor);
+            MyCustomScreen.hudAlpha = getInt(json, "hudAlpha", MyCustomScreen.hudAlpha);
+            MyCustomScreen.showPet = getBool(json, "showPet", MyCustomScreen.showPet);
+            MyCustomScreen.searchHistoryRaw = getString(json, "searchHistoryRaw", MyCustomScreen.searchHistoryRaw);
 
             // === ВИДИМОСТЬ ЭЛЕМЕНТОВ ===
-            if (json.has("showCoords")) MyCustomScreen.showCoords = json.get("showCoords").getAsBoolean();
-            if (json.has("showBiome")) MyCustomScreen.showBiome = json.get("showBiome").getAsBoolean();
-            if (json.has("showTime")) MyCustomScreen.showTime = json.get("showTime").getAsBoolean();
-            if (json.has("showFps")) MyCustomScreen.showFps = json.get("showFps").getAsBoolean();
-            if (json.has("showPing")) MyCustomScreen.showPing = json.get("showPing").getAsBoolean();
-            if (json.has("showTps")) MyCustomScreen.showTps = json.get("showTps").getAsBoolean();
-            if (json.has("showBps")) MyCustomScreen.showBps = json.get("showBps").getAsBoolean();
-            if (json.has("showDirection")) MyCustomScreen.showDirection = json.get("showDirection").getAsBoolean();
-            if (json.has("showHitCounter")) MyCustomScreen.showHitCounter = json.get("showHitCounter").getAsBoolean();
-            if (json.has("showPotionEffects")) MyCustomScreen.showPotionEffects = json.get("showPotionEffects").getAsBoolean();
-            if (json.has("potionEffectsIcons")) MyCustomScreen.potionEffectsIcons = json.get("potionEffectsIcons").getAsBoolean();
-            if (json.has("showEquipmentHud")) MyCustomScreen.showEquipmentHud = json.get("showEquipmentHud").getAsBoolean();
-            if (json.has("equipmentShowDurability")) MyCustomScreen.equipmentShowDurability = json.get("equipmentShowDurability").getAsBoolean();
-            if (json.has("lowFireEnabled")) MyCustomScreen.lowFireEnabled = json.get("lowFireEnabled").getAsBoolean();
-            if (json.has("lowShieldEnabled")) MyCustomScreen.lowShieldEnabled = json.get("lowShieldEnabled").getAsBoolean();
+            MyCustomScreen.showCoords = getBool(json, "showCoords", MyCustomScreen.showCoords);
+            MyCustomScreen.showBiome = getBool(json, "showBiome", MyCustomScreen.showBiome);
+            MyCustomScreen.showTime = getBool(json, "showTime", MyCustomScreen.showTime);
+            MyCustomScreen.showFps = getBool(json, "showFps", MyCustomScreen.showFps);
+            MyCustomScreen.showPing = getBool(json, "showPing", MyCustomScreen.showPing);
+            MyCustomScreen.showTps = getBool(json, "showTps", MyCustomScreen.showTps);
+            MyCustomScreen.showBps = getBool(json, "showBps", MyCustomScreen.showBps);
+            MyCustomScreen.showDirection = getBool(json, "showDirection", MyCustomScreen.showDirection);
+            MyCustomScreen.showHitCounter = getBool(json, "showHitCounter", MyCustomScreen.showHitCounter);
+            MyCustomScreen.showPotionEffects = getBool(json, "showPotionEffects", MyCustomScreen.showPotionEffects);
+            MyCustomScreen.potionEffectsIcons = getBool(json, "potionEffectsIcons", MyCustomScreen.potionEffectsIcons);
+            MyCustomScreen.showEquipmentHud = getBool(json, "showEquipmentHud", MyCustomScreen.showEquipmentHud);
+            MyCustomScreen.equipmentShowDurability = getBool(json, "equipmentShowDurability", MyCustomScreen.equipmentShowDurability);
+            MyCustomScreen.lowFireEnabled = getBool(json, "lowFireEnabled", MyCustomScreen.lowFireEnabled);
+            MyCustomScreen.lowShieldEnabled = getBool(json, "lowShieldEnabled", MyCustomScreen.lowShieldEnabled);
 
             // === ПОЗИЦИИ ===
-            if (json.has("coordsX")) MyCustomScreen.coordsX = json.get("coordsX").getAsInt();
-            if (json.has("coordsY")) MyCustomScreen.coordsY = json.get("coordsY").getAsInt();
-            if (json.has("biomeX")) MyCustomScreen.biomeX = json.get("biomeX").getAsInt();
-            if (json.has("biomeY")) MyCustomScreen.biomeY = json.get("biomeY").getAsInt();
-            if (json.has("timeX")) MyCustomScreen.timeX = json.get("timeX").getAsInt();
-            if (json.has("timeY")) MyCustomScreen.timeY = json.get("timeY").getAsInt();
-            if (json.has("fpsX")) MyCustomScreen.fpsX = json.get("fpsX").getAsInt();
-            if (json.has("fpsY")) MyCustomScreen.fpsY = json.get("fpsY").getAsInt();
-            if (json.has("pingX")) MyCustomScreen.pingX = json.get("pingX").getAsInt();
-            if (json.has("pingY")) MyCustomScreen.pingY = json.get("pingY").getAsInt();
-            if (json.has("tpsX")) MyCustomScreen.tpsX = json.get("tpsX").getAsInt();
-            if (json.has("tpsY")) MyCustomScreen.tpsY = json.get("tpsY").getAsInt();
-            if (json.has("bpsX")) MyCustomScreen.bpsX = json.get("bpsX").getAsInt();
-            if (json.has("bpsY")) MyCustomScreen.bpsY = json.get("bpsY").getAsInt();
-            if (json.has("directionX")) MyCustomScreen.directionX = json.get("directionX").getAsInt();
-            if (json.has("directionY")) MyCustomScreen.directionY = json.get("directionY").getAsInt();
-            if (json.has("hitCounterX")) MyCustomScreen.hitCounterX = json.get("hitCounterX").getAsInt();
-            if (json.has("hitCounterY")) MyCustomScreen.hitCounterY = json.get("hitCounterY").getAsInt();
-            if (json.has("potionEffectsX")) MyCustomScreen.potionEffectsX = json.get("potionEffectsX").getAsInt();
-            if (json.has("potionEffectsY")) MyCustomScreen.potionEffectsY = json.get("potionEffectsY").getAsInt();
-            if (json.has("equipmentHudX")) MyCustomScreen.equipmentHudX = json.get("equipmentHudX").getAsInt();
-            if (json.has("equipmentHudY")) MyCustomScreen.equipmentHudY = json.get("equipmentHudY").getAsInt();
+            MyCustomScreen.coordsX = getInt(json, "coordsX", MyCustomScreen.coordsX);
+            MyCustomScreen.coordsY = getInt(json, "coordsY", MyCustomScreen.coordsY);
+            MyCustomScreen.biomeX = getInt(json, "biomeX", MyCustomScreen.biomeX);
+            MyCustomScreen.biomeY = getInt(json, "biomeY", MyCustomScreen.biomeY);
+            MyCustomScreen.timeX = getInt(json, "timeX", MyCustomScreen.timeX);
+            MyCustomScreen.timeY = getInt(json, "timeY", MyCustomScreen.timeY);
+            MyCustomScreen.fpsX = getInt(json, "fpsX", MyCustomScreen.fpsX);
+            MyCustomScreen.fpsY = getInt(json, "fpsY", MyCustomScreen.fpsY);
+            MyCustomScreen.pingX = getInt(json, "pingX", MyCustomScreen.pingX);
+            MyCustomScreen.pingY = getInt(json, "pingY", MyCustomScreen.pingY);
+            MyCustomScreen.tpsX = getInt(json, "tpsX", MyCustomScreen.tpsX);
+            MyCustomScreen.tpsY = getInt(json, "tpsY", MyCustomScreen.tpsY);
+            MyCustomScreen.bpsX = getInt(json, "bpsX", MyCustomScreen.bpsX);
+            MyCustomScreen.bpsY = getInt(json, "bpsY", MyCustomScreen.bpsY);
+            MyCustomScreen.directionX = getInt(json, "directionX", MyCustomScreen.directionX);
+            MyCustomScreen.directionY = getInt(json, "directionY", MyCustomScreen.directionY);
+            MyCustomScreen.hitCounterX = getInt(json, "hitCounterX", MyCustomScreen.hitCounterX);
+            MyCustomScreen.hitCounterY = getInt(json, "hitCounterY", MyCustomScreen.hitCounterY);
+            MyCustomScreen.potionEffectsX = getInt(json, "potionEffectsX", MyCustomScreen.potionEffectsX);
+            MyCustomScreen.potionEffectsY = getInt(json, "potionEffectsY", MyCustomScreen.potionEffectsY);
+            MyCustomScreen.equipmentHudX = getInt(json, "equipmentHudX", MyCustomScreen.equipmentHudX);
+            MyCustomScreen.equipmentHudY = getInt(json, "equipmentHudY", MyCustomScreen.equipmentHudY);
 
             // === ПЕРЕВОД ===
-            if (json.has("fpsRussian")) MyCustomScreen.fpsRussian = json.get("fpsRussian").getAsBoolean();
-            if (json.has("pingRussian")) MyCustomScreen.pingRussian = json.get("pingRussian").getAsBoolean();
-            if (json.has("tpsRussian")) MyCustomScreen.tpsRussian = json.get("tpsRussian").getAsBoolean();
-            if (json.has("bpsRussian")) MyCustomScreen.bpsRussian = json.get("bpsRussian").getAsBoolean();
-            if (json.has("directionRussian")) MyCustomScreen.directionRussian = json.get("directionRussian").getAsBoolean();
-            if (json.has("hitCounterRussian")) MyCustomScreen.hitCounterRussian = json.get("hitCounterRussian").getAsBoolean();
-            if (json.has("potionEffectsRussian")) MyCustomScreen.potionEffectsRussian = json.get("potionEffectsRussian").getAsBoolean();
-            if (json.has("equipmentHudRussian")) MyCustomScreen.equipmentHudRussian = json.get("equipmentHudRussian").getAsBoolean();
-            if (json.has("lowFireShieldRussian")) MyCustomScreen.lowFireShieldRussian = json.get("lowFireShieldRussian").getAsBoolean();
-            if (json.has("zoomRussian")) MyCustomScreen.zoomRussian = json.get("zoomRussian").getAsBoolean();
-            if (json.has("autoSwapRussian")) MyCustomScreen.autoSwapRussian = json.get("autoSwapRussian").getAsBoolean();
-            if (json.has("fastExpRussian")) MyCustomScreen.fastExpRussian = json.get("fastExpRussian").getAsBoolean();
-            if (json.has("autoSprintRussian")) MyCustomScreen.autoSprintRussian = json.get("autoSprintRussian").getAsBoolean();
-            if (json.has("shiftTapRussian")) MyCustomScreen.shiftTapRussian = json.get("shiftTapRussian").getAsBoolean();
-            if (json.has("comboEnabled")) MyCustomScreen.comboEnabled = json.get("comboEnabled").getAsBoolean();
-            if (json.has("comboX")) MyCustomScreen.comboX = json.get("comboX").getAsInt();
-            if (json.has("comboY")) MyCustomScreen.comboY = json.get("comboY").getAsInt();
-            if (json.has("comboColor")) MyCustomScreen.comboColor = json.get("comboColor").getAsInt();
-            if (json.has("comboResetTime")) MyCustomScreen.comboResetTime = json.get("comboResetTime").getAsInt();
-            if (json.has("comboFontSize")) MyCustomScreen.comboFontSize = json.get("comboFontSize").getAsInt();
-            if (json.has("comboRussian")) MyCustomScreen.comboRussian = json.get("comboRussian").getAsBoolean();
+            MyCustomScreen.fpsRussian = getBool(json, "fpsRussian", MyCustomScreen.fpsRussian);
+            MyCustomScreen.pingRussian = getBool(json, "pingRussian", MyCustomScreen.pingRussian);
+            MyCustomScreen.tpsRussian = getBool(json, "tpsRussian", MyCustomScreen.tpsRussian);
+            MyCustomScreen.bpsRussian = getBool(json, "bpsRussian", MyCustomScreen.bpsRussian);
+            MyCustomScreen.directionRussian = getBool(json, "directionRussian", MyCustomScreen.directionRussian);
+            MyCustomScreen.hitCounterRussian = getBool(json, "hitCounterRussian", MyCustomScreen.hitCounterRussian);
+            MyCustomScreen.potionEffectsRussian = getBool(json, "potionEffectsRussian", MyCustomScreen.potionEffectsRussian);
+            MyCustomScreen.equipmentHudRussian = getBool(json, "equipmentHudRussian", MyCustomScreen.equipmentHudRussian);
+            MyCustomScreen.lowFireShieldRussian = getBool(json, "lowFireShieldRussian", MyCustomScreen.lowFireShieldRussian);
+            MyCustomScreen.zoomRussian = getBool(json, "zoomRussian", MyCustomScreen.zoomRussian);
+            MyCustomScreen.autoSwapRussian = getBool(json, "autoSwapRussian", MyCustomScreen.autoSwapRussian);
+            MyCustomScreen.fastExpRussian = getBool(json, "fastExpRussian", MyCustomScreen.fastExpRussian);
+            MyCustomScreen.autoSprintRussian = getBool(json, "autoSprintRussian", MyCustomScreen.autoSprintRussian);
+            MyCustomScreen.shiftTapRussian = getBool(json, "shiftTapRussian", MyCustomScreen.shiftTapRussian);
 
             // === TAPEMOUSE ===
-            if (json.has("tapeMouseEnabled")) MyCustomScreen.tapeMouseEnabled = json.get("tapeMouseEnabled").getAsBoolean();
-            if (json.has("tapeMouseTarget")) MyCustomScreen.tapeMouseTarget = json.get("tapeMouseTarget").getAsInt();
-            if (json.has("tapeMouseDelay")) MyCustomScreen.tapeMouseDelay = json.get("tapeMouseDelay").getAsFloat();
-            if (json.has("tapeMouseRussian")) MyCustomScreen.tapeMouseRussian = json.get("tapeMouseRussian").getAsBoolean();
-            if (json.has("tapeMouseRequireTarget")) MyCustomScreen.tapeMouseRequireTarget = json.get("tapeMouseRequireTarget").getAsBoolean();
-            if (json.has("tapeMouseRequireFullAttack")) MyCustomScreen.tapeMouseRequireFullAttack = json.get("tapeMouseRequireFullAttack").getAsBoolean();
+            MyCustomScreen.tapeMouseEnabled = getBool(json, "tapeMouseEnabled", MyCustomScreen.tapeMouseEnabled);
+            MyCustomScreen.tapeMouseTarget = getInt(json, "tapeMouseTarget", MyCustomScreen.tapeMouseTarget);
+            MyCustomScreen.tapeMouseDelay = getFloat(json, "tapeMouseDelay", MyCustomScreen.tapeMouseDelay);
+            MyCustomScreen.tapeMouseRussian = getBool(json, "tapeMouseRussian", MyCustomScreen.tapeMouseRussian);
+            MyCustomScreen.tapeMouseRequireTarget = getBool(json, "tapeMouseRequireTarget", MyCustomScreen.tapeMouseRequireTarget);
+            MyCustomScreen.tapeMouseRequireFullAttack = getBool(json, "tapeMouseRequireFullAttack", MyCustomScreen.tapeMouseRequireFullAttack);
 
             // === AUTOSWAP ===
-            if (json.has("autoSwapEnabled")) MyCustomScreen.autoSwapEnabled = json.get("autoSwapEnabled").getAsBoolean();
-            if (json.has("autoSwapMode")) MyCustomScreen.autoSwapMode = json.get("autoSwapMode").getAsInt();
-            if (json.has("autoSwapOpenDelay")) MyCustomScreen.autoSwapOpenDelay = json.get("autoSwapOpenDelay").getAsInt();
-            if (json.has("autoSwapCooldown")) MyCustomScreen.autoSwapCooldown = json.get("autoSwapCooldown").getAsInt();
+            MyCustomScreen.autoSwapEnabled = getBool(json, "autoSwapEnabled", MyCustomScreen.autoSwapEnabled);
+            MyCustomScreen.autoSwapMode = getInt(json, "autoSwapMode", MyCustomScreen.autoSwapMode);
+            MyCustomScreen.autoSwapOpenDelay = getInt(json, "autoSwapOpenDelay", MyCustomScreen.autoSwapOpenDelay);
+            MyCustomScreen.autoSwapCooldown = getInt(json, "autoSwapCooldown", MyCustomScreen.autoSwapCooldown);
 
             // === FASTEXP ===
-            if (json.has("fastExpEnabled")) MyCustomScreen.fastExpEnabled = json.get("fastExpEnabled").getAsBoolean();
+            MyCustomScreen.fastExpEnabled = getBool(json, "fastExpEnabled", MyCustomScreen.fastExpEnabled);
 
             // === AUTOSPRINT / SHIFTTAP ===
-            if (json.has("autoSprintEnabled")) MyCustomScreen.autoSprintEnabled = json.get("autoSprintEnabled").getAsBoolean();
-            if (json.has("shiftTapEnabled")) MyCustomScreen.shiftTapEnabled = json.get("shiftTapEnabled").getAsBoolean();
+            MyCustomScreen.autoSprintEnabled = getBool(json, "autoSprintEnabled", MyCustomScreen.autoSprintEnabled);
+            MyCustomScreen.shiftTapEnabled = getBool(json, "shiftTapEnabled", MyCustomScreen.shiftTapEnabled);
 
             // === ZOOM ===
-            if (json.has("zoomEnabled")) MyCustomScreen.zoomEnabled = json.get("zoomEnabled").getAsBoolean();
-            if (json.has("zoomFactor")) MyCustomScreen.zoomFactor = json.get("zoomFactor").getAsFloat();
-            if (json.has("zoomSmoothness")) MyCustomScreen.zoomSmoothness = json.get("zoomSmoothness").getAsFloat();
+            MyCustomScreen.zoomEnabled = getBool(json, "zoomEnabled", MyCustomScreen.zoomEnabled);
+            MyCustomScreen.zoomFactor = getFloat(json, "zoomFactor", MyCustomScreen.zoomFactor);
+            MyCustomScreen.zoomSmoothness = getFloat(json, "zoomSmoothness", MyCustomScreen.zoomSmoothness);
 
             // === ASPECT RATIO ===
-            if (json.has("aspectRatioEnabled")) MyCustomScreen.aspectRatioEnabled = json.get("aspectRatioEnabled").getAsBoolean();
-            if (json.has("aspectRatio")) MyCustomScreen.aspectRatio = json.get("aspectRatio").getAsFloat();
-            if (json.has("aspectRatioRussian")) MyCustomScreen.aspectRatioRussian = json.get("aspectRatioRussian").getAsBoolean();
+            MyCustomScreen.aspectRatioEnabled = getBool(json, "aspectRatioEnabled", MyCustomScreen.aspectRatioEnabled);
+            MyCustomScreen.aspectRatio = getFloat(json, "aspectRatio", MyCustomScreen.aspectRatio);
+            MyCustomScreen.aspectRatioRussian = getBool(json, "aspectRatioRussian", MyCustomScreen.aspectRatioRussian);
 
             // === CUSTOM HIT SOUNDS ===
-            if (json.has("customHitSoundsEnabled")) MyCustomScreen.customHitSoundsEnabled = json.get("customHitSoundsEnabled").getAsBoolean();
-            if (json.has("customHitSoundVolume")) MyCustomScreen.customHitSoundVolume = json.get("customHitSoundVolume").getAsFloat();
-            if (json.has("customHitSoundPitch")) MyCustomScreen.customHitSoundPitch = json.get("customHitSoundPitch").getAsFloat();
-            if (json.has("customHitSoundsRussian")) MyCustomScreen.customHitSoundsRussian = json.get("customHitSoundsRussian").getAsBoolean();
-            if (json.has("customHitSoundPreset")) MyCustomScreen.customHitSoundPreset = json.get("customHitSoundPreset").getAsInt();
+            MyCustomScreen.customHitSoundsEnabled = getBool(json, "customHitSoundsEnabled", MyCustomScreen.customHitSoundsEnabled);
+            MyCustomScreen.customHitSoundVolume = getFloat(json, "customHitSoundVolume", MyCustomScreen.customHitSoundVolume);
+            MyCustomScreen.customHitSoundPitch = getFloat(json, "customHitSoundPitch", MyCustomScreen.customHitSoundPitch);
+            MyCustomScreen.customHitSoundsRussian = getBool(json, "customHitSoundsRussian", MyCustomScreen.customHitSoundsRussian);
+            MyCustomScreen.customHitSoundPreset = getInt(json, "customHitSoundPreset", MyCustomScreen.customHitSoundPreset);
 
             // === LOW FIRE / LOW SHIELD ===
-            if (json.has("lowFireOffset")) MyCustomScreen.lowFireOffset = json.get("lowFireOffset").getAsFloat();
-            if (json.has("lowShieldOffset")) MyCustomScreen.lowShieldOffset = json.get("lowShieldOffset").getAsFloat();
+            MyCustomScreen.lowFireOffset = getFloat(json, "lowFireOffset", MyCustomScreen.lowFireOffset);
+            MyCustomScreen.lowShieldOffset = getFloat(json, "lowShieldOffset", MyCustomScreen.lowShieldOffset);
+
+            // === COMBO COUNTER ===
+            MyCustomScreen.comboEnabled = getBool(json, "comboEnabled", MyCustomScreen.comboEnabled);
+            MyCustomScreen.comboX = getInt(json, "comboX", MyCustomScreen.comboX);
+            MyCustomScreen.comboY = getInt(json, "comboY", MyCustomScreen.comboY);
+            MyCustomScreen.comboColor = getInt(json, "comboColor", MyCustomScreen.comboColor);
+            MyCustomScreen.comboResetTime = getInt(json, "comboResetTime", MyCustomScreen.comboResetTime);
+            MyCustomScreen.comboFontSize = getInt(json, "comboFontSize", MyCustomScreen.comboFontSize);
+            MyCustomScreen.comboRussian = getBool(json, "comboRussian", MyCustomScreen.comboRussian);
+
+            // === EFFECT WARNINGS ===
+            MyCustomScreen.effectWarningsEnabled = getBool(json, "effectWarningsEnabled", MyCustomScreen.effectWarningsEnabled);
+            MyCustomScreen.effectWarningsX = getInt(json, "effectWarningsX", MyCustomScreen.effectWarningsX);
+            MyCustomScreen.effectWarningsY = getInt(json, "effectWarningsY", MyCustomScreen.effectWarningsY);
+            MyCustomScreen.effectWarningsColor = getInt(json, "effectWarningsColor", MyCustomScreen.effectWarningsColor);
+            MyCustomScreen.effectWarningsThreshold = getInt(json, "effectWarningsThreshold", MyCustomScreen.effectWarningsThreshold);
+            MyCustomScreen.effectWarningsAlpha = getInt(json, "effectWarningsAlpha", MyCustomScreen.effectWarningsAlpha);
+            MyCustomScreen.effectWarningsShowName = getBool(json, "effectWarningsShowName", MyCustomScreen.effectWarningsShowName);
+            MyCustomScreen.effectWarningsShowIcon = getBool(json, "effectWarningsShowIcon", MyCustomScreen.effectWarningsShowIcon);
+            MyCustomScreen.effectWarningsRussian = getBool(json, "effectWarningsRussian", MyCustomScreen.effectWarningsRussian);
+
+            // === CROSSHAIR ===
+            MyCustomScreen.crosshairEnabled = getBool(json, "crosshairEnabled", MyCustomScreen.crosshairEnabled);
+            MyCustomScreen.crosshairColor = getInt(json, "crosshairColor", MyCustomScreen.crosshairColor);
+            MyCustomScreen.crosshairSize = getInt(json, "crosshairSize", MyCustomScreen.crosshairSize);
+            MyCustomScreen.crosshairThickness = getInt(json, "crosshairThickness", MyCustomScreen.crosshairThickness);
+            MyCustomScreen.crosshairGap = getInt(json, "crosshairGap", MyCustomScreen.crosshairGap);
+            MyCustomScreen.crosshairAlpha = getInt(json, "crosshairAlpha", MyCustomScreen.crosshairAlpha);
+            MyCustomScreen.crosshairRussian = getBool(json, "crosshairRussian", MyCustomScreen.crosshairRussian);
 
             return true;
 
@@ -307,6 +383,23 @@ public class ConfigManager {
             ResistanceDLC.LOGGER.error("Не удалось загрузить конфиг " + name + ": " + e.getMessage());
             return false;
         }
+    }
+
+    // ===== ХЕЛПЕРЫ ДЛЯ БЕЗОПАСНОГО ЧТЕНИЯ =====
+    private static boolean getBool(JsonObject json, String key, boolean def) {
+        return json.has(key) ? json.get(key).getAsBoolean() : def;
+    }
+
+    private static int getInt(JsonObject json, String key, int def) {
+        return json.has(key) ? json.get(key).getAsInt() : def;
+    }
+
+    private static float getFloat(JsonObject json, String key, float def) {
+        return json.has(key) ? json.get(key).getAsFloat() : def;
+    }
+
+    private static String getString(JsonObject json, String key, String def) {
+        return json.has(key) ? json.get(key).getAsString() : def;
     }
 
     public static boolean remove(String name) {
@@ -343,13 +436,15 @@ public class ConfigManager {
             String os = System.getProperty("os.name").toLowerCase();
             String path = CONFIG_DIR.toAbsolutePath().toString();
 
+            ProcessBuilder pb;
             if (os.contains("win")) {
-                Runtime.getRuntime().exec("explorer.exe \"" + path + "\"");
+                pb = new ProcessBuilder("explorer.exe", path);
             } else if (os.contains("mac")) {
-                Runtime.getRuntime().exec("open \"" + path + "\"");
+                pb = new ProcessBuilder("open", path);
             } else {
-                Runtime.getRuntime().exec("xdg-open \"" + path + "\"");
+                pb = new ProcessBuilder("xdg-open", path);
             }
+            pb.start();
         } catch (IOException e) {
             ResistanceDLC.LOGGER.error("Не удалось открыть папку конфигов: " + e.getMessage());
         }

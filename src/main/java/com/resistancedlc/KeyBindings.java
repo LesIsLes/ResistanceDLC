@@ -16,7 +16,12 @@ public class KeyBindings {
     public static KeyMapping autoSwapKey;
     private static KeyMapping.Category category;
 
+    private static boolean registered = false;
+
     public static void register() {
+        if (registered) return;
+        registered = true;
+
         if (category == null) {
             category = KeyMapping.Category.register(
                     Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "main")

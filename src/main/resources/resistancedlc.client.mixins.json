@@ -7,7 +7,8 @@
     "AspectRatioMixin",
     "HitSoundMixin",
     "LowFireMixin",
-    "LowShieldMixin"
+    "LowShieldMixin",
+    "GuiCrosshairMixin"
   ],
   "injectors": {
     "defaultRequire": 1
