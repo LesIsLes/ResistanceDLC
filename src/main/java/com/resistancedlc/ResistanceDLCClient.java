@@ -37,6 +37,7 @@ import java.util.List;
 public class ResistanceDLCClient implements ClientModInitializer {
 
     private static long lastAttackTime = 0;
+    private static boolean tapeMouseWeHeldRMB = false;
 
     @Override
     public void onInitializeClient() {
@@ -130,7 +131,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
             );
         });
 
-        // ===== BPS (блоки в секунду) =====
+        // ===== BPS =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player != null) {
                 double dx = client.player.getX() - MyCustomScreen.lastPlayerX;
@@ -201,7 +202,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 MyCustomScreen.autoSwapStage = 1;
                 MyCustomScreen.autoSwapNextActionTime = now + 50;
             } else if (MyCustomScreen.autoSwapStage == 1) {
-                // Перепроверяем слот перед свапом — игрок мог выбросить предмет
                 int slot = MyCustomScreen.autoSwapSlotToSwap;
                 if (slot >= 0 && slot < client.player.getInventory().getContainerSize()) {
                     swapOffhandWithSlot(client.player, slot);
@@ -216,6 +216,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 MyCustomScreen.autoSwapLastTime = now;
             }
         });
+
         // ===== FASTEXP =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!MyCustomScreen.fastExpEnabled) return;
@@ -260,7 +261,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
             }
         });
 
-        // ===== COMBO: сброс по таймауту =====
+        // ===== COMBO: сброс =====
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (!MyCustomScreen.comboEnabled) return;
             if (MyCustomScreen.currentCombo <= 0) return;
@@ -270,11 +271,30 @@ public class ResistanceDLCClient implements ClientModInitializer {
             }
         });
 
-        // ===== TAPEMOUSE: логика ударов =====
+        // ===== TAPEMOUSE: логика (ЛКМ / ПКМ) =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!MyCustomScreen.tapeMouseEnabled) return;
             if (client.player == null || client.level == null) return;
             if (client.screen != null) return;
+
+            // ===== ВЕТКА ПКМ =====
+            if (MyCustomScreen.tapeMouseButton == 1) {
+                // Зажать ПКМ — обрабатывается во втором тике, тут просто выходим
+                if (MyCustomScreen.tapeMouseHoldRight) {
+                    return;
+                }
+
+                // Обычный режим ПКМ: useItem с задержкой
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - lastAttackTime < (long)(MyCustomScreen.tapeMouseDelay * 1000)) return;
+                if (client.gameMode != null) {
+                    client.gameMode.useItem(client.player, InteractionHand.MAIN_HAND);
+                    lastAttackTime = currentTime;
+                }
+                return;
+            }
+
+            // ===== ВЕТКА ЛКМ (атака) =====
             if (MyCustomScreen.tapeMouseRequireFullAttack) {
                 if (client.player.getAttackStrengthScale(0.0f) < 1.0f) return;
             }
@@ -303,6 +323,26 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 if (target != null) client.gameMode.attack(client.player, target);
                 client.player.swing(InteractionHand.MAIN_HAND);
                 lastAttackTime = currentTime;
+            }
+        });
+
+        // ===== TAPEMOUSE: отпускание ПКМ при выключении (флаг) =====
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            boolean shouldHold = MyCustomScreen.tapeMouseEnabled
+                    && MyCustomScreen.tapeMouseButton == 1
+                    && MyCustomScreen.tapeMouseHoldRight
+                    && client.screen == null;
+
+            if (shouldHold) {
+                if (!tapeMouseWeHeldRMB) {
+                    client.options.keyUse.setDown(true);
+                    tapeMouseWeHeldRMB = true;
+                }
+            } else {
+                if (tapeMouseWeHeldRMB) {
+                    client.options.keyUse.setDown(false);
+                    tapeMouseWeHeldRMB = false;
+                }
             }
         });
 

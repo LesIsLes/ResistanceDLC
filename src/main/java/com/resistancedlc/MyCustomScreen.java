@@ -93,6 +93,8 @@ public class MyCustomScreen extends Screen {
     public static boolean tapeMouseRussian = false;
     public static boolean tapeMouseRequireTarget = true;
     public static boolean tapeMouseRequireFullAttack = false;
+    public static int tapeMouseButton = 0;              // 0 = ЛКМ, 1 = ПКМ
+    public static boolean tapeMouseHoldRight = false;   // для ПКМ: зажать, а не кликать
 
     // ===== AUTOSWAP =====
     public static boolean autoSwapEnabled = false;
@@ -826,9 +828,10 @@ public class MyCustomScreen extends Screen {
         this.addRenderableWidget(hitTranslate);
     }
     private void initPage4(int centerX, int panelY) {
+        // ===== ВКЛЮЧЕНИЕ =====
         Checkbox tapeMouseCheckbox = Checkbox.builder(
                         Component.literal(tapeMouseRussian ? "Включить TapeMouse" : "Enable TapeMouse"), this.font)
-                .pos(centerX - 100, panelY + 60)
+                .pos(centerX - 100, panelY + 75)
                 .selected(tapeMouseEnabled)
                 .onValueChange((c, v) -> { tapeMouseEnabled = v; ConfigManager.save(); })
                 .build();
@@ -838,46 +841,72 @@ public class MyCustomScreen extends Screen {
             tapeMouseRussian = !tapeMouseRussian;
             ConfigManager.save();
             this.rebuildWidgets();
-        }).bounds(centerX + 120, panelY + 60, 25, 20).build();
+        }).bounds(centerX + 145, panelY + 75, 25, 20).build();
         this.addRenderableWidget(tapeMouseTranslate);
 
-        Button targetBtn = Button.builder(
-                Component.literal(getTargetName(tapeMouseTarget, tapeMouseRussian)),
+        // ===== ВЫБОР КНОПКИ (ЛКМ / ПКМ) =====
+        Button buttonModeBtn = Button.builder(
+                Component.literal(getButtonName(tapeMouseButton, tapeMouseRussian)),
                 (b) -> {
-                    tapeMouseTarget = (tapeMouseTarget + 1) % 3;
+                    tapeMouseButton = (tapeMouseButton + 1) % 2;
                     ConfigManager.save();
                     this.rebuildWidgets();
                 }
-        ).bounds(centerX - 100, panelY + 90, 200, 20).build();
-        this.addRenderableWidget(targetBtn);
+        ).bounds(centerX - 100, panelY + 100, 200, 20).build();
+        this.addRenderableWidget(buttonModeBtn);
 
-        Checkbox requireTargetCheckbox = Checkbox.builder(
-                        Component.literal(tapeMouseRussian ? "Бить только при наведении" : "Only when aiming at target"), this.font)
-                .pos(centerX - 100, panelY + 120)
-                .selected(tapeMouseRequireTarget)
-                .onValueChange((c, v) -> { tapeMouseRequireTarget = v; ConfigManager.save(); })
-                .build();
-        this.addRenderableWidget(requireTargetCheckbox);
+        // ===== ВЕТКА ЛКМ: фильтры =====
+        if (tapeMouseButton == 0) {
+            Button targetBtn = Button.builder(
+                    Component.literal(getTargetName(tapeMouseTarget, tapeMouseRussian)),
+                    (b) -> {
+                        tapeMouseTarget = (tapeMouseTarget + 1) % 3;
+                        ConfigManager.save();
+                        this.rebuildWidgets();
+                    }
+            ).bounds(centerX - 100, panelY + 130, 200, 20).build();
+            this.addRenderableWidget(targetBtn);
 
-        Checkbox requireFullAttackCheckbox = Checkbox.builder(
-                        Component.literal(tapeMouseRussian ? "Бить только при заряженной атаке" : "Only on full attack charge"), this.font)
-                .pos(centerX - 100, panelY + 143)
-                .selected(tapeMouseRequireFullAttack)
-                .onValueChange((c, v) -> { tapeMouseRequireFullAttack = v; ConfigManager.save(); })
-                .build();
-        this.addRenderableWidget(requireFullAttackCheckbox);
+            Checkbox requireTargetCheckbox = Checkbox.builder(
+                            Component.literal(tapeMouseRussian ? "Бить только при наведении" : "Only when aiming at target"), this.font)
+                    .pos(centerX - 100, panelY + 158)
+                    .selected(tapeMouseRequireTarget)
+                    .onValueChange((c, v) -> { tapeMouseRequireTarget = v; ConfigManager.save(); })
+                    .build();
+            this.addRenderableWidget(requireTargetCheckbox);
 
+            Checkbox requireFullAttackCheckbox = Checkbox.builder(
+                            Component.literal(tapeMouseRussian ? "Бить только при заряженной атаке" : "Only on full attack charge"), this.font)
+                    .pos(centerX - 100, panelY + 181)
+                    .selected(tapeMouseRequireFullAttack)
+                    .onValueChange((c, v) -> { tapeMouseRequireFullAttack = v; ConfigManager.save(); })
+                    .build();
+            this.addRenderableWidget(requireFullAttackCheckbox);
+        }
+        // ===== ВЕТКА ПКМ: только "зажать" =====
+        else {
+            Checkbox holdRightCheckbox = Checkbox.builder(
+                            Component.literal(tapeMouseRussian ? "Зажать ПКМ" : "Hold RMB"), this.font)
+                    .pos(centerX - 100, panelY + 160)
+                    .selected(tapeMouseHoldRight)
+                    .onValueChange((c, v) -> { tapeMouseHoldRight = v; ConfigManager.save(); })
+                    .build();
+            this.addRenderableWidget(holdRightCheckbox);
+        }
+
+        // ===== БИНДИНГ КЛАВИШИ =====
         String tmKeyName = KeyBindings.tapeMouseKey != null
                 ? KeyBindings.tapeMouseKey.getTranslatedKeyMessage().getString() : "R";
 
         Button tapeMouseKeyBindButton = Button.builder(
                         Component.literal(isBindingKey && bindingTarget == 2 ? "Нажмите клавишу..." : "Клавиша TapeMouse: " + tmKeyName),
                         (b) -> { isBindingKey = true; bindingTarget = 2; b.setMessage(Component.literal("Нажмите клавишу...")); })
-                .bounds(centerX - 100, panelY + 175, 200, 20).build();
+                .bounds(centerX - 100, panelY + 225, 200, 20).build();
         this.addRenderableWidget(tapeMouseKeyBindButton);
 
+        // ===== ЗАДЕРЖКА =====
         AbstractSliderButton delaySlider = new AbstractSliderButton(
-                centerX - 100, panelY + 215, 200, 20,
+                centerX - 100, panelY + 265, 200, 20,
                 Component.literal(getDelayText()),
                 (tapeMouseDelay - 0.1f) / 4.9f
         ) {
@@ -1563,6 +1592,13 @@ public class MyCustomScreen extends Screen {
                 .bounds(centerX + 140, panelY + 240, 40, 18).build();
         this.addRenderableWidget(colorWhite);
     }
+    private String getButtonName(int btn, boolean russian) {
+        if (russian) {
+            return btn == 0 ? "Кнопка: ЛКМ (атака)" : "Кнопка: ПКМ (использование)";
+        } else {
+            return btn == 0 ? "Button: LMB (attack)" : "Button: RMB (use)";
+        }
+    }
 
     private String getTargetName(int target, boolean russian) {
         if (russian) {
@@ -1698,8 +1734,11 @@ public class MyCustomScreen extends Screen {
                     panelX + 20, panelY + 35, guiTextColor);
             graphics.fill(panelX + 20, panelY + 47, panelX + panelWidth - 20, panelY + 48, guiColor);
 
-            graphics.drawString(this.font, "§7Автоматически наносит удары",
-                    panelX + 20, panelY + 50, 0xFFAAAAAA);
+            String sub = tapeMouseButton == 0
+                    ? "§7Автоматическая атака по цели"
+                    : "§7Автоматическое использование предмета";
+            graphics.drawString(this.font, sub,
+                    panelX + 20, panelY + 55, 0xFFAAAAAA);
 
         } else if (currentPage == 5) {
             graphics.drawString(this.font, "§l▸ FOV (Угол обзора)",

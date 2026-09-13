@@ -139,6 +139,8 @@ public class ConfigManager {
             json.addProperty("tapeMouseRussian", MyCustomScreen.tapeMouseRussian);
             json.addProperty("tapeMouseRequireTarget", MyCustomScreen.tapeMouseRequireTarget);
             json.addProperty("tapeMouseRequireFullAttack", MyCustomScreen.tapeMouseRequireFullAttack);
+            json.addProperty("tapeMouseButton", MyCustomScreen.tapeMouseButton);
+            json.addProperty("tapeMouseHoldRight", MyCustomScreen.tapeMouseHoldRight);
 
             // === AUTOSWAP ===
             json.addProperty("autoSwapEnabled", MyCustomScreen.autoSwapEnabled);
@@ -313,6 +315,8 @@ public class ConfigManager {
             MyCustomScreen.tapeMouseRussian = getBool(json, "tapeMouseRussian", MyCustomScreen.tapeMouseRussian);
             MyCustomScreen.tapeMouseRequireTarget = getBool(json, "tapeMouseRequireTarget", MyCustomScreen.tapeMouseRequireTarget);
             MyCustomScreen.tapeMouseRequireFullAttack = getBool(json, "tapeMouseRequireFullAttack", MyCustomScreen.tapeMouseRequireFullAttack);
+            MyCustomScreen.tapeMouseButton = getInt(json, "tapeMouseButton", MyCustomScreen.tapeMouseButton);
+            MyCustomScreen.tapeMouseHoldRight = getBool(json, "tapeMouseHoldRight", MyCustomScreen.tapeMouseHoldRight);
 
             // === AUTOSWAP ===
             MyCustomScreen.autoSwapEnabled = getBool(json, "autoSwapEnabled", MyCustomScreen.autoSwapEnabled);

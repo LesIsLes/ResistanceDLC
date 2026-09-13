@@ -8,7 +8,7 @@
     "lesis"
   ],
   "contact": {},
-  "license": "All Rights Reserved",
+  "license": "MIT",
   "icon": "assets/resistancedlc/icon.png",
   "environment": "*",
   "entrypoints": {
