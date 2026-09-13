@@ -204,6 +204,7 @@ public class ConfigManager {
             json.addProperty("crosshairGap", MyCustomScreen.crosshairGap);
             json.addProperty("crosshairAlpha", MyCustomScreen.crosshairAlpha);
             json.addProperty("crosshairRussian", MyCustomScreen.crosshairRussian);
+            json.addProperty("crosshairShape", MyCustomScreen.crosshairShape);
 
             Path file = CONFIG_DIR.resolve(name + ".json");
             synchronized (GSON) {
@@ -380,7 +381,7 @@ public class ConfigManager {
             MyCustomScreen.crosshairGap = getInt(json, "crosshairGap", MyCustomScreen.crosshairGap);
             MyCustomScreen.crosshairAlpha = getInt(json, "crosshairAlpha", MyCustomScreen.crosshairAlpha);
             MyCustomScreen.crosshairRussian = getBool(json, "crosshairRussian", MyCustomScreen.crosshairRussian);
-
+            MyCustomScreen.crosshairShape = getInt(json, "crosshairShape", MyCustomScreen.crosshairShape);
             return true;
 
         } catch (Exception e) {

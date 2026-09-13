@@ -2,5 +2,12 @@
   "subtitles.resistancedlc.custom_hit": "Кастомный удар",
   "key.resistancedlc.open_gui": "Открыть GUI",
   "key.resistancedlc.zoom": "Приближение",
+  "key.resistancedlc.tape_mouse": "TapeMouse",
+  "key.resistancedlc.auto_swap": "Автосвап",
+  "key.resistancedlc.custom_hit_sounds": "Кастомные звуки удара",
+  "key.resistancedlc.fast_exp": "FastExp",
+  "key.resistancedlc.shift_tap": "ShiftTap",
+  "key.resistancedlc.combo": "Счётчик комбо",
+  "key.resistancedlc.effect_warnings": "Effect Warnings",
   "key.category.resistancedlc.main": "Resistance DLC"
 }

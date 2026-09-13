@@ -14,6 +14,11 @@ public class KeyBindings {
     public static KeyMapping zoomKey;
     public static KeyMapping tapeMouseKey;
     public static KeyMapping autoSwapKey;
+    public static KeyMapping customHitSoundsKey;
+    public static KeyMapping fastExpKey;
+    public static KeyMapping shiftTapKey;
+    public static KeyMapping comboKey;
+    public static KeyMapping effectWarningsKey;
     private static KeyMapping.Category category;
 
     private static boolean registered = false;
@@ -55,6 +60,40 @@ public class KeyBindings {
                 GLFW.GLFW_KEY_H,
                 category
         ));
+        customHitSoundsKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.resistancedlc.custom_hit_sounds",
+                InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_J,
+                category
+        ));
+
+        fastExpKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.resistancedlc.fast_exp",
+                InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_K,
+                category
+        ));
+
+        shiftTapKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.resistancedlc.shift_tap",
+                InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_L,
+                category
+        ));
+
+        comboKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.resistancedlc.combo",
+                InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_M,
+                category
+        ));
+
+        effectWarningsKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.resistancedlc.effect_warnings",
+                InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_N,
+                category
+        ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (openGuiKey.consumeClick()) {
@@ -94,4 +133,44 @@ public class KeyBindings {
             Minecraft.getInstance().options.load();
         }
     }
+
+public static void setCustomHitSoundsKey(int keyCode) {
+    if (customHitSoundsKey != null) {
+        customHitSoundsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+        Minecraft.getInstance().options.save();
+        Minecraft.getInstance().options.load();
+    }
+}
+
+public static void setFastExpKey(int keyCode) {
+    if (fastExpKey != null) {
+        fastExpKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+        Minecraft.getInstance().options.save();
+        Minecraft.getInstance().options.load();
+    }
+}
+
+public static void setShiftTapKey(int keyCode) {
+    if (shiftTapKey != null) {
+        shiftTapKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+        Minecraft.getInstance().options.save();
+        Minecraft.getInstance().options.load();
+    }
+}
+
+public static void setComboKey(int keyCode) {
+    if (comboKey != null) {
+        comboKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+        Minecraft.getInstance().options.save();
+        Minecraft.getInstance().options.load();
+    }
+}
+
+public static void setEffectWarningsKey(int keyCode) {
+    if (effectWarningsKey != null) {
+        effectWarningsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+        Minecraft.getInstance().options.save();
+        Minecraft.getInstance().options.load();
+    }
+  }
 }

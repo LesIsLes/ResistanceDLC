@@ -2,5 +2,12 @@
   "subtitles.resistancedlc.custom_hit": "Custom Hit",
   "key.resistancedlc.open_gui": "Open GUI",
   "key.resistancedlc.zoom": "Zoom",
+  "key.resistancedlc.tape_mouse": "TapeMouse",
+  "key.resistancedlc.auto_swap": "AutoSwap",
+  "key.resistancedlc.custom_hit_sounds": "Custom Hit Sounds",
+  "key.resistancedlc.fast_exp": "FastExp",
+  "key.resistancedlc.shift_tap": "ShiftTap",
+  "key.resistancedlc.combo": "Combo Counter",
+  "key.resistancedlc.effect_warnings": "Effect Warnings",
   "key.category.resistancedlc.main": "Resistance DLC"
 }

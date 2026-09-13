@@ -171,6 +171,65 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 }
             }
         });
+        // ===== TOGGLE КЛАВИШАМИ: Custom Hit Sounds / FastExp / ShiftTap / Combo / Effect Warnings =====
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.player == null) return;
+
+            // Custom Hit Sounds
+            if (KeyBindings.customHitSoundsKey != null) {
+                while (KeyBindings.customHitSoundsKey.consumeClick()) {
+                    MyCustomScreen.customHitSoundsEnabled = !MyCustomScreen.customHitSoundsEnabled;
+                    ConfigManager.save();
+                    String state = MyCustomScreen.customHitSoundsEnabled ? "§aвключён" : "§cвыключен";
+                    client.player.displayClientMessage(
+                            Component.literal("§6Custom Hit Sounds " + state), true);
+                }
+            }
+
+            // FastExp
+            if (KeyBindings.fastExpKey != null) {
+                while (KeyBindings.fastExpKey.consumeClick()) {
+                    MyCustomScreen.fastExpEnabled = !MyCustomScreen.fastExpEnabled;
+                    ConfigManager.save();
+                    String state = MyCustomScreen.fastExpEnabled ? "§aвключён" : "§cвыключен";
+                    client.player.displayClientMessage(
+                            Component.literal("§6FastExp " + state), true);
+                }
+            }
+
+            // ShiftTap
+            if (KeyBindings.shiftTapKey != null) {
+                while (KeyBindings.shiftTapKey.consumeClick()) {
+                    MyCustomScreen.shiftTapEnabled = !MyCustomScreen.shiftTapEnabled;
+                    ConfigManager.save();
+                    String state = MyCustomScreen.shiftTapEnabled ? "§aвключён" : "§cвыключен";
+                    client.player.displayClientMessage(
+                            Component.literal("§6ShiftTap " + state), true);
+                }
+            }
+
+            // Combo Counter
+            if (KeyBindings.comboKey != null) {
+                while (KeyBindings.comboKey.consumeClick()) {
+                    MyCustomScreen.comboEnabled = !MyCustomScreen.comboEnabled;
+                    ConfigManager.save();
+                    String state = MyCustomScreen.comboEnabled ? "§aвключён" : "§cвыключен";
+                    client.player.displayClientMessage(
+                            Component.literal("§6Combo Counter " + state), true);
+                }
+            }
+
+            // Effect Warnings
+            if (KeyBindings.effectWarningsKey != null) {
+                while (KeyBindings.effectWarningsKey.consumeClick()) {
+                    MyCustomScreen.effectWarningsEnabled = !MyCustomScreen.effectWarningsEnabled;
+                    ConfigManager.save();
+                    String state = MyCustomScreen.effectWarningsEnabled ? "§aвключён" : "§cвыключен";
+                    client.player.displayClientMessage(
+                            Component.literal("§6Effect Warnings " + state), true);
+                }
+            }
+        });
 
         // ===== AUTOSWAP: нажатие клавиши =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -376,15 +435,71 @@ public class ResistanceDLCClient implements ClientModInitializer {
             int size = MyCustomScreen.crosshairSize;
             int thick = MyCustomScreen.crosshairThickness;
             int gap = MyCustomScreen.crosshairGap;
+            int shape = MyCustomScreen.crosshairShape;
 
-            graphics.fill(chCenterX - thick / 2, chCenterY - gap - size,
-                    chCenterX + (thick + 1) / 2, chCenterY - gap, chColor);
-            graphics.fill(chCenterX - thick / 2, chCenterY + gap,
-                    chCenterX + (thick + 1) / 2, chCenterY + gap + size, chColor);
-            graphics.fill(chCenterX - gap - size, chCenterY - thick / 2,
-                    chCenterX - gap, chCenterY + (thick + 1) / 2, chColor);
-            graphics.fill(chCenterX + gap, chCenterY - thick / 2,
-                    chCenterX + gap + size, chCenterY + (thick + 1) / 2, chColor);
+            switch (shape) {
+                case 0 -> {
+                    // ===== Форма 0: Крест (4 линии) =====
+                    graphics.fill(chCenterX - thick / 2, chCenterY - gap - size,
+                            chCenterX + (thick + 1) / 2, chCenterY - gap, chColor);
+                    graphics.fill(chCenterX - thick / 2, chCenterY + gap,
+                            chCenterX + (thick + 1) / 2, chCenterY + gap + size, chColor);
+                    graphics.fill(chCenterX - gap - size, chCenterY - thick / 2,
+                            chCenterX - gap, chCenterY + (thick + 1) / 2, chColor);
+                    graphics.fill(chCenterX + gap, chCenterY - thick / 2,
+                            chCenterX + gap + size, chCenterY + (thick + 1) / 2, chColor);
+                }
+                case 1 -> {
+                    // ===== Форма 1: Точка =====
+                    // Рисуем квадрат + 4 угловых пикселя для сглаживания
+                    int dotSize = Math.max(1, thick);
+                    int half = dotSize / 2;
+                    graphics.fill(chCenterX - half, chCenterY - half,
+                            chCenterX - half + dotSize, chCenterY - half + dotSize, chColor);
+                }
+                case 2 -> {
+                    // ===== Форма 2: Круг (контурный) =====
+                    // Аппроксимируем окружность через 16 точек
+                    int radius = Math.max(2, size);
+                    int points = 24;
+                    for (int i = 0; i < points; i++) {
+                        double angle = 2 * Math.PI * i / points;
+                        int px = chCenterX + (int) Math.round(Math.cos(angle) * radius);
+                        int py = chCenterY + (int) Math.round(Math.sin(angle) * radius);
+                        int pt = Math.max(1, thick);
+                        graphics.fill(px - pt / 2, py - pt / 2,
+                                px - pt / 2 + pt, py - pt / 2 + pt, chColor);
+                    }
+                }
+                case 3 -> {
+                    // ===== Форма 3: Стрелки (4 треугольника) =====
+                    // Верх
+                    drawTriangle(graphics, chCenterX, chCenterY - gap - size, size, thick, 0, chColor);
+                    // Низ
+                    drawTriangle(graphics, chCenterX, chCenterY + gap + size, size, thick, 1, chColor);
+                    // Лево
+                    drawTriangle(graphics, chCenterX - gap - size, chCenterY, size, thick, 2, chColor);
+                    // Право
+                    drawTriangle(graphics, chCenterX + gap + size, chCenterY, size, thick, 3, chColor);
+                }
+                case 4 -> {
+                    // ===== Форма 4: Крест + Точка =====
+                    // Крест
+                    graphics.fill(chCenterX - thick / 2, chCenterY - gap - size,
+                            chCenterX + (thick + 1) / 2, chCenterY - gap, chColor);
+                    graphics.fill(chCenterX - thick / 2, chCenterY + gap,
+                            chCenterX + (thick + 1) / 2, chCenterY + gap + size, chColor);
+                    graphics.fill(chCenterX - gap - size, chCenterY - thick / 2,
+                            chCenterX - gap, chCenterY + (thick + 1) / 2, chColor);
+                    graphics.fill(chCenterX + gap, chCenterY - thick / 2,
+                            chCenterX + gap + size, chCenterY + (thick + 1) / 2, chColor);
+                    // Точка в центре
+                    int dotSize = Math.max(1, thick);
+                    int half = dotSize / 2;
+                    graphics.fill(chCenterX - half, chCenterY - half,
+                            chCenterX - half + dotSize, chCenterY - half + dotSize, chColor);
+                }
+            }
         }
 
         // ===== ИКОНКА МОДА =====
@@ -798,7 +913,44 @@ public class ResistanceDLCClient implements ClientModInitializer {
         if (num >= 0 && num < roman.length) return roman[num];
         return String.valueOf(num);
     }
-
+    /**
+     * Рисует треугольник (стрелку) в одном из 4 направлений.
+     * direction: 0 = верх, 1 = низ, 2 = лево, 3 = право.
+     * tipX, tipY — координаты вершины (острия).
+     * size — длина стрелки.
+     * thick — ширина основания.
+     */
+    private static void drawTriangle(GuiGraphics graphics, int tipX, int tipY,
+                                     int size, int thick, int direction, int color) {
+        int baseSize = Math.max(2, thick * 2);
+        for (int i = 0; i < size; i++) {
+            // На каждом шаге от острия к основанию — расширяем
+            int width = (int) Math.round((double) baseSize * i / size);
+            if (width < 1) width = 1;
+            switch (direction) {
+                case 0 -> {
+                    // Верх: острие сверху, основание снизу
+                    int y = tipY + i;
+                    graphics.fill(tipX - width / 2, y, tipX - width / 2 + width, y + 1, color);
+                }
+                case 1 -> {
+                    // Низ: острие снизу, основание сверху
+                    int y = tipY - i;
+                    graphics.fill(tipX - width / 2, y, tipX - width / 2 + width, y + 1, color);
+                }
+                case 2 -> {
+                    // Лево: острие слева, основание справа
+                    int x = tipX + i;
+                    graphics.fill(x, tipY - width / 2, x + 1, tipY - width / 2 + width, color);
+                }
+                case 3 -> {
+                    // Право: острие справа, основание слева
+                    int x = tipX - i;
+                    graphics.fill(x, tipY - width / 2, x + 1, tipY - width / 2 + width, color);
+                }
+            }
+        }
+    }
     private void sendMessage(String message) {
         Minecraft client = Minecraft.getInstance();
         if (client.player != null) {
