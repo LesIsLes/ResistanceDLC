@@ -202,7 +202,7 @@ public class MyCustomScreen extends Screen {
     private final int panelWidth = 400;
     private final int panelHeight = 420;
 
-    // ⚠️ ФИКС: флаг — события Screen'а уже зарегистрированы (защита от краша)
+    // ⚠️ ФИКС: флаг — события Screen'а уже зарегистрированы
     private boolean eventsRegistered = false;
 
     private static final String[][] SEARCH_INDEX = {
@@ -275,15 +275,15 @@ public class MyCustomScreen extends Screen {
             { "crosshair", "Кастомный прицел", "16" },
             { "точка", "Кастомный прицел", "16" }
     };
-    // ⚠️ ФИКС: конструктор НЕ регистрирует события — только super()
+    // ⚠️ ФИКС: конструктор НЕ регистрирует события
     public MyCustomScreen() {
         super(Component.literal("Resistance DLC — Настройки"));
     }
 
     /**
      * Регистрируется РОВНО ОДИН РАЗ на экземпляр Screen'а.
-     * Вызывается из init(), а НЕ из конструктора — Fabric Screen API
-     * требует, чтобы Screen уже был инициализирован.
+     * Вызывается из init() (см. ниже), а НЕ из конструктора —
+     * Fabric Screen API требует, чтобы Screen уже был инициализирован.
      */
     private void registerScreenEvents() {
         ScreenKeyboardEvents.allowKeyPress(this).register((screen, keyEvent) -> {
@@ -360,8 +360,8 @@ public class MyCustomScreen extends Screen {
         this.panelX = (this.width - panelWidth) / 2 + 80;
         this.panelY = (this.height - panelHeight) / 2;
 
-        // ⚠️ ФИКС: регистрация событий ТОЛЬКО здесь, и ТОЛЬКО один раз.
-        // При rebuildWidgets() init() вызывается снова, но флаг уже true — пропускаем.
+        // ⚠️ ФИКС: регистрация событий ТОЛЬКО здесь, ТОЛЬКО один раз.
+        // При rebuildWidgets() init() вызывается снова, но флаг true — пропускаем.
         if (!eventsRegistered) {
             eventsRegistered = true;
             registerScreenEvents();
@@ -1363,7 +1363,6 @@ public class MyCustomScreen extends Screen {
     }
 
     private void initPage15(int centerX, int panelY) {
-        // Сдвинуто на +75, чтобы не налезать на заголовок §7 на +60
         Checkbox enableCheckbox = Checkbox.builder(
                         Component.literal(effectWarningsRussian ? "Включить Effect Warnings" : "Enable Effect Warnings"), this.font)
                 .pos(centerX - 100, panelY + 75)
@@ -1458,7 +1457,6 @@ public class MyCustomScreen extends Screen {
     }
 
     private void initPage16(int centerX, int panelY) {
-        // Сдвинуто на +75, чтобы не налезать на заголовок §7 на +60
         Checkbox enableCheckbox = Checkbox.builder(
                         Component.literal(crosshairRussian ? "Включить кастомный прицел" : "Enable custom crosshair"), this.font)
                 .pos(centerX - 100, panelY + 75)
@@ -1608,8 +1606,6 @@ public class MyCustomScreen extends Screen {
         super.render(graphics, mouseX, mouseY, delta);
 
         // Пет-иконка — сидит на верхнем правом углу поля поиска.
-        // Поле: X = panelX-180 … panelX-20, Y = panelY+50 … panelY+68.
-        // Пет 24×24, petY = panelY+30 → нижние 4 px перекрывают верх поля.
         if (showPet) {
             int petSize = 24;
             int petX = panelX - 45;
