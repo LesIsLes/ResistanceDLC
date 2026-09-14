@@ -20,7 +20,8 @@ public class KeyBindings {
     public static KeyMapping comboKey;
     public static KeyMapping effectWarningsKey;
     public static KeyMapping waypointsKey;
-    public static KeyMapping totemLogKey;   // ← НОВОЕ
+    public static KeyMapping totemLogKey;
+    public static KeyMapping pickupLogKey;   // ← НОВОЕ
     private static KeyMapping.Category category;
 
     private static boolean registered = false;
@@ -108,6 +109,13 @@ public class KeyBindings {
                 "key.resistancedlc.totem_log",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_O,
+                category
+        ));
+
+        pickupLogKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.resistancedlc.pickup_log",
+                InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_P,
                 category
         ));
 
@@ -205,4 +213,12 @@ public class KeyBindings {
             Minecraft.getInstance().options.load();
         }
     }
+    public static void setPickupLogKey(int keyCode) {
+        if (pickupLogKey != null) {
+            pickupLogKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            Minecraft.getInstance().options.save();
+            Minecraft.getInstance().options.load();
+        }
+    }
 }
+

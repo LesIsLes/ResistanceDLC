@@ -9,7 +9,11 @@
     "LowFireMixin",
     "LowShieldMixin",
     "GuiCrosshairMixin",
-    "TotemLogMixin"
+    "TotemLogMixin",
+    "NoHurtCamMixin",
+    "NoBobbingMixin",
+    "PvPSafeCommandMixin",
+    "PickUpLoggerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -27,6 +27,9 @@ public class HitSoundMixin {
         // ===== ЗАПИСЬ В ТРЕКЕР ПОСЛЕДНЕГО УДАРА =====
         if (target instanceof Player victim) {
             TotemTracker.record(victim.getUUID(), self.getName().getString());
+
+            // ===== PVP SAFE: мы ударили игрока — начинаем бой =====
+            com.resistancedlc.PvPSafeManager.recordHit();
         }
 
         // ===== COMBO COUNTER =====

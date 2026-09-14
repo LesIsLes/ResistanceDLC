@@ -193,17 +193,53 @@ public class ConfigManager {
             json.addProperty("crosshairAlpha", MyCustomScreen.crosshairAlpha);
             json.addProperty("crosshairRussian", MyCustomScreen.crosshairRussian);
             json.addProperty("crosshairShape", MyCustomScreen.crosshairShape);
+
             // === WAYPOINTS ===
             json.addProperty("waypointsRaw", MyCustomScreen.waypointsRaw);
             json.addProperty("waypointsMax", MyCustomScreen.waypointsMax);
             json.addProperty("waypointsRussian", MyCustomScreen.waypointsRussian);
             json.addProperty("waypointsEnabled", MyCustomScreen.waypointsEnabled);
 
-            // === TOTEM LOG (НОВОЕ) ===
+            // === TOTEM LOG ===
             json.addProperty("totemLogEnabled", MyCustomScreen.totemLogEnabled);
             json.addProperty("totemLogRadius", MyCustomScreen.totemLogRadius);
             json.addProperty("totemLogSound", MyCustomScreen.totemLogSound);
             json.addProperty("totemLogRussian", MyCustomScreen.totemLogRussian);
+
+            // === CAMERA ===
+            json.addProperty("noHurtCamEnabled", MyCustomScreen.noHurtCamEnabled);
+            json.addProperty("noBobbingEnabled", MyCustomScreen.noBobbingEnabled);
+            json.addProperty("cameraRussian", MyCustomScreen.cameraRussian);
+
+            // === SHULKER PEEK ===
+            json.addProperty("shulkerPeekEnabled", MyCustomScreen.shulkerPeekEnabled);
+            json.addProperty("shulkerPeekRequireShift", MyCustomScreen.shulkerPeekRequireShift);
+            json.addProperty("shulkerPeekShowTitle", MyCustomScreen.shulkerPeekShowTitle);
+            json.addProperty("shulkerPeekShowCounts", MyCustomScreen.shulkerPeekShowCounts);
+            json.addProperty("shulkerPeekRussian", MyCustomScreen.shulkerPeekRussian);
+
+            // === PVP SAFE ===
+            json.addProperty("pvpSafeEnabled", MyCustomScreen.pvpSafeEnabled);
+            json.addProperty("pvpSafeTimer", MyCustomScreen.pvpSafeTimer);
+            json.addProperty("pvpSafeBlockQuit", MyCustomScreen.pvpSafeBlockQuit);
+            json.addProperty("pvpSafeBlockCommands", MyCustomScreen.pvpSafeBlockCommands);
+            json.addProperty("pvpSafeShowHud", MyCustomScreen.pvpSafeShowHud);
+            json.addProperty("pvpSafeHudX", MyCustomScreen.pvpSafeHudX);
+            json.addProperty("pvpSafeHudY", MyCustomScreen.pvpSafeHudY);
+            json.addProperty("pvpSafeHudColor", MyCustomScreen.pvpSafeHudColor);
+            json.addProperty("pvpSafeRussian", MyCustomScreen.pvpSafeRussian);
+
+            // === PICKUP LOGGER ===
+            json.addProperty("pickupLogEnabled", MyCustomScreen.pickupLogEnabled);
+            json.addProperty("pickupLogMode", MyCustomScreen.pickupLogMode);
+            json.addProperty("pickupLogWeapon", MyCustomScreen.pickupLogWeapon);
+            json.addProperty("pickupLogArmor", MyCustomScreen.pickupLogArmor);
+            json.addProperty("pickupLogPotions", MyCustomScreen.pickupLogPotions);
+            json.addProperty("pickupLogTotems", MyCustomScreen.pickupLogTotems);
+            json.addProperty("pickupLogHeads", MyCustomScreen.pickupLogHeads);
+            json.addProperty("pickupLogSpawners", MyCustomScreen.pickupLogSpawners);
+            json.addProperty("pickupLogStructureBlocks", MyCustomScreen.pickupLogStructureBlocks);
+            json.addProperty("pickupLogRussian", MyCustomScreen.pickupLogRussian);
 
             Path file = CONFIG_DIR.resolve(name + ".json");
             synchronized (GSON) {
@@ -381,17 +417,53 @@ public class ConfigManager {
             MyCustomScreen.crosshairAlpha = getInt(json, "crosshairAlpha", MyCustomScreen.crosshairAlpha);
             MyCustomScreen.crosshairRussian = getBool(json, "crosshairRussian", MyCustomScreen.crosshairRussian);
             MyCustomScreen.crosshairShape = getInt(json, "crosshairShape", MyCustomScreen.crosshairShape);
+
             // === WAYPOINTS ===
             MyCustomScreen.waypointsRaw = getString(json, "waypointsRaw", MyCustomScreen.waypointsRaw);
             MyCustomScreen.waypointsMax = getInt(json, "waypointsMax", MyCustomScreen.waypointsMax);
             MyCustomScreen.waypointsRussian = getBool(json, "waypointsRussian", MyCustomScreen.waypointsRussian);
             MyCustomScreen.waypointsEnabled = getBool(json, "waypointsEnabled", MyCustomScreen.waypointsEnabled);
 
-            // === TOTEM LOG (НОВОЕ) ===
+            // === TOTEM LOG ===
             MyCustomScreen.totemLogEnabled = getBool(json, "totemLogEnabled", MyCustomScreen.totemLogEnabled);
             MyCustomScreen.totemLogRadius = getInt(json, "totemLogRadius", MyCustomScreen.totemLogRadius);
             MyCustomScreen.totemLogSound = getBool(json, "totemLogSound", MyCustomScreen.totemLogSound);
             MyCustomScreen.totemLogRussian = getBool(json, "totemLogRussian", MyCustomScreen.totemLogRussian);
+
+            // === CAMERA ===
+            MyCustomScreen.noHurtCamEnabled = getBool(json, "noHurtCamEnabled", MyCustomScreen.noHurtCamEnabled);
+            MyCustomScreen.noBobbingEnabled = getBool(json, "noBobbingEnabled", MyCustomScreen.noBobbingEnabled);
+            MyCustomScreen.cameraRussian = getBool(json, "cameraRussian", MyCustomScreen.cameraRussian);
+
+            // === SHULKER PEEK ===
+            MyCustomScreen.shulkerPeekEnabled = getBool(json, "shulkerPeekEnabled", MyCustomScreen.shulkerPeekEnabled);
+            MyCustomScreen.shulkerPeekRequireShift = getBool(json, "shulkerPeekRequireShift", MyCustomScreen.shulkerPeekRequireShift);
+            MyCustomScreen.shulkerPeekShowTitle = getBool(json, "shulkerPeekShowTitle", MyCustomScreen.shulkerPeekShowTitle);
+            MyCustomScreen.shulkerPeekShowCounts = getBool(json, "shulkerPeekShowCounts", MyCustomScreen.shulkerPeekShowCounts);
+            MyCustomScreen.shulkerPeekRussian = getBool(json, "shulkerPeekRussian", MyCustomScreen.shulkerPeekRussian);
+
+            // === PVP SAFE ===
+            MyCustomScreen.pvpSafeEnabled = getBool(json, "pvpSafeEnabled", MyCustomScreen.pvpSafeEnabled);
+            MyCustomScreen.pvpSafeTimer = getInt(json, "pvpSafeTimer", MyCustomScreen.pvpSafeTimer);
+            MyCustomScreen.pvpSafeBlockQuit = getBool(json, "pvpSafeBlockQuit", MyCustomScreen.pvpSafeBlockQuit);
+            MyCustomScreen.pvpSafeBlockCommands = getBool(json, "pvpSafeBlockCommands", MyCustomScreen.pvpSafeBlockCommands);
+            MyCustomScreen.pvpSafeShowHud = getBool(json, "pvpSafeShowHud", MyCustomScreen.pvpSafeShowHud);
+            MyCustomScreen.pvpSafeHudX = getInt(json, "pvpSafeHudX", MyCustomScreen.pvpSafeHudX);
+            MyCustomScreen.pvpSafeHudY = getInt(json, "pvpSafeHudY", MyCustomScreen.pvpSafeHudY);
+            MyCustomScreen.pvpSafeHudColor = getInt(json, "pvpSafeHudColor", MyCustomScreen.pvpSafeHudColor);
+            MyCustomScreen.pvpSafeRussian = getBool(json, "pvpSafeRussian", MyCustomScreen.pvpSafeRussian);
+
+            // === PICKUP LOGGER ===
+            MyCustomScreen.pickupLogEnabled = getBool(json, "pickupLogEnabled", MyCustomScreen.pickupLogEnabled);
+            MyCustomScreen.pickupLogMode = getInt(json, "pickupLogMode", MyCustomScreen.pickupLogMode);
+            MyCustomScreen.pickupLogWeapon = getBool(json, "pickupLogWeapon", MyCustomScreen.pickupLogWeapon);
+            MyCustomScreen.pickupLogArmor = getBool(json, "pickupLogArmor", MyCustomScreen.pickupLogArmor);
+            MyCustomScreen.pickupLogPotions = getBool(json, "pickupLogPotions", MyCustomScreen.pickupLogPotions);
+            MyCustomScreen.pickupLogTotems = getBool(json, "pickupLogTotems", MyCustomScreen.pickupLogTotems);
+            MyCustomScreen.pickupLogHeads = getBool(json, "pickupLogHeads", MyCustomScreen.pickupLogHeads);
+            MyCustomScreen.pickupLogSpawners = getBool(json, "pickupLogSpawners", MyCustomScreen.pickupLogSpawners);
+            MyCustomScreen.pickupLogStructureBlocks = getBool(json, "pickupLogStructureBlocks", MyCustomScreen.pickupLogStructureBlocks);
+            MyCustomScreen.pickupLogRussian = getBool(json, "pickupLogRussian", MyCustomScreen.pickupLogRussian);
 
             return true;
 

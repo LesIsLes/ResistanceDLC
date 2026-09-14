@@ -31,6 +31,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.waypoints.TrackedWaypoint;
 import net.minecraft.world.phys.Vec3;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
+import net.minecraft.client.gui.screens.PauseScreen;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,6 +45,9 @@ public class ResistanceDLCClient implements ClientModInitializer {
     private static long lastAttackTime = 0;
     private static boolean tapeMouseWeHeldRMB = false;
 
+    // ===== PVP SAFE: отслеживание здоровья =====
+    private static float lastHealth = -1.0f;
+
     @Override
     public void onInitializeClient() {
         // ===== ДЕБАУНС СОХРАНЕНИЯ КОНФИГА =====
@@ -50,11 +56,33 @@ public class ResistanceDLCClient implements ClientModInitializer {
         // ===== ЗАГРУЗКА КОНФИГА + КЛАВИШИ =====
         ConfigManager.load();
         KeyBindings.register();
+        // ===== PVP SAFE: блокировка ESC через Fabric API =====
+        net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register(
+                (client, screen, scaledWidth, scaledHeight) -> {
+                    if (!(screen instanceof net.minecraft.client.gui.screens.PauseScreen)) return;
 
-        // ===== СОХРАНЕНИЕ ПРИ ВЫХОДЕ ИЗ МИРА + ОЧИСТКА ТРЕКЕРА =====
+                    net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents
+                            .allowKeyPress(screen)
+                            .register((s, keyEvent) -> {
+                                if (!MyCustomScreen.pvpSafeEnabled) return true;
+                                if (!MyCustomScreen.pvpSafeBlockQuit) return true;
+                                if (!PvPSafeManager.isInCombat()) return true;
+
+                                // ESC = 256
+                                if (keyEvent.key() == 256) {
+                                    PvPSafeManager.sendQuitBlockedMessage();
+                                    return false;
+                                }
+                                return true;
+                            });
+                }
+        );
+        // ===== СОХРАНЕНИЕ ПРИ ВЫХОДЕ + ОЧИСТКА ТРЕКЕРОВ =====
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             ConfigManager.saveNow();
             TotemTracker.clear();
+            PvPSafeManager.reset();
+            lastHealth = -1.0f;
         });
 
         // ===== КОМАНДЫ =====
@@ -253,6 +281,30 @@ public class ResistanceDLCClient implements ClientModInitializer {
             }
         });
 
+        // ===== PVP SAFE: отслеживание здоровья =====
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.player == null) {
+                lastHealth = -1.0f;
+                return;
+            }
+
+            float currentHealth = client.player.getHealth();
+
+            if (lastHealth < 0) {
+                lastHealth = currentHealth;
+                return;
+            }
+
+            if (currentHealth < lastHealth) {
+                PvPSafeManager.recordHit();
+            }
+
+            lastHealth = currentHealth;
+        });
+
+        // ===== PICKUP LOGGER: отправка сообщений в чат (рендер-поток) =====
+        ClientTickEvents.END_CLIENT_TICK.register(client -> PickUpLogger.tick());
+
         // ===== ZOOM =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) return;
@@ -334,7 +386,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 }
             }
 
-            // ===== TOTEM LOG =====
             if (KeyBindings.totemLogKey != null) {
                 while (KeyBindings.totemLogKey.consumeClick()) {
                     MyCustomScreen.totemLogEnabled = !MyCustomScreen.totemLogEnabled;
@@ -342,6 +393,16 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     String state = MyCustomScreen.totemLogEnabled ? "§aвключён" : "§cвыключен";
                     client.player.displayClientMessage(
                             Component.literal("§6Totem Log " + state), true);
+                }
+            }
+
+            if (KeyBindings.pickupLogKey != null) {
+                while (KeyBindings.pickupLogKey.consumeClick()) {
+                    MyCustomScreen.pickupLogEnabled = !MyCustomScreen.pickupLogEnabled;
+                    ConfigManager.save();
+                    String state = MyCustomScreen.pickupLogEnabled ? "§aвключён" : "§cвыключен";
+                    client.player.displayClientMessage(
+                            Component.literal("§6PickUpLogger " + state), true);
                 }
             }
         });
@@ -381,23 +442,18 @@ public class ResistanceDLCClient implements ClientModInitializer {
             long now = System.currentTimeMillis();
             if (now < MyCustomScreen.autoSwapNextActionTime) return;
 
-            // ===== ЭТАП 0: открыть инвентарь =====
             if (MyCustomScreen.autoSwapStage == 0) {
                 client.setScreen(new InventoryScreen(client.player));
                 MyCustomScreen.autoSwapStage = 1;
                 MyCustomScreen.autoSwapNextActionTime = now + 75;
-            }
-            // ===== ЭТАП 1: свап через handleInventoryMouseClick =====
-            else if (MyCustomScreen.autoSwapStage == 1) {
+            } else if (MyCustomScreen.autoSwapStage == 1) {
                 int slot = MyCustomScreen.autoSwapSlotToSwap;
                 if (slot >= 0 && slot < client.player.getInventory().getContainerSize()) {
                     swapOffhandWithSlot(client, slot);
                 }
                 MyCustomScreen.autoSwapStage = 2;
                 MyCustomScreen.autoSwapNextActionTime = now + 75;
-            }
-            // ===== ЭТАП 2: закрыть инвентарь =====
-            else if (MyCustomScreen.autoSwapStage == 2) {
+            } else if (MyCustomScreen.autoSwapStage == 2) {
                 client.setScreen(null);
                 MyCustomScreen.autoSwapInProgress = false;
                 MyCustomScreen.autoSwapStage = 0;
@@ -677,6 +733,18 @@ public class ResistanceDLCClient implements ClientModInitializer {
             graphics.drawString(client.font, comboText, 0, 0, MyCustomScreen.comboColor, true);
 
             graphics.pose().popMatrix();
+        }
+
+        if (MyCustomScreen.pvpSafeEnabled
+                && MyCustomScreen.pvpSafeShowHud
+                && PvPSafeManager.isInCombat()) {
+            int remaining = PvPSafeManager.getRemainingSeconds();
+            String text = "§c⚔ Бой: " + remaining + " сек";
+            graphics.drawString(client.font, text,
+                    MyCustomScreen.pvpSafeHudX,
+                    MyCustomScreen.pvpSafeHudY,
+                    MyCustomScreen.pvpSafeHudColor,
+                    true);
         }
 
         if (MyCustomScreen.showCoords) {
@@ -982,8 +1050,19 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
         TrackedWaypoint.Projector projector = client.gameRenderer;
 
+        int EDGE_MARGIN = 20;
+
         for (MyCustomScreen.Waypoint wp : waypoints) {
             double dist = wp.distanceTo(px, py, pz);
+
+            int wpColor;
+            if (dist < 50.0) {
+                wpColor = 0xFF00FF00;
+            } else if (dist < 200.0) {
+                wpColor = 0xFFFFFF00;
+            } else {
+                wpColor = 0xFFFF0000;
+            }
 
             Vec3 ndc;
             try {
@@ -997,32 +1076,52 @@ public class ResistanceDLCClient implements ClientModInitializer {
             double ndcX = ndc.x;
             double ndcY = behind ? -ndc.y : ndc.y;
 
-            if (ndcX < -2.0 || ndcX > 2.0 || ndcY < -2.0 || ndcY > 2.0) continue;
-
             int screenX = (int) ((ndcX + 1.0) * 0.5 * screenW);
             int screenY = (int) ((1.0 - ndcY) * 0.5 * screenH);
 
-            int wpColor;
-            if (dist < 50.0) {
-                wpColor = 0xFF00FF00;
-            } else if (dist < 200.0) {
-                wpColor = 0xFFFFFF00;
+            boolean onScreen = !behind
+                    && ndcX >= -1.0 && ndcX <= 1.0
+                    && ndcY >= -1.0 && ndcY <= 1.0;
+
+            if (onScreen) {
+                drawWaypointDiamond(graphics, screenX, screenY, 5, wpColor);
+
+                String label = wp.name();
+                String distStr = String.format("%.0fm", dist);
+
+                int labelW = client.font.width(label);
+                int distW = client.font.width(distStr);
+
+                graphics.drawString(client.font, label,
+                        screenX - labelW / 2, screenY - 16, wpColor, true);
+                graphics.drawString(client.font, distStr,
+                        screenX - distW / 2, screenY + 8, wpColor, true);
             } else {
-                wpColor = 0xFFFF0000;
+                boolean onLeft = ndcX < 0;
+
+                int arrowX = onLeft ? EDGE_MARGIN : screenW - EDGE_MARGIN;
+
+                double ndcYClamped = Math.max(-1.0, Math.min(1.0, ndcY));
+                int arrowY = (int) ((1.0 - ndcYClamped) * 0.5 * screenH);
+                arrowY = Math.max(EDGE_MARGIN, Math.min(screenH - EDGE_MARGIN, arrowY));
+
+                double dirX = onLeft ? -1.0 : 1.0;
+
+                drawWaypointArrow(graphics, arrowX, arrowY, dirX, wpColor);
+
+                String label = wp.name();
+                String distStr = String.format("%.0fm", dist);
+                String fullText = "§e" + label + " §7" + distStr;
+
+                int textW = client.font.width(fullText);
+                int textX = onLeft ? arrowX + 12 : arrowX - textW - 12;
+                int textY = arrowY - 4;
+
+                textX = Math.max(4, Math.min(screenW - textW - 4, textX));
+                textY = Math.max(4, Math.min(screenH - 12, textY));
+
+                graphics.drawString(client.font, fullText, textX, textY, wpColor, true);
             }
-
-            drawWaypointDiamond(graphics, screenX, screenY, 5, wpColor);
-
-            String label = wp.name();
-            String distStr = String.format("%.0fm", dist);
-
-            int labelW = client.font.width(label);
-            int distW = client.font.width(distStr);
-
-            graphics.drawString(client.font, label,
-                    screenX - labelW / 2, screenY - 16, wpColor, true);
-            graphics.drawString(client.font, distStr,
-                    screenX - distW / 2, screenY + 8, wpColor, true);
         }
     }
 
@@ -1036,6 +1135,32 @@ public class ResistanceDLCClient implements ClientModInitializer {
             int halfWidth = radius - dy;
             if (halfWidth < 0) halfWidth = 0;
             graphics.fill(cx - halfWidth, cy + dy, cx + halfWidth + 1, cy + dy + 1, color);
+        }
+    }
+
+    private static void drawWaypointArrow(GuiGraphics graphics, int cx, int cy,
+                                          double dirX, int color) {
+        int arrowSize = 8;
+        int baseWidth = 6;
+
+        int tipX = cx + (int) Math.round(dirX * arrowSize);
+        int baseX = cx - (int) Math.round(dirX * arrowSize);
+
+        int startX = Math.min(tipX, baseX);
+        int endX = Math.max(tipX, baseX);
+
+        for (int x = startX; x <= endX; x++) {
+            double t;
+            if (dirX > 0) {
+                t = (double) (x - baseX) / (tipX - baseX);
+            } else {
+                t = (double) (baseX - x) / (baseX - tipX);
+            }
+            t = Math.max(0.0, Math.min(1.0, t));
+
+            int halfH = (int) Math.round(baseWidth * (1.0 - t));
+
+            graphics.fill(x, cy - halfH, x + 1, cy + halfH + 1, color);
         }
     }
 
@@ -1103,11 +1228,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
         return -1;
     }
 
-    /**
-     * Отправляет серверу пакет смены offhand ↔ слот через SWAP (button=40).
-     * Использует ванильный путь multiPlayerGameMode.handleInventoryMouseClick,
-     * который корректно формирует syncId, revision и SlotActionType.
-     */
     private static void swapOffhandWithSlot(Minecraft client, int slotIndex) {
         if (client.player == null) return;
         if (client.gameMode == null) return;

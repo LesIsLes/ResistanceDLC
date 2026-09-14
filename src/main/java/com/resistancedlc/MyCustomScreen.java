@@ -162,11 +162,46 @@ public class MyCustomScreen extends Screen {
     public static float aspectRatio = 1.0f;
     public static boolean aspectRatioRussian = false;
 
-    // ===== TOTEM LOG (НОВОЕ) =====
+    // ===== TOTEM LOG =====
     public static boolean totemLogEnabled = false;
     public static int totemLogRadius = 15;
     public static boolean totemLogSound = true;
     public static boolean totemLogRussian = false;
+
+    // ===== CAMERA =====
+    public static boolean noHurtCamEnabled = false;
+    public static boolean noBobbingEnabled = false;
+    public static boolean cameraRussian = false;
+
+    // ===== SHULKER PEEK =====
+    public static boolean shulkerPeekEnabled = false;
+    public static boolean shulkerPeekRequireShift = false;
+    public static boolean shulkerPeekShowTitle = true;
+    public static boolean shulkerPeekShowCounts = true;
+    public static boolean shulkerPeekRussian = false;
+
+    // ===== PVP SAFE =====
+    public static boolean pvpSafeEnabled = false;
+    public static int pvpSafeTimer = 30;
+    public static boolean pvpSafeBlockQuit = true;
+    public static boolean pvpSafeBlockCommands = true;
+    public static boolean pvpSafeShowHud = true;
+    public static int pvpSafeHudX = 10;
+    public static int pvpSafeHudY = 240;
+    public static int pvpSafeHudColor = 0xFFFF0000;
+    public static boolean pvpSafeRussian = false;
+
+    // ===== PICKUP LOGGER =====
+    public static boolean pickupLogEnabled = false;
+    public static int pickupLogMode = 1;
+    public static boolean pickupLogWeapon = true;
+    public static boolean pickupLogArmor = true;
+    public static boolean pickupLogPotions = true;
+    public static boolean pickupLogTotems = true;
+    public static boolean pickupLogHeads = true;
+    public static boolean pickupLogSpawners = true;
+    public static boolean pickupLogStructureBlocks = true;
+    public static boolean pickupLogRussian = false;
 
     public static String searchHistoryRaw = "";
     private static final int SEARCH_HISTORY_MAX = 8;
@@ -189,9 +224,9 @@ public class MyCustomScreen extends Screen {
 
     private static final int[] SECTION_PAGES = {
             7,  // 0 = HUD
-            6,  // 1 = PVP  (было 5, стало 6 — добавили Totem Log)
+            8,  // 1 = PVP (7 → 8: PvPSafe + PickUpLogger)
             1,  // 2 = PVE
-            6,  // 3 = Visual
+            8,  // 3 = Visual
             2   // 4 = Misc
     };
     private static final int SECTION_COUNT = SECTION_PAGES.length;
@@ -217,7 +252,6 @@ public class MyCustomScreen extends Screen {
 
     private boolean eventsRegistered = false;
 
-    // ===== WAYPOINT RENAME DIALOG =====
     private boolean renameDialogOpen = false;
     private int renameDialogIndex = -1;
     private String renameDialogOldName = "";
@@ -306,6 +340,14 @@ public class MyCustomScreen extends Screen {
             { "totem", "Totem Log", "5", "1" },
             { "лог", "Totem Log", "5", "1" },
             { "pvp", "Totem Log", "5", "1" },
+            { "pvp safe", "PvPSafe", "6", "1" },
+            { "pvpsafe", "PvPSafe", "6", "1" },
+            { "бой", "PvPSafe", "6", "1" },
+            { "combat", "PvPSafe", "6", "1" },
+            { "защита", "PvPSafe", "6", "1" },
+            { "pickup", "PickUpLogger", "7", "1" },
+            { "подбор", "PickUpLogger", "7", "1" },
+            { "pickup logger", "PickUpLogger", "7", "1" },
             { "tape", "TapeMouse", "0", "2" },
             { "тейп", "TapeMouse", "0", "2" },
             { "автокликер", "TapeMouse", "0", "2" },
@@ -322,11 +364,22 @@ public class MyCustomScreen extends Screen {
             { "метка", "Waypoints", "5", "3" },
             { "метки", "Waypoints", "5", "3" },
             { "waypoint", "Waypoints", "5", "3" },
+            { "hurt", "No Hurt Cam", "6", "3" },
+            { "тряска", "No Hurt Cam", "6", "3" },
+            { "урон", "No Hurt Cam", "6", "3" },
+            { "bobbing", "No Bobbing", "6", "3" },
+            { "покачивание", "No Bobbing", "6", "3" },
+            { "камера", "Camera", "6", "3" },
+            { "шалкер", "Shulker Peek", "7", "3" },
+            { "shulker", "Shulker Peek", "7", "3" },
+            { "peek", "Shulker Peek", "7", "3" },
+            { "содержимое", "Shulker Peek", "7", "3" },
             { "клавиша", "Привязка клавиши GUI", "0", "4" },
             { "gui", "Привязка клавиши GUI", "0", "4" },
             { "конфиг", "Конфигурации", "1", "4" },
             { "config", "Конфигурации", "1", "4" }
     };
+
     public MyCustomScreen() {
         super(Component.literal("Resistance DLC — Настройки"));
     }
@@ -366,6 +419,8 @@ public class MyCustomScreen extends Screen {
                 KeyBindings.setWaypointsKey(keyCode);
             } else if (bindingTarget == 10) {
                 KeyBindings.setTotemLogKey(keyCode);
+            } else if (bindingTarget == 11) {
+                KeyBindings.setPickupLogKey(keyCode);
             }
             isBindingKey = false;
             bindingTarget = 0;
@@ -393,7 +448,6 @@ public class MyCustomScreen extends Screen {
                     }
                 }
             }
-
             return true;
         });
     }
@@ -500,7 +554,9 @@ public class MyCustomScreen extends Screen {
                     case 2 -> initPage12(centerX, panelY);
                     case 3 -> initPage13(centerX, panelY);
                     case 4 -> initPage3b(centerX, panelY);
-                    case 5 -> initTotemLogPage(centerX, panelY);  // ← НОВОЕ
+                    case 5 -> initTotemLogPage(centerX, panelY);
+                    case 6 -> initPvPSafePage(centerX, panelY);
+                    case 7 -> initPickUpLoggerPage(centerX, panelY);
                 }
             }
             case 2 -> {
@@ -516,6 +572,8 @@ public class MyCustomScreen extends Screen {
                     case 3 -> initPage10(centerX, panelY);
                     case 4 -> initThemesPage(centerX, panelY);
                     case 5 -> initWaypointsPage(centerX, panelY);
+                    case 6 -> initCameraPage(centerX, panelY);
+                    case 7 -> initShulkerPeekPage(centerX, panelY);
                 }
             }
             case 4 -> {
@@ -528,11 +586,9 @@ public class MyCustomScreen extends Screen {
     }
 
     // =========================================================
-    // TOTEM LOG — НОВАЯ СТРАНИЦА (PVP, index 5)
+    // TOTEM LOG (PVP, index 5)
     // =========================================================
     private void initTotemLogPage(int centerX, int panelY) {
-        // Заголовок
-        // ===== ЧЕКБОКС ВКЛ/ВЫКЛ =====
         Checkbox enableCheckbox = Checkbox.builder(
                         Component.literal(totemLogRussian ? "Включить Totem Log" : "Enable Totem Log"), this.font)
                 .pos(centerX - 100, panelY + 70)
@@ -548,7 +604,6 @@ public class MyCustomScreen extends Screen {
         }).bounds(centerX + 120, panelY + 70, 25, 20).build();
         this.addRenderableWidget(translateBtn);
 
-        // ===== КЕЙБИНД =====
         String tlKeyName = KeyBindings.totemLogKey != null
                 ? KeyBindings.totemLogKey.getTranslatedKeyMessage().getString() : "O";
         Button keyBindBtn = Button.builder(
@@ -560,16 +615,15 @@ public class MyCustomScreen extends Screen {
                             bindingTarget = 10;
                             b.setMessage(Component.literal("Нажмите клавишу..."));
                         })
-                .bounds(centerX - 100, panelY + 110, 200, 20).build();
+                .bounds(centerX - 100, panelY + 105, 200, 20).build();
         this.addRenderableWidget(keyBindBtn);
 
-        // ===== СЛАЙДЕР РАДИУСА =====
         AbstractSliderButton radiusSlider = new AbstractSliderButton(
-                centerX - 100, panelY + 150, 200, 20,
+                centerX - 100, panelY + 140, 200, 20,
                 Component.literal(totemLogRussian
                         ? ("Радиус: " + totemLogRadius + " блоков")
                         : ("Radius: " + totemLogRadius + " blocks")),
-                (totemLogRadius - 5) / 15.0  // 5..20
+                (totemLogRadius - 5) / 15.0
         ) {
             @Override protected void updateMessage() {
                 this.setMessage(Component.literal(totemLogRussian
@@ -584,17 +638,258 @@ public class MyCustomScreen extends Screen {
         };
         this.addRenderableWidget(radiusSlider);
 
-        // ===== ЧЕКБОКС ЗВУКА =====
         Checkbox soundCheckbox = Checkbox.builder(
                         Component.literal(totemLogRussian ? "Звук-уведомление" : "Sound notification"), this.font)
-                .pos(centerX - 100, panelY + 190)
+                .pos(centerX - 100, panelY + 175)
                 .selected(totemLogSound)
                 .onValueChange((c, v) -> { totemLogSound = v; ConfigManager.save(); })
                 .build();
         this.addRenderableWidget(soundCheckbox);
+    }
 
-        // ===== ПОДСКАЗКА =====
-        // Рисуется в render()
+    // =========================================================
+    // PVP SAFE (PVP, index 6)
+    // =========================================================
+    private void initPvPSafePage(int centerX, int panelY) {
+        Checkbox enableCheckbox = Checkbox.builder(
+                        Component.literal(pvpSafeRussian ? "Включить PvPSafe" : "Enable PvPSafe"), this.font)
+                .pos(centerX - 100, panelY + 70)
+                .selected(pvpSafeEnabled)
+                .onValueChange((c, v) -> { pvpSafeEnabled = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(enableCheckbox);
+
+        Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
+            pvpSafeRussian = !pvpSafeRussian;
+            ConfigManager.save();
+            this.rebuildWidgets();
+        }).bounds(centerX + 120, panelY + 70, 25, 20).build();
+        this.addRenderableWidget(translateBtn);
+
+        AbstractSliderButton timerSlider = new AbstractSliderButton(
+                centerX - 100, panelY + 110, 200, 20,
+                Component.literal(pvpSafeRussian
+                        ? ("Таймер боя: " + pvpSafeTimer + " сек")
+                        : ("Combat timer: " + pvpSafeTimer + " sec")),
+                (pvpSafeTimer - 10) / 50.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(pvpSafeRussian
+                        ? ("Таймер боя: " + pvpSafeTimer + " сек")
+                        : ("Combat timer: " + pvpSafeTimer + " sec")));
+            }
+            @Override protected void applyValue() {
+                pvpSafeTimer = 10 + (int)(this.value * 50);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        };
+        this.addRenderableWidget(timerSlider);
+
+        Checkbox quitCheckbox = Checkbox.builder(
+                        Component.literal(pvpSafeRussian ? "Блокировать выход (ESC)" : "Block quit (ESC)"), this.font)
+                .pos(centerX - 100, panelY + 150)
+                .selected(pvpSafeBlockQuit)
+                .onValueChange((c, v) -> { pvpSafeBlockQuit = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(quitCheckbox);
+
+        Checkbox cmdCheckbox = Checkbox.builder(
+                        Component.literal(pvpSafeRussian ? "Блокировать команды" : "Block commands"), this.font)
+                .pos(centerX - 100, panelY + 180)
+                .selected(pvpSafeBlockCommands)
+                .onValueChange((c, v) -> { pvpSafeBlockCommands = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(cmdCheckbox);
+
+        Checkbox hudCheckbox = Checkbox.builder(
+                        Component.literal(pvpSafeRussian ? "Показывать HUD-таймер" : "Show HUD timer"), this.font)
+                .pos(centerX - 100, panelY + 215)
+                .selected(pvpSafeShowHud)
+                .onValueChange((c, v) -> { pvpSafeShowHud = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(hudCheckbox);
+
+        makePosEditor(centerX, panelY, 255,
+                () -> pvpSafeHudX, () -> pvpSafeHudY,
+                (x, y) -> { pvpSafeHudX = x; pvpSafeHudY = y; },
+                10, 240);
+    }
+
+    // =========================================================
+    // PICKUP LOGGER (PVP, index 7)
+    // =========================================================
+    private void initPickUpLoggerPage(int centerX, int panelY) {
+        Checkbox enableCheckbox = Checkbox.builder(
+                        Component.literal(pickupLogRussian ? "Включить PickUpLogger" : "Enable PickUpLogger"), this.font)
+                .pos(centerX - 100, panelY + 65)
+                .selected(pickupLogEnabled)
+                .onValueChange((c, v) -> { pickupLogEnabled = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(enableCheckbox);
+
+        Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
+            pickupLogRussian = !pickupLogRussian;
+            ConfigManager.save();
+            this.rebuildWidgets();
+        }).bounds(centerX + 120, panelY + 65, 25, 20).build();
+        this.addRenderableWidget(translateBtn);
+
+        String plKeyName = KeyBindings.pickupLogKey != null
+                ? KeyBindings.pickupLogKey.getTranslatedKeyMessage().getString() : "P";
+        Button keyBindBtn = Button.builder(
+                        Component.literal(isBindingKey && bindingTarget == 11
+                                ? "Нажмите клавишу..."
+                                : (pickupLogRussian ? "Клавиша: " : "Key: ") + plKeyName),
+                        (b) -> {
+                            isBindingKey = true;
+                            bindingTarget = 11;
+                            b.setMessage(Component.literal("Нажмите клавишу..."));
+                        })
+                .bounds(centerX - 100, panelY + 100, 200, 20).build();
+        this.addRenderableWidget(keyBindBtn);
+
+        String[] modesRu = {"Режим: Все предметы", "Режим: Только ценные", "Режим: По категориям"};
+        String[] modesEn = {"Mode: All items", "Mode: Valuable only", "Mode: By categories"};
+        Button modeBtn = Button.builder(
+                Component.literal(pickupLogRussian ? modesRu[pickupLogMode] : modesEn[pickupLogMode]),
+                (b) -> {
+                    pickupLogMode = (pickupLogMode + 1) % 3;
+                    ConfigManager.save();
+                    this.rebuildWidgets();
+                }
+        ).bounds(centerX - 100, panelY + 135, 200, 20).build();
+        this.addRenderableWidget(modeBtn);
+
+        if (pickupLogMode == 2) {
+            Checkbox weaponCheckbox = Checkbox.builder(
+                            Component.literal(pickupLogRussian ? "Оружие" : "Weapon"), this.font)
+                    .pos(centerX - 100, panelY + 175)
+                    .selected(pickupLogWeapon)
+                    .onValueChange((c, v) -> { pickupLogWeapon = v; ConfigManager.save(); })
+                    .build();
+            this.addRenderableWidget(weaponCheckbox);
+
+            Checkbox armorCheckbox = Checkbox.builder(
+                            Component.literal(pickupLogRussian ? "Броня" : "Armor"), this.font)
+                    .pos(centerX - 100, panelY + 200)
+                    .selected(pickupLogArmor)
+                    .onValueChange((c, v) -> { pickupLogArmor = v; ConfigManager.save(); })
+                    .build();
+            this.addRenderableWidget(armorCheckbox);
+
+            Checkbox potionsCheckbox = Checkbox.builder(
+                            Component.literal(pickupLogRussian ? "Зелья" : "Potions"), this.font)
+                    .pos(centerX - 100, panelY + 225)
+                    .selected(pickupLogPotions)
+                    .onValueChange((c, v) -> { pickupLogPotions = v; ConfigManager.save(); })
+                    .build();
+            this.addRenderableWidget(potionsCheckbox);
+
+            Checkbox totemsCheckbox = Checkbox.builder(
+                            Component.literal(pickupLogRussian ? "Талисманы" : "Totems"), this.font)
+                    .pos(centerX - 100, panelY + 250)
+                    .selected(pickupLogTotems)
+                    .onValueChange((c, v) -> { pickupLogTotems = v; ConfigManager.save(); })
+                    .build();
+            this.addRenderableWidget(totemsCheckbox);
+
+            Checkbox headsCheckbox = Checkbox.builder(
+                            Component.literal(pickupLogRussian ? "Головы игроков" : "Player heads"), this.font)
+                    .pos(centerX - 100, panelY + 275)
+                    .selected(pickupLogHeads)
+                    .onValueChange((c, v) -> { pickupLogHeads = v; ConfigManager.save(); })
+                    .build();
+            this.addRenderableWidget(headsCheckbox);
+
+            Checkbox spawnersCheckbox = Checkbox.builder(
+                            Component.literal(pickupLogRussian ? "Спавнеры" : "Spawners"), this.font)
+                    .pos(centerX - 100, panelY + 300)
+                    .selected(pickupLogSpawners)
+                    .onValueChange((c, v) -> { pickupLogSpawners = v; ConfigManager.save(); })
+                    .build();
+            this.addRenderableWidget(spawnersCheckbox);
+
+            Checkbox structureCheckbox = Checkbox.builder(
+                            Component.literal(pickupLogRussian ? "Блоки пазл/конструктор" : "Jigsaw/Structure blocks"), this.font)
+                    .pos(centerX - 100, panelY + 325)
+                    .selected(pickupLogStructureBlocks)
+                    .onValueChange((c, v) -> { pickupLogStructureBlocks = v; ConfigManager.save(); })
+                    .build();
+            this.addRenderableWidget(structureCheckbox);
+        }
+    }
+
+    // =========================================================
+    // CAMERA (Visual, index 6)
+    // =========================================================
+    private void initCameraPage(int centerX, int panelY) {
+        Checkbox noHurtCamCheckbox = Checkbox.builder(
+                        Component.literal(cameraRussian ? "Отключить тряску при уроне" : "No Hurt Cam"), this.font)
+                .pos(centerX - 100, panelY + 80)
+                .selected(noHurtCamEnabled)
+                .onValueChange((c, v) -> { noHurtCamEnabled = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(noHurtCamCheckbox);
+
+        Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
+            cameraRussian = !cameraRussian;
+            ConfigManager.save();
+            this.rebuildWidgets();
+        }).bounds(centerX + 120, panelY + 80, 25, 20).build();
+        this.addRenderableWidget(translateBtn);
+
+        Checkbox noBobbingCheckbox = Checkbox.builder(
+                        Component.literal(cameraRussian ? "Отключить покачивание камеры" : "No Bobbing"), this.font)
+                .pos(centerX - 100, panelY + 120)
+                .selected(noBobbingEnabled)
+                .onValueChange((c, v) -> { noBobbingEnabled = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(noBobbingCheckbox);
+    }
+
+    // =========================================================
+    // SHULKER PEEK (Visual, index 7)
+    // =========================================================
+    private void initShulkerPeekPage(int centerX, int panelY) {
+        Checkbox enableCheckbox = Checkbox.builder(
+                        Component.literal(shulkerPeekRussian ? "Включить Shulker Peek" : "Enable Shulker Peek"), this.font)
+                .pos(centerX - 100, panelY + 75)
+                .selected(shulkerPeekEnabled)
+                .onValueChange((c, v) -> { shulkerPeekEnabled = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(enableCheckbox);
+
+        Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
+            shulkerPeekRussian = !shulkerPeekRussian;
+            ConfigManager.save();
+            this.rebuildWidgets();
+        }).bounds(centerX + 120, panelY + 75, 25, 20).build();
+        this.addRenderableWidget(translateBtn);
+
+        Checkbox shiftCheckbox = Checkbox.builder(
+                        Component.literal(shulkerPeekRussian ? "Только при Shift" : "Only on Shift"), this.font)
+                .pos(centerX - 100, panelY + 115)
+                .selected(shulkerPeekRequireShift)
+                .onValueChange((c, v) -> { shulkerPeekRequireShift = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(shiftCheckbox);
+
+        Checkbox titleCheckbox = Checkbox.builder(
+                        Component.literal(shulkerPeekRussian ? "Показывать название" : "Show title"), this.font)
+                .pos(centerX - 100, panelY + 150)
+                .selected(shulkerPeekShowTitle)
+                .onValueChange((c, v) -> { shulkerPeekShowTitle = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(titleCheckbox);
+
+        Checkbox countsCheckbox = Checkbox.builder(
+                        Component.literal(shulkerPeekRussian ? "Показывать количество" : "Show item counts"), this.font)
+                .pos(centerX - 100, panelY + 185)
+                .selected(shulkerPeekShowCounts)
+                .onValueChange((c, v) -> { shulkerPeekShowCounts = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(countsCheckbox);
     }
 
     private static void addSearchHistory(String query) {
@@ -634,10 +929,6 @@ public class MyCustomScreen extends Screen {
         }
         return history;
     }
-
-    // =========================================================
-    // WAYPOINTS — методы
-    // =========================================================
 
     public static List<Waypoint> getWaypoints() {
         List<Waypoint> list = new ArrayList<>();
@@ -704,10 +995,6 @@ public class MyCustomScreen extends Screen {
         }
         return renamed;
     }
-
-    // =========================================================
-    // WAYPOINT RENAME DIALOG
-    // =========================================================
 
     private void openRenameDialog(int index, String oldName) {
         this.renameDialogOpen = true;
@@ -924,7 +1211,6 @@ public class MyCustomScreen extends Screen {
     }
 
     private void initPage0(int centerX, int panelY) {
-        // Мёртвый код — оставлен для совместимости
     }
 
     private void initPage1(int centerX, int panelY) {
@@ -1297,6 +1583,7 @@ public class MyCustomScreen extends Screen {
         };
         this.addRenderableWidget(pitchSlider);
     }
+
     private void initPage7(int centerX, int panelY) {
         Checkbox potionCheckbox = Checkbox.builder(
                         Component.literal(potionEffectsRussian ? "Показывать эффекты" : "Show Effects"), this.font)
@@ -2152,6 +2439,7 @@ public class MyCustomScreen extends Screen {
             return btn == 0 ? "Button: LMB (attack)" : "Button: RMB (use)";
         }
     }
+
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
         graphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xC0000000);
@@ -2187,7 +2475,6 @@ public class MyCustomScreen extends Screen {
 
         super.render(graphics, mouseX, mouseY, delta);
 
-        // ===== WAYPOINTS: заголовки и список =====
         if (currentSection == 3 && currentPage == 5) {
             graphics.drawString(this.font, "§l▸ Координаты новой метки",
                     panelX + 20, panelY + 35, guiTextColor);
@@ -2238,7 +2525,71 @@ public class MyCustomScreen extends Screen {
             }
         }
 
-        // ===== Плашка "результат в другом разделе" =====
+        if (currentSection == 3 && currentPage == 6) {
+            graphics.drawString(this.font, "§l▸ Настройки камеры",
+                    panelX + 20, panelY + 40, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 52, panelX + panelWidth - 20, panelY + 53, guiColor);
+
+            graphics.drawString(this.font, "§7No Hurt Cam §f— убирает тряску при получении урона",
+                    panelX + 20, panelY + 175, 0xFFAAAAAA);
+            graphics.drawString(this.font, "§7No Bobbing §f— убирает покачивание камеры при ходьбе",
+                    panelX + 20, panelY + 189, 0xFFAAAAAA);
+            graphics.drawString(this.font, "§7Обе фичи безопасны и разрешены на PvP-серверах",
+                    panelX + 20, panelY + 203, 0xFF888888);
+        }
+
+        if (currentSection == 3 && currentPage == 7) {
+            graphics.drawString(this.font, "§l▸ Shulker Peek",
+                    panelX + 20, panelY + 40, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 52, panelX + panelWidth - 20, panelY + 53, guiColor);
+
+            graphics.drawString(this.font, "§7Показывает содержимое шалкера при наведении",
+                    panelX + 20, panelY + 230, 0xFFAAAAAA);
+            graphics.drawString(this.font, "§7Работает чисто на клиенте — сервер не видит",
+                    panelX + 20, panelY + 244, 0xFFAAAAAA);
+            graphics.drawString(this.font, "§7Содержимое уже есть в NBT предмета",
+                    panelX + 20, panelY + 258, 0xFF888888);
+        }
+
+        if (currentSection == 1 && currentPage == 5) {
+            int hintY = panelY + 230;
+            graphics.drawString(this.font,
+                    "§7Формат: §c[PvP] §f<атакующий> §7снёс тотем §f<жертва>",
+                    panelX + 20, hintY, 0xFFFFFFFF);
+            graphics.drawString(this.font,
+                    "§7Радиус проверяется от §fтебя §7до §fжертвы",
+                    panelX + 20, hintY + 14, 0xFFFFFFFF);
+            graphics.drawString(this.font,
+                    "§7Звук: §fBLOCK_NOTE_BLOCK_PLING §7(клиентский)",
+                    panelX + 20, hintY + 28, 0xFFFFFFFF);
+        }
+
+        if (currentSection == 1 && currentPage == 6) {
+            graphics.drawString(this.font, "§l▸ PvPSafe",
+                    panelX + 20, panelY + 40, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 52, panelX + panelWidth - 20, panelY + 53, guiColor);
+
+            graphics.drawString(this.font, "§7Блокирует выход и опасные команды во время боя:",
+                    panelX + 20, panelY + 310, 0xFFAAAAAA);
+            graphics.drawString(this.font, "§f/hub §7· §f/an<число> §7· §f/logout §7· §f/limbo §7· §f/suicide",
+                    panelX + 20, panelY + 324, 0xFFFFFFFF);
+            graphics.drawString(this.font, "§c⚠ Не работает со спец-предметами (явная пыль и т.п.)",
+                    panelX + 20, panelY + 342, 0xFFFF5555);
+        }
+
+        if (currentSection == 1 && currentPage == 7) {
+            graphics.drawString(this.font, "§l▸ PickUpLogger",
+                    panelX + 20, panelY + 40, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 52, panelX + panelWidth - 20, panelY + 53, guiColor);
+
+            if (pickupLogMode != 2) {
+                graphics.drawString(this.font, "§7Логирует подобранные предметы в чат:",
+                        panelX + 20, panelY + 195, 0xFFAAAAAA);
+                graphics.drawString(this.font, "§a[PickUp] §f+1 §eАлмазный меч",
+                        panelX + 20, panelY + 209, 0xFFFFFFFF);
+            }
+        }
+
         if (searchOtherSectionMsg != null && !searchOtherSectionMsg.isEmpty()) {
             int msgW = this.font.width(searchOtherSectionMsg) + 16;
             int msgH = 18;
@@ -2255,7 +2606,6 @@ public class MyCustomScreen extends Screen {
                     msgX + msgW / 2, msgY + 5, 0xFFFFFFFF);
         }
 
-        // ===== ПЕТ =====
         if (showPet) {
             int petSize = 24;
             int petX = panelX - 45;
@@ -2274,14 +2624,12 @@ public class MyCustomScreen extends Screen {
             );
         }
 
-        // ===== ЗАГОЛОВОК =====
         String sectionName = getSectionName(currentSection, modLogoRussian);
         int pagesInSection = SECTION_PAGES[currentSection];
         String title = "Resistance DLC — " + sectionName + " · Стр. " + (currentPage + 1) + " / " + pagesInSection;
         graphics.drawCenteredString(this.font, "§l" + title,
                 panelX + panelWidth / 2, panelY + 15, guiColor);
 
-        // ===== СЧЁТЧИК ВНИЗУ =====
         graphics.drawCenteredString(this.font,
                 "§7" + sectionName + " · Стр. " + (currentPage + 1) + " / " + pagesInSection,
                 panelX + panelWidth / 2, panelY + 405, 0xFFFFFFFF);
