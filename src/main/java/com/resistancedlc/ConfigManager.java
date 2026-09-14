@@ -205,6 +205,11 @@ public class ConfigManager {
             json.addProperty("crosshairAlpha", MyCustomScreen.crosshairAlpha);
             json.addProperty("crosshairRussian", MyCustomScreen.crosshairRussian);
             json.addProperty("crosshairShape", MyCustomScreen.crosshairShape);
+            // === WAYPOINTS ===
+            json.addProperty("waypointsRaw", MyCustomScreen.waypointsRaw);
+            json.addProperty("waypointsMax", MyCustomScreen.waypointsMax);
+            json.addProperty("waypointsRussian", MyCustomScreen.waypointsRussian);
+            json.addProperty("waypointsEnabled", MyCustomScreen.waypointsEnabled);
 
             Path file = CONFIG_DIR.resolve(name + ".json");
             synchronized (GSON) {
@@ -382,6 +387,11 @@ public class ConfigManager {
             MyCustomScreen.crosshairAlpha = getInt(json, "crosshairAlpha", MyCustomScreen.crosshairAlpha);
             MyCustomScreen.crosshairRussian = getBool(json, "crosshairRussian", MyCustomScreen.crosshairRussian);
             MyCustomScreen.crosshairShape = getInt(json, "crosshairShape", MyCustomScreen.crosshairShape);
+            // === WAYPOINTS ===
+            MyCustomScreen.waypointsRaw = getString(json, "waypointsRaw", MyCustomScreen.waypointsRaw);
+            MyCustomScreen.waypointsMax = getInt(json, "waypointsMax", MyCustomScreen.waypointsMax);
+            MyCustomScreen.waypointsRussian = getBool(json, "waypointsRussian", MyCustomScreen.waypointsRussian);
+            MyCustomScreen.waypointsEnabled = getBool(json, "waypointsEnabled", MyCustomScreen.waypointsEnabled);
             return true;
 
         } catch (Exception e) {

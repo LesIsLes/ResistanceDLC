@@ -145,6 +145,12 @@ public class MyCustomScreen extends Screen {
     public static boolean crosshairRussian = false;
     public static int crosshairShape = 0;   // 0=Cross, 1=Dot, 2=Circle, 3=Arrows, 4=Cross+Dot
 
+    // ===== WAYPOINTS =====
+    public static String waypointsRaw = "";
+    public static int waypointsMax = 5;
+    public static boolean waypointsRussian = false;
+    public static boolean waypointsEnabled = true;
+
     // ===== AUTOSPRINT =====
     public static boolean autoSprintEnabled = false;
     public static boolean autoSprintRussian = false;
@@ -226,11 +232,46 @@ public class MyCustomScreen extends Screen {
     private final int panelHeight = 420;
 
     private boolean eventsRegistered = false;
+    /**
+     * Точка-метка в мире.
+     * Формат хранения в конфиге: "Name:x:y:z|Name2:x:y:z|..."
+     */
+    public static record Waypoint(String name, double x, double y, double z) {
+        public String serialize() {
+            return name.replace(":", "_").replace("|", "_")
+                    + ":" + x + ":" + y + ":" + z;
+        }
 
+        public static Waypoint deserialize(String s) {
+            try {
+                String[] parts = s.split(":");
+                if (parts.length != 4) return null;
+                String name = parts[0];
+                double x = Double.parseDouble(parts[1]);
+                double y = Double.parseDouble(parts[2]);
+                double z = Double.parseDouble(parts[3]);
+                return new Waypoint(name, x, y, z);
+            } catch (Exception e) {
+                return null;
+            }
+        }
+
+        public String displayName() {
+            return name + " (" + (int) x + ", " + (int) y + ", " + (int) z + ")";
+        }
+
+        public double distanceTo(double px, double py, double pz) {
+            double dx = x - px;
+            double dy = y - py;
+            double dz = z - pz;
+            return Math.sqrt(dx * dx + dy * dy + dz * dz);
+        }
+    }
     /**
      * Формат: [ключ, отображаемое_название, страница_в_разделе, индекс_раздела]
      * Индексы разделов: 0 = HUD, 1 = PVP, 2 = PVE, 3 = Visual, 4 = Misc
      */
+
     private static final String[][] SEARCH_INDEX = {
             // ===== HUD 0.0 — Элементы HUD =====
             { "hud", "Показывать HUD", "0", "0" },
@@ -720,6 +761,69 @@ public class MyCustomScreen extends Screen {
             if (!s.isEmpty()) history.add(s);
         }
         return history;
+    }
+    // =========================================================
+    // WAYPOINTS
+    // =========================================================
+
+    /**
+     * Парсит waypointsRaw и возвращает список.
+     */
+    public static List<Waypoint> getWaypoints() {
+        List<Waypoint> list = new ArrayList<>();
+        if (waypointsRaw == null || waypointsRaw.isEmpty()) return list;
+        for (String s : waypointsRaw.split("\\|")) {
+            if (s.isEmpty()) continue;
+            Waypoint wp = Waypoint.deserialize(s);
+            if (wp != null) list.add(wp);
+        }
+        return list;
+    }
+
+    /**
+     * Сохраняет список waypoints обратно в строку.
+     */
+    public static void setWaypoints(List<Waypoint> list) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < list.size(); i++) {
+            if (i > 0) sb.append("|");
+            sb.append(list.get(i).serialize());
+        }
+        waypointsRaw = sb.toString();
+    }
+
+    /**
+     * Добавляет waypoint. Если превышен лимит — не добавляет.
+     * Возвращает true, если добавлено.
+     */
+    public static boolean addWaypoint(double x, double y, double z) {
+        List<Waypoint> list = getWaypoints();
+        if (list.size() >= waypointsMax) return false;
+        String name = "WP" + (list.size() + 1);
+        list.add(new Waypoint(name, x, y, z));
+        setWaypoints(list);
+        ConfigManager.save();
+        return true;
+    }
+
+    /**
+     * Удаляет waypoint по индексу. Возвращает true, если удалено.
+     */
+    public static boolean removeWaypoint(int index) {
+        List<Waypoint> list = getWaypoints();
+        if (index < 0 || index >= list.size()) return false;
+        list.remove(index);
+        setWaypoints(list);
+        ConfigManager.save();
+        return true;
+    }
+
+    /**
+     * Удаляет все waypoints.
+     */
+    public static void clearWaypoints() {
+        waypointsRaw = "";
+        ConfigManager.save();
     }
     // ===== ХЕЛПЕР: EditBox "X, Y" + ОК + Сброс + 4 стрелки =====
     private void makePosEditor(int centerX, int panelY, int rowY,
