@@ -17,32 +17,20 @@ public class ConfigManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path CONFIG_DIR = FabricLoader.getInstance().getConfigDir().resolve("resistancedlc");
 
-    // ===== ДЕБАУНС =====
     private static final long SAVE_DEBOUNCE_MS = 500;
     private static boolean savePending = false;
     private static long lastSaveRequest = 0;
 
-    /**
-     * Планирует сохранение. Реальная запись произойдёт через 500 мс
-     * после последнего вызова (см. tick() — вызывается из ClientTickEvents).
-     */
     public static void save() {
         savePending = true;
         lastSaveRequest = System.currentTimeMillis();
     }
 
-    /**
-     * Принудительное немедленное сохранение (без дебаунса).
-     * Используется при закрытии экрана / выключении игры.
-     */
     public static void saveNow() {
         savePending = false;
         saveAs("default");
     }
 
-    /**
-     * Вызывается каждый клиентский тик. Если запрос на сохранение висит > 500 мс — пишем.
-     */
     public static void tick() {
         if (!savePending) return;
         if (System.currentTimeMillis() - lastSaveRequest < SAVE_DEBOUNCE_MS) return;
@@ -210,6 +198,12 @@ public class ConfigManager {
             json.addProperty("waypointsMax", MyCustomScreen.waypointsMax);
             json.addProperty("waypointsRussian", MyCustomScreen.waypointsRussian);
             json.addProperty("waypointsEnabled", MyCustomScreen.waypointsEnabled);
+
+            // === TOTEM LOG (НОВОЕ) ===
+            json.addProperty("totemLogEnabled", MyCustomScreen.totemLogEnabled);
+            json.addProperty("totemLogRadius", MyCustomScreen.totemLogRadius);
+            json.addProperty("totemLogSound", MyCustomScreen.totemLogSound);
+            json.addProperty("totemLogRussian", MyCustomScreen.totemLogRussian);
 
             Path file = CONFIG_DIR.resolve(name + ".json");
             synchronized (GSON) {
@@ -392,6 +386,13 @@ public class ConfigManager {
             MyCustomScreen.waypointsMax = getInt(json, "waypointsMax", MyCustomScreen.waypointsMax);
             MyCustomScreen.waypointsRussian = getBool(json, "waypointsRussian", MyCustomScreen.waypointsRussian);
             MyCustomScreen.waypointsEnabled = getBool(json, "waypointsEnabled", MyCustomScreen.waypointsEnabled);
+
+            // === TOTEM LOG (НОВОЕ) ===
+            MyCustomScreen.totemLogEnabled = getBool(json, "totemLogEnabled", MyCustomScreen.totemLogEnabled);
+            MyCustomScreen.totemLogRadius = getInt(json, "totemLogRadius", MyCustomScreen.totemLogRadius);
+            MyCustomScreen.totemLogSound = getBool(json, "totemLogSound", MyCustomScreen.totemLogSound);
+            MyCustomScreen.totemLogRussian = getBool(json, "totemLogRussian", MyCustomScreen.totemLogRussian);
+
             return true;
 
         } catch (Exception e) {
@@ -400,7 +401,6 @@ public class ConfigManager {
         }
     }
 
-    // ===== ХЕЛПЕРЫ ДЛЯ БЕЗОПАСНОГО ЧТЕНИЯ =====
     private static boolean getBool(JsonObject json, String key, boolean def) {
         return json.has(key) ? json.get(key).getAsBoolean() : def;
     }

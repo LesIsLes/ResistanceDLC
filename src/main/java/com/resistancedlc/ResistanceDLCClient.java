@@ -28,6 +28,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.waypoints.TrackedWaypoint;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -48,8 +50,11 @@ public class ResistanceDLCClient implements ClientModInitializer {
         ConfigManager.load();
         KeyBindings.register();
 
-        // ===== СОХРАНЕНИЕ ПРИ ВЫХОДЕ ИЗ МИРА =====
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ConfigManager.saveNow());
+        // ===== СОХРАНЕНИЕ ПРИ ВЫХОДЕ ИЗ МИРА + ОЧИСТКА ТРЕКЕРА =====
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            ConfigManager.saveNow();
+            TotemTracker.clear();
+        });
 
         // ===== КОМАНДЫ =====
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
@@ -213,6 +218,23 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                             })
                                     )
                             )
+                            .then(ClientCommandManager.literal("rename")
+                                    .then(ClientCommandManager.argument("old", StringArgumentType.string())
+                                            .then(ClientCommandManager.argument("new", StringArgumentType.string())
+                                                    .executes(context -> {
+                                                        String oldName = StringArgumentType.getString(context, "old");
+                                                        String newName = StringArgumentType.getString(context, "new");
+
+                                                        if (MyCustomScreen.renameWaypoint(oldName, newName)) {
+                                                            sendMessage("§a[Waypoints] Метка §e" + oldName + "§a переименована в §6" + newName);
+                                                        } else {
+                                                            sendMessage("§c[Waypoints] Метка §e" + oldName + "§c не найдена.");
+                                                        }
+                                                        return 1;
+                                                    })
+                                            )
+                                    )
+                            )
             );
         });
 
@@ -308,6 +330,17 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     String state = MyCustomScreen.effectWarningsEnabled ? "§aвключён" : "§cвыключен";
                     client.player.displayClientMessage(
                             Component.literal("§6Effect Warnings " + state), true);
+                }
+            }
+
+            // ===== TOTEM LOG (НОВОЕ) =====
+            if (KeyBindings.totemLogKey != null) {
+                while (KeyBindings.totemLogKey.consumeClick()) {
+                    MyCustomScreen.totemLogEnabled = !MyCustomScreen.totemLogEnabled;
+                    ConfigManager.save();
+                    String state = MyCustomScreen.totemLogEnabled ? "§aвключён" : "§cвыключен";
+                    client.player.displayClientMessage(
+                            Component.literal("§6Totem Log " + state), true);
                 }
             }
         });
@@ -516,9 +549,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
         );
     }
 
-    // =========================================================
-    // HUD
-    // =========================================================
+    // ===== HUD =====
     private static void renderHud(GuiGraphics graphics) {
         if (!MyCustomScreen.showHud) return;
 
@@ -529,10 +560,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
         int baseColor = MyCustomScreen.hudColor;
         int color = (baseColor & 0x00FFFFFF) | (alpha << 24);
 
-        // ===== WAYPOINTS (заглушка) =====
         renderWaypoints(graphics);
 
-        // ===== CROSSHAIR =====
         if (MyCustomScreen.crosshairEnabled) {
             int chCenterX = client.getWindow().getGuiScaledWidth() / 2;
             int chCenterY = client.getWindow().getGuiScaledHeight() / 2;
@@ -595,7 +624,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
             }
         }
 
-        // ===== ИКОНКА МОДА =====
         if (MyCustomScreen.showModLogo) {
             int logoX = MyCustomScreen.modLogoX;
             int logoY = MyCustomScreen.modLogoY;
@@ -617,7 +645,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     logoX + 20, logoY + 4, color);
         }
 
-        // ===== COMBO COUNTER =====
         if (MyCustomScreen.comboEnabled && MyCustomScreen.currentCombo > 0) {
             String comboText = "x" + MyCustomScreen.currentCombo;
             int fontSize = MyCustomScreen.comboFontSize;
@@ -636,7 +663,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
             graphics.pose().popMatrix();
         }
 
-        // ===== КООРДИНАТЫ =====
         if (MyCustomScreen.showCoords) {
             drawHudString(graphics, client.font,
                     String.format("XYZ: %d / %d / %d",
@@ -646,7 +672,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     MyCustomScreen.coordsX, MyCustomScreen.coordsY, color);
         }
 
-        // ===== БИОМ =====
         if (MyCustomScreen.showBiome) {
             String biome = client.level.getBiome(client.player.blockPosition())
                     .unwrapKey()
@@ -656,7 +681,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     MyCustomScreen.biomeX, MyCustomScreen.biomeY, color);
         }
 
-        // ===== ВРЕМЯ =====
         if (MyCustomScreen.showTime) {
             long time = client.level.getDayTime() % 24000;
             String timeStr = time < 12000 ? "День" : "Ночь";
@@ -664,14 +688,12 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     MyCustomScreen.timeX, MyCustomScreen.timeY, color);
         }
 
-        // ===== FPS =====
         if (MyCustomScreen.showFps) {
             String label = MyCustomScreen.fpsRussian ? "КВС" : "FPS";
             drawHudString(graphics, client.font, label + ": " + client.getFps(),
                     MyCustomScreen.fpsX, MyCustomScreen.fpsY, color);
         }
 
-        // ===== PING =====
         if (MyCustomScreen.showPing) {
             int ping = 0;
             if (client.getConnection() != null
@@ -683,7 +705,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     MyCustomScreen.pingX, MyCustomScreen.pingY, color);
         }
 
-        // ===== TPS =====
         if (MyCustomScreen.showTps) {
             float tps = 20.0f;
             if (client.getSingleplayerServer() != null) {
@@ -698,7 +719,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     MyCustomScreen.tpsX, MyCustomScreen.tpsY, color);
         }
 
-        // ===== BPS =====
         if (MyCustomScreen.showBps) {
             String label = MyCustomScreen.bpsRussian ? "БВС" : "BPS";
             drawHudString(graphics, client.font,
@@ -706,7 +726,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     MyCustomScreen.bpsX, MyCustomScreen.bpsY, color);
         }
 
-        // ===== DIRECTION =====
         if (MyCustomScreen.showDirection) {
             float yaw = client.player.getYRot();
             yaw = ((yaw % 360) + 360) % 360;
@@ -727,7 +746,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     MyCustomScreen.directionX, MyCustomScreen.directionY, color);
         }
 
-        // ===== HITS =====
         if (MyCustomScreen.showHitCounter) {
             Entity target = client.crosshairPickEntity;
             if (target instanceof LivingEntity living) {
@@ -750,7 +768,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
             }
         }
 
-        // ===== POTION EFFECTS =====
         if (MyCustomScreen.showPotionEffects) {
             Collection<MobEffectInstance> effects = client.player.getActiveEffects();
             if (!effects.isEmpty()) {
@@ -821,7 +838,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
             }
         }
 
-        // ===== EFFECT WARNINGS =====
         if (MyCustomScreen.effectWarningsEnabled) {
             Collection<MobEffectInstance> warnEffects = client.player.getActiveEffects();
             int warnY = 0;
@@ -880,7 +896,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
             }
         }
 
-        // ===== EQUIPMENT HUD =====
         if (MyCustomScreen.showEquipmentHud) {
             int guiW = client.getWindow().getGuiScaledWidth();
             int guiH = client.getWindow().getGuiScaledHeight();
@@ -917,32 +932,95 @@ public class ResistanceDLCClient implements ClientModInitializer {
         }
     }
 
-    // =========================================================
-    // ХЕЛПЕРЫ
-    // =========================================================
-
-    /**
-     * Показывает справку по команде /wp.
-     */
     private static void showWaypointsHelp() {
         sendMessage("§6§l══════ Waypoints — команды ══════");
         sendMessage("§e/wp §7— показать эту справку");
         sendMessage("§e/wp help §7— показать эту справку");
         sendMessage("§e/wp add §7— добавить метку в текущей позиции");
         sendMessage("§e/wp list §7— список всех меток");
-        sendMessage("§e/wp remove <имя> §7— удалить метку по имени (§7например §eWP1§7)");
+        sendMessage("§e/wp remove <имя> §7— удалить метку по имени");
+        sendMessage("§e/wp rename <старое> <новое> §7— переименовать метку");
         sendMessage("§e/wp clear §7— удалить все метки");
         sendMessage("§7Клавиша §eB §7— быстро добавить метку");
         sendMessage("§7GUI: §eG §7→ вкладка §6Visual §7→ §6Waypoints");
+        sendMessage("§7В GUI у каждой метки есть кнопки §e✎§7 (§7переименовать§7) и §c× §7(удалить)");
         sendMessage("§6§l════════════════════════════════");
     }
 
-    /**
-     * Рендер waypoints на экране.
-     * ВРЕМЕННАЯ ЗАГЛУШКА — проекция будет добавлена позже.
-     */
     private static void renderWaypoints(GuiGraphics graphics) {
-        // TODO: реализовать проекцию мировой позиции в экранные координаты
+        if (!MyCustomScreen.waypointsEnabled) return;
+
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.level == null) return;
+        if (client.options.hideGui) return;
+
+        List<MyCustomScreen.Waypoint> waypoints = MyCustomScreen.getWaypoints();
+        if (waypoints.isEmpty()) return;
+
+        int screenW = graphics.guiWidth();
+        int screenH = graphics.guiHeight();
+
+        double px = client.player.getX();
+        double py = client.player.getY();
+        double pz = client.player.getZ();
+
+        TrackedWaypoint.Projector projector = client.gameRenderer;
+
+        for (MyCustomScreen.Waypoint wp : waypoints) {
+            double dist = wp.distanceTo(px, py, pz);
+
+            Vec3 ndc;
+            try {
+                ndc = projector.projectPointToScreen(new Vec3(wp.x(), wp.y(), wp.z()));
+            } catch (Exception e) {
+                continue;
+            }
+            if (ndc == null) continue;
+
+            boolean behind = ndc.z > 1.0;
+            double ndcX = ndc.x;
+            double ndcY = behind ? -ndc.y : ndc.y;
+
+            if (ndcX < -2.0 || ndcX > 2.0 || ndcY < -2.0 || ndcY > 2.0) continue;
+
+            int screenX = (int) ((ndcX + 1.0) * 0.5 * screenW);
+            int screenY = (int) ((1.0 - ndcY) * 0.5 * screenH);
+
+            int wpColor;
+            if (dist < 50.0) {
+                wpColor = 0xFF00FF00;
+            } else if (dist < 200.0) {
+                wpColor = 0xFFFFFF00;
+            } else {
+                wpColor = 0xFFFF0000;
+            }
+
+            drawWaypointDiamond(graphics, screenX, screenY, 5, wpColor);
+
+            String label = wp.name();
+            String distStr = String.format("%.0fm", dist);
+
+            int labelW = client.font.width(label);
+            int distW = client.font.width(distStr);
+
+            graphics.drawString(client.font, label,
+                    screenX - labelW / 2, screenY - 16, wpColor, true);
+            graphics.drawString(client.font, distStr,
+                    screenX - distW / 2, screenY + 8, wpColor, true);
+        }
+    }
+
+    private static void drawWaypointDiamond(GuiGraphics graphics, int cx, int cy, int radius, int color) {
+        for (int dy = -radius; dy <= 0; dy++) {
+            int halfWidth = radius + dy;
+            if (halfWidth < 0) halfWidth = 0;
+            graphics.fill(cx - halfWidth, cy + dy, cx + halfWidth + 1, cy + dy + 1, color);
+        }
+        for (int dy = 1; dy <= radius; dy++) {
+            int halfWidth = radius - dy;
+            if (halfWidth < 0) halfWidth = 0;
+            graphics.fill(cx - halfWidth, cy + dy, cx + halfWidth + 1, cy + dy + 1, color);
+        }
     }
 
     private static void drawTriangle(GuiGraphics graphics, int tipX, int tipY,

@@ -14,9 +14,6 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
-import org.joml.Matrix4f;
-import org.joml.Vector4f;
-import com.mojang.blaze3d.systems.RenderSystem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +24,6 @@ public class MyCustomScreen extends Screen {
     public static boolean showHud = false;
     public static int hudColor = 0xFF00FF00;
 
-    // ===== ИКОНКА МОДА =====
     public static boolean showModLogo = false;
     public static int modLogoX = 10, modLogoY = 5;
     public static boolean modLogoRussian = false;
@@ -39,7 +35,6 @@ public class MyCustomScreen extends Screen {
     public static int guiColor = 0xFF00FF00;
     public static int guiTextColor = 0xFFFFFFFF;
 
-    // ===== ПОЗИЦИИ HUD =====
     public static int coordsX = 10, coordsY = 35;
     public static int biomeX = 10, biomeY = 50;
     public static int timeX = 10, timeY = 65;
@@ -138,7 +133,6 @@ public class MyCustomScreen extends Screen {
     public static boolean crosshairRussian = false;
     public static int crosshairShape = 0;
 
-    // ===== WAYPOINTS =====
     public static String waypointsRaw = "";
     public static int waypointsMax = 5;
     public static boolean waypointsRussian = false;
@@ -168,6 +162,12 @@ public class MyCustomScreen extends Screen {
     public static float aspectRatio = 1.0f;
     public static boolean aspectRatioRussian = false;
 
+    // ===== TOTEM LOG (НОВОЕ) =====
+    public static boolean totemLogEnabled = false;
+    public static int totemLogRadius = 15;
+    public static boolean totemLogSound = true;
+    public static boolean totemLogRussian = false;
+
     public static String searchHistoryRaw = "";
     private static final int SEARCH_HISTORY_MAX = 8;
 
@@ -189,9 +189,9 @@ public class MyCustomScreen extends Screen {
 
     private static final int[] SECTION_PAGES = {
             7,  // 0 = HUD
-            5,  // 1 = PVP
+            6,  // 1 = PVP  (было 5, стало 6 — добавили Totem Log)
             1,  // 2 = PVE
-            6,  // 3 = Visual (6 страниц — добавлена Waypoints)
+            6,  // 3 = Visual
             2   // 4 = Misc
     };
     private static final int SECTION_COUNT = SECTION_PAGES.length;
@@ -217,10 +217,11 @@ public class MyCustomScreen extends Screen {
 
     private boolean eventsRegistered = false;
 
-    /**
-     * Точка-метка в мире.
-     * Формат хранения: "Name:x:y:z|Name2:x:y:z|..."
-     */
+    // ===== WAYPOINT RENAME DIALOG =====
+    private boolean renameDialogOpen = false;
+    private int renameDialogIndex = -1;
+    private String renameDialogOldName = "";
+
     public static record Waypoint(String name, double x, double y, double z) {
         public String serialize() {
             return name.replace(":", "_").replace("|", "_")
@@ -254,55 +255,30 @@ public class MyCustomScreen extends Screen {
     }
 
     private static final String[][] SEARCH_INDEX = {
-            // ===== HUD 0.0 — Элементы HUD =====
             { "hud", "Показывать HUD", "0", "0" },
             { "худ", "Показывать HUD", "0", "0" },
             { "иконка", "Иконка мода", "0", "0" },
             { "лого", "Иконка мода", "0", "0" },
             { "logo", "Иконка мода", "0", "0" },
-            { "иконка мода", "Иконка мода", "0", "0" },
             { "координаты", "Координаты", "0", "0" },
             { "coords", "Координаты", "0", "0" },
-            { "xyz", "Координаты", "0", "0" },
             { "биом", "Биом", "0", "0" },
             { "biome", "Биом", "0", "0" },
             { "время", "Время", "0", "0" },
             { "time", "Время", "0", "0" },
             { "прозрачность", "Прозрачность HUD", "0", "0" },
-            { "alpha", "Прозрачность HUD", "0", "0" },
-
-            // ===== HUD 0.1 — Эффекты зелий =====
             { "эффект", "Эффекты зелий", "1", "0" },
             { "зелье", "Эффекты зелий", "1", "0" },
             { "potion", "Эффекты зелий", "1", "0" },
             { "иконки", "Иконки эффектов", "1", "0" },
-            { "иконки эффектов", "Иконки эффектов", "1", "0" },
-            { "icons", "Иконки эффектов", "1", "0" },
-
-            // ===== HUD 0.2 — Экипировка =====
             { "экипировка", "Экипировка", "2", "0" },
             { "броня", "Экипировка", "2", "0" },
             { "прочность", "Прочность брони", "2", "0" },
             { "equipment", "Экипировка", "2", "0" },
-            { "armor", "Экипировка", "2", "0" },
-            { "durability", "Прочность брони", "2", "0" },
-
-            // ===== HUD 0.3 — Effect Warnings =====
             { "warnings", "Effect Warnings", "3", "0" },
-            { "варнинги", "Effect Warnings", "3", "0" },
             { "предупреждение", "Effect Warnings", "3", "0" },
-            { "эффект предупреждение", "Effect Warnings", "3", "0" },
-            { "порог", "Effect Warnings: порог", "3", "0" },
-            { "threshold", "Effect Warnings: порог", "3", "0" },
-
-            // ===== HUD 0.4 — Combo Counter =====
             { "комбо", "Combo Counter", "4", "0" },
             { "combo", "Combo Counter", "4", "0" },
-            { "combo counter", "Combo Counter", "4", "0" },
-            { "счётчик", "Combo Counter", "4", "0" },
-            { "счетчик", "Combo Counter", "4", "0" },
-
-            // ===== HUD 0.5 — Доп. элементы =====
             { "fps", "FPS / КВС", "5", "0" },
             { "квс", "FPS / КВС", "5", "0" },
             { "ping", "Ping / Пинг", "5", "0" },
@@ -312,118 +288,49 @@ public class MyCustomScreen extends Screen {
             { "bps", "BPS / БВС", "5", "0" },
             { "бвс", "BPS / БВС", "5", "0" },
             { "направление", "Направление", "5", "0" },
-            { "direction", "Направление", "5", "0" },
             { "удар", "Счётчик ударов", "5", "0" },
             { "hit", "Счётчик ударов", "5", "0" },
-            { "хит", "Счётчик ударов", "5", "0" },
-
-            // ===== HUD 0.6 — Оформление HUD =====
             { "цвет", "Цвет HUD / GUI", "6", "0" },
-            { "color", "Цвет HUD / GUI", "6", "0" },
             { "фон", "Фон HUD", "6", "0" },
-            { "background", "Фон HUD", "6", "0" },
-            { "сбросить цвета", "Сброс цветов", "6", "0" },
-
-            // ===== PVP 1.0 — Custom Hit Sounds =====
             { "звук", "Custom Hit Sounds", "0", "1" },
             { "sound", "Custom Hit Sounds", "0", "1" },
-            { "hit sound", "Custom Hit Sounds", "0", "1" },
-            { "hitsound", "Custom Hit Sounds", "0", "1" },
-            { "громкость", "Hit Sound: громкость", "0", "1" },
-            { "тон", "Hit Sound: тон", "0", "1" },
-            { "пресет", "Hit Sound: пресет", "0", "1" },
-
-            // ===== PVP 1.1 — AutoSwap =====
             { "автосвап", "Автосвап", "1", "1" },
             { "autoswap", "Автосвап", "1", "1" },
-            { "swap", "Автосвап", "1", "1" },
-            { "свап", "Автосвап", "1", "1" },
-            { "тотем", "Автосвап", "1", "1" },
-            { "totem", "Автосвап", "1", "1" },
-
-            // ===== PVP 1.2 — FastExp =====
             { "fast", "FastExp", "2", "1" },
-            { "fastexp", "FastExp", "2", "1" },
-            { "фаст", "FastExp", "2", "1" },
             { "опыт", "FastExp", "2", "1" },
-            { "exp", "FastExp", "2", "1" },
-
-            // ===== PVP 1.3 — ShiftTap =====
             { "shifttap", "ShiftTap", "3", "1" },
-            { "shift", "ShiftTap", "3", "1" },
             { "шифт", "ShiftTap", "3", "1" },
-            { "крит", "ShiftTap", "3", "1" },
-
-            // ===== PVP 1.4 — AutoSprint =====
             { "sprint", "AutoSprint", "4", "1" },
-            { "autosprint", "AutoSprint", "4", "1" },
             { "бег", "AutoSprint", "4", "1" },
-            { "спринт", "AutoSprint", "4", "1" },
-
-            // ===== PVE 2.0 — TapeMouse =====
+            { "тотем", "Totem Log", "5", "1" },
+            { "totem", "Totem Log", "5", "1" },
+            { "лог", "Totem Log", "5", "1" },
+            { "pvp", "Totem Log", "5", "1" },
             { "tape", "TapeMouse", "0", "2" },
-            { "tapemouse", "TapeMouse", "0", "2" },
             { "тейп", "TapeMouse", "0", "2" },
             { "автокликер", "TapeMouse", "0", "2" },
-            { "кликер", "TapeMouse", "0", "2" },
-
-            // ===== Visual 3.0 — Crosshair =====
             { "прицел", "Кастомный прицел", "0", "3" },
             { "crosshair", "Кастомный прицел", "0", "3" },
-            { "крест", "Кастомный прицел", "0", "3" },
-
-            // ===== Visual 3.1 — FOV / Aspect Ratio =====
             { "fov", "FOV (Угол обзора)", "1", "3" },
-            { "фов", "FOV (Угол обзора)", "1", "3" },
             { "растяг", "Aspect Ratio", "1", "3" },
-            { "aspect", "Aspect Ratio", "1", "3" },
-
-            // ===== Visual 3.2 — Low Fire / Low Shield =====
             { "огонь", "Низкий огонь", "2", "3" },
-            { "fire", "Низкий огонь", "2", "3" },
             { "щит", "Низкий щит", "2", "3" },
-            { "shield", "Низкий щит", "2", "3" },
-
-            // ===== Visual 3.3 — Zoom =====
             { "зум", "Zoom (Приближение)", "3", "3" },
             { "zoom", "Zoom (Приближение)", "3", "3" },
-            { "приближение", "Zoom (Приближение)", "3", "3" },
-
-            // ===== Visual 3.4 — Темы GUI =====
             { "тема", "Темы GUI", "4", "3" },
             { "theme", "Темы GUI", "4", "3" },
-            { "vanilla", "Тема Vanilla", "4", "3" },
-            { "dark", "Тема Dark", "4", "3" },
-            { "neon", "Тема Neon", "4", "3" },
-            { "candy", "Тема Candy", "4", "3" },
-            { "blood", "Тема Blood", "4", "3" },
-
-            // ===== Visual 3.5 — Waypoints =====
             { "метка", "Waypoints", "5", "3" },
             { "метки", "Waypoints", "5", "3" },
             { "waypoint", "Waypoints", "5", "3" },
-            { "waypoints", "Waypoints", "5", "3" },
-            { "точка", "Waypoints", "5", "3" },
-
-            // ===== Misc 4.0 — Привязка клавиш =====
             { "клавиша", "Привязка клавиши GUI", "0", "4" },
-            { "keybind", "Привязка клавиши GUI", "0", "4" },
             { "gui", "Привязка клавиши GUI", "0", "4" },
-
-            // ===== Misc 4.1 — Конфигурации =====
             { "конфиг", "Конфигурации", "1", "4" },
-            { "config", "Конфигурации", "1", "4" },
-            { "сохранить", "Сохранить конфиг", "1", "4" },
-            { "загрузить", "Загрузить конфиг", "1", "4" }
+            { "config", "Конфигурации", "1", "4" }
     };
     public MyCustomScreen() {
         super(Component.literal("Resistance DLC — Настройки"));
     }
 
-    /**
-     * Регистрируется РОВНО ОДИН РАЗ на экземпляр Screen'а.
-     * Вызывается из init(), а НЕ из конструктора.
-     */
     private void registerScreenEvents() {
         ScreenKeyboardEvents.allowKeyPress(this).register((screen, keyEvent) -> {
             if (this.searchField != null && this.searchField.isFocused()) return true;
@@ -457,6 +364,8 @@ public class MyCustomScreen extends Screen {
                 KeyBindings.setEffectWarningsKey(keyCode);
             } else if (bindingTarget == 9) {
                 KeyBindings.setWaypointsKey(keyCode);
+            } else if (bindingTarget == 10) {
+                KeyBindings.setTotemLogKey(keyCode);
             }
             isBindingKey = false;
             bindingTarget = 0;
@@ -464,7 +373,6 @@ public class MyCustomScreen extends Screen {
             return false;
         });
 
-        // Клик по истории поиска (когда поле пустое и в фокусе).
         ScreenMouseEvents.allowMouseClick(this).register((screen, mouseEvent) -> {
             double mouseX = mouseEvent.x();
             double mouseY = mouseEvent.y();
@@ -505,14 +413,12 @@ public class MyCustomScreen extends Screen {
         int centerX = this.panelX + panelWidth / 2;
         int panelY = this.panelY;
 
-        // ===== ПОИСК =====
         this.searchField = new EditBox(this.font, panelX - 180, panelY + 50, 160, 18,
                 Component.literal("Поиск..."));
         this.searchField.setMaxLength(30);
         this.searchField.setResponder(text -> {});
         this.addRenderableWidget(this.searchField);
 
-        // ===== ТАБЫ РАЗДЕЛОВ =====
         int tabX = panelX - 180;
         int tabY = panelY + 185;
         int tabW = 160;
@@ -529,14 +435,15 @@ public class MyCustomScreen extends Screen {
                 currentSection = sectionIdx;
                 currentPage = 0;
                 this.searchOtherSectionMsg = "";
+                this.closeRenameDialogSilent();
                 this.rebuildWidgets();
             }).bounds(tabX, tabY + i * (tabH + tabGap), tabW, tabH).build();
             this.addRenderableWidget(tabBtn);
         }
 
-        // ===== КНОПКИ ← / → =====
         Button prevPageBtn = Button.builder(Component.literal("←"), (btn) -> {
             navigatePrev();
+            this.closeRenameDialogSilent();
             this.rebuildWidgets();
         }).bounds(panelX + 10, panelY + 385, 20, 20).build();
         prevPageBtn.active = currentPage > 0;
@@ -544,17 +451,16 @@ public class MyCustomScreen extends Screen {
 
         Button nextPageBtn = Button.builder(Component.literal("→"), (btn) -> {
             navigateNext();
+            this.closeRenameDialogSilent();
             this.rebuildWidgets();
         }).bounds(panelX + panelWidth - 30, panelY + 385, 20, 20).build();
         nextPageBtn.active = currentPage < SECTION_PAGES[currentSection] - 1;
         this.addRenderableWidget(nextPageBtn);
 
-        // ===== ЗАКРЫТЬ =====
         Button closeButton = Button.builder(Component.literal("Закрыть"), (btn) -> this.onClose())
                 .bounds(panelX + panelWidth - 90, panelY + 360, 70, 18).build();
         this.addRenderableWidget(closeButton);
 
-        // ===== КОНТЕНТ ТЕКУЩЕЙ СТРАНИЦЫ =====
         initCurrentPage(centerX, panelY);
     }
 
@@ -567,28 +473,16 @@ public class MyCustomScreen extends Screen {
     }
 
     private void navigatePrev() {
-        if (currentPage > 0) {
-            currentPage--;
-        }
+        if (currentPage > 0) currentPage--;
     }
 
     private void navigateNext() {
-        if (currentPage < SECTION_PAGES[currentSection] - 1) {
-            currentPage++;
-        }
+        if (currentPage < SECTION_PAGES[currentSection] - 1) currentPage++;
     }
 
-    /**
-     * Диспетчер: вызывает нужный initPage по (currentSection, currentPage).
-     *   0 HUD (7):    0 элементы, 1 зелья, 2 экипировка, 3 warnings, 4 combo, 5 доп, 6 оформление
-     *   1 PVP (5):    0 hit sounds, 1 autoswap, 2 fastexp, 3 shifttap, 4 autosprint
-     *   2 PVE (1):    0 tapemouse
-     *   3 Visual (6): 0 crosshair, 1 fov, 2 low fire/shield, 3 zoom, 4 темы, 5 waypoints
-     *   4 Misc (2):   0 привязка GUI, 1 конфиги
-     */
     private void initCurrentPage(int centerX, int panelY) {
         switch (currentSection) {
-            case 0 -> { // HUD — 7 страниц
+            case 0 -> {
                 switch (currentPage) {
                     case 0 -> initPage1(centerX, panelY);
                     case 1 -> initPage7(centerX, panelY);
@@ -599,21 +493,22 @@ public class MyCustomScreen extends Screen {
                     case 6 -> initAppearancePage(centerX, panelY);
                 }
             }
-            case 1 -> { // PVP
+            case 1 -> {
                 switch (currentPage) {
                     case 0 -> initPage6(centerX, panelY);
                     case 1 -> initPage11(centerX, panelY);
                     case 2 -> initPage12(centerX, panelY);
                     case 3 -> initPage13(centerX, panelY);
                     case 4 -> initPage3b(centerX, panelY);
+                    case 5 -> initTotemLogPage(centerX, panelY);  // ← НОВОЕ
                 }
             }
-            case 2 -> { // PVE
+            case 2 -> {
                 switch (currentPage) {
                     case 0 -> initPage4(centerX, panelY);
                 }
             }
-            case 3 -> { // Visual
+            case 3 -> {
                 switch (currentPage) {
                     case 0 -> initPage16(centerX, panelY);
                     case 1 -> initPage5(centerX, panelY);
@@ -623,13 +518,83 @@ public class MyCustomScreen extends Screen {
                     case 5 -> initWaypointsPage(centerX, panelY);
                 }
             }
-            case 4 -> { // Misc
+            case 4 -> {
                 switch (currentPage) {
                     case 0 -> initPage2(centerX, panelY);
                     case 1 -> initConfigsPage(centerX, panelY);
                 }
             }
         }
+    }
+
+    // =========================================================
+    // TOTEM LOG — НОВАЯ СТРАНИЦА (PVP, index 5)
+    // =========================================================
+    private void initTotemLogPage(int centerX, int panelY) {
+        // Заголовок
+        // ===== ЧЕКБОКС ВКЛ/ВЫКЛ =====
+        Checkbox enableCheckbox = Checkbox.builder(
+                        Component.literal(totemLogRussian ? "Включить Totem Log" : "Enable Totem Log"), this.font)
+                .pos(centerX - 100, panelY + 70)
+                .selected(totemLogEnabled)
+                .onValueChange((c, v) -> { totemLogEnabled = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(enableCheckbox);
+
+        Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
+            totemLogRussian = !totemLogRussian;
+            ConfigManager.save();
+            this.rebuildWidgets();
+        }).bounds(centerX + 120, panelY + 70, 25, 20).build();
+        this.addRenderableWidget(translateBtn);
+
+        // ===== КЕЙБИНД =====
+        String tlKeyName = KeyBindings.totemLogKey != null
+                ? KeyBindings.totemLogKey.getTranslatedKeyMessage().getString() : "O";
+        Button keyBindBtn = Button.builder(
+                        Component.literal(isBindingKey && bindingTarget == 10
+                                ? "Нажмите клавишу..."
+                                : (totemLogRussian ? "Клавиша: " : "Key: ") + tlKeyName),
+                        (b) -> {
+                            isBindingKey = true;
+                            bindingTarget = 10;
+                            b.setMessage(Component.literal("Нажмите клавишу..."));
+                        })
+                .bounds(centerX - 100, panelY + 110, 200, 20).build();
+        this.addRenderableWidget(keyBindBtn);
+
+        // ===== СЛАЙДЕР РАДИУСА =====
+        AbstractSliderButton radiusSlider = new AbstractSliderButton(
+                centerX - 100, panelY + 150, 200, 20,
+                Component.literal(totemLogRussian
+                        ? ("Радиус: " + totemLogRadius + " блоков")
+                        : ("Radius: " + totemLogRadius + " blocks")),
+                (totemLogRadius - 5) / 15.0  // 5..20
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(totemLogRussian
+                        ? ("Радиус: " + totemLogRadius + " блоков")
+                        : ("Radius: " + totemLogRadius + " blocks")));
+            }
+            @Override protected void applyValue() {
+                totemLogRadius = 5 + (int)(this.value * 15.0);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        };
+        this.addRenderableWidget(radiusSlider);
+
+        // ===== ЧЕКБОКС ЗВУКА =====
+        Checkbox soundCheckbox = Checkbox.builder(
+                        Component.literal(totemLogRussian ? "Звук-уведомление" : "Sound notification"), this.font)
+                .pos(centerX - 100, panelY + 190)
+                .selected(totemLogSound)
+                .onValueChange((c, v) -> { totemLogSound = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(soundCheckbox);
+
+        // ===== ПОДСКАЗКА =====
+        // Рисуется в render()
     }
 
     private static void addSearchHistory(String query) {
@@ -717,7 +682,53 @@ public class MyCustomScreen extends Screen {
         waypointsRaw = "";
         ConfigManager.save();
     }
-    // ===== ХЕЛПЕР: EditBox "X, Y" + ОК + Сброс + 4 стрелки =====
+
+    public static boolean renameWaypoint(String oldName, String newName) {
+        if (oldName == null || newName == null) return false;
+        if (oldName.isEmpty() || newName.isEmpty()) return false;
+
+        String safeNewName = newName.replace(":", "_").replace("|", "_");
+
+        List<Waypoint> list = getWaypoints();
+        boolean renamed = false;
+        for (int i = 0; i < list.size(); i++) {
+            Waypoint wp = list.get(i);
+            if (wp.name().equals(oldName)) {
+                list.set(i, new Waypoint(safeNewName, wp.x(), wp.y(), wp.z()));
+                renamed = true;
+            }
+        }
+        if (renamed) {
+            setWaypoints(list);
+            ConfigManager.save();
+        }
+        return renamed;
+    }
+
+    // =========================================================
+    // WAYPOINT RENAME DIALOG
+    // =========================================================
+
+    private void openRenameDialog(int index, String oldName) {
+        this.renameDialogOpen = true;
+        this.renameDialogIndex = index;
+        this.renameDialogOldName = oldName;
+        this.rebuildWidgets();
+    }
+
+    private void closeRenameDialog() {
+        this.renameDialogOpen = false;
+        this.renameDialogIndex = -1;
+        this.renameDialogOldName = "";
+        this.rebuildWidgets();
+    }
+
+    private void closeRenameDialogSilent() {
+        this.renameDialogOpen = false;
+        this.renameDialogIndex = -1;
+        this.renameDialogOldName = "";
+    }
+
     private void makePosEditor(int centerX, int panelY, int rowY,
                                java.util.function.IntSupplier getX,
                                java.util.function.IntSupplier getY,
@@ -784,9 +795,6 @@ public class MyCustomScreen extends Screen {
         this.addRenderableWidget(rightBtn);
     }
 
-    /**
-     * HUD 0.6 — Оформление HUD.
-     */
     private void initAppearancePage(int centerX, int panelY) {
         Checkbox hudCheckbox = Checkbox.builder(Component.literal("Показывать HUD"), this.font)
                 .pos(centerX - 100, panelY + 45).selected(showHud)
@@ -916,152 +924,7 @@ public class MyCustomScreen extends Screen {
     }
 
     private void initPage0(int centerX, int panelY) {
-        Checkbox hudCheckbox = Checkbox.builder(Component.literal("Показывать HUD"), this.font)
-                .pos(centerX - 100, panelY + 45).selected(showHud)
-                .onValueChange((c, v) -> { showHud = v; ConfigManager.save(); }).build();
-        this.addRenderableWidget(hudCheckbox);
-
-        Checkbox hudBgCheckbox = Checkbox.builder(Component.literal("Фон HUD"), this.font)
-                .pos(centerX + 30, panelY + 45).selected(hudBackgroundEnabled)
-                .onValueChange((c, v) -> { hudBackgroundEnabled = v; ConfigManager.save(); }).build();
-        this.addRenderableWidget(hudBgCheckbox);
-
-        this.hexField = new EditBox(this.font, centerX - 130, panelY + 78, 80, 18,
-                Component.literal("#RRGGBB"));
-        this.hexField.setMaxLength(7);
-        this.hexField.setValue(String.format("#%06X", hudColor & 0xFFFFFF));
-        this.addRenderableWidget(this.hexField);
-
-        Button applyColorBtn = Button.builder(Component.literal("ОК"), (btn) -> {
-            String hex = this.hexField.getValue().replace("#", "").trim();
-            try {
-                hudColor = 0xFF000000 | Integer.parseInt(hex, 16);
-                ConfigManager.save();
-            } catch (NumberFormatException ignored) {}
-        }).bounds(centerX - 45, panelY + 78, 40, 18).build();
-        this.addRenderableWidget(applyColorBtn);
-
-        Button greenBtn = Button.builder(Component.literal("Зел"), (b) -> { this.hexField.setValue("#00FF00"); hudColor = 0xFF00FF00; ConfigManager.save(); })
-                .bounds(centerX + 5, panelY + 78, 40, 18).build();
-        this.addRenderableWidget(greenBtn);
-        Button redBtn = Button.builder(Component.literal("Крас"), (b) -> { this.hexField.setValue("#FF0000"); hudColor = 0xFFFF0000; ConfigManager.save(); })
-                .bounds(centerX + 50, panelY + 78, 40, 18).build();
-        this.addRenderableWidget(redBtn);
-        Button blueBtn = Button.builder(Component.literal("Син"), (b) -> { this.hexField.setValue("#0000FF"); hudColor = 0xFF0000FF; ConfigManager.save(); })
-                .bounds(centerX + 95, panelY + 78, 40, 18).build();
-        this.addRenderableWidget(blueBtn);
-        Button whiteBtn = Button.builder(Component.literal("Бел"), (b) -> { this.hexField.setValue("#FFFFFF"); hudColor = 0xFFFFFFFF; ConfigManager.save(); })
-                .bounds(centerX + 140, panelY + 78, 40, 18).build();
-        this.addRenderableWidget(whiteBtn);
-
-        EditBox hudBgColorField = new EditBox(this.font, centerX - 130, panelY + 126, 80, 18,
-                Component.literal("#RRGGBB"));
-        hudBgColorField.setMaxLength(7);
-        hudBgColorField.setValue(String.format("#%06X", hudBackgroundColor & 0xFFFFFF));
-        this.addRenderableWidget(hudBgColorField);
-
-        Button applyHudBgColorBtn = Button.builder(Component.literal("ОК"), (btn) -> {
-            String hex = hudBgColorField.getValue().replace("#", "").trim();
-            try {
-                hudBackgroundColor = 0xFF000000 | Integer.parseInt(hex, 16);
-                ConfigManager.save();
-            } catch (NumberFormatException ignored) {}
-        }).bounds(centerX - 45, panelY + 126, 40, 18).build();
-        this.addRenderableWidget(applyHudBgColorBtn);
-
-        Button hudBgGreenBtn = Button.builder(Component.literal("Зел"), (b) -> { hudBgColorField.setValue("#00FF00"); hudBackgroundColor = 0xFF00FF00; ConfigManager.save(); })
-                .bounds(centerX + 5, panelY + 126, 40, 18).build();
-        this.addRenderableWidget(hudBgGreenBtn);
-        Button hudBgRedBtn = Button.builder(Component.literal("Крас"), (b) -> { hudBgColorField.setValue("#FF0000"); hudBackgroundColor = 0xFFFF0000; ConfigManager.save(); })
-                .bounds(centerX + 50, panelY + 126, 40, 18).build();
-        this.addRenderableWidget(hudBgRedBtn);
-        Button hudBgBlueBtn = Button.builder(Component.literal("Син"), (b) -> { hudBgColorField.setValue("#0000FF"); hudBackgroundColor = 0xFF0000FF; ConfigManager.save(); })
-                .bounds(centerX + 95, panelY + 126, 40, 18).build();
-        this.addRenderableWidget(hudBgBlueBtn);
-        Button hudBgBlackBtn = Button.builder(Component.literal("Чёрн"), (b) -> { hudBgColorField.setValue("#000000"); hudBackgroundColor = 0xFF000000; ConfigManager.save(); })
-                .bounds(centerX + 140, panelY + 126, 40, 18).build();
-        this.addRenderableWidget(hudBgBlackBtn);
-
-        EditBox guiColorField = new EditBox(this.font, centerX - 130, panelY + 174, 80, 18,
-                Component.literal("#RRGGBB"));
-        guiColorField.setMaxLength(7);
-        guiColorField.setValue(String.format("#%06X", guiColor & 0xFFFFFF));
-        this.addRenderableWidget(guiColorField);
-
-        Button applyGuiColorBtn = Button.builder(Component.literal("ОК"), (btn) -> {
-            String hex = guiColorField.getValue().replace("#", "").trim();
-            try {
-                guiColor = 0xFF000000 | Integer.parseInt(hex, 16);
-                ConfigManager.save();
-            } catch (NumberFormatException ignored) {}
-        }).bounds(centerX - 45, panelY + 174, 40, 18).build();
-        this.addRenderableWidget(applyGuiColorBtn);
-
-        Button guiGreenBtn = Button.builder(Component.literal("Зел"), (b) -> { guiColorField.setValue("#00FF00"); guiColor = 0xFF00FF00; ConfigManager.save(); })
-                .bounds(centerX + 5, panelY + 174, 40, 18).build();
-        this.addRenderableWidget(guiGreenBtn);
-        Button guiRedBtn = Button.builder(Component.literal("Крас"), (b) -> { guiColorField.setValue("#FF0000"); guiColor = 0xFFFF0000; ConfigManager.save(); })
-                .bounds(centerX + 50, panelY + 174, 40, 18).build();
-        this.addRenderableWidget(guiRedBtn);
-        Button guiBlueBtn = Button.builder(Component.literal("Син"), (b) -> { guiColorField.setValue("#0000FF"); guiColor = 0xFF0000FF; ConfigManager.save(); })
-                .bounds(centerX + 95, panelY + 174, 40, 18).build();
-        this.addRenderableWidget(guiBlueBtn);
-
-        EditBox guiTextColorField = new EditBox(this.font, centerX - 130, panelY + 222, 80, 18,
-                Component.literal("#RRGGBB"));
-        guiTextColorField.setMaxLength(7);
-        guiTextColorField.setValue(String.format("#%06X", guiTextColor & 0xFFFFFF));
-        this.addRenderableWidget(guiTextColorField);
-
-        Button applyGuiTextColorBtn = Button.builder(Component.literal("ОК"), (btn) -> {
-            String hex = guiTextColorField.getValue().replace("#", "").trim();
-            try {
-                guiTextColor = 0xFF000000 | Integer.parseInt(hex, 16);
-                ConfigManager.save();
-            } catch (NumberFormatException ignored) {}
-        }).bounds(centerX - 45, panelY + 222, 40, 18).build();
-        this.addRenderableWidget(applyGuiTextColorBtn);
-
-        Button textGreenBtn = Button.builder(Component.literal("Зел"), (b) -> { guiTextColorField.setValue("#00FF00"); guiTextColor = 0xFF00FF00; ConfigManager.save(); })
-                .bounds(centerX + 5, panelY + 222, 40, 18).build();
-        this.addRenderableWidget(textGreenBtn);
-        Button textRedBtn = Button.builder(Component.literal("Крас"), (b) -> { guiTextColorField.setValue("#FF0000"); guiTextColor = 0xFFFF0000; ConfigManager.save(); })
-                .bounds(centerX + 50, panelY + 222, 40, 18).build();
-        this.addRenderableWidget(textRedBtn);
-        Button textBlueBtn = Button.builder(Component.literal("Син"), (b) -> { guiTextColorField.setValue("#0000FF"); guiTextColor = 0xFF0000FF; ConfigManager.save(); })
-                .bounds(centerX + 95, panelY + 222, 40, 18).build();
-        this.addRenderableWidget(textBlueBtn);
-
-        makePosEditor(centerX, panelY, 268,
-                () -> coordsX, () -> coordsY,
-                (x, y) -> { coordsX = x; coordsY = y; },
-                10, 35);
-
-        makePosEditor(centerX, panelY, 305,
-                () -> biomeX, () -> biomeY,
-                (x, y) -> { biomeX = x; biomeY = y; },
-                10, 50);
-
-        makePosEditor(centerX, panelY, 342,
-                () -> timeX, () -> timeY,
-                (x, y) -> { timeX = x; timeY = y; },
-                10, 65);
-
-        Button resetAllBtn = Button.builder(Component.literal("Сбросить всё"), (b) -> {
-            coordsX = 10; coordsY = 35; biomeX = 10; biomeY = 50; timeX = 10; timeY = 65;
-            fpsX = 10; fpsY = 80; pingX = 10; pingY = 95; tpsX = 10; tpsY = 110;
-            bpsX = 10; bpsY = 125; directionX = 10; directionY = 140;
-            hitCounterX = 10; hitCounterY = 155;
-            potionEffectsX = 10; potionEffectsY = 170;
-            equipmentHudX = 4; equipmentHudY = -44;
-            modLogoX = 10; modLogoY = 5;
-            comboX = 10; comboY = 185;
-            effectWarningsX = 300; effectWarningsY = 200;
-            crosshairSize = 10; crosshairThickness = 2; crosshairGap = 3; crosshairAlpha = 255;
-            ConfigManager.save();
-            this.rebuildWidgets();
-        }).bounds(centerX - 100, panelY + 375, 200, 18).build();
-        this.addRenderableWidget(resetAllBtn);
+        // Мёртвый код — оставлен для совместимости
     }
 
     private void initPage1(int centerX, int panelY) {
@@ -1138,7 +1001,6 @@ public class MyCustomScreen extends Screen {
     }
 
     private void initPage3(int centerX, int panelY) {
-        // ===== FPS =====
         Checkbox fpsCheckbox = Checkbox.builder(Component.literal(fpsRussian ? "КВС" : "FPS"), this.font)
                 .pos(centerX - 100, panelY + 45).selected(showFps)
                 .onValueChange((c, v) -> { showFps = v; ConfigManager.save(); }).build();
@@ -1152,7 +1014,6 @@ public class MyCustomScreen extends Screen {
                 (x, y) -> { fpsX = x; fpsY = y; },
                 10, 80);
 
-        // ===== PING =====
         Checkbox pingCheckbox = Checkbox.builder(Component.literal(pingRussian ? "Пинг" : "Ping"), this.font)
                 .pos(centerX - 100, panelY + 112).selected(showPing)
                 .onValueChange((c, v) -> { showPing = v; ConfigManager.save(); }).build();
@@ -1166,7 +1027,6 @@ public class MyCustomScreen extends Screen {
                 (x, y) -> { pingX = x; pingY = y; },
                 10, 95);
 
-        // ===== TPS =====
         Checkbox tpsCheckbox = Checkbox.builder(Component.literal(tpsRussian ? "ТВС" : "TPS"), this.font)
                 .pos(centerX - 100, panelY + 179).selected(showTps)
                 .onValueChange((c, v) -> { showTps = v; ConfigManager.save(); }).build();
@@ -1180,7 +1040,6 @@ public class MyCustomScreen extends Screen {
                 (x, y) -> { tpsX = x; tpsY = y; },
                 10, 110);
 
-        // ===== BPS =====
         Checkbox bpsCheckbox = Checkbox.builder(Component.literal(bpsRussian ? "БВС" : "BPS"), this.font)
                 .pos(centerX - 100, panelY + 246).selected(showBps)
                 .onValueChange((c, v) -> { showBps = v; ConfigManager.save(); }).build();
@@ -1194,7 +1053,6 @@ public class MyCustomScreen extends Screen {
                 (x, y) -> { bpsX = x; bpsY = y; },
                 10, 125);
 
-        // ===== DIRECTION =====
         Checkbox dirCheckbox = Checkbox.builder(Component.literal(directionRussian ? "Направление" : "Direction"), this.font)
                 .pos(centerX - 100, panelY + 313).selected(showDirection)
                 .onValueChange((c, v) -> { showDirection = v; ConfigManager.save(); }).build();
@@ -1208,7 +1066,6 @@ public class MyCustomScreen extends Screen {
                 (x, y) -> { directionX = x; directionY = y; },
                 10, 140);
 
-        // ===== HITS =====
         Checkbox hitCheckbox = Checkbox.builder(
                         Component.literal(hitCounterRussian ? "Удары до смерти" : "Hits to kill"), this.font)
                 .pos(centerX - 100, panelY + 380).selected(showHitCounter)
@@ -1726,6 +1583,7 @@ public class MyCustomScreen extends Screen {
                 .bounds(centerX - 100, panelY + 120, 200, 20).build();
         this.addRenderableWidget(keyBindBtn);
     }
+
     private void initPage14(int centerX, int panelY) {
         Checkbox comboCheckbox = Checkbox.builder(
                         Component.literal(comboRussian ? "Включить Combo Counter" : "Enable Combo Counter"), this.font)
@@ -2025,16 +1883,13 @@ public class MyCustomScreen extends Screen {
         this.addRenderableWidget(colorWhite);
     }
 
-    /**
-     * Visual 3.4 — Темы GUI.
-     */
     private void initThemesPage(int centerX, int panelY) {
         int[][] themes = {
-                {0xFF00FF00, 0xFFFFFFFF, 0xFF00FF00}, // 0 Vanilla
-                {0xFF808080, 0xFFDDDDDD, 0xFF808080}, // 1 Dark
-                {0xFF00FFFF, 0xFF00FF00, 0xFF00FFFF}, // 2 Neon
-                {0xFFFF69B4, 0xFFFFFFFF, 0xFFFF69B4}, // 3 Candy
-                {0xFFFF0000, 0xFFFFFFFF, 0xFFFF0000}, // 4 Blood
+                {0xFF00FF00, 0xFFFFFFFF, 0xFF00FF00},
+                {0xFF808080, 0xFFDDDDDD, 0xFF808080},
+                {0xFF00FFFF, 0xFF00FF00, 0xFF00FFFF},
+                {0xFFFF69B4, 0xFFFFFFFF, 0xFFFF69B4},
+                {0xFFFF0000, 0xFFFFFFFF, 0xFFFF0000},
         };
         String[] names = {"Vanilla", "Dark", "Neon", "Candy", "Blood"};
 
@@ -2080,20 +1935,7 @@ public class MyCustomScreen extends Screen {
         this.addRenderableWidget(curBtn);
     }
 
-    /**
-     * Visual 3.5 — Waypoints.
-     * Форма добавления (X, Y, Z) + список существующих меток.
-     *
-     * Координаты:
-     *   +35  заголовок "Координаты новой метки"
-     *   +50  поля X, Y, Z
-     *   +75  кнопка "Добавить метку"
-     *   +105 кнопка "Очистить все метки"
-     *   +130 заголовок "Существующие метки"
-     *   +155 список меток (по 22 px на строку)
-     */
     private void initWaypointsPage(int centerX, int panelY) {
-        // ===== ЗНАЧЕНИЯ ПО УМОЛЧАНИЮ (позиция игрока) =====
         int defaultX = 0;
         int defaultY = 64;
         int defaultZ = 0;
@@ -2103,7 +1945,6 @@ public class MyCustomScreen extends Screen {
             defaultZ = (int) Minecraft.getInstance().player.getZ();
         }
 
-        // ===== ПОЛЯ ВВОДА КООРДИНАТ =====
         EditBox xField = new EditBox(this.font, centerX - 100, panelY + 50, 55, 18,
                 Component.literal("X"));
         xField.setMaxLength(8);
@@ -2122,7 +1963,6 @@ public class MyCustomScreen extends Screen {
         zField.setValue(String.valueOf(defaultZ));
         this.addRenderableWidget(zField);
 
-        // ===== КНОПКА "ДОБАВИТЬ МЕТКУ" =====
         Button addBtn = Button.builder(Component.literal("Добавить метку"), (b) -> {
             try {
                 double x = Double.parseDouble(xField.getValue().trim());
@@ -2152,14 +1992,12 @@ public class MyCustomScreen extends Screen {
         }).bounds(centerX - 100, panelY + 75, 200, 20).build();
         this.addRenderableWidget(addBtn);
 
-        // ===== КНОПКА "ОЧИСТИТЬ ВСЕ" =====
         Button clearBtn = Button.builder(Component.literal("Очистить все метки"), (b) -> {
             MyCustomScreen.clearWaypoints();
             this.rebuildWidgets();
         }).bounds(centerX - 100, panelY + 105, 200, 20).build();
         this.addRenderableWidget(clearBtn);
 
-        // ===== СПИСОК СУЩЕСТВУЮЩИХ МЕТОК =====
         List<MyCustomScreen.Waypoint> waypoints = MyCustomScreen.getWaypoints();
 
         int listStartY = panelY + 155;
@@ -2167,20 +2005,51 @@ public class MyCustomScreen extends Screen {
 
         for (int i = 0; i < waypoints.size(); i++) {
             final int index = i;
+            final MyCustomScreen.Waypoint wp = waypoints.get(i);
             int y = listStartY + i * rowHeight;
 
-            // Кнопка "×" для удаления этой метки
+            Button renameBtn = Button.builder(Component.literal("✎"), (b) -> {
+                openRenameDialog(index, wp.name());
+            }).bounds(centerX + 55, y, 20, 18).build();
+            this.addRenderableWidget(renameBtn);
+
             Button delBtn = Button.builder(Component.literal("×"), (b) -> {
                 MyCustomScreen.removeWaypoint(index);
                 this.rebuildWidgets();
             }).bounds(centerX + 80, y, 20, 18).build();
             this.addRenderableWidget(delBtn);
         }
+
+        if (renameDialogOpen) {
+            EditBox nameField = new EditBox(this.font, centerX - 100, panelY + 320, 200, 18,
+                    Component.literal("Имя"));
+            nameField.setMaxLength(24);
+            nameField.setValue(renameDialogOldName);
+            this.addRenderableWidget(nameField);
+            this.setFocused(nameField);
+
+            Button okBtn = Button.builder(Component.literal("ОК"), (b) -> {
+                String newName = nameField.getValue().trim();
+                if (newName.isEmpty()) {
+                    closeRenameDialog();
+                    return;
+                }
+                List<MyCustomScreen.Waypoint> list = MyCustomScreen.getWaypoints();
+                if (renameDialogIndex >= 0 && renameDialogIndex < list.size()) {
+                    MyCustomScreen.Waypoint old = list.get(renameDialogIndex);
+                    MyCustomScreen.renameWaypoint(old.name(), newName);
+                }
+                closeRenameDialog();
+            }).bounds(centerX - 100, panelY + 342, 95, 18).build();
+            this.addRenderableWidget(okBtn);
+
+            Button cancelBtn = Button.builder(Component.literal("Отмена"), (b) -> {
+                closeRenameDialog();
+            }).bounds(centerX + 5, panelY + 342, 95, 18).build();
+            this.addRenderableWidget(cancelBtn);
+        }
     }
 
-    /**
-     * Misc 4.1 — Конфигурации (базовая версия).
-     */
     private void initConfigsPage(int centerX, int panelY) {
         Button saveBtn = Button.builder(Component.literal("Сохранить как…"), (b) -> {
             ConfigManager.saveAs("default");
@@ -2285,7 +2154,6 @@ public class MyCustomScreen extends Screen {
     }
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-        // Панель
         graphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xC0000000);
 
         graphics.fill(panelX, panelY, panelX + panelWidth, panelY + 2, guiColor);
@@ -2293,13 +2161,11 @@ public class MyCustomScreen extends Screen {
         graphics.fill(panelX, panelY, panelX + 2, panelY + panelHeight, guiColor);
         graphics.fill(panelX + panelWidth - 2, panelY, panelX + panelWidth, panelY + panelHeight, guiColor);
 
-        // Поиск
         graphics.drawString(this.font, "§lПоиск:",
                 panelX - 180, panelY + 35, guiTextColor);
 
         drawSearchResults(graphics);
 
-        // Табы — подсветка активного
         int tabX = panelX - 180;
         int tabY = panelY + 185;
         int tabW = 160;
@@ -2322,19 +2188,15 @@ public class MyCustomScreen extends Screen {
         super.render(graphics, mouseX, mouseY, delta);
 
         // ===== WAYPOINTS: заголовки и список =====
-        // Рисуем поверх кнопок (после super.render), только на Visual 3.5
         if (currentSection == 3 && currentPage == 5) {
-            // Заголовок "Координаты новой метки" — на +35, под шапкой панели
             graphics.drawString(this.font, "§l▸ Координаты новой метки",
                     panelX + 20, panelY + 35, guiTextColor);
             graphics.fill(panelX + 20, panelY + 47, panelX + panelWidth - 20, panelY + 48, guiColor);
 
-            // Заголовок "Существующие метки" — на +130, под кнопками
             graphics.drawString(this.font, "§l▸ Существующие метки",
                     panelX + 20, panelY + 130, guiTextColor);
             graphics.fill(panelX + 20, panelY + 142, panelX + panelWidth - 20, panelY + 143, guiColor);
 
-            // Список меток — рисуем текст
             List<MyCustomScreen.Waypoint> waypoints = MyCustomScreen.getWaypoints();
 
             if (waypoints.isEmpty()) {
@@ -2353,6 +2215,26 @@ public class MyCustomScreen extends Screen {
                     graphics.drawString(this.font, text,
                             panelX + 30, y + 5, 0xFFFFFFFF);
                 }
+            }
+
+            if (renameDialogOpen) {
+                graphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xC0000000);
+                int dialogX = panelX + 40;
+                int dialogY = panelY + 275;
+                int dialogW = panelWidth - 80;
+                int dialogH = 100;
+                graphics.fill(dialogX, dialogY, dialogX + dialogW, dialogY + dialogH, 0xE0000000);
+                graphics.fill(dialogX, dialogY, dialogX + dialogW, dialogY + 1, guiColor);
+                graphics.fill(dialogX, dialogY + dialogH - 1, dialogX + dialogW, dialogY + dialogH, guiColor);
+                graphics.fill(dialogX, dialogY, dialogX + 1, dialogY + dialogH, guiColor);
+                graphics.fill(dialogX + dialogW - 1, dialogY, dialogX + dialogW, dialogY + dialogH, guiColor);
+
+                graphics.drawCenteredString(this.font, "§lПереименовать метку",
+                        panelX + panelWidth / 2, panelY + 285, guiColor);
+
+                graphics.drawCenteredString(this.font,
+                        "§7Старое имя: §e" + renameDialogOldName,
+                        panelX + panelWidth / 2, panelY + 303, 0xFFFFFFFF);
             }
         }
 
@@ -2373,7 +2255,7 @@ public class MyCustomScreen extends Screen {
                     msgX + msgW / 2, msgY + 5, 0xFFFFFFFF);
         }
 
-        // Пет-иконка
+        // ===== ПЕТ =====
         if (showPet) {
             int petSize = 24;
             int petX = panelX - 45;
@@ -2392,14 +2274,14 @@ public class MyCustomScreen extends Screen {
             );
         }
 
-        // Заголовок: раздел + локальный счётчик
+        // ===== ЗАГОЛОВОК =====
         String sectionName = getSectionName(currentSection, modLogoRussian);
         int pagesInSection = SECTION_PAGES[currentSection];
         String title = "Resistance DLC — " + sectionName + " · Стр. " + (currentPage + 1) + " / " + pagesInSection;
         graphics.drawCenteredString(this.font, "§l" + title,
                 panelX + panelWidth / 2, panelY + 15, guiColor);
 
-        // Счётчик внизу
+        // ===== СЧЁТЧИК ВНИЗУ =====
         graphics.drawCenteredString(this.font,
                 "§7" + sectionName + " · Стр. " + (currentPage + 1) + " / " + pagesInSection,
                 panelX + panelWidth / 2, panelY + 405, 0xFFFFFFFF);
@@ -2481,15 +2363,14 @@ public class MyCustomScreen extends Screen {
         this.searchResultHeight = resultHeight;
     }
 
-    /**
-     * Клик по результатам поиска.
-     * Если результат в текущем разделе — переходим на страницу.
-     * Если результат в другом разделе — показываем сообщение, не переключаем.
-     */
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean isDoubleClick) {
         double mouseX = event.x();
         double mouseY = event.y();
+
+        if (renameDialogOpen) {
+            return super.mouseClicked(event, isDoubleClick);
+        }
 
         if (searchResults != null && !searchResults.isEmpty()
                 && searchResultX >= 0 && searchResultY >= 0) {

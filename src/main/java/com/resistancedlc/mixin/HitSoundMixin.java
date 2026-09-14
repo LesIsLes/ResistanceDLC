@@ -1,6 +1,7 @@
 package com.resistancedlc.mixin;
 
 import com.resistancedlc.MyCustomScreen;
+import com.resistancedlc.TotemTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
@@ -23,10 +24,14 @@ public class HitSoundMixin {
         if (client.player == null || self != client.player) return;
         if (client.level == null) return;
 
+        // ===== ЗАПИСЬ В ТРЕКЕР ПОСЛЕДНЕГО УДАРА =====
+        if (target instanceof Player victim) {
+            TotemTracker.record(victim.getUUID(), self.getName().getString());
+        }
+
         // ===== COMBO COUNTER =====
         if (MyCustomScreen.comboEnabled) {
-            // Считаем только полноценный удар (полный замах)
-            if (client.player != null && client.player.getAttackStrengthScale(0.0f) >= 1.0f) {
+            if (client.player.getAttackStrengthScale(0.0f) >= 1.0f) {
                 MyCustomScreen.currentCombo++;
                 MyCustomScreen.lastComboTime = System.currentTimeMillis();
             }

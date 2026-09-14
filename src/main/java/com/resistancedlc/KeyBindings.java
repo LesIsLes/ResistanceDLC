@@ -19,7 +19,8 @@ public class KeyBindings {
     public static KeyMapping shiftTapKey;
     public static KeyMapping comboKey;
     public static KeyMapping effectWarningsKey;
-    public static KeyMapping waypointsKey;   // ← НОВОЕ
+    public static KeyMapping waypointsKey;
+    public static KeyMapping totemLogKey;   // ← НОВОЕ
     private static KeyMapping.Category category;
 
     private static boolean registered = false;
@@ -103,6 +104,13 @@ public class KeyBindings {
                 category
         ));
 
+        totemLogKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.resistancedlc.totem_log",
+                InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_O,
+                category
+        ));
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (openGuiKey.consumeClick()) {
                 Minecraft.getInstance().setScreen(new MyCustomScreen());
@@ -142,50 +150,59 @@ public class KeyBindings {
         }
     }
 
-public static void setCustomHitSoundsKey(int keyCode) {
-    if (customHitSoundsKey != null) {
-        customHitSoundsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-        Minecraft.getInstance().options.save();
-        Minecraft.getInstance().options.load();
+    public static void setCustomHitSoundsKey(int keyCode) {
+        if (customHitSoundsKey != null) {
+            customHitSoundsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            Minecraft.getInstance().options.save();
+            Minecraft.getInstance().options.load();
+        }
     }
-}
 
-public static void setFastExpKey(int keyCode) {
-    if (fastExpKey != null) {
-        fastExpKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-        Minecraft.getInstance().options.save();
-        Minecraft.getInstance().options.load();
+    public static void setFastExpKey(int keyCode) {
+        if (fastExpKey != null) {
+            fastExpKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            Minecraft.getInstance().options.save();
+            Minecraft.getInstance().options.load();
+        }
     }
-}
 
-public static void setShiftTapKey(int keyCode) {
-    if (shiftTapKey != null) {
-        shiftTapKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-        Minecraft.getInstance().options.save();
-        Minecraft.getInstance().options.load();
+    public static void setShiftTapKey(int keyCode) {
+        if (shiftTapKey != null) {
+            shiftTapKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            Minecraft.getInstance().options.save();
+            Minecraft.getInstance().options.load();
+        }
     }
-}
 
-public static void setComboKey(int keyCode) {
-    if (comboKey != null) {
-        comboKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-        Minecraft.getInstance().options.save();
-        Minecraft.getInstance().options.load();
+    public static void setComboKey(int keyCode) {
+        if (comboKey != null) {
+            comboKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            Minecraft.getInstance().options.save();
+            Minecraft.getInstance().options.load();
+        }
     }
-}
 
-public static void setEffectWarningsKey(int keyCode) {
-    if (effectWarningsKey != null) {
-        effectWarningsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-        Minecraft.getInstance().options.save();
-        Minecraft.getInstance().options.load();
+    public static void setEffectWarningsKey(int keyCode) {
+        if (effectWarningsKey != null) {
+            effectWarningsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            Minecraft.getInstance().options.save();
+            Minecraft.getInstance().options.load();
+        }
     }
-  }
-public static void setWaypointsKey(int keyCode) {
-    if (waypointsKey != null) {
-        waypointsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-        Minecraft.getInstance().options.save();
-        Minecraft.getInstance().options.load();
+
+    public static void setWaypointsKey(int keyCode) {
+        if (waypointsKey != null) {
+            waypointsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            Minecraft.getInstance().options.save();
+            Minecraft.getInstance().options.load();
+        }
     }
-}
+
+    public static void setTotemLogKey(int keyCode) {
+        if (totemLogKey != null) {
+            totemLogKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            Minecraft.getInstance().options.save();
+            Minecraft.getInstance().options.load();
+        }
+    }
 }

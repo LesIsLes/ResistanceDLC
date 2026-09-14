@@ -8,7 +8,8 @@
     "HitSoundMixin",
     "LowFireMixin",
     "LowShieldMixin",
-    "GuiCrosshairMixin"
+    "GuiCrosshairMixin",
+    "TotemLogMixin"
   ],
   "injectors": {
     "defaultRequire": 1
