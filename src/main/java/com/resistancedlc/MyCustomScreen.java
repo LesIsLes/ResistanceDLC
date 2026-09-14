@@ -92,7 +92,7 @@ public class MyCustomScreen extends Screen {
 
     public static boolean autoSwapEnabled = false;
     public static int autoSwapMode = 2;
-    public static int autoSwapOpenDelay = 150;
+    public static int autoSwapOpenDelay = 200;
     public static int autoSwapCooldown = 500;
     public static boolean autoSwapRussian = false;
 

@@ -26,6 +26,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.waypoints.TrackedWaypoint;
@@ -333,7 +334,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 }
             }
 
-            // ===== TOTEM LOG (НОВОЕ) =====
+            // ===== TOTEM LOG =====
             if (KeyBindings.totemLogKey != null) {
                 while (KeyBindings.totemLogKey.consumeClick()) {
                     MyCustomScreen.totemLogEnabled = !MyCustomScreen.totemLogEnabled;
@@ -353,35 +354,50 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 if (client.player == null || client.level == null) return;
                 if (client.screen != null) return;
                 if (MyCustomScreen.autoSwapInProgress) return;
+
                 long now = System.currentTimeMillis();
                 if (now - MyCustomScreen.autoSwapLastTime < MyCustomScreen.autoSwapCooldown) return;
+
                 int slotToSwap = findAutoSwapSlot(client.player);
                 if (slotToSwap < 0) return;
+
                 MyCustomScreen.autoSwapInProgress = true;
                 MyCustomScreen.autoSwapStage = 0;
                 MyCustomScreen.autoSwapSlotToSwap = slotToSwap;
-                MyCustomScreen.autoSwapNextActionTime = now;
+                MyCustomScreen.autoSwapNextActionTime = now + 25;
             }
         });
 
         // ===== AUTOSWAP: этапы =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!MyCustomScreen.autoSwapInProgress) return;
-            if (client.player == null) return;
+            if (client.player == null) {
+                MyCustomScreen.autoSwapInProgress = false;
+                MyCustomScreen.autoSwapStage = 0;
+                MyCustomScreen.autoSwapSlotToSwap = -1;
+                return;
+            }
+
             long now = System.currentTimeMillis();
             if (now < MyCustomScreen.autoSwapNextActionTime) return;
+
+            // ===== ЭТАП 0: открыть инвентарь =====
             if (MyCustomScreen.autoSwapStage == 0) {
                 client.setScreen(new InventoryScreen(client.player));
                 MyCustomScreen.autoSwapStage = 1;
-                MyCustomScreen.autoSwapNextActionTime = now + 50;
-            } else if (MyCustomScreen.autoSwapStage == 1) {
+                MyCustomScreen.autoSwapNextActionTime = now + 75;
+            }
+            // ===== ЭТАП 1: свап через handleInventoryMouseClick =====
+            else if (MyCustomScreen.autoSwapStage == 1) {
                 int slot = MyCustomScreen.autoSwapSlotToSwap;
                 if (slot >= 0 && slot < client.player.getInventory().getContainerSize()) {
-                    swapOffhandWithSlot(client.player, slot);
+                    swapOffhandWithSlot(client, slot);
                 }
                 MyCustomScreen.autoSwapStage = 2;
-                MyCustomScreen.autoSwapNextActionTime = now + MyCustomScreen.autoSwapOpenDelay;
-            } else if (MyCustomScreen.autoSwapStage == 2) {
+                MyCustomScreen.autoSwapNextActionTime = now + 75;
+            }
+            // ===== ЭТАП 2: закрыть инвентарь =====
+            else if (MyCustomScreen.autoSwapStage == 2) {
                 client.setScreen(null);
                 MyCustomScreen.autoSwapInProgress = false;
                 MyCustomScreen.autoSwapStage = 0;
@@ -1087,12 +1103,26 @@ public class ResistanceDLCClient implements ClientModInitializer {
         return -1;
     }
 
-    private static void swapOffhandWithSlot(Player player, int slotIndex) {
-        ItemStack offhandItem = player.getOffhandItem().copy();
-        ItemStack inventoryItem = player.getInventory().getItem(slotIndex).copy();
+    /**
+     * Отправляет серверу пакет смены offhand ↔ слот через SWAP (button=40).
+     * Использует ванильный путь multiPlayerGameMode.handleInventoryMouseClick,
+     * который корректно формирует syncId, revision и SlotActionType.
+     */
+    private static void swapOffhandWithSlot(Minecraft client, int slotIndex) {
+        if (client.player == null) return;
+        if (client.gameMode == null) return;
+        if (slotIndex == 40) return;
 
-        player.getInventory().setItem(slotIndex, offhandItem);
-        player.setItemSlot(EquipmentSlot.OFFHAND, inventoryItem);
+        ItemStack targetStack = client.player.getInventory().getItem(slotIndex);
+        if (targetStack.isEmpty()) return;
+
+        client.gameMode.handleInventoryMouseClick(
+                0,
+                slotIndex,
+                40,
+                ClickType.SWAP,
+                client.player
+        );
     }
 
     private static void drawHudString(GuiGraphics graphics, Font font, String text, int x, int y, int color) {
