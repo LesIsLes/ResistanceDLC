@@ -84,6 +84,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                             }
                                         }
                                         return 1;
+
                                     })
                             )
                             .then(ClientCommandManager.literal("save")
@@ -123,6 +124,80 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                                     sendMessage("§aКонфиг §e" + name + " §aудалён!");
                                                 } else {
                                                     sendMessage("§cКонфиг §e" + name + " §cне найден!");
+                                                }
+                                                return 1;
+                                            })
+                                    )
+                            )
+            );
+            dispatcher.register(
+                    ClientCommandManager.literal("wp")
+                            .then(ClientCommandManager.literal("add")
+                                    .executes(context -> {
+                                        Minecraft mc = Minecraft.getInstance();
+                                        if (mc.player == null) return 0;
+
+                                        double x = mc.player.getX();
+                                        double y = mc.player.getY();
+                                        double z = mc.player.getZ();
+
+                                        boolean added = MyCustomScreen.addWaypoint(x, y, z);
+                                        if (added) {
+                                            int newIndex = MyCustomScreen.getWaypoints().size();
+                                            sendMessage(String.format(
+                                                    "§a[Waypoints] Добавлена метка §6WP%d§a: §e%d, %d, %d",
+                                                    newIndex, (int) x, (int) y, (int) z
+                                            ));
+                                        } else {
+                                            sendMessage("§c[Waypoints] Достигнут лимит ("
+                                                    + MyCustomScreen.waypointsMax + ")");
+                                        }
+                                        return 1;
+                                    })
+                            )
+                            .then(ClientCommandManager.literal("list")
+                                    .executes(context -> {
+                                        List<MyCustomScreen.Waypoint> list = MyCustomScreen.getWaypoints();
+                                        if (list.isEmpty()) {
+                                            sendMessage("§7[Waypoints] Меток нет.");
+                                        } else {
+                                            sendMessage("§6[Waypoints] Метки (" + list.size() + "/"
+                                                    + MyCustomScreen.waypointsMax + "):");
+                                            for (int i = 0; i < list.size(); i++) {
+                                                MyCustomScreen.Waypoint wp = list.get(i);
+                                                sendMessage(String.format(
+                                                        "§7  %d. §e%s §7(%d, %d, %d)",
+                                                        i + 1, wp.name(),
+                                                        (int) wp.x(), (int) wp.y(), (int) wp.z()
+                                                ));
+                                            }
+                                        }
+                                        return 1;
+                                    })
+                            )
+                            .then(ClientCommandManager.literal("clear")
+                                    .executes(context -> {
+                                        MyCustomScreen.clearWaypoints();
+                                        sendMessage("§a[Waypoints] Все метки удалены.");
+                                        return 1;
+                                    })
+                            )
+                            .then(ClientCommandManager.literal("remove")
+                                    .then(ClientCommandManager.argument("name", StringArgumentType.string())
+                                            .executes(context -> {
+                                                String name = StringArgumentType.getString(context, "name");
+                                                List<MyCustomScreen.Waypoint> list = MyCustomScreen.getWaypoints();
+                                                int removed = 0;
+                                                for (int i = list.size() - 1; i >= 0; i--) {
+                                                    if (list.get(i).name().equals(name)) {
+                                                        MyCustomScreen.removeWaypoint(i);
+                                                        removed++;
+                                                    }
+                                                }
+                                                if (removed > 0) {
+                                                    sendMessage("§a[Waypoints] Удалено меток: §e" + removed);
+                                                } else {
+                                                    sendMessage("§c[Waypoints] Метка §e" + name + "§c не найдена.");
                                                 }
                                                 return 1;
                                             })
@@ -275,7 +350,31 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 MyCustomScreen.autoSwapLastTime = now;
             }
         });
+        // ===== WAYPOINTS: кейбинд B =====
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (KeyBindings.waypointsKey == null) return;
+            while (KeyBindings.waypointsKey.consumeClick()) {
+                if (client.player == null) return;
 
+                double x = client.player.getX();
+                double y = client.player.getY();
+                double z = client.player.getZ();
+
+                boolean added = MyCustomScreen.addWaypoint(x, y, z);
+                if (added) {
+                    int newIndex = MyCustomScreen.getWaypoints().size();
+                    client.player.displayClientMessage(
+                            Component.literal(String.format(
+                                    "§a[Waypoints] Добавлена метка §6WP%d§a: §e%d, %d, %d",
+                                    newIndex, (int) x, (int) y, (int) z
+                            )), true);
+                } else {
+                    client.player.displayClientMessage(
+                            Component.literal("§c[Waypoints] Достигнут лимит меток ("
+                                    + MyCustomScreen.waypointsMax + ")"), true);
+                }
+            }
+        });
         // ===== FASTEXP =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!MyCustomScreen.fastExpEnabled) return;

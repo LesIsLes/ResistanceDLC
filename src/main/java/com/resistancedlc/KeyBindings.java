@@ -19,6 +19,7 @@ public class KeyBindings {
     public static KeyMapping shiftTapKey;
     public static KeyMapping comboKey;
     public static KeyMapping effectWarningsKey;
+    public static KeyMapping waypointsKey;   // ← НОВОЕ
     private static KeyMapping.Category category;
 
     private static boolean registered = false;
@@ -92,6 +93,13 @@ public class KeyBindings {
                 "key.resistancedlc.effect_warnings",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_N,
+                category
+        ));
+
+        waypointsKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.resistancedlc.waypoints",
+                InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_B,
                 category
         ));
 
@@ -173,4 +181,11 @@ public static void setEffectWarningsKey(int keyCode) {
         Minecraft.getInstance().options.load();
     }
   }
+public static void setWaypointsKey(int keyCode) {
+    if (waypointsKey != null) {
+        waypointsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+        Minecraft.getInstance().options.save();
+        Minecraft.getInstance().options.load();
+    }
+}
 }

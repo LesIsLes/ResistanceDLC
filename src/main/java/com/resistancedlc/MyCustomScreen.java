@@ -61,33 +61,28 @@ public class MyCustomScreen extends Screen {
     public static int hitCounterX = 10, hitCounterY = 155;
     public static boolean hitCounterRussian = false;
 
-    // ===== POTION EFFECTS HUD =====
     public static boolean showPotionEffects = false;
     public static int potionEffectsX = 10, potionEffectsY = 170;
     public static boolean potionEffectsRussian = false;
     public static boolean potionEffectsIcons = true;
 
-    // ===== EQUIPMENT HUD =====
     public static boolean showEquipmentHud = false;
     public static int equipmentHudX = 4, equipmentHudY = -44;
     public static boolean equipmentHudRussian = false;
     public static boolean equipmentShowDurability = true;
 
-    // ===== LOW FIRE / LOW SHIELD =====
     public static boolean lowFireEnabled = false;
     public static float lowFireOffset = 0.3f;
     public static boolean lowShieldEnabled = false;
     public static float lowShieldOffset = 0.3f;
     public static boolean lowFireShieldRussian = false;
 
-    // ===== ZOOM =====
     public static boolean zoomEnabled = true;
     public static float zoomFactor = 4.0f;
     public static float zoomSmoothness = 0.25f;
     public static boolean zoomRussian = false;
     public static float currentZoom = 1.0f;
 
-    // ===== TAPEMOUSE =====
     public static boolean tapeMouseEnabled = false;
     public static int tapeMouseTarget = 0;
     public static float tapeMouseDelay = 1.0f;
@@ -97,7 +92,6 @@ public class MyCustomScreen extends Screen {
     public static int tapeMouseButton = 0;
     public static boolean tapeMouseHoldRight = false;
 
-    // ===== AUTOSWAP =====
     public static boolean autoSwapEnabled = false;
     public static int autoSwapMode = 2;
     public static int autoSwapOpenDelay = 150;
@@ -110,11 +104,9 @@ public class MyCustomScreen extends Screen {
     public static long autoSwapLastTime = 0;
     public static int autoSwapSlotToSwap = -1;
 
-    // ===== FASTEXP =====
     public static boolean fastExpEnabled = false;
     public static boolean fastExpRussian = false;
 
-    // ===== COMBO COUNTER =====
     public static boolean comboEnabled = false;
     public static int comboX = 10, comboY = 185;
     public static int comboColor = 0xFFFFFF00;
@@ -125,7 +117,6 @@ public class MyCustomScreen extends Screen {
     public static int currentCombo = 0;
     public static long lastComboTime = 0;
 
-    // ===== EFFECT WARNINGS =====
     public static boolean effectWarningsEnabled = false;
     public static int effectWarningsX = 300, effectWarningsY = 200;
     public static int effectWarningsColor = 0xFFFF0000;
@@ -135,7 +126,6 @@ public class MyCustomScreen extends Screen {
     public static boolean effectWarningsShowIcon = true;
     public static boolean effectWarningsRussian = false;
 
-    // ===== CROSSHAIR =====
     public static boolean crosshairEnabled = false;
     public static int crosshairColor = 0xFFFFFFFF;
     public static int crosshairSize = 10;
@@ -143,7 +133,7 @@ public class MyCustomScreen extends Screen {
     public static int crosshairGap = 3;
     public static int crosshairAlpha = 255;
     public static boolean crosshairRussian = false;
-    public static int crosshairShape = 0;   // 0=Cross, 1=Dot, 2=Circle, 3=Arrows, 4=Cross+Dot
+    public static int crosshairShape = 0;
 
     // ===== WAYPOINTS =====
     public static String waypointsRaw = "";
@@ -151,40 +141,33 @@ public class MyCustomScreen extends Screen {
     public static boolean waypointsRussian = false;
     public static boolean waypointsEnabled = true;
 
-    // ===== AUTOSPRINT =====
     public static boolean autoSprintEnabled = false;
     public static boolean autoSprintRussian = false;
 
-    // ===== SHIFTTAP =====
     public static boolean shiftTapEnabled = false;
     public static boolean shiftTapRussian = false;
     public static long shiftTapReleaseTime = 0;
     public static boolean shiftTapActive = false;
 
-    // ===== CUSTOM HIT SOUNDS =====
     public static boolean customHitSoundsEnabled = false;
     public static float customHitSoundVolume = 1.0f;
     public static float customHitSoundPitch = 1.0f;
     public static boolean customHitSoundsRussian = false;
     public static int customHitSoundPreset = 1;
 
-    // ===== РУССКИЙ ЯЗЫК ДЛЯ HUD =====
     public static boolean fpsRussian = false;
     public static boolean pingRussian = false;
     public static boolean tpsRussian = false;
     public static boolean bpsRussian = false;
     public static boolean directionRussian = false;
 
-    // ===== FOV / ASPECT RATIO =====
     public static boolean aspectRatioEnabled = false;
     public static float aspectRatio = 1.0f;
     public static boolean aspectRatioRussian = false;
 
-    // ===== ИСТОРИЯ ПОИСКА =====
     public static String searchHistoryRaw = "";
     private static final int SEARCH_HISTORY_MAX = 8;
 
-    // ===== ПРОЧЕЕ =====
     public static boolean showPet = true;
     public static int hudAlpha = 255;
     public static boolean isBindingKey = false;
@@ -205,7 +188,7 @@ public class MyCustomScreen extends Screen {
             7,  // 0 = HUD
             5,  // 1 = PVP
             1,  // 2 = PVE
-            5,  // 3 = Visual
+            6,  // 3 = Visual (6 страниц — добавлена Waypoints)
             2   // 4 = Misc
     };
     private static final int SECTION_COUNT = SECTION_PAGES.length;
@@ -222,19 +205,18 @@ public class MyCustomScreen extends Screen {
     private int searchResultWidth = 0;
     private int searchResultHeight = 0;
 
-    // Сообщение "результат в другом разделе" — показывается внутри GUI
     private String searchOtherSectionMsg = "";
 
-    // ===== ГЕОМЕТРИЯ ПАНЕЛИ =====
     private int panelX;
     private int panelY;
     private final int panelWidth = 400;
     private final int panelHeight = 420;
 
     private boolean eventsRegistered = false;
+
     /**
      * Точка-метка в мире.
-     * Формат хранения в конфиге: "Name:x:y:z|Name2:x:y:z|..."
+     * Формат хранения: "Name:x:y:z|Name2:x:y:z|..."
      */
     public static record Waypoint(String name, double x, double y, double z) {
         public String serialize() {
@@ -267,10 +249,6 @@ public class MyCustomScreen extends Screen {
             return Math.sqrt(dx * dx + dy * dy + dz * dz);
         }
     }
-    /**
-     * Формат: [ключ, отображаемое_название, страница_в_разделе, индекс_раздела]
-     * Индексы разделов: 0 = HUD, 1 = PVP, 2 = PVE, 3 = Visual, 4 = Misc
-     */
 
     private static final String[][] SEARCH_INDEX = {
             // ===== HUD 0.0 — Элементы HUD =====
@@ -313,8 +291,6 @@ public class MyCustomScreen extends Screen {
             { "эффект предупреждение", "Effect Warnings", "3", "0" },
             { "порог", "Effect Warnings: порог", "3", "0" },
             { "threshold", "Effect Warnings: порог", "3", "0" },
-            { "название warnings", "Effect Warnings: название", "3", "0" },
-            { "иконка warnings", "Effect Warnings: иконка", "3", "0" },
 
             // ===== HUD 0.4 — Combo Counter =====
             { "комбо", "Combo Counter", "4", "0" },
@@ -322,9 +298,6 @@ public class MyCustomScreen extends Screen {
             { "combo counter", "Combo Counter", "4", "0" },
             { "счётчик", "Combo Counter", "4", "0" },
             { "счетчик", "Combo Counter", "4", "0" },
-            { "размер combo", "Combo: размер", "4", "0" },
-            { "цвет combo", "Combo: цвет", "4", "0" },
-            { "время сброса", "Combo: время сброса", "4", "0" },
 
             // ===== HUD 0.5 — Доп. элементы =====
             { "fps", "FPS / КВС", "5", "0" },
@@ -340,34 +313,22 @@ public class MyCustomScreen extends Screen {
             { "удар", "Счётчик ударов", "5", "0" },
             { "hit", "Счётчик ударов", "5", "0" },
             { "хит", "Счётчик ударов", "5", "0" },
-            { "hits", "Счётчик ударов", "5", "0" },
-            { "hits to kill", "Счётчик ударов", "5", "0" },
 
             // ===== HUD 0.6 — Оформление HUD =====
             { "цвет", "Цвет HUD / GUI", "6", "0" },
             { "color", "Цвет HUD / GUI", "6", "0" },
-            { "цвет hud", "Цвет HUD", "6", "0" },
-            { "цвет gui", "Цвет GUI", "6", "0" },
-            { "цвет текста", "Цвет текста GUI", "6", "0" },
             { "фон", "Фон HUD", "6", "0" },
             { "background", "Фон HUD", "6", "0" },
-            { "высота фона", "Высота фона HUD", "6", "0" },
-            { "прозрачность фона", "Прозрачность фона HUD", "6", "0" },
             { "сбросить цвета", "Сброс цветов", "6", "0" },
-            { "reset colors", "Сброс цветов", "6", "0" },
 
             // ===== PVP 1.0 — Custom Hit Sounds =====
             { "звук", "Custom Hit Sounds", "0", "1" },
-            { "звуки удара", "Custom Hit Sounds", "0", "1" },
             { "sound", "Custom Hit Sounds", "0", "1" },
             { "hit sound", "Custom Hit Sounds", "0", "1" },
             { "hitsound", "Custom Hit Sounds", "0", "1" },
             { "громкость", "Hit Sound: громкость", "0", "1" },
-            { "volume", "Hit Sound: громкость", "0", "1" },
             { "тон", "Hit Sound: тон", "0", "1" },
-            { "pitch", "Hit Sound: тон", "0", "1" },
             { "пресет", "Hit Sound: пресет", "0", "1" },
-            { "preset", "Hit Sound: пресет", "0", "1" },
 
             // ===== PVP 1.1 — AutoSwap =====
             { "автосвап", "Автосвап", "1", "1" },
@@ -376,26 +337,18 @@ public class MyCustomScreen extends Screen {
             { "свап", "Автосвап", "1", "1" },
             { "тотем", "Автосвап", "1", "1" },
             { "totem", "Автосвап", "1", "1" },
-            { "шар", "Автосвап", "1", "1" },
-            { "head", "Автосвап", "1", "1" },
-            { "задержка открытия", "AutoSwap: задержка", "1", "1" },
-            { "cooldown", "AutoSwap: cooldown", "1", "1" },
 
             // ===== PVP 1.2 — FastExp =====
             { "fast", "FastExp", "2", "1" },
-            { "fast exp", "FastExp", "2", "1" },
             { "fastexp", "FastExp", "2", "1" },
             { "фаст", "FastExp", "2", "1" },
             { "опыт", "FastExp", "2", "1" },
             { "exp", "FastExp", "2", "1" },
-            { "бутылочка", "FastExp", "2", "1" },
 
             // ===== PVP 1.3 — ShiftTap =====
             { "shifttap", "ShiftTap", "3", "1" },
-            { "shift tap", "ShiftTap", "3", "1" },
             { "shift", "ShiftTap", "3", "1" },
             { "шифт", "ShiftTap", "3", "1" },
-            { "шифт тап", "ShiftTap", "3", "1" },
             { "крит", "ShiftTap", "3", "1" },
 
             // ===== PVP 1.4 — AutoSprint =====
@@ -410,99 +363,55 @@ public class MyCustomScreen extends Screen {
             { "тейп", "TapeMouse", "0", "2" },
             { "автокликер", "TapeMouse", "0", "2" },
             { "кликер", "TapeMouse", "0", "2" },
-            { "наведение", "TapeMouse: только при наведении", "0", "2" },
-            { "заряд", "TapeMouse: только при заряженной атаке", "0", "2" },
-            { "пкм", "TapeMouse: ПКМ / зажать ПКМ", "0", "2" },
-            { "лкм", "TapeMouse: ЛКМ", "0", "2" },
-            { "зажать", "TapeMouse: зажать ПКМ", "0", "2" },
-            { "hold", "TapeMouse: зажать ПКМ", "0", "2" },
-            { "задержка", "TapeMouse: задержка", "0", "2" },
-            { "delay", "TapeMouse: задержка", "0", "2" },
-            { "цель", "TapeMouse: цель", "0", "2" },
-            { "target", "TapeMouse: цель", "0", "2" },
 
             // ===== Visual 3.0 — Crosshair =====
             { "прицел", "Кастомный прицел", "0", "3" },
             { "crosshair", "Кастомный прицел", "0", "3" },
-            { "точка", "Кастомный прицел", "0", "3" },
             { "крест", "Кастомный прицел", "0", "3" },
-            { "размер прицела", "Crosshair: размер", "0", "3" },
-            { "толщина прицела", "Crosshair: толщина", "0", "3" },
-            { "зазор прицела", "Crosshair: зазор", "0", "3" },
 
             // ===== Visual 3.1 — FOV / Aspect Ratio =====
             { "fov", "FOV (Угол обзора)", "1", "3" },
             { "фов", "FOV (Угол обзора)", "1", "3" },
             { "растяг", "Aspect Ratio", "1", "3" },
             { "aspect", "Aspect Ratio", "1", "3" },
-            { "aspect ratio", "Aspect Ratio", "1", "3" },
-            { "stretch", "Aspect Ratio", "1", "3" },
-            { "4:3", "FOV: пресет 4:3", "1", "3" },
-            { "16:9", "FOV: пресет 16:9", "1", "3" },
-            { "21:9", "FOV: пресет 21:9", "1", "3" },
-            { "1:1", "FOV: пресет 1:1", "1", "3" },
 
             // ===== Visual 3.2 — Low Fire / Low Shield =====
             { "огонь", "Низкий огонь", "2", "3" },
             { "fire", "Низкий огонь", "2", "3" },
-            { "low fire", "Низкий огонь", "2", "3" },
-            { "низкий огонь", "Низкий огонь", "2", "3" },
             { "щит", "Низкий щит", "2", "3" },
             { "shield", "Низкий щит", "2", "3" },
-            { "low shield", "Низкий щит", "2", "3" },
-            { "низкий щит", "Низкий щит", "2", "3" },
-            { "смещение огня", "Low Fire: смещение", "2", "3" },
-            { "смещение щита", "Low Shield: смещение", "2", "3" },
 
             // ===== Visual 3.3 — Zoom =====
             { "зум", "Zoom (Приближение)", "3", "3" },
             { "zoom", "Zoom (Приближение)", "3", "3" },
             { "приближение", "Zoom (Приближение)", "3", "3" },
-            { "сила зума", "Zoom: сила", "3", "3" },
-            { "factor", "Zoom: сила", "3", "3" },
-            { "плавность", "Zoom: плавность", "3", "3" },
-            { "smoothness", "Zoom: плавность", "3", "3" },
-            { "smooth", "Zoom: плавность", "3", "3" },
 
             // ===== Visual 3.4 — Темы GUI =====
             { "тема", "Темы GUI", "4", "3" },
-            { "темы", "Темы GUI", "4", "3" },
             { "theme", "Темы GUI", "4", "3" },
-            { "themes", "Темы GUI", "4", "3" },
-            { "gui тема", "Темы GUI", "4", "3" },
             { "vanilla", "Тема Vanilla", "4", "3" },
             { "dark", "Тема Dark", "4", "3" },
-            { "тёмная", "Тема Dark", "4", "3" },
             { "neon", "Тема Neon", "4", "3" },
-            { "неон", "Тема Neon", "4", "3" },
             { "candy", "Тема Candy", "4", "3" },
-            { "канди", "Тема Candy", "4", "3" },
             { "blood", "Тема Blood", "4", "3" },
-            { "блад", "Тема Blood", "4", "3" },
-            { "сбросить тему", "Сброс темы", "4", "3" },
+
+            // ===== Visual 3.5 — Waypoints =====
+            { "метка", "Waypoints", "5", "3" },
+            { "метки", "Waypoints", "5", "3" },
+            { "waypoint", "Waypoints", "5", "3" },
+            { "waypoints", "Waypoints", "5", "3" },
+            { "точка", "Waypoints", "5", "3" },
 
             // ===== Misc 4.0 — Привязка клавиш =====
             { "клавиша", "Привязка клавиши GUI", "0", "4" },
             { "keybind", "Привязка клавиши GUI", "0", "4" },
-            { "key", "Привязка клавиши GUI", "0", "4" },
             { "gui", "Привязка клавиши GUI", "0", "4" },
-            { "гуи", "Привязка клавиши GUI", "0", "4" },
-            { "открыть gui", "Привязка клавиши GUI", "0", "4" },
 
             // ===== Misc 4.1 — Конфигурации =====
             { "конфиг", "Конфигурации", "1", "4" },
-            { "конфигурации", "Конфигурации", "1", "4" },
             { "config", "Конфигурации", "1", "4" },
             { "сохранить", "Сохранить конфиг", "1", "4" },
-            { "save", "Сохранить конфиг", "1", "4" },
-            { "загрузить", "Загрузить конфиг", "1", "4" },
-            { "load", "Загрузить конфиг", "1", "4" },
-            { "удалить", "Удалить конфиг", "1", "4" },
-            { "remove", "Удалить конфиг", "1", "4" },
-            { "список", "Список конфигов", "1", "4" },
-            { "list", "Список конфигов", "1", "4" },
-            { "папка", "Открыть папку", "1", "4" },
-            { "folder", "Открыть папку", "1", "4" }
+            { "загрузить", "Загрузить конфиг", "1", "4" }
     };
     public MyCustomScreen() {
         super(Component.literal("Resistance DLC — Настройки"));
@@ -510,11 +419,7 @@ public class MyCustomScreen extends Screen {
 
     /**
      * Регистрируется РОВНО ОДИН РАЗ на экземпляр Screen'а.
-     * Вызывается из init(), а НЕ из конструктора — Fabric Screen API
-     * требует, чтобы Screen уже был инициализирован.
-     *
-     * ВАЖНО: клик по результатам поиска обрабатывается НЕ здесь, а в mouseClicked().
-     * Здесь только клавиатура и клик по истории поиска (когда поле пустое).
+     * Вызывается из init(), а НЕ из конструктора.
      */
     private void registerScreenEvents() {
         ScreenKeyboardEvents.allowKeyPress(this).register((screen, keyEvent) -> {
@@ -547,6 +452,8 @@ public class MyCustomScreen extends Screen {
                 KeyBindings.setComboKey(keyCode);
             } else if (bindingTarget == 8) {
                 KeyBindings.setEffectWarningsKey(keyCode);
+            } else if (bindingTarget == 9) {
+                KeyBindings.setWaypointsKey(keyCode);
             }
             isBindingKey = false;
             bindingTarget = 0;
@@ -554,8 +461,7 @@ public class MyCustomScreen extends Screen {
             return false;
         });
 
-        // Клик по результатам поиска — в mouseClicked().
-        // Здесь — только клик по истории поиска (когда поле пустое и в фокусе).
+        // Клик по истории поиска (когда поле пустое и в фокусе).
         ScreenMouseEvents.allowMouseClick(this).register((screen, mouseEvent) -> {
             double mouseX = mouseEvent.x();
             double mouseY = mouseEvent.y();
@@ -586,7 +492,6 @@ public class MyCustomScreen extends Screen {
         this.panelX = (this.width - panelWidth) / 2 + 80;
         this.panelY = (this.height - panelHeight) / 2;
 
-        // ⚠️ ФИКС: регистрация событий ТОЛЬКО здесь, ТОЛЬКО один раз
         if (!eventsRegistered) {
             eventsRegistered = true;
             registerScreenEvents();
@@ -597,14 +502,14 @@ public class MyCustomScreen extends Screen {
         int centerX = this.panelX + panelWidth / 2;
         int panelY = this.panelY;
 
-        // ===== ПОИСК (слева от панели) =====
+        // ===== ПОИСК =====
         this.searchField = new EditBox(this.font, panelX - 180, panelY + 50, 160, 18,
                 Component.literal("Поиск..."));
         this.searchField.setMaxLength(30);
         this.searchField.setResponder(text -> {});
         this.addRenderableWidget(this.searchField);
 
-        // ===== ТАБЫ РАЗДЕЛОВ (вертикально, НИЖЕ результатов поиска) =====
+        // ===== ТАБЫ РАЗДЕЛОВ =====
         int tabX = panelX - 180;
         int tabY = panelY + 185;
         int tabW = 160;
@@ -662,14 +567,12 @@ public class MyCustomScreen extends Screen {
         if (currentPage > 0) {
             currentPage--;
         }
-        // Иначе — уже на первой странице раздела, ничего не делаем
     }
 
     private void navigateNext() {
         if (currentPage < SECTION_PAGES[currentSection] - 1) {
             currentPage++;
         }
-        // Иначе — уже на последней странице раздела, ничего не делаем
     }
 
     /**
@@ -677,20 +580,20 @@ public class MyCustomScreen extends Screen {
      *   0 HUD (7):    0 элементы, 1 зелья, 2 экипировка, 3 warnings, 4 combo, 5 доп, 6 оформление
      *   1 PVP (5):    0 hit sounds, 1 autoswap, 2 fastexp, 3 shifttap, 4 autosprint
      *   2 PVE (1):    0 tapemouse
-     *   3 Visual (5): 0 crosshair, 1 fov, 2 low fire/shield, 3 zoom, 4 темы
+     *   3 Visual (6): 0 crosshair, 1 fov, 2 low fire/shield, 3 zoom, 4 темы, 5 waypoints
      *   4 Misc (2):   0 привязка GUI, 1 конфиги
      */
     private void initCurrentPage(int centerX, int panelY) {
         switch (currentSection) {
             case 0 -> { // HUD — 7 страниц
                 switch (currentPage) {
-                    case 0 -> initPage1(centerX, panelY);          // Элементы HUD
-                    case 1 -> initPage7(centerX, panelY);          // Эффекты зелий
-                    case 2 -> initPage8(centerX, panelY);          // Экипировка
-                    case 3 -> initPage15(centerX, panelY);         // Effect Warnings
-                    case 4 -> initPage14(centerX, panelY);         // Combo Counter
-                    case 5 -> initPage3(centerX, panelY);          // Доп. элементы
-                    case 6 -> initAppearancePage(centerX, panelY); // Оформление HUD
+                    case 0 -> initPage1(centerX, panelY);
+                    case 1 -> initPage7(centerX, panelY);
+                    case 2 -> initPage8(centerX, panelY);
+                    case 3 -> initPage15(centerX, panelY);
+                    case 4 -> initPage14(centerX, panelY);
+                    case 5 -> initPage3(centerX, panelY);
+                    case 6 -> initAppearancePage(centerX, panelY);
                 }
             }
             case 1 -> { // PVP
@@ -714,6 +617,7 @@ public class MyCustomScreen extends Screen {
                     case 2 -> initPage9(centerX, panelY);
                     case 3 -> initPage10(centerX, panelY);
                     case 4 -> initThemesPage(centerX, panelY);
+                    case 5 -> initWaypointsPage(centerX, panelY);
                 }
             }
             case 4 -> { // Misc
@@ -762,13 +666,11 @@ public class MyCustomScreen extends Screen {
         }
         return history;
     }
+
     // =========================================================
-    // WAYPOINTS
+    // WAYPOINTS — методы
     // =========================================================
 
-    /**
-     * Парсит waypointsRaw и возвращает список.
-     */
     public static List<Waypoint> getWaypoints() {
         List<Waypoint> list = new ArrayList<>();
         if (waypointsRaw == null || waypointsRaw.isEmpty()) return list;
@@ -780,9 +682,6 @@ public class MyCustomScreen extends Screen {
         return list;
     }
 
-    /**
-     * Сохраняет список waypoints обратно в строку.
-     */
     public static void setWaypoints(List<Waypoint> list) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < list.size(); i++) {
@@ -792,10 +691,6 @@ public class MyCustomScreen extends Screen {
         waypointsRaw = sb.toString();
     }
 
-    /**
-     * Добавляет waypoint. Если превышен лимит — не добавляет.
-     * Возвращает true, если добавлено.
-     */
     public static boolean addWaypoint(double x, double y, double z) {
         List<Waypoint> list = getWaypoints();
         if (list.size() >= waypointsMax) return false;
@@ -806,9 +701,6 @@ public class MyCustomScreen extends Screen {
         return true;
     }
 
-    /**
-     * Удаляет waypoint по индексу. Возвращает true, если удалено.
-     */
     public static boolean removeWaypoint(int index) {
         List<Waypoint> list = getWaypoints();
         if (index < 0 || index >= list.size()) return false;
@@ -818,9 +710,6 @@ public class MyCustomScreen extends Screen {
         return true;
     }
 
-    /**
-     * Удаляет все waypoints.
-     */
     public static void clearWaypoints() {
         waypointsRaw = "";
         ConfigManager.save();
@@ -894,10 +783,8 @@ public class MyCustomScreen extends Screen {
 
     /**
      * HUD 0.6 — Оформление HUD.
-     * Цвета (HUD / фон / GUI / текст GUI), чекбоксы HUD и фон HUD, сброс.
      */
     private void initAppearancePage(int centerX, int panelY) {
-        // ===== ЧЕКБОКСЫ =====
         Checkbox hudCheckbox = Checkbox.builder(Component.literal("Показывать HUD"), this.font)
                 .pos(centerX - 100, panelY + 45).selected(showHud)
                 .onValueChange((c, v) -> { showHud = v; ConfigManager.save(); }).build();
@@ -908,7 +795,6 @@ public class MyCustomScreen extends Screen {
                 .onValueChange((c, v) -> { hudBackgroundEnabled = v; ConfigManager.save(); }).build();
         this.addRenderableWidget(hudBgCheckbox);
 
-        // ===== ЦВЕТ HUD =====
         this.hexField = new EditBox(this.font, centerX - 130, panelY + 78, 80, 18,
                 Component.literal("#RRGGBB"));
         this.hexField.setMaxLength(7);
@@ -937,7 +823,6 @@ public class MyCustomScreen extends Screen {
                 .bounds(centerX + 140, panelY + 78, 40, 18).build();
         this.addRenderableWidget(whiteBtn);
 
-        // ===== ЦВЕТ ФОНА HUD =====
         EditBox hudBgColorField = new EditBox(this.font, centerX - 130, panelY + 126, 80, 18,
                 Component.literal("#RRGGBB"));
         hudBgColorField.setMaxLength(7);
@@ -966,7 +851,6 @@ public class MyCustomScreen extends Screen {
                 .bounds(centerX + 140, panelY + 126, 40, 18).build();
         this.addRenderableWidget(hudBgBlackBtn);
 
-        // ===== ЦВЕТ GUI =====
         EditBox guiColorField = new EditBox(this.font, centerX - 130, panelY + 174, 80, 18,
                 Component.literal("#RRGGBB"));
         guiColorField.setMaxLength(7);
@@ -992,7 +876,6 @@ public class MyCustomScreen extends Screen {
                 .bounds(centerX + 95, panelY + 174, 40, 18).build();
         this.addRenderableWidget(guiBlueBtn);
 
-        // ===== ЦВЕТ ТЕКСТА GUI =====
         EditBox guiTextColorField = new EditBox(this.font, centerX - 130, panelY + 222, 80, 18,
                 Component.literal("#RRGGBB"));
         guiTextColorField.setMaxLength(7);
@@ -1018,7 +901,6 @@ public class MyCustomScreen extends Screen {
                 .bounds(centerX + 95, panelY + 222, 40, 18).build();
         this.addRenderableWidget(textBlueBtn);
 
-        // ===== СБРОС ЦВЕТОВ =====
         Button resetColorsBtn = Button.builder(Component.literal("Сбросить цвета на Vanilla"), (b) -> {
             guiColor = 0xFF00FF00;
             guiTextColor = 0xFFFFFFFF;
@@ -2038,7 +1920,6 @@ public class MyCustomScreen extends Screen {
         }).bounds(centerX + 120, panelY + 45, 25, 20).build();
         this.addRenderableWidget(translateBtn);
 
-        // ===== ФОРМА ПРИЦЕЛА =====
         Button shapeBtn = Button.builder(
                 Component.literal(getCrosshairShapeName(crosshairShape, crosshairRussian)),
                 (b) -> {
@@ -2049,7 +1930,6 @@ public class MyCustomScreen extends Screen {
         ).bounds(centerX - 100, panelY + 80, 200, 20).build();
         this.addRenderableWidget(shapeBtn);
 
-        // ===== РАЗМЕР =====
         AbstractSliderButton sizeSlider = new AbstractSliderButton(
                 centerX - 100, panelY + 115, 200, 20,
                 Component.literal(crosshairRussian ? ("Размер: " + crosshairSize + " px") : ("Size: " + crosshairSize + " px")),
@@ -2144,7 +2024,6 @@ public class MyCustomScreen extends Screen {
 
     /**
      * Visual 3.4 — Темы GUI.
-     * 5 пресетов, каждая тема применяет guiColor + guiTextColor + hudColor.
      */
     private void initThemesPage(int centerX, int panelY) {
         int[][] themes = {
@@ -2196,6 +2075,104 @@ public class MyCustomScreen extends Screen {
                 .bounds(centerX - 100, panelY + 250, 200, 20).build();
         curBtn.active = false;
         this.addRenderableWidget(curBtn);
+    }
+
+    /**
+     * Visual 3.5 — Waypoints.
+     * Форма добавления (X, Y, Z) + список существующих меток.
+     *
+     * Координаты:
+     *   +35  заголовок "Координаты новой метки"
+     *   +50  поля X, Y, Z
+     *   +75  кнопка "Добавить метку"
+     *   +105 кнопка "Очистить все метки"
+     *   +130 заголовок "Существующие метки"
+     *   +155 список меток (по 22 px на строку)
+     */
+    private void initWaypointsPage(int centerX, int panelY) {
+        // ===== ЗНАЧЕНИЯ ПО УМОЛЧАНИЮ (позиция игрока) =====
+        int defaultX = 0;
+        int defaultY = 64;
+        int defaultZ = 0;
+        if (Minecraft.getInstance().player != null) {
+            defaultX = (int) Minecraft.getInstance().player.getX();
+            defaultY = (int) Minecraft.getInstance().player.getY();
+            defaultZ = (int) Minecraft.getInstance().player.getZ();
+        }
+
+        // ===== ПОЛЯ ВВОДА КООРДИНАТ =====
+        EditBox xField = new EditBox(this.font, centerX - 100, panelY + 50, 55, 18,
+                Component.literal("X"));
+        xField.setMaxLength(8);
+        xField.setValue(String.valueOf(defaultX));
+        this.addRenderableWidget(xField);
+
+        EditBox yField = new EditBox(this.font, centerX - 38, panelY + 50, 55, 18,
+                Component.literal("Y"));
+        yField.setMaxLength(8);
+        yField.setValue(String.valueOf(defaultY));
+        this.addRenderableWidget(yField);
+
+        EditBox zField = new EditBox(this.font, centerX + 24, panelY + 50, 55, 18,
+                Component.literal("Z"));
+        zField.setMaxLength(8);
+        zField.setValue(String.valueOf(defaultZ));
+        this.addRenderableWidget(zField);
+
+        // ===== КНОПКА "ДОБАВИТЬ МЕТКУ" =====
+        Button addBtn = Button.builder(Component.literal("Добавить метку"), (b) -> {
+            try {
+                double x = Double.parseDouble(xField.getValue().trim());
+                double y = Double.parseDouble(yField.getValue().trim());
+                double z = Double.parseDouble(zField.getValue().trim());
+
+                boolean added = MyCustomScreen.addWaypoint(x, y, z);
+                if (added && Minecraft.getInstance().player != null) {
+                    int newIndex = MyCustomScreen.getWaypoints().size();
+                    Minecraft.getInstance().player.displayClientMessage(
+                            Component.literal(String.format(
+                                    "§a[Waypoints] Добавлена метка §6WP%d§a: §e%d, %d, %d",
+                                    newIndex, (int) x, (int) y, (int) z
+                            )), true);
+                } else if (Minecraft.getInstance().player != null) {
+                    Minecraft.getInstance().player.displayClientMessage(
+                            Component.literal("§c[Waypoints] Достигнут лимит ("
+                                    + MyCustomScreen.waypointsMax + ")"), true);
+                }
+            } catch (NumberFormatException e) {
+                if (Minecraft.getInstance().player != null) {
+                    Minecraft.getInstance().player.displayClientMessage(
+                            Component.literal("§c[Waypoints] Неверные координаты"), true);
+                }
+            }
+            this.rebuildWidgets();
+        }).bounds(centerX - 100, panelY + 75, 200, 20).build();
+        this.addRenderableWidget(addBtn);
+
+        // ===== КНОПКА "ОЧИСТИТЬ ВСЕ" =====
+        Button clearBtn = Button.builder(Component.literal("Очистить все метки"), (b) -> {
+            MyCustomScreen.clearWaypoints();
+            this.rebuildWidgets();
+        }).bounds(centerX - 100, panelY + 105, 200, 20).build();
+        this.addRenderableWidget(clearBtn);
+
+        // ===== СПИСОК СУЩЕСТВУЮЩИХ МЕТОК =====
+        List<MyCustomScreen.Waypoint> waypoints = MyCustomScreen.getWaypoints();
+
+        int listStartY = panelY + 155;
+        int rowHeight = 22;
+
+        for (int i = 0; i < waypoints.size(); i++) {
+            final int index = i;
+            int y = listStartY + i * rowHeight;
+
+            // Кнопка "×" для удаления этой метки
+            Button delBtn = Button.builder(Component.literal("×"), (b) -> {
+                MyCustomScreen.removeWaypoint(index);
+                this.rebuildWidgets();
+            }).bounds(centerX + 80, y, 20, 18).build();
+            this.addRenderableWidget(delBtn);
+        }
     }
 
     /**
@@ -2251,6 +2228,7 @@ public class MyCustomScreen extends Screen {
         }
         return 0;
     }
+
     private String getCrosshairShapeName(int shape, boolean russian) {
         if (russian) {
             return switch (shape) {
@@ -2270,6 +2248,7 @@ public class MyCustomScreen extends Screen {
             };
         }
     }
+
     private String getTargetName(int target, boolean russian) {
         if (russian) {
             return switch (target) {
@@ -2339,28 +2318,59 @@ public class MyCustomScreen extends Screen {
 
         super.render(graphics, mouseX, mouseY, delta);
 
-        // ===== Плашка с сообщением "результат в другом разделе" =====
+        // ===== WAYPOINTS: заголовки и список =====
+        // Рисуем поверх кнопок (после super.render), только на Visual 3.5
+        if (currentSection == 3 && currentPage == 5) {
+            // Заголовок "Координаты новой метки" — на +35, под шапкой панели
+            graphics.drawString(this.font, "§l▸ Координаты новой метки",
+                    panelX + 20, panelY + 35, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 47, panelX + panelWidth - 20, panelY + 48, guiColor);
+
+            // Заголовок "Существующие метки" — на +130, под кнопками
+            graphics.drawString(this.font, "§l▸ Существующие метки",
+                    panelX + 20, panelY + 130, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 142, panelX + panelWidth - 20, panelY + 143, guiColor);
+
+            // Список меток — рисуем текст
+            List<MyCustomScreen.Waypoint> waypoints = MyCustomScreen.getWaypoints();
+
+            if (waypoints.isEmpty()) {
+                graphics.drawString(this.font, "§7Меток нет. Нажмите B или введите координаты.",
+                        panelX + 20, panelY + 158, 0xFFAAAAAA);
+            } else {
+                int listStartY = panelY + 155;
+                int rowHeight = 22;
+
+                for (int i = 0; i < waypoints.size(); i++) {
+                    MyCustomScreen.Waypoint wp = waypoints.get(i);
+                    int y = listStartY + i * rowHeight;
+
+                    String text = String.format("§e%s §7(%d, %d, %d)",
+                            wp.name(), (int) wp.x(), (int) wp.y(), (int) wp.z());
+                    graphics.drawString(this.font, text,
+                            panelX + 30, y + 5, 0xFFFFFFFF);
+                }
+            }
+        }
+
+        // ===== Плашка "результат в другом разделе" =====
         if (searchOtherSectionMsg != null && !searchOtherSectionMsg.isEmpty()) {
             int msgW = this.font.width(searchOtherSectionMsg) + 16;
             int msgH = 18;
             int msgX = panelX + (panelWidth - msgW) / 2;
             int msgY = panelY + panelHeight - 55;
 
-            // фон
             graphics.fill(msgX, msgY, msgX + msgW, msgY + msgH, 0xE0000000);
-            // рамка guiColor
             graphics.fill(msgX, msgY, msgX + msgW, msgY + 1, guiColor);
             graphics.fill(msgX, msgY + msgH - 1, msgX + msgW, msgY + msgH, guiColor);
             graphics.fill(msgX, msgY, msgX + 1, msgY + msgH, guiColor);
             graphics.fill(msgX + msgW - 1, msgY, msgX + msgW, msgY + msgH, guiColor);
 
-            // текст — без §e (он уже внутри строки, но для drawCenteredString
-            // нужно чистое содержимое с §-кодами — они обрабатываются в самом тексте)
             graphics.drawCenteredString(this.font, searchOtherSectionMsg,
                     msgX + msgW / 2, msgY + 5, 0xFFFFFFFF);
         }
 
-        // Пет-иконка — на верхнем правом углу поля поиска
+        // Пет-иконка
         if (showPet) {
             int petSize = 24;
             int petX = panelX - 45;
@@ -2386,7 +2396,7 @@ public class MyCustomScreen extends Screen {
         graphics.drawCenteredString(this.font, "§l" + title,
                 panelX + panelWidth / 2, panelY + 15, guiColor);
 
-        // Счётчик внизу: локальный
+        // Счётчик внизу
         graphics.drawCenteredString(this.font,
                 "§7" + sectionName + " · Стр. " + (currentPage + 1) + " / " + pagesInSection,
                 panelX + panelWidth / 2, panelY + 405, 0xFFFFFFFF);
@@ -2472,8 +2482,6 @@ public class MyCustomScreen extends Screen {
      * Клик по результатам поиска.
      * Если результат в текущем разделе — переходим на страницу.
      * Если результат в другом разделе — показываем сообщение, не переключаем.
-     *
-     * ВАЖНО: в Minecraft 1.21.11 сигнатура изменилась на (MouseButtonEvent, boolean).
      */
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean isDoubleClick) {
@@ -2498,7 +2506,6 @@ public class MyCustomScreen extends Screen {
                         this.searchOtherSectionMsg = "";
                         this.rebuildWidgets();
                     } else {
-                        // Не пишем в чат — показываем плашку внутри GUI
                         String secName = getSectionName(targetSection, modLogoRussian);
                         this.searchOtherSectionMsg = "§eРезультат в разделе §6" + secName
                                 + "§e. Переключитесь туда вручную.";
