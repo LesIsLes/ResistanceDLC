@@ -43,3 +43,4 @@ replay_*.log
 src_backup_*
 src_v1.0_backup/
 *.bakgradle-log.txt
+gradle-log.txt
