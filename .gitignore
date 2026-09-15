@@ -42,4 +42,4 @@ replay_*.log
 # Бэкапы
 src_backup_*
 src_v1.0_backup/
-*.bak
+*.bakgradle-log.txt
