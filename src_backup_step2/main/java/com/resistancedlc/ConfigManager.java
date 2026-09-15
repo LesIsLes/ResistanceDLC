@@ -53,7 +53,7 @@ public class ConfigManager {
             json.addProperty("hudColor", ModConfig.hudColor);
             json.addProperty("showModLogo", ModConfig.showModLogo);
             json.addProperty("modLogoX", ModConfig.modLogoX);
-            json.addProperty("modLogoY", ModConfig.modLogoY);
+            json.addProperty("modLogoY", MyCustomScreen.modLogoY);
             json.addProperty("modLogoRussian", ModConfig.modLogoRussian);
             json.addProperty("hudBackgroundEnabled", ModConfig.hudBackgroundEnabled);
             json.addProperty("hudBackgroundAlpha", ModConfig.hudBackgroundAlpha);
@@ -84,27 +84,27 @@ public class ConfigManager {
 
             // === ПОЗИЦИИ ===
             json.addProperty("coordsX", ModConfig.coordsX);
-            json.addProperty("coordsY", ModConfig.coordsY);
+            json.addProperty("coordsY", MyCustomScreen.coordsY);
             json.addProperty("biomeX", ModConfig.biomeX);
-            json.addProperty("biomeY", ModConfig.biomeY);
+            json.addProperty("biomeY", MyCustomScreen.biomeY);
             json.addProperty("timeX", ModConfig.timeX);
-            json.addProperty("timeY", ModConfig.timeY);
+            json.addProperty("timeY", MyCustomScreen.timeY);
             json.addProperty("fpsX", ModConfig.fpsX);
-            json.addProperty("fpsY", ModConfig.fpsY);
+            json.addProperty("fpsY", MyCustomScreen.fpsY);
             json.addProperty("pingX", ModConfig.pingX);
-            json.addProperty("pingY", ModConfig.pingY);
+            json.addProperty("pingY", MyCustomScreen.pingY);
             json.addProperty("tpsX", ModConfig.tpsX);
-            json.addProperty("tpsY", ModConfig.tpsY);
+            json.addProperty("tpsY", MyCustomScreen.tpsY);
             json.addProperty("bpsX", ModConfig.bpsX);
-            json.addProperty("bpsY", ModConfig.bpsY);
+            json.addProperty("bpsY", MyCustomScreen.bpsY);
             json.addProperty("directionX", ModConfig.directionX);
-            json.addProperty("directionY", ModConfig.directionY);
+            json.addProperty("directionY", MyCustomScreen.directionY);
             json.addProperty("hitCounterX", ModConfig.hitCounterX);
-            json.addProperty("hitCounterY", ModConfig.hitCounterY);
+            json.addProperty("hitCounterY", MyCustomScreen.hitCounterY);
             json.addProperty("potionEffectsX", ModConfig.potionEffectsX);
-            json.addProperty("potionEffectsY", ModConfig.potionEffectsY);
+            json.addProperty("potionEffectsY", MyCustomScreen.potionEffectsY);
             json.addProperty("equipmentHudX", ModConfig.equipmentHudX);
-            json.addProperty("equipmentHudY", ModConfig.equipmentHudY);
+            json.addProperty("equipmentHudY", MyCustomScreen.equipmentHudY);
 
             // === ПЕРЕВОД ===
             json.addProperty("fpsRussian", ModConfig.fpsRussian);
@@ -169,7 +169,7 @@ public class ConfigManager {
             // === COMBO COUNTER ===
             json.addProperty("comboEnabled", ModConfig.comboEnabled);
             json.addProperty("comboX", ModConfig.comboX);
-            json.addProperty("comboY", ModConfig.comboY);
+            json.addProperty("comboY", MyCustomScreen.comboY);
             json.addProperty("comboColor", ModConfig.comboColor);
             json.addProperty("comboResetTime", ModConfig.comboResetTime);
             json.addProperty("comboFontSize", ModConfig.comboFontSize);
@@ -178,7 +178,7 @@ public class ConfigManager {
             // === EFFECT WARNINGS ===
             json.addProperty("effectWarningsEnabled", ModConfig.effectWarningsEnabled);
             json.addProperty("effectWarningsX", ModConfig.effectWarningsX);
-            json.addProperty("effectWarningsY", ModConfig.effectWarningsY);
+            json.addProperty("effectWarningsY", MyCustomScreen.effectWarningsY);
             json.addProperty("effectWarningsColor", ModConfig.effectWarningsColor);
             json.addProperty("effectWarningsThreshold", ModConfig.effectWarningsThreshold);
             json.addProperty("effectWarningsAlpha", ModConfig.effectWarningsAlpha);
@@ -297,7 +297,7 @@ public class ConfigManager {
             ModConfig.hudColor = getInt(json, "hudColor", ModConfig.hudColor);
             ModConfig.showModLogo = getBool(json, "showModLogo", ModConfig.showModLogo);
             ModConfig.modLogoX = getInt(json, "modLogoX", ModConfig.modLogoX);
-            ModConfig.modLogoY = getInt(json, "modLogoY", ModConfig.modLogoY);
+            MyCustomScreen.modLogoY = getInt(json, "modLogoY", MyCustomScreen.modLogoY);
             ModConfig.modLogoRussian = getBool(json, "modLogoRussian", ModConfig.modLogoRussian);
             ModConfig.hudBackgroundEnabled = getBool(json, "hudBackgroundEnabled", ModConfig.hudBackgroundEnabled);
             ModConfig.hudBackgroundAlpha = getInt(json, "hudBackgroundAlpha", ModConfig.hudBackgroundAlpha);
@@ -328,27 +328,27 @@ public class ConfigManager {
 
             // === ПОЗИЦИИ ===
             ModConfig.coordsX = getInt(json, "coordsX", ModConfig.coordsX);
-            ModConfig.coordsY = getInt(json, "coordsY", ModConfig.coordsY);
+            MyCustomScreen.coordsY = getInt(json, "coordsY", MyCustomScreen.coordsY);
             ModConfig.biomeX = getInt(json, "biomeX", ModConfig.biomeX);
-            ModConfig.biomeY = getInt(json, "biomeY", ModConfig.biomeY);
+            MyCustomScreen.biomeY = getInt(json, "biomeY", MyCustomScreen.biomeY);
             ModConfig.timeX = getInt(json, "timeX", ModConfig.timeX);
-            ModConfig.timeY = getInt(json, "timeY", ModConfig.timeY);
+            MyCustomScreen.timeY = getInt(json, "timeY", MyCustomScreen.timeY);
             ModConfig.fpsX = getInt(json, "fpsX", ModConfig.fpsX);
-            ModConfig.fpsY = getInt(json, "fpsY", ModConfig.fpsY);
+            MyCustomScreen.fpsY = getInt(json, "fpsY", MyCustomScreen.fpsY);
             ModConfig.pingX = getInt(json, "pingX", ModConfig.pingX);
-            ModConfig.pingY = getInt(json, "pingY", ModConfig.pingY);
+            MyCustomScreen.pingY = getInt(json, "pingY", MyCustomScreen.pingY);
             ModConfig.tpsX = getInt(json, "tpsX", ModConfig.tpsX);
-            ModConfig.tpsY = getInt(json, "tpsY", ModConfig.tpsY);
+            MyCustomScreen.tpsY = getInt(json, "tpsY", MyCustomScreen.tpsY);
             ModConfig.bpsX = getInt(json, "bpsX", ModConfig.bpsX);
-            ModConfig.bpsY = getInt(json, "bpsY", ModConfig.bpsY);
+            MyCustomScreen.bpsY = getInt(json, "bpsY", MyCustomScreen.bpsY);
             ModConfig.directionX = getInt(json, "directionX", ModConfig.directionX);
-            ModConfig.directionY = getInt(json, "directionY", ModConfig.directionY);
+            MyCustomScreen.directionY = getInt(json, "directionY", MyCustomScreen.directionY);
             ModConfig.hitCounterX = getInt(json, "hitCounterX", ModConfig.hitCounterX);
-            ModConfig.hitCounterY = getInt(json, "hitCounterY", ModConfig.hitCounterY);
+            MyCustomScreen.hitCounterY = getInt(json, "hitCounterY", MyCustomScreen.hitCounterY);
             ModConfig.potionEffectsX = getInt(json, "potionEffectsX", ModConfig.potionEffectsX);
-            ModConfig.potionEffectsY = getInt(json, "potionEffectsY", ModConfig.potionEffectsY);
+            MyCustomScreen.potionEffectsY = getInt(json, "potionEffectsY", MyCustomScreen.potionEffectsY);
             ModConfig.equipmentHudX = getInt(json, "equipmentHudX", ModConfig.equipmentHudX);
-            ModConfig.equipmentHudY = getInt(json, "equipmentHudY", ModConfig.equipmentHudY);
+            MyCustomScreen.equipmentHudY = getInt(json, "equipmentHudY", MyCustomScreen.equipmentHudY);
 
             // === ПЕРЕВОД ===
             ModConfig.fpsRussian = getBool(json, "fpsRussian", ModConfig.fpsRussian);
@@ -413,7 +413,7 @@ public class ConfigManager {
             // === COMBO COUNTER ===
             ModConfig.comboEnabled = getBool(json, "comboEnabled", ModConfig.comboEnabled);
             ModConfig.comboX = getInt(json, "comboX", ModConfig.comboX);
-            ModConfig.comboY = getInt(json, "comboY", ModConfig.comboY);
+            MyCustomScreen.comboY = getInt(json, "comboY", MyCustomScreen.comboY);
             ModConfig.comboColor = getInt(json, "comboColor", ModConfig.comboColor);
             ModConfig.comboResetTime = getInt(json, "comboResetTime", ModConfig.comboResetTime);
             ModConfig.comboFontSize = getInt(json, "comboFontSize", ModConfig.comboFontSize);
@@ -422,7 +422,7 @@ public class ConfigManager {
             // === EFFECT WARNINGS ===
             ModConfig.effectWarningsEnabled = getBool(json, "effectWarningsEnabled", ModConfig.effectWarningsEnabled);
             ModConfig.effectWarningsX = getInt(json, "effectWarningsX", ModConfig.effectWarningsX);
-            ModConfig.effectWarningsY = getInt(json, "effectWarningsY", ModConfig.effectWarningsY);
+            MyCustomScreen.effectWarningsY = getInt(json, "effectWarningsY", MyCustomScreen.effectWarningsY);
             ModConfig.effectWarningsColor = getInt(json, "effectWarningsColor", ModConfig.effectWarningsColor);
             ModConfig.effectWarningsThreshold = getInt(json, "effectWarningsThreshold", ModConfig.effectWarningsThreshold);
             ModConfig.effectWarningsAlpha = getInt(json, "effectWarningsAlpha", ModConfig.effectWarningsAlpha);
