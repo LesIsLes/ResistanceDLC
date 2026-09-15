@@ -1,5 +1,7 @@
 package com.resistancedlc.mixin;
 
+import com.resistancedlc.config.ModConfig;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.resistancedlc.MyCustomScreen;
 import net.minecraft.client.renderer.GameRenderer;
@@ -13,7 +15,7 @@ public class NoHurtCamMixin {
 
     @Inject(method = "bobHurt", at = @At("HEAD"), cancellable = true)
     private void onTiltViewWhenHurt(PoseStack poseStack, float f, CallbackInfo ci) {
-        if (MyCustomScreen.noHurtCamEnabled) {
+        if (ModConfig.noHurtCamEnabled) {
             ci.cancel();
         }
     }

@@ -1,5 +1,7 @@
 package com.resistancedlc.mixin;
 
+import com.resistancedlc.config.ModConfig;
+
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.GameRenderer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,13 +18,13 @@ public class AspectRatioMixin {
         float originalFov = cir.getReturnValue();
 
         // Aspect Ratio (растяг)
-        if (MyCustomScreen.aspectRatioEnabled) {
-            originalFov = originalFov * MyCustomScreen.aspectRatio;
+        if (ModConfig.aspectRatioEnabled) {
+            originalFov = originalFov * ModConfig.aspectRatio;
         }
 
         // Zoom
-        if (MyCustomScreen.zoomEnabled) {
-            originalFov = originalFov * MyCustomScreen.currentZoom;
+        if (ModConfig.zoomEnabled) {
+            originalFov = originalFov * ModConfig.currentZoom;
         }
 
         cir.setReturnValue(originalFov);

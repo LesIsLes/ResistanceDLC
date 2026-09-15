@@ -1,5 +1,7 @@
 package com.resistancedlc.mixin;
 
+import com.resistancedlc.config.ModConfig;
+
 import com.resistancedlc.MyCustomScreen;
 import com.resistancedlc.TotemTracker;
 import net.minecraft.client.Minecraft;
@@ -26,7 +28,7 @@ public class TotemLogMixin {
     private void onTotemPop(DamageSource source, CallbackInfoReturnable<Boolean> cir) {
         // Сработал тотем?
         if (!cir.getReturnValue()) return;
-        if (!MyCustomScreen.totemLogEnabled) return;
+        if (!ModConfig.totemLogEnabled) return;
 
         Minecraft client = Minecraft.getInstance();
         if (client.player == null || client.level == null) return;
@@ -35,7 +37,7 @@ public class TotemLogMixin {
 
         // Радиус проверяем от жертвы до игрока-клиента
         double distSq = victim.distanceToSqr(client.player);
-        int radius = MyCustomScreen.totemLogRadius;
+        int radius = ModConfig.totemLogRadius;
         if (distSq > (double) radius * radius) return;
 
         // === Кто снёс ===
@@ -71,7 +73,7 @@ public class TotemLogMixin {
         client.player.displayClientMessage(Component.literal(msg), false);
 
         // === Звук-уведомление (клиентский) ===
-        if (MyCustomScreen.totemLogSound) {
+        if (ModConfig.totemLogSound) {
             client.level.playLocalSound(
                     client.player.getX(),
                     client.player.getY(),

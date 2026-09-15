@@ -1,5 +1,7 @@
 package com.resistancedlc.mixin;
 
+import com.resistancedlc.config.ModConfig;
+
 import com.resistancedlc.PvPSafeManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -18,7 +20,7 @@ public class PvPSafeCommandMixin {
     @Inject(method = "sendCommand", at = @At("HEAD"), cancellable = true)
     private void onSendCommand(String command, CallbackInfo ci) {
         if (!PvPSafeManager.isInCombat()) return;
-        if (!com.resistancedlc.MyCustomScreen.pvpSafeBlockCommands) return;
+        if (!com.resistancedlc.config.ModConfig.pvpSafeBlockCommands) return;
         if (command == null) return;
 
         // Убираем ведущий слэш

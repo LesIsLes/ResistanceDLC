@@ -1,5 +1,7 @@
 package com.resistancedlc.mixin;
 
+import com.resistancedlc.config.ModConfig;
+
 import com.resistancedlc.MyCustomScreen;
 import com.resistancedlc.TotemTracker;
 import net.minecraft.client.Minecraft;
@@ -33,17 +35,17 @@ public class HitSoundMixin {
         }
 
         // ===== COMBO COUNTER =====
-        if (MyCustomScreen.comboEnabled) {
+        if (ModConfig.comboEnabled) {
             if (client.player.getAttackStrengthScale(0.0f) >= 1.0f) {
-                MyCustomScreen.currentCombo++;
-                MyCustomScreen.lastComboTime = System.currentTimeMillis();
+                ModConfig.currentCombo++;
+                ModConfig.lastComboTime = System.currentTimeMillis();
             }
         }
 
         // ===== CUSTOM HIT SOUNDS =====
-        if (!MyCustomScreen.customHitSoundsEnabled) return;
+        if (!ModConfig.customHitSoundsEnabled) return;
 
-        int preset = MyCustomScreen.customHitSoundPreset;
+        int preset = ModConfig.customHitSoundPreset;
         if (preset < 1 || preset > 7) preset = 1;
 
         SoundEvent customSound = SoundEvent.createVariableRangeEvent(
@@ -54,8 +56,8 @@ public class HitSoundMixin {
                 self.getX(), self.getY(), self.getZ(),
                 customSound,
                 SoundSource.PLAYERS,
-                MyCustomScreen.customHitSoundVolume,
-                MyCustomScreen.customHitSoundPitch,
+                ModConfig.customHitSoundVolume,
+                ModConfig.customHitSoundPitch,
                 false
         );
     }

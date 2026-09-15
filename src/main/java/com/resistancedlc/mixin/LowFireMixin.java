@@ -1,5 +1,7 @@
 package com.resistancedlc.mixin;
 
+import com.resistancedlc.config.ModConfig;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.resistancedlc.MyCustomScreen;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -18,8 +20,8 @@ public class LowFireMixin {
                                      MultiBufferSource multiBufferSource,
                                      TextureAtlasSprite textureAtlasSprite,
                                      CallbackInfo ci) {
-        if (MyCustomScreen.lowFireEnabled) {
-            poseStack.translate(0.0, -MyCustomScreen.lowFireOffset, 0.0);
+        if (ModConfig.lowFireEnabled) {
+            poseStack.translate(0.0, -ModConfig.lowFireOffset, 0.0);
         }
     }
 }

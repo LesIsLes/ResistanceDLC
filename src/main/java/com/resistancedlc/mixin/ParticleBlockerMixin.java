@@ -1,5 +1,7 @@
 package com.resistancedlc.mixin;
 
+import com.resistancedlc.config.ModConfig;
+
 import com.resistancedlc.MyCustomScreen;
 import com.resistancedlc.ParticleBlockerManager;
 import net.minecraft.client.particle.Particle;
@@ -21,7 +23,7 @@ public class ParticleBlockerMixin {
     private void onCreateParticle(ParticleOptions options, double x, double y, double z,
                                   double xSpeed, double ySpeed, double zSpeed,
                                   CallbackInfoReturnable<Particle> cir) {
-        if (!MyCustomScreen.particleBlockerEnabled) return;
+        if (!ModConfig.particleBlockerEnabled) return;
         if (options == null) return;
 
         try {

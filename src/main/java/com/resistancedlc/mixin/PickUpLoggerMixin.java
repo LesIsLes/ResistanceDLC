@@ -1,5 +1,7 @@
 package com.resistancedlc.mixin;
 
+import com.resistancedlc.config.ModConfig;
+
 import com.resistancedlc.PickUpLogger;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -17,7 +19,7 @@ public class PickUpLoggerMixin {
 
     @Inject(method = "handleTakeItemEntity", at = @At("HEAD"))
     private void onTakeItem(ClientboundTakeItemEntityPacket packet, CallbackInfo ci) {
-        if (!com.resistancedlc.MyCustomScreen.pickupLogEnabled) return;
+        if (!com.resistancedlc.config.ModConfig.pickupLogEnabled) return;
 
         Minecraft client = Minecraft.getInstance();
         if (client.player == null || client.level == null) return;

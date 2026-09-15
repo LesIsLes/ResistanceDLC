@@ -1,5 +1,7 @@
 package com.resistancedlc.mixin;
 
+import com.resistancedlc.config.ModConfig;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.resistancedlc.MyCustomScreen;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -24,8 +26,8 @@ public class LowShieldMixin {
                                      SubmitNodeCollector submitNodeCollector,
                                      int j,
                                      CallbackInfo ci) {
-        if (MyCustomScreen.lowShieldEnabled) {
-            poseStack.translate(0.0, -MyCustomScreen.lowShieldOffset, 0.0);
+        if (ModConfig.lowShieldEnabled) {
+            poseStack.translate(0.0, -ModConfig.lowShieldOffset, 0.0);
         }
     }
 }

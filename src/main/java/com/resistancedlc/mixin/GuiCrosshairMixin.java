@@ -1,5 +1,7 @@
 package com.resistancedlc.mixin;
 
+import com.resistancedlc.config.ModConfig;
+
 import com.resistancedlc.MyCustomScreen;
 import net.minecraft.client.gui.Gui;
 import org.spongepowered.asm.mixin.Mixin;
@@ -12,7 +14,7 @@ public class GuiCrosshairMixin {
 
     @Inject(method = "renderCrosshair", at = @At("HEAD"), cancellable = true)
     private void onRenderCrosshair(CallbackInfo ci) {
-        if (MyCustomScreen.crosshairEnabled) {
+        if (ModConfig.crosshairEnabled) {
             ci.cancel();
         }
     }

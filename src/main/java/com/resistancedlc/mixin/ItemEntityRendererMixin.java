@@ -1,5 +1,7 @@
 package com.resistancedlc.mixin;
 
+import com.resistancedlc.config.ModConfig;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.resistancedlc.MyCustomScreen;
@@ -20,7 +22,7 @@ public class ItemEntityRendererMixin {
                           SubmitNodeCollector collector,
                           CameraRenderState cameraState,
                           CallbackInfo ci) {
-        if (!MyCustomScreen.itemPhysicsEnabled) return;
+        if (!ModConfig.itemPhysicsEnabled) return;
 
         // Обнуляем анимацию — предмет не крутится и не качается
         state.ageInTicks = 0.0f;

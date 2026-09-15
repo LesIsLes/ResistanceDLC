@@ -1,5 +1,7 @@
 package com.resistancedlc.mixin;
 
+import com.resistancedlc.config.ModConfig;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.resistancedlc.MyCustomScreen;
 import net.minecraft.client.renderer.GameRenderer;
@@ -13,7 +15,7 @@ public class NoBobbingMixin {
 
     @Inject(method = "bobView", at = @At("HEAD"), cancellable = true)
     private void onBobView(PoseStack poseStack, float f, CallbackInfo ci) {
-        if (MyCustomScreen.noBobbingEnabled) {
+        if (ModConfig.noBobbingEnabled) {
             ci.cancel();
         }
     }
