@@ -272,6 +272,12 @@ public class ConfigManager {
             json.addProperty("lastDeathDimension", ModConfig.lastDeathDimension);
             json.addProperty("lastDeathTime", ModConfig.lastDeathTime);
 
+            // === CUSTOM HITBOX ===
+            json.addProperty("customHitboxEnabled", ModConfig.customHitboxEnabled);
+            json.addProperty("customHitboxRussian", ModConfig.customHitboxRussian);
+            json.addProperty("customHitboxColor", ModConfig.customHitboxColor);
+            json.addProperty("customHitboxAlpha", ModConfig.customHitboxAlpha);
+
             Path file = CONFIG_DIR.resolve(name + ".json");
             synchronized (GSON) {
                 Files.writeString(file, GSON.toJson(json));
@@ -524,6 +530,12 @@ public class ConfigManager {
             ModConfig.lastDeathZ = getInt(json, "lastDeathZ", ModConfig.lastDeathZ);
             ModConfig.lastDeathDimension = getString(json, "lastDeathDimension", ModConfig.lastDeathDimension);
             ModConfig.lastDeathTime = getLong(json, "lastDeathTime", ModConfig.lastDeathTime);
+
+            // === CUSTOM HITBOX ===
+            ModConfig.customHitboxEnabled = getBool(json, "customHitboxEnabled", ModConfig.customHitboxEnabled);
+            ModConfig.customHitboxRussian = getBool(json, "customHitboxRussian", ModConfig.customHitboxRussian);
+            ModConfig.customHitboxColor = getInt(json, "customHitboxColor", ModConfig.customHitboxColor);
+            ModConfig.customHitboxAlpha = getInt(json, "customHitboxAlpha", ModConfig.customHitboxAlpha);
 
             return true;
 

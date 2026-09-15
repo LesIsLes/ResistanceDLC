@@ -33,7 +33,7 @@ public class MyCustomScreen extends Screen {
             7,  // 0 = HUD
             8,  // 1 = PVP
             1,  // 2 = PVE
-            9,  // 3 = Visual
+            10, // 3 = Visual (было 9 → 10: Custom Hitbox)
             5   // 4 = Misc (было 4 → 5: DeathCoords)
     };
 
@@ -338,6 +338,16 @@ public class MyCustomScreen extends Screen {
             { "портал частицы", "Портал", "8", "3" },
             { "криты частицы", "Криты", "8", "3" },
 
+            // Стр 9: Custom Hitbox
+            { "hitbox", "Custom Hitbox", "9", "3" },
+            { "хитбокс", "Custom Hitbox", "9", "3" },
+            { "custom hitbox", "Custom Hitbox", "9", "3" },
+            { "хит бокс", "Custom Hitbox", "9", "3" },
+            { "рамка", "Custom Hitbox", "9", "3" },
+            { "bounding box", "Custom Hitbox", "9", "3" },
+            { "bbo", "Custom Hitbox", "9", "3" },
+            { "цвет хитбокса", "Custom Hitbox", "9", "3" },
+
             // ===================== MISC =====================
             // Стр 0: Привязка GUI
             { "клавиша", "Привязка клавиши GUI", "0", "4" },
@@ -570,6 +580,7 @@ public class MyCustomScreen extends Screen {
                     case 6 -> initCameraPage(centerX, panelY);
                     case 7 -> initItemPhysicsPage(centerX, panelY);
                     case 8 -> initParticleBlockerPage(centerX, panelY);
+                    case 9 -> initCustomHitboxPage(centerX, panelY);
                 }
             }
             case 4 -> {
@@ -585,60 +596,97 @@ public class MyCustomScreen extends Screen {
     }
 
     // =========================================================
-    // AUTO RECONNECT (Misc, index 3)
+    // CUSTOM HITBOX (Visual, index 9)
     // =========================================================
-    private void initAutoReconnectPage(int centerX, int panelY) {
-        // ===== ВКЛ/ВЫКЛ =====
+    private void initCustomHitboxPage(int centerX, int panelY) {
         Checkbox enableCheckbox = Checkbox.builder(
-                        Component.literal(ModConfig.autoReconnectRussian ? "Включить AutoReconnect" : "Enable AutoReconnect"), this.font)
-                .pos(centerX - 100, panelY + 70)
-                .selected(ModConfig.autoReconnectEnabled)
-                .onValueChange((c, v) -> { ModConfig.autoReconnectEnabled = v; ConfigManager.save(); })
+                        Component.literal(ModConfig.customHitboxRussian
+                                ? "Включить Custom Hitbox"
+                                : "Enable Custom Hitbox"), this.font)
+                .pos(centerX - 100, panelY + 60)
+                .selected(ModConfig.customHitboxEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.customHitboxEnabled = v;
+                    ConfigManager.save();
+                })
                 .build();
         this.addRenderableWidget(enableCheckbox);
 
         Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
-            ModConfig.autoReconnectRussian = !ModConfig.autoReconnectRussian;
+            ModConfig.customHitboxRussian = !ModConfig.customHitboxRussian;
             ConfigManager.save();
             this.rebuildWidgets();
-        }).bounds(centerX + 120, panelY + 70, 25, 20).build();
+        }).bounds(centerX + 120, panelY + 60, 25, 20).build();
         this.addRenderableWidget(translateBtn);
 
-        // ===== СЛАЙДЕР ЗАДЕРЖКИ =====
-        AbstractSliderButton delaySlider = new AbstractSliderButton(
-                centerX - 100, panelY + 110, 200, 20,
-                Component.literal(ModConfig.autoReconnectRussian
-                        ? ("Задержка: " + ModConfig.autoReconnectDelay + " сек")
-                        : ("Delay: " + ModConfig.autoReconnectDelay + " sec")),
-                (ModConfig.autoReconnectDelay - 1) / 29.0
+        EditBox colorField = new EditBox(this.font, centerX - 130, panelY + 100, 80, 18,
+                Component.literal("#RRGGBB"));
+        colorField.setMaxLength(7);
+        colorField.setValue(String.format("#%06X", ModConfig.customHitboxColor & 0xFFFFFF));
+        this.addRenderableWidget(colorField);
+
+        Button applyColorBtn = Button.builder(Component.literal("ОК"), (btn) -> {
+            String hex = colorField.getValue().replace("#", "").trim();
+            try {
+                ModConfig.customHitboxColor = 0xFF000000 | Integer.parseInt(hex, 16);
+                ConfigManager.save();
+            } catch (NumberFormatException ignored) {}
+        }).bounds(centerX - 45, panelY + 100, 40, 18).build();
+        this.addRenderableWidget(applyColorBtn);
+
+        Button colorGreen = Button.builder(Component.literal("Зел"), (b) -> {
+            colorField.setValue("#00FF00");
+            ModConfig.customHitboxColor = 0xFF00FF00;
+            ConfigManager.save();
+        }).bounds(centerX + 5, panelY + 100, 40, 18).build();
+        this.addRenderableWidget(colorGreen);
+
+        Button colorRed = Button.builder(Component.literal("Крас"), (b) -> {
+            colorField.setValue("#FF0000");
+            ModConfig.customHitboxColor = 0xFFFF0000;
+            ConfigManager.save();
+        }).bounds(centerX + 50, panelY + 100, 40, 18).build();
+        this.addRenderableWidget(colorRed);
+
+        Button colorBlue = Button.builder(Component.literal("Син"), (b) -> {
+            colorField.setValue("#0000FF");
+            ModConfig.customHitboxColor = 0xFF0000FF;
+            ConfigManager.save();
+        }).bounds(centerX + 95, panelY + 100, 40, 18).build();
+        this.addRenderableWidget(colorBlue);
+
+        Button colorWhite = Button.builder(Component.literal("Бел"), (b) -> {
+            colorField.setValue("#FFFFFF");
+            ModConfig.customHitboxColor = 0xFFFFFFFF;
+            ConfigManager.save();
+        }).bounds(centerX + 140, panelY + 100, 40, 18).build();
+        this.addRenderableWidget(colorWhite);
+
+        AbstractSliderButton alphaSlider = new AbstractSliderButton(
+                centerX - 100, panelY + 140, 200, 20,
+                Component.literal(ModConfig.customHitboxRussian
+                        ? "Прозрачность: " + ModConfig.customHitboxAlpha
+                        : "Alpha: " + ModConfig.customHitboxAlpha),
+                ModConfig.customHitboxAlpha / 255.0
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal(ModConfig.autoReconnectRussian
-                        ? ("Задержка: " + ModConfig.autoReconnectDelay + " сек")
-                        : ("Delay: " + ModConfig.autoReconnectDelay + " sec")));
+                this.setMessage(Component.literal(ModConfig.customHitboxRussian
+                        ? "Прозрачность: " + ModConfig.customHitboxAlpha
+                        : "Alpha: " + ModConfig.customHitboxAlpha));
             }
             @Override protected void applyValue() {
-                ModConfig.autoReconnectDelay = 1 + (int)(this.value * 29);
+                ModConfig.customHitboxAlpha = (int)(this.value * 255);
                 this.updateMessage();
                 ConfigManager.save();
             }
         };
-        this.addRenderableWidget(delaySlider);
-
-        // ===== HUD-ИНДИКАТОР =====
-        Checkbox hudCheckbox = Checkbox.builder(
-                        Component.literal(ModConfig.autoReconnectRussian ? "Показывать HUD-таймер" : "Show HUD timer"), this.font)
-                .pos(centerX - 100, panelY + 150)
-                .selected(ModConfig.autoReconnectShowHud)
-                .onValueChange((c, v) -> { ModConfig.autoReconnectShowHud = v; ConfigManager.save(); })
-                .build();
-        this.addRenderableWidget(hudCheckbox);
+        this.addRenderableWidget(alphaSlider);
     }
+
     // =========================================================
     // DEATH COORDS (Misc, index 4)
     // =========================================================
     private void initDeathCoordsPage(int centerX, int panelY) {
-        // ===== ВКЛ/ВЫКЛ =====
         Checkbox enableCheckbox = Checkbox.builder(
                         Component.literal(ModConfig.deathCoordsRussian
                                 ? "Включить DeathCoords"
@@ -659,7 +707,6 @@ public class MyCustomScreen extends Screen {
         }).bounds(centerX + 120, panelY + 70, 25, 20).build();
         this.addRenderableWidget(translateBtn);
 
-        // ===== КНОПКА "ПОКАЗАТЬ ПОСЛЕДНЮЮ СМЕРТЬ" =====
         Button showBtn = Button.builder(
                 Component.literal(ModConfig.deathCoordsRussian
                         ? "Показать последнюю точку смерти"
@@ -668,7 +715,6 @@ public class MyCustomScreen extends Screen {
         ).bounds(centerX - 100, panelY + 110, 200, 20).build();
         this.addRenderableWidget(showBtn);
 
-        // ===== КНОПКА "ОЧИСТИТЬ" =====
         Button clearBtn = Button.builder(
                 Component.literal(ModConfig.deathCoordsRussian
                         ? "Очистить сохранённую точку"
@@ -680,6 +726,55 @@ public class MyCustomScreen extends Screen {
         ).bounds(centerX - 100, panelY + 140, 200, 20).build();
         this.addRenderableWidget(clearBtn);
     }
+
+    // =========================================================
+    // AUTO RECONNECT (Misc, index 3)
+    // =========================================================
+    private void initAutoReconnectPage(int centerX, int panelY) {
+        Checkbox enableCheckbox = Checkbox.builder(
+                        Component.literal(ModConfig.autoReconnectRussian ? "Включить AutoReconnect" : "Enable AutoReconnect"), this.font)
+                .pos(centerX - 100, panelY + 70)
+                .selected(ModConfig.autoReconnectEnabled)
+                .onValueChange((c, v) -> { ModConfig.autoReconnectEnabled = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(enableCheckbox);
+
+        Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
+            ModConfig.autoReconnectRussian = !ModConfig.autoReconnectRussian;
+            ConfigManager.save();
+            this.rebuildWidgets();
+        }).bounds(centerX + 120, panelY + 70, 25, 20).build();
+        this.addRenderableWidget(translateBtn);
+
+        AbstractSliderButton delaySlider = new AbstractSliderButton(
+                centerX - 100, panelY + 110, 200, 20,
+                Component.literal(ModConfig.autoReconnectRussian
+                        ? ("Задержка: " + ModConfig.autoReconnectDelay + " сек")
+                        : ("Delay: " + ModConfig.autoReconnectDelay + " sec")),
+                (ModConfig.autoReconnectDelay - 1) / 29.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(ModConfig.autoReconnectRussian
+                        ? ("Задержка: " + ModConfig.autoReconnectDelay + " сек")
+                        : ("Delay: " + ModConfig.autoReconnectDelay + " sec")));
+            }
+            @Override protected void applyValue() {
+                ModConfig.autoReconnectDelay = 1 + (int)(this.value * 29);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        };
+        this.addRenderableWidget(delaySlider);
+
+        Checkbox hudCheckbox = Checkbox.builder(
+                        Component.literal(ModConfig.autoReconnectRussian ? "Показывать HUD-таймер" : "Show HUD timer"), this.font)
+                .pos(centerX - 100, panelY + 150)
+                .selected(ModConfig.autoReconnectShowHud)
+                .onValueChange((c, v) -> { ModConfig.autoReconnectShowHud = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(hudCheckbox);
+    }
+
     // =========================================================
     // TOTEM LOG (PVP, index 5)
     // =========================================================
@@ -947,7 +1042,6 @@ public class MyCustomScreen extends Screen {
     // ITEM PHYSICS (Visual, index 7)
     // =========================================================
     private void initItemPhysicsPage(int centerX, int panelY) {
-        // ===== ВКЛ/ВЫКЛ =====
         Checkbox enableCheckbox = Checkbox.builder(
                         Component.literal(ModConfig.itemPhysicsRussian ? "Включить ItemPhysics" : "Enable ItemPhysics"), this.font)
                 .pos(centerX - 100, panelY + 80)
@@ -963,11 +1057,11 @@ public class MyCustomScreen extends Screen {
         }).bounds(centerX + 120, panelY + 80, 25, 20).build();
         this.addRenderableWidget(translateBtn);
     }
+
     // =========================================================
     // PARTICLE BLOCKER (Visual, index 8)
     // =========================================================
     private void initParticleBlockerPage(int centerX, int panelY) {
-        // ===== ВКЛ/ВЫКЛ ВСЕГО =====
         Checkbox enableCheckbox = Checkbox.builder(
                         Component.literal(ModConfig.particleBlockerRussian ? "Включить Particle Blocker" : "Enable Particle Blocker"), this.font)
                 .pos(centerX - 100, panelY + 75)
@@ -983,13 +1077,11 @@ public class MyCustomScreen extends Screen {
         }).bounds(centerX + 120, panelY + 75, 25, 20).build();
         this.addRenderableWidget(translateBtn);
 
-        // ===== КАТЕГОРИИ (2 столбца) =====
         int col1X = centerX - 100;
         int col2X = centerX + 10;
         int row1Y = panelY + 110;
         int rowStep = 22;
 
-        // Столбец 1
         Checkbox fireCheckbox = Checkbox.builder(
                         Component.literal(ModConfig.particleBlockerRussian ? "Огонь" : "Fire"), this.font)
                 .pos(col1X, row1Y)
@@ -1022,7 +1114,6 @@ public class MyCustomScreen extends Screen {
                 .build();
         this.addRenderableWidget(potionCheckbox);
 
-        // Столбец 2
         Checkbox waterCheckbox = Checkbox.builder(
                         Component.literal(ModConfig.particleBlockerRussian ? "Вода" : "Water"), this.font)
                 .pos(col2X, row1Y)
@@ -1055,11 +1146,11 @@ public class MyCustomScreen extends Screen {
                 .build();
         this.addRenderableWidget(critCheckbox);
     }
+
     // =========================================================
     // CHAT FILTER (Misc, index 2)
     // =========================================================
     private void initChatFilterPage(int centerX, int panelY) {
-        // ===== ВКЛ/ВЫКЛ =====
         Checkbox enableCheckbox = Checkbox.builder(
                         Component.literal(ModConfig.chatFilterRussian ? "Включить ChatFilter" : "Enable ChatFilter"), this.font)
                 .pos(centerX - 100, panelY + 65)
@@ -1075,7 +1166,6 @@ public class MyCustomScreen extends Screen {
         }).bounds(centerX + 120, panelY + 65, 25, 20).build();
         this.addRenderableWidget(translateBtn);
 
-        // ===== ДОБАВЛЕНИЕ СЛОВА =====
         EditBox wordField = new EditBox(this.font, centerX - 100, panelY + 100, 160, 20,
                 Component.literal(ModConfig.chatFilterRussian ? "Стоп-слово..." : "Stop word..."));
         wordField.setMaxLength(30);
@@ -1091,7 +1181,6 @@ public class MyCustomScreen extends Screen {
         }).bounds(centerX + 65, panelY + 100, 35, 20).build();
         this.addRenderableWidget(addBtn);
 
-        // ===== СПИСОК СТОП-СЛОВ (кнопки ×) =====
         List<String> words = ChatFilterManager.getWords();
         int listStartY = panelY + 140;
         int rowHeight = 20;
@@ -1108,7 +1197,6 @@ public class MyCustomScreen extends Screen {
             this.addRenderableWidget(delBtn);
         }
 
-        // ===== КНОПКА "ОЧИСТИТЬ ВСЁ" =====
         Button clearBtn = Button.builder(
                 Component.literal(ModConfig.chatFilterRussian ? "Очистить всё" : "Clear all"), (b) -> {
                     ChatFilterManager.clearWords();
@@ -2815,7 +2903,6 @@ public class MyCustomScreen extends Screen {
             }
         }
 
-        // ===== CHAT FILTER: заголовок + список =====
         if (currentSection == 4 && currentPage == 2) {
             graphics.drawString(this.font, "§l▸ ChatFilter",
                     panelX + 20, panelY + 40, ModConfig.guiTextColor);
@@ -2846,7 +2933,6 @@ public class MyCustomScreen extends Screen {
             }
         }
 
-        // ===== AUTO RECONNECT: заголовок + подсказки =====
         if (currentSection == 4 && currentPage == 3) {
             graphics.drawString(this.font, "§l▸ AutoReconnect",
                     panelX + 20, panelY + 40, ModConfig.guiTextColor);
@@ -2861,7 +2947,7 @@ public class MyCustomScreen extends Screen {
             graphics.drawString(this.font, "§c⚠ Не работает в одиночной игре",
                     panelX + 20, panelY + 250, 0xFFFF5555);
         }
-        // ===== DEATH COORDS: заголовок + подсказки =====
+
         if (currentSection == 4 && currentPage == 4) {
             graphics.drawString(this.font, "§l▸ DeathCoords",
                     panelX + 20, panelY + 40, ModConfig.guiTextColor);
@@ -2895,7 +2981,7 @@ public class MyCustomScreen extends Screen {
                         panelX + 20, panelY + 234, 0xFF888888);
             }
         }
-        // ===== PARTICLE BLOCKER: заголовок + подсказки =====
+
         if (currentSection == 3 && currentPage == 8) {
             graphics.drawString(this.font, "§l▸ Particle Blocker",
                     panelX + 20, panelY + 25, ModConfig.guiTextColor);
@@ -2909,6 +2995,24 @@ public class MyCustomScreen extends Screen {
                     panelX + 20, panelY + 248, 0xFFFFFFFF);
             graphics.drawString(this.font, "§7Чисто визуально — сервер не видит.",
                     panelX + 20, panelY + 270, 0xFF888888);
+        }
+
+        if (currentSection == 3 && currentPage == 9) {
+            graphics.drawString(this.font, "§l▸ Custom Hitbox",
+                    panelX + 20, panelY + 35, ModConfig.guiTextColor);
+            graphics.fill(panelX + 20, panelY + 47, panelX + panelWidth - 20, panelY + 48, ModConfig.guiColor);
+
+            graphics.drawString(this.font,
+                    ModConfig.customHitboxRussian
+                            ? "§7Меняет цвет ванильных debug-хитбоксов."
+                            : "§7Changes vanilla debug hitbox color.",
+                    panelX + 20, panelY + 180, 0xFFAAAAAA);
+            graphics.drawString(this.font,
+                    "§7Активация: §fF3 + B §7(стандартный debug-режим)",
+                    panelX + 20, panelY + 200, 0xFFFFFFFF);
+            graphics.drawString(this.font,
+                    "§7Чисто визуально — сервер не видит.",
+                    panelX + 20, panelY + 220, 0xFF888888);
         }
 
         if (searchOtherSectionMsg != null && !searchOtherSectionMsg.isEmpty()) {

@@ -227,4 +227,10 @@ public class ModConfig {
 
     public static double lastPlayerX = 0, lastPlayerY = 0, lastPlayerZ = 0;
     public static double currentBps = 0;
+
+    // ===================== CUSTOM HITBOX =====================
+    public static boolean customHitboxEnabled = false;
+    public static boolean customHitboxRussian = false;
+    public static int customHitboxColor = 0xFFFFFFFF;   // ARGB
+    public static int customHitboxAlpha = 180;          // 0-255
 }

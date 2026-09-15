@@ -15,7 +15,8 @@
     "PvPSafeCommandMixin",
     "PickUpLoggerMixin",
     "ItemEntityRendererMixin",
-    "ParticleBlockerMixin"
+    "ParticleBlockerMixin",
+    "CustomHitboxMixin"
   ],
   "injectors": {
     "defaultRequire": 1
