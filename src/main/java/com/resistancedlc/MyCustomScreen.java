@@ -173,12 +173,21 @@ public class MyCustomScreen extends Screen {
     public static boolean noBobbingEnabled = false;
     public static boolean cameraRussian = false;
 
-    // ===== SHULKER PEEK =====
-    public static boolean shulkerPeekEnabled = false;
-    public static boolean shulkerPeekRequireShift = false;
-    public static boolean shulkerPeekShowTitle = true;
-    public static boolean shulkerPeekShowCounts = true;
-    public static boolean shulkerPeekRussian = false;
+    // ===== ITEM PHYSICS =====
+    public static boolean itemPhysicsEnabled = false;
+    public static boolean itemPhysicsRussian = false;
+
+    // ===== PARTICLE BLOCKER =====
+    public static boolean particleBlockerEnabled = false;
+    public static boolean particleBlockerFire = false;
+    public static boolean particleBlockerSmoke = false;
+    public static boolean particleBlockerExplosion = false;
+    public static boolean particleBlockerPotions = false;
+    public static boolean particleBlockerWater = false;
+    public static boolean particleBlockerRedstone = false;
+    public static boolean particleBlockerPortal = false;
+    public static boolean particleBlockerCrit = false;
+    public static boolean particleBlockerRussian = false;
 
     // ===== PVP SAFE =====
     public static boolean pvpSafeEnabled = false;
@@ -237,9 +246,10 @@ public class MyCustomScreen extends Screen {
             7,  // 0 = HUD
             8,  // 1 = PVP
             1,  // 2 = PVE
-            8,  // 3 = Visual
-            4   // 4 = Misc (было 3 → 4: AutoReconnect)
+            9,  // 3 = Visual (было 8 → 9: Particle Blocker)
+            4   // 4 = Misc
     };
+
     private static final int SECTION_COUNT = SECTION_PAGES.length;
 
     private int currentSection = 0;
@@ -381,10 +391,14 @@ public class MyCustomScreen extends Screen {
             { "bobbing", "No Bobbing", "6", "3" },
             { "покачивание", "No Bobbing", "6", "3" },
             { "камера", "Camera", "6", "3" },
-            { "шалкер", "Shulker Peek", "7", "3" },
-            { "shulker", "Shulker Peek", "7", "3" },
-            { "peek", "Shulker Peek", "7", "3" },
-            { "содержимое", "Shulker Peek", "7", "3" },
+            { "itemphysics", "ItemPhysics", "7", "3" },
+            { "физика", "ItemPhysics", "7", "3" },
+            { "предмет", "ItemPhysics", "7", "3" },
+            { "лежат", "ItemPhysics", "7", "3" },
+            { "particle", "Particle Blocker", "8", "3" },
+            { "частицы", "Particle Blocker", "8", "3" },
+            { "particles", "Particle Blocker", "8", "3" },
+            { "блокировка", "Particle Blocker", "8", "3" },
             { "клавиша", "Привязка клавиши GUI", "0", "4" },
             { "gui", "Привязка клавиши GUI", "0", "4" },
             { "конфиг", "Конфигурации", "1", "4" },
@@ -591,7 +605,8 @@ public class MyCustomScreen extends Screen {
                     case 4 -> initThemesPage(centerX, panelY);
                     case 5 -> initWaypointsPage(centerX, panelY);
                     case 6 -> initCameraPage(centerX, panelY);
-                    case 7 -> initShulkerPeekPage(centerX, panelY);
+                    case 7 -> initItemPhysicsPage(centerX, panelY);
+                    case 8 -> initParticleBlockerPage(centerX, panelY);
                 }
             }
             case 4 -> {
@@ -919,49 +934,117 @@ public class MyCustomScreen extends Screen {
     }
 
     // =========================================================
-    // SHULKER PEEK (Visual, index 7)
+    // ITEM PHYSICS (Visual, index 7)
     // =========================================================
-    private void initShulkerPeekPage(int centerX, int panelY) {
+    private void initItemPhysicsPage(int centerX, int panelY) {
+        // ===== ВКЛ/ВЫКЛ =====
         Checkbox enableCheckbox = Checkbox.builder(
-                        Component.literal(shulkerPeekRussian ? "Включить Shulker Peek" : "Enable Shulker Peek"), this.font)
-                .pos(centerX - 100, panelY + 75)
-                .selected(shulkerPeekEnabled)
-                .onValueChange((c, v) -> { shulkerPeekEnabled = v; ConfigManager.save(); })
+                        Component.literal(itemPhysicsRussian ? "Включить ItemPhysics" : "Enable ItemPhysics"), this.font)
+                .pos(centerX - 100, panelY + 80)
+                .selected(itemPhysicsEnabled)
+                .onValueChange((c, v) -> { itemPhysicsEnabled = v; ConfigManager.save(); })
                 .build();
         this.addRenderableWidget(enableCheckbox);
 
         Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
-            shulkerPeekRussian = !shulkerPeekRussian;
+            itemPhysicsRussian = !itemPhysicsRussian;
+            ConfigManager.save();
+            this.rebuildWidgets();
+        }).bounds(centerX + 120, panelY + 80, 25, 20).build();
+        this.addRenderableWidget(translateBtn);
+    }
+    // =========================================================
+    // PARTICLE BLOCKER (Visual, index 8)
+    // =========================================================
+    private void initParticleBlockerPage(int centerX, int panelY) {
+        // ===== ВКЛ/ВЫКЛ ВСЕГО =====
+        Checkbox enableCheckbox = Checkbox.builder(
+                        Component.literal(particleBlockerRussian ? "Включить Particle Blocker" : "Enable Particle Blocker"), this.font)
+                .pos(centerX - 100, panelY + 75)
+                .selected(particleBlockerEnabled)
+                .onValueChange((c, v) -> { particleBlockerEnabled = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(enableCheckbox);
+
+        Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
+            particleBlockerRussian = !particleBlockerRussian;
             ConfigManager.save();
             this.rebuildWidgets();
         }).bounds(centerX + 120, panelY + 75, 25, 20).build();
         this.addRenderableWidget(translateBtn);
 
-        Checkbox shiftCheckbox = Checkbox.builder(
-                        Component.literal(shulkerPeekRussian ? "Только при Shift" : "Only on Shift"), this.font)
-                .pos(centerX - 100, panelY + 115)
-                .selected(shulkerPeekRequireShift)
-                .onValueChange((c, v) -> { shulkerPeekRequireShift = v; ConfigManager.save(); })
-                .build();
-        this.addRenderableWidget(shiftCheckbox);
+        // ===== КАТЕГОРИИ (2 столбца) =====
+        int col1X = centerX - 100;
+        int col2X = centerX + 10;
+        int row1Y = panelY + 110;
+        int rowStep = 22;
 
-        Checkbox titleCheckbox = Checkbox.builder(
-                        Component.literal(shulkerPeekRussian ? "Показывать название" : "Show title"), this.font)
-                .pos(centerX - 100, panelY + 150)
-                .selected(shulkerPeekShowTitle)
-                .onValueChange((c, v) -> { shulkerPeekShowTitle = v; ConfigManager.save(); })
+        // Столбец 1
+        Checkbox fireCheckbox = Checkbox.builder(
+                        Component.literal(particleBlockerRussian ? "Огонь" : "Fire"), this.font)
+                .pos(col1X, row1Y)
+                .selected(particleBlockerFire)
+                .onValueChange((c, v) -> { particleBlockerFire = v; ConfigManager.save(); })
                 .build();
-        this.addRenderableWidget(titleCheckbox);
+        this.addRenderableWidget(fireCheckbox);
 
-        Checkbox countsCheckbox = Checkbox.builder(
-                        Component.literal(shulkerPeekRussian ? "Показывать количество" : "Show item counts"), this.font)
-                .pos(centerX - 100, panelY + 185)
-                .selected(shulkerPeekShowCounts)
-                .onValueChange((c, v) -> { shulkerPeekShowCounts = v; ConfigManager.save(); })
+        Checkbox smokeCheckbox = Checkbox.builder(
+                        Component.literal(particleBlockerRussian ? "Дым" : "Smoke"), this.font)
+                .pos(col1X, row1Y + rowStep)
+                .selected(particleBlockerSmoke)
+                .onValueChange((c, v) -> { particleBlockerSmoke = v; ConfigManager.save(); })
                 .build();
-        this.addRenderableWidget(countsCheckbox);
+        this.addRenderableWidget(smokeCheckbox);
+
+        Checkbox explosionCheckbox = Checkbox.builder(
+                        Component.literal(particleBlockerRussian ? "Взрывы" : "Explosions"), this.font)
+                .pos(col1X, row1Y + rowStep * 2)
+                .selected(particleBlockerExplosion)
+                .onValueChange((c, v) -> { particleBlockerExplosion = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(explosionCheckbox);
+
+        Checkbox potionCheckbox = Checkbox.builder(
+                        Component.literal(particleBlockerRussian ? "Зелья" : "Potions"), this.font)
+                .pos(col1X, row1Y + rowStep * 3)
+                .selected(particleBlockerPotions)
+                .onValueChange((c, v) -> { particleBlockerPotions = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(potionCheckbox);
+
+        // Столбец 2
+        Checkbox waterCheckbox = Checkbox.builder(
+                        Component.literal(particleBlockerRussian ? "Вода" : "Water"), this.font)
+                .pos(col2X, row1Y)
+                .selected(particleBlockerWater)
+                .onValueChange((c, v) -> { particleBlockerWater = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(waterCheckbox);
+
+        Checkbox redstoneCheckbox = Checkbox.builder(
+                        Component.literal(particleBlockerRussian ? "Редстоун" : "Redstone"), this.font)
+                .pos(col2X, row1Y + rowStep)
+                .selected(particleBlockerRedstone)
+                .onValueChange((c, v) -> { particleBlockerRedstone = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(redstoneCheckbox);
+
+        Checkbox portalCheckbox = Checkbox.builder(
+                        Component.literal(particleBlockerRussian ? "Портал" : "Portal"), this.font)
+                .pos(col2X, row1Y + rowStep * 2)
+                .selected(particleBlockerPortal)
+                .onValueChange((c, v) -> { particleBlockerPortal = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(portalCheckbox);
+
+        Checkbox critCheckbox = Checkbox.builder(
+                        Component.literal(particleBlockerRussian ? "Криты" : "Crits"), this.font)
+                .pos(col2X, row1Y + rowStep * 3)
+                .selected(particleBlockerCrit)
+                .onValueChange((c, v) -> { particleBlockerCrit = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(critCheckbox);
     }
-
     // =========================================================
     // CHAT FILTER (Misc, index 2)
     // =========================================================
@@ -2671,16 +2754,16 @@ public class MyCustomScreen extends Screen {
         }
 
         if (currentSection == 3 && currentPage == 7) {
-            graphics.drawString(this.font, "§l▸ Shulker Peek",
+            graphics.drawString(this.font, "§l▸ ItemPhysics",
                     panelX + 20, panelY + 40, guiTextColor);
             graphics.fill(panelX + 20, panelY + 52, panelX + panelWidth - 20, panelY + 53, guiColor);
 
-            graphics.drawString(this.font, "§7Показывает содержимое шалкера при наведении",
-                    panelX + 20, panelY + 230, 0xFFAAAAAA);
-            graphics.drawString(this.font, "§7Работает чисто на клиенте — сервер не видит",
-                    panelX + 20, panelY + 244, 0xFFAAAAAA);
-            graphics.drawString(this.font, "§7Содержимое уже есть в NBT предмета",
-                    panelX + 20, panelY + 258, 0xFF888888);
+            graphics.drawString(this.font, "§7Предметы на земле лежат плашмя,",
+                    panelX + 20, panelY + 175, 0xFFAAAAAA);
+            graphics.drawString(this.font, "§7а не крутятся и не парят.",
+                    panelX + 20, panelY + 189, 0xFFAAAAAA);
+            graphics.drawString(this.font, "§7Чисто визуально — сервер не видит.",
+                    panelX + 20, panelY + 203, 0xFF888888);
         }
 
         if (currentSection == 1 && currentPage == 5) {
@@ -2767,6 +2850,21 @@ public class MyCustomScreen extends Screen {
                     panelX + 20, panelY + 230, 0xFFFFFFFF);
             graphics.drawString(this.font, "§c⚠ Не работает в одиночной игре",
                     panelX + 20, panelY + 250, 0xFFFF5555);
+        }
+        // ===== PARTICLE BLOCKER: заголовок + подсказки =====
+        if (currentSection == 3 && currentPage == 8) {
+            graphics.drawString(this.font, "§l▸ Particle Blocker",
+                    panelX + 20, panelY + 25, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 37, panelX + panelWidth - 20, panelY + 38, guiColor);
+
+            graphics.drawString(this.font, "§7Отключает частицы по категориям:",
+                    panelX + 20, panelY + 220, 0xFFAAAAAA);
+            graphics.drawString(this.font, "§fогонь · дым · взрывы · зелья",
+                    panelX + 20, panelY + 234, 0xFFFFFFFF);
+            graphics.drawString(this.font, "§fвода · редстоун · портал · криты",
+                    panelX + 20, panelY + 248, 0xFFFFFFFF);
+            graphics.drawString(this.font, "§7Чисто визуально — сервер не видит.",
+                    panelX + 20, panelY + 270, 0xFF888888);
         }
 
         if (searchOtherSectionMsg != null && !searchOtherSectionMsg.isEmpty()) {

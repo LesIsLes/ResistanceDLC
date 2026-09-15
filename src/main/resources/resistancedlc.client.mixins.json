@@ -13,7 +13,9 @@
     "NoHurtCamMixin",
     "NoBobbingMixin",
     "PvPSafeCommandMixin",
-    "PickUpLoggerMixin"
+    "PickUpLoggerMixin",
+    "ItemEntityRendererMixin",
+    "ParticleBlockerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

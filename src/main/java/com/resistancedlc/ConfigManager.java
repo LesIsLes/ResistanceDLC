@@ -211,12 +211,21 @@ public class ConfigManager {
             json.addProperty("noBobbingEnabled", MyCustomScreen.noBobbingEnabled);
             json.addProperty("cameraRussian", MyCustomScreen.cameraRussian);
 
-            // === SHULKER PEEK ===
-            json.addProperty("shulkerPeekEnabled", MyCustomScreen.shulkerPeekEnabled);
-            json.addProperty("shulkerPeekRequireShift", MyCustomScreen.shulkerPeekRequireShift);
-            json.addProperty("shulkerPeekShowTitle", MyCustomScreen.shulkerPeekShowTitle);
-            json.addProperty("shulkerPeekShowCounts", MyCustomScreen.shulkerPeekShowCounts);
-            json.addProperty("shulkerPeekRussian", MyCustomScreen.shulkerPeekRussian);
+            // === ITEM PHYSICS ===
+            json.addProperty("itemPhysicsEnabled", MyCustomScreen.itemPhysicsEnabled);
+            json.addProperty("itemPhysicsRussian", MyCustomScreen.itemPhysicsRussian);
+
+            // === PARTICLE BLOCKER ===
+            json.addProperty("particleBlockerEnabled", MyCustomScreen.particleBlockerEnabled);
+            json.addProperty("particleBlockerFire", MyCustomScreen.particleBlockerFire);
+            json.addProperty("particleBlockerSmoke", MyCustomScreen.particleBlockerSmoke);
+            json.addProperty("particleBlockerExplosion", MyCustomScreen.particleBlockerExplosion);
+            json.addProperty("particleBlockerPotions", MyCustomScreen.particleBlockerPotions);
+            json.addProperty("particleBlockerWater", MyCustomScreen.particleBlockerWater);
+            json.addProperty("particleBlockerRedstone", MyCustomScreen.particleBlockerRedstone);
+            json.addProperty("particleBlockerPortal", MyCustomScreen.particleBlockerPortal);
+            json.addProperty("particleBlockerCrit", MyCustomScreen.particleBlockerCrit);
+            json.addProperty("particleBlockerRussian", MyCustomScreen.particleBlockerRussian);
 
             // === PVP SAFE ===
             json.addProperty("pvpSafeEnabled", MyCustomScreen.pvpSafeEnabled);
@@ -446,12 +455,21 @@ public class ConfigManager {
             MyCustomScreen.noBobbingEnabled = getBool(json, "noBobbingEnabled", MyCustomScreen.noBobbingEnabled);
             MyCustomScreen.cameraRussian = getBool(json, "cameraRussian", MyCustomScreen.cameraRussian);
 
-            // === SHULKER PEEK ===
-            MyCustomScreen.shulkerPeekEnabled = getBool(json, "shulkerPeekEnabled", MyCustomScreen.shulkerPeekEnabled);
-            MyCustomScreen.shulkerPeekRequireShift = getBool(json, "shulkerPeekRequireShift", MyCustomScreen.shulkerPeekRequireShift);
-            MyCustomScreen.shulkerPeekShowTitle = getBool(json, "shulkerPeekShowTitle", MyCustomScreen.shulkerPeekShowTitle);
-            MyCustomScreen.shulkerPeekShowCounts = getBool(json, "shulkerPeekShowCounts", MyCustomScreen.shulkerPeekShowCounts);
-            MyCustomScreen.shulkerPeekRussian = getBool(json, "shulkerPeekRussian", MyCustomScreen.shulkerPeekRussian);
+            // === ITEM PHYSICS ===
+            MyCustomScreen.itemPhysicsEnabled = getBool(json, "itemPhysicsEnabled", MyCustomScreen.itemPhysicsEnabled);
+            MyCustomScreen.itemPhysicsRussian = getBool(json, "itemPhysicsRussian", MyCustomScreen.itemPhysicsRussian);
+
+            // === PARTICLE BLOCKER ===
+            MyCustomScreen.particleBlockerEnabled = getBool(json, "particleBlockerEnabled", MyCustomScreen.particleBlockerEnabled);
+            MyCustomScreen.particleBlockerFire = getBool(json, "particleBlockerFire", MyCustomScreen.particleBlockerFire);
+            MyCustomScreen.particleBlockerSmoke = getBool(json, "particleBlockerSmoke", MyCustomScreen.particleBlockerSmoke);
+            MyCustomScreen.particleBlockerExplosion = getBool(json, "particleBlockerExplosion", MyCustomScreen.particleBlockerExplosion);
+            MyCustomScreen.particleBlockerPotions = getBool(json, "particleBlockerPotions", MyCustomScreen.particleBlockerPotions);
+            MyCustomScreen.particleBlockerWater = getBool(json, "particleBlockerWater", MyCustomScreen.particleBlockerWater);
+            MyCustomScreen.particleBlockerRedstone = getBool(json, "particleBlockerRedstone", MyCustomScreen.particleBlockerRedstone);
+            MyCustomScreen.particleBlockerPortal = getBool(json, "particleBlockerPortal", MyCustomScreen.particleBlockerPortal);
+            MyCustomScreen.particleBlockerCrit = getBool(json, "particleBlockerCrit", MyCustomScreen.particleBlockerCrit);
+            MyCustomScreen.particleBlockerRussian = getBool(json, "particleBlockerRussian", MyCustomScreen.particleBlockerRussian);
 
             // === PVP SAFE ===
             MyCustomScreen.pvpSafeEnabled = getBool(json, "pvpSafeEnabled", MyCustomScreen.pvpSafeEnabled);
