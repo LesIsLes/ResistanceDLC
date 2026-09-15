@@ -16,7 +16,9 @@
     "PickUpLoggerMixin",
     "ItemEntityRendererMixin",
     "ParticleBlockerMixin",
-    "CustomHitboxMixin"
+    "CustomHitboxMixin",
+    "ItemScrollerMixin",
+    "AbstractContainerScreenAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

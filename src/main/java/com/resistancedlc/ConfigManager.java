@@ -278,6 +278,13 @@ public class ConfigManager {
             json.addProperty("customHitboxColor", ModConfig.customHitboxColor);
             json.addProperty("customHitboxAlpha", ModConfig.customHitboxAlpha);
 
+            // === ITEM SCROLLER ===
+            json.addProperty("itemScrollerEnabled", ModConfig.itemScrollerEnabled);
+            json.addProperty("itemScrollerRussian", ModConfig.itemScrollerRussian);
+            json.addProperty("itemScrollerDelay", ModConfig.itemScrollerDelay);
+            json.addProperty("itemScrollerShiftStack", ModConfig.itemScrollerShiftStack);
+            json.addProperty("itemScrollerCtrlAll", ModConfig.itemScrollerCtrlAll);
+
             Path file = CONFIG_DIR.resolve(name + ".json");
             synchronized (GSON) {
                 Files.writeString(file, GSON.toJson(json));
@@ -536,6 +543,13 @@ public class ConfigManager {
             ModConfig.customHitboxRussian = getBool(json, "customHitboxRussian", ModConfig.customHitboxRussian);
             ModConfig.customHitboxColor = getInt(json, "customHitboxColor", ModConfig.customHitboxColor);
             ModConfig.customHitboxAlpha = getInt(json, "customHitboxAlpha", ModConfig.customHitboxAlpha);
+
+            // === ITEM SCROLLER ===
+            ModConfig.itemScrollerEnabled = getBool(json, "itemScrollerEnabled", ModConfig.itemScrollerEnabled);
+            ModConfig.itemScrollerRussian = getBool(json, "itemScrollerRussian", ModConfig.itemScrollerRussian);
+            ModConfig.itemScrollerDelay = getInt(json, "itemScrollerDelay", ModConfig.itemScrollerDelay);
+            ModConfig.itemScrollerShiftStack = getBool(json, "itemScrollerShiftStack", ModConfig.itemScrollerShiftStack);
+            ModConfig.itemScrollerCtrlAll = getBool(json, "itemScrollerCtrlAll", ModConfig.itemScrollerCtrlAll);
 
             return true;
 

@@ -233,4 +233,11 @@ public class ModConfig {
     public static boolean customHitboxRussian = false;
     public static int customHitboxColor = 0xFFFFFFFF;   // ARGB
     public static int customHitboxAlpha = 180;          // 0-255
+
+    // ===================== ITEM SCROLLER =====================
+    public static boolean itemScrollerEnabled = false;
+    public static boolean itemScrollerRussian = false;
+    public static int itemScrollerDelay = 200;          // 100-500ms
+    public static boolean itemScrollerShiftStack = true;  // Shift → вся стопка
+    public static boolean itemScrollerCtrlAll = true;     // Ctrl → все стопки
 }

@@ -32,9 +32,9 @@ public class MyCustomScreen extends Screen {
     private static final int[] SECTION_PAGES = {
             7,  // 0 = HUD
             8,  // 1 = PVP
-            1,  // 2 = PVE
-            10, // 3 = Visual (было 9 → 10: Custom Hitbox)
-            5   // 4 = Misc (было 4 → 5: DeathCoords)
+            2,  // 2 = PVE (было 1 → 2: ItemScroller)
+            10, // 3 = Visual
+            5   // 4 = Misc
     };
 
     private static final int SECTION_COUNT = SECTION_PAGES.length;
@@ -256,6 +256,15 @@ public class MyCustomScreen extends Screen {
             { "кнопка tape", "Кнопка TapeMouse", "0", "2" },
             { "задержка кликов", "Задержка TapeMouse", "0", "2" },
             { "зажать пкм", "Зажать ПКМ", "0", "2" },
+            // Стр 1: ItemScroller
+            { "itemscroller", "ItemScroller", "1", "2" },
+            { "item scroller", "ItemScroller", "1", "2" },
+            { "скролл", "ItemScroller", "1", "2" },
+            { "перенос", "ItemScroller", "1", "2" },
+            { "shift скролл", "ItemScroller", "1", "2" },
+            { "ctrl скролл", "ItemScroller", "1", "2" },
+            { "быстрый перенос", "ItemScroller", "1", "2" },
+            { "перекидывание", "ItemScroller", "1", "2" },
 
             // ===================== VISUAL =====================
             // Стр 0: Crosshair
@@ -567,6 +576,7 @@ public class MyCustomScreen extends Screen {
             case 2 -> {
                 switch (currentPage) {
                     case 0 -> initPage4(centerX, panelY);
+                    case 1 -> initItemScrollerPage(centerX, panelY);
                 }
             }
             case 3 -> {
@@ -1777,7 +1787,80 @@ public class MyCustomScreen extends Screen {
         };
         this.addRenderableWidget(delaySlider);
     }
+    // =========================================================
+    // ITEM SCROLLER (PVE, index 1)
+    // =========================================================
+    private void initItemScrollerPage(int centerX, int panelY) {
+        // ===== ВКЛ/ВЫКЛ =====
+        Checkbox enableCheckbox = Checkbox.builder(
+                        Component.literal(ModConfig.itemScrollerRussian
+                                ? "Включить ItemScroller"
+                                : "Enable ItemScroller"), this.font)
+                .pos(centerX - 100, panelY + 55)
+                .selected(ModConfig.itemScrollerEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.itemScrollerEnabled = v;
+                    ConfigManager.save();
+                })
+                .build();
+        this.addRenderableWidget(enableCheckbox);
 
+        Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
+            ModConfig.itemScrollerRussian = !ModConfig.itemScrollerRussian;
+            ConfigManager.save();
+            this.rebuildWidgets();
+        }).bounds(centerX + 120, panelY + 55, 25, 20).build();
+        this.addRenderableWidget(translateBtn);
+
+        // ===== ЗАДЕРЖКА =====
+        AbstractSliderButton delaySlider = new AbstractSliderButton(
+                centerX - 100, panelY + 95, 200, 20,
+                Component.literal(ModConfig.itemScrollerRussian
+                        ? "Задержка: " + ModConfig.itemScrollerDelay + " мс"
+                        : "Delay: " + ModConfig.itemScrollerDelay + " ms"),
+                (ModConfig.itemScrollerDelay - 100) / 400.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(ModConfig.itemScrollerRussian
+                        ? "Задержка: " + ModConfig.itemScrollerDelay + " мс"
+                        : "Delay: " + ModConfig.itemScrollerDelay + " ms"));
+            }
+            @Override protected void applyValue() {
+                ModConfig.itemScrollerDelay = 100 + (int)(this.value * 400);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        };
+        this.addRenderableWidget(delaySlider);
+
+        // ===== SHIFT → СТОПКА =====
+        Checkbox shiftCheckbox = Checkbox.builder(
+                        Component.literal(ModConfig.itemScrollerRussian
+                                ? "Shift → вся стопка"
+                                : "Shift → whole stack"), this.font)
+                .pos(centerX - 100, panelY + 130)
+                .selected(ModConfig.itemScrollerShiftStack)
+                .onValueChange((c, v) -> {
+                    ModConfig.itemScrollerShiftStack = v;
+                    ConfigManager.save();
+                })
+                .build();
+        this.addRenderableWidget(shiftCheckbox);
+
+        // ===== CTRL → ВСЁ =====
+        Checkbox ctrlCheckbox = Checkbox.builder(
+                        Component.literal(ModConfig.itemScrollerRussian
+                                ? "Ctrl → все стопки"
+                                : "Ctrl → all stacks"), this.font)
+                .pos(centerX - 100, panelY + 155)
+                .selected(ModConfig.itemScrollerCtrlAll)
+                .onValueChange((c, v) -> {
+                    ModConfig.itemScrollerCtrlAll = v;
+                    ConfigManager.save();
+                })
+                .build();
+        this.addRenderableWidget(ctrlCheckbox);
+    }
     private void initPage5(int centerX, int panelY) {
         Checkbox aspectCheckbox = Checkbox.builder(
                         Component.literal(ModConfig.aspectRatioRussian ? "Включить растяг" : "Enable stretch"), this.font)
@@ -3013,6 +3096,41 @@ public class MyCustomScreen extends Screen {
             graphics.drawString(this.font,
                     "§7Чисто визуально — сервер не видит.",
                     panelX + 20, panelY + 220, 0xFF888888);
+        }
+        // ===== ITEM SCROLLER: заголовок + подсказки =====
+        if (currentSection == 2 && currentPage == 1) {
+            graphics.drawString(this.font, "§l▸ ItemScroller",
+                    panelX + 20, panelY + 35, ModConfig.guiTextColor);
+            graphics.fill(panelX + 20, panelY + 47, panelX + panelWidth - 20, panelY + 48, ModConfig.guiColor);
+
+            // ===== ITEM SCROLLER: заголовок + подсказки =====
+            if (currentSection == 2 && currentPage == 1) {
+                graphics.drawString(this.font, "§l▸ ItemScroller",
+                        panelX + 20, panelY + 35, ModConfig.guiTextColor);
+                graphics.fill(panelX + 20, panelY + 47, panelX + panelWidth - 20, panelY + 48, ModConfig.guiColor);
+
+                graphics.drawString(this.font,
+                        ModConfig.itemScrollerRussian
+                                ? "§7Скролл над слотом → §fвся стопка"
+                                : "§7Scroll over slot → §fwhole stack",
+                        panelX + 20, panelY + 195, 0xFFFFFFFF);
+                graphics.drawString(this.font,
+                        "§7Shift + скролл → §f1 предмет",
+                        panelX + 20, panelY + 215, 0xFFFFFFFF);
+                graphics.drawString(this.font,
+                        "§7Ctrl + скролл → §fвсе стопки такого типа",
+                        panelX + 20, panelY + 229, 0xFFFFFFFF);
+                graphics.drawString(this.font,
+                        ModConfig.itemScrollerRussian
+                                ? "§c⚠ 200ms — безопасно для большинства серверов."
+                                : "§c⚠ 200ms — safe for most servers.",
+                        panelX + 20, panelY + 255, 0xFFFF5555);
+                graphics.drawString(this.font,
+                        ModConfig.itemScrollerRussian
+                                ? "§7Меньше 100ms — риск кика/бана на серверах."
+                                : "§7Below 100ms — risk of kick/ban on servers.",
+                        panelX + 20, panelY + 269, 0xFF888888);
+            }
         }
 
         if (searchOtherSectionMsg != null && !searchOtherSectionMsg.isEmpty()) {
