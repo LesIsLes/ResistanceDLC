@@ -241,6 +241,17 @@ public class ConfigManager {
             json.addProperty("pickupLogStructureBlocks", MyCustomScreen.pickupLogStructureBlocks);
             json.addProperty("pickupLogRussian", MyCustomScreen.pickupLogRussian);
 
+            // === CHAT FILTER ===
+            json.addProperty("chatFilterEnabled", MyCustomScreen.chatFilterEnabled);
+            json.addProperty("chatFilterWordsRaw", MyCustomScreen.chatFilterWordsRaw);
+            json.addProperty("chatFilterRussian", MyCustomScreen.chatFilterRussian);
+
+            // === AUTO RECONNECT ===
+            json.addProperty("autoReconnectEnabled", MyCustomScreen.autoReconnectEnabled);
+            json.addProperty("autoReconnectDelay", MyCustomScreen.autoReconnectDelay);
+            json.addProperty("autoReconnectShowHud", MyCustomScreen.autoReconnectShowHud);
+            json.addProperty("autoReconnectRussian", MyCustomScreen.autoReconnectRussian);
+
             Path file = CONFIG_DIR.resolve(name + ".json");
             synchronized (GSON) {
                 Files.writeString(file, GSON.toJson(json));
@@ -464,6 +475,17 @@ public class ConfigManager {
             MyCustomScreen.pickupLogSpawners = getBool(json, "pickupLogSpawners", MyCustomScreen.pickupLogSpawners);
             MyCustomScreen.pickupLogStructureBlocks = getBool(json, "pickupLogStructureBlocks", MyCustomScreen.pickupLogStructureBlocks);
             MyCustomScreen.pickupLogRussian = getBool(json, "pickupLogRussian", MyCustomScreen.pickupLogRussian);
+
+            // === CHAT FILTER ===
+            MyCustomScreen.chatFilterEnabled = getBool(json, "chatFilterEnabled", MyCustomScreen.chatFilterEnabled);
+            MyCustomScreen.chatFilterWordsRaw = getString(json, "chatFilterWordsRaw", MyCustomScreen.chatFilterWordsRaw);
+            MyCustomScreen.chatFilterRussian = getBool(json, "chatFilterRussian", MyCustomScreen.chatFilterRussian);
+
+            // === AUTO RECONNECT ===
+            MyCustomScreen.autoReconnectEnabled = getBool(json, "autoReconnectEnabled", MyCustomScreen.autoReconnectEnabled);
+            MyCustomScreen.autoReconnectDelay = getInt(json, "autoReconnectDelay", MyCustomScreen.autoReconnectDelay);
+            MyCustomScreen.autoReconnectShowHud = getBool(json, "autoReconnectShowHud", MyCustomScreen.autoReconnectShowHud);
+            MyCustomScreen.autoReconnectRussian = getBool(json, "autoReconnectRussian", MyCustomScreen.autoReconnectRussian);
 
             return true;
 

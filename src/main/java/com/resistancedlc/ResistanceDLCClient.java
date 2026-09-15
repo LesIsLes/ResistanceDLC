@@ -7,12 +7,16 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -31,9 +35,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.waypoints.TrackedWaypoint;
 import net.minecraft.world.phys.Vec3;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
-import net.minecraft.client.gui.screens.PauseScreen;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,33 +58,55 @@ public class ResistanceDLCClient implements ClientModInitializer {
         // ===== ЗАГРУЗКА КОНФИГА + КЛАВИШИ =====
         ConfigManager.load();
         KeyBindings.register();
+
         // ===== PVP SAFE: блокировка ESC через Fabric API =====
-        net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register(
-                (client, screen, scaledWidth, scaledHeight) -> {
-                    if (!(screen instanceof net.minecraft.client.gui.screens.PauseScreen)) return;
+        ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+            if (!(screen instanceof PauseScreen)) return;
 
-                    net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents
-                            .allowKeyPress(screen)
-                            .register((s, keyEvent) -> {
-                                if (!MyCustomScreen.pvpSafeEnabled) return true;
-                                if (!MyCustomScreen.pvpSafeBlockQuit) return true;
-                                if (!PvPSafeManager.isInCombat()) return true;
+            ScreenKeyboardEvents.allowKeyPress(screen).register((s, keyEvent) -> {
+                if (!MyCustomScreen.pvpSafeEnabled) return true;
+                if (!MyCustomScreen.pvpSafeBlockQuit) return true;
+                if (!PvPSafeManager.isInCombat()) return true;
 
-                                // ESC = 256
-                                if (keyEvent.key() == 256) {
-                                    PvPSafeManager.sendQuitBlockedMessage();
-                                    return false;
-                                }
-                                return true;
-                            });
+                if (keyEvent.key() == 256) {
+                    PvPSafeManager.sendQuitBlockedMessage();
+                    return false;
                 }
-        );
+                return true;
+            });
+        });
+
+        // ===== AUTO RECONNECT: отмена ESC =====
+        ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+            ScreenKeyboardEvents.allowKeyPress(screen).register((s, keyEvent) -> {
+                if (!AutoReconnectManager.isReconnecting()) return true;
+
+                if (keyEvent.key() == 256) {
+                    AutoReconnectManager.cancel();
+                    if (client.player != null) {
+                        client.player.displayClientMessage(
+                                Component.literal("§c[AutoReconnect] Отменено"), true);
+                    }
+                    return false;
+                }
+                return true;
+            });
+        });
+
         // ===== СОХРАНЕНИЕ ПРИ ВЫХОДЕ + ОЧИСТКА ТРЕКЕРОВ =====
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             ConfigManager.saveNow();
             TotemTracker.clear();
             PvPSafeManager.reset();
             lastHealth = -1.0f;
+
+            // ===== AUTO RECONNECT: запуск таймера =====
+            AutoReconnectManager.onDisconnect();
+        });
+
+        // ===== AUTO RECONNECT: запоминаем сервер при JOIN =====
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+            AutoReconnectManager.onJoin();
         });
 
         // ===== КОМАНДЫ =====
@@ -265,6 +289,76 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                     )
                             )
             );
+
+            // ===== КОМАНДА /chatfilter =====
+            dispatcher.register(
+                    ClientCommandManager.literal("chatfilter")
+                            .executes(context -> {
+                                sendMessage("§6§l══════ ChatFilter — команды ══════");
+                                sendMessage("§e/chatfilter add <слово> §7— добавить стоп-слово");
+                                sendMessage("§e/chatfilter remove <слово> §7— удалить стоп-слово");
+                                sendMessage("§e/chatfilter list §7— список стоп-слов");
+                                sendMessage("§e/chatfilter clear §7— очистить всё");
+                                sendMessage("§6§l════════════════════════════════");
+                                return 1;
+                            })
+                            .then(ClientCommandManager.literal("add")
+                                    .then(ClientCommandManager.argument("word", StringArgumentType.string())
+                                            .executes(context -> {
+                                                String word = StringArgumentType.getString(context, "word");
+                                                if (ChatFilterManager.addWord(word)) {
+                                                    sendMessage("§a[ChatFilter] Добавлено: §e" + word);
+                                                } else {
+                                                    sendMessage("§c[ChatFilter] Уже есть или пусто: §e" + word);
+                                                }
+                                                return 1;
+                                            })
+                                    )
+                            )
+                            .then(ClientCommandManager.literal("remove")
+                                    .then(ClientCommandManager.argument("word", StringArgumentType.string())
+                                            .executes(context -> {
+                                                String word = StringArgumentType.getString(context, "word");
+                                                if (ChatFilterManager.removeWord(word)) {
+                                                    sendMessage("§a[ChatFilter] Удалено: §e" + word);
+                                                } else {
+                                                    sendMessage("§c[ChatFilter] Не найдено: §e" + word);
+                                                }
+                                                return 1;
+                                            })
+                                    )
+                            )
+                            .then(ClientCommandManager.literal("list")
+                                    .executes(context -> {
+                                        List<String> words = ChatFilterManager.getWords();
+                                        if (words.isEmpty()) {
+                                            sendMessage("§7[ChatFilter] Список пуст.");
+                                        } else {
+                                            sendMessage("§6[ChatFilter] Стоп-слова (" + words.size() + "):");
+                                            sendMessage("§7 - §e" + String.join("§7, §e", words));
+                                        }
+                                        return 1;
+                                    })
+                            )
+                            .then(ClientCommandManager.literal("clear")
+                                    .executes(context -> {
+                                        ChatFilterManager.clearWords();
+                                        sendMessage("§a[ChatFilter] Список очищен.");
+                                        return 1;
+                                    })
+                            )
+            );
+        });
+
+        // ===== CHAT FILTER: перехват сообщений =====
+        ClientReceiveMessageEvents.ALLOW_CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
+            if (!MyCustomScreen.chatFilterEnabled) return true;
+            return !ChatFilterManager.shouldHide(message.getString());
+        });
+
+        ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) -> {
+            if (!MyCustomScreen.chatFilterEnabled) return true;
+            return !ChatFilterManager.shouldHide(message.getString());
         });
 
         // ===== BPS =====
@@ -304,6 +398,9 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
         // ===== PICKUP LOGGER: отправка сообщений в чат (рендер-поток) =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> PickUpLogger.tick());
+
+        // ===== AUTO RECONNECT: тик =====
+        ClientTickEvents.END_CLIENT_TICK.register(client -> AutoReconnectManager.tick());
 
         // ===== ZOOM =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -850,6 +947,18 @@ public class ResistanceDLCClient implements ClientModInitializer {
                         MyCustomScreen.hitCounterX, MyCustomScreen.hitCounterY,
                         hpColor);
             }
+        }
+
+        // ===== AUTO RECONNECT HUD =====
+        if (AutoReconnectManager.isReconnecting()
+                && MyCustomScreen.autoReconnectShowHud) {
+            int remaining = AutoReconnectManager.getRemainingSeconds();
+            String text = "§c[AutoReconnect] §fЧерез " + remaining + " сек §7(ESC — отмена)";
+            graphics.drawString(client.font, text,
+                    client.getWindow().getGuiScaledWidth() / 2 - client.font.width(text) / 2,
+                    client.getWindow().getGuiScaledHeight() / 2 + 30,
+                    0xFFFFFFFF,
+                    true);
         }
 
         if (MyCustomScreen.showPotionEffects) {

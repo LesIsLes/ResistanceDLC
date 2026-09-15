@@ -203,6 +203,17 @@ public class MyCustomScreen extends Screen {
     public static boolean pickupLogStructureBlocks = true;
     public static boolean pickupLogRussian = false;
 
+    // ===== CHAT FILTER =====
+    public static boolean chatFilterEnabled = false;
+    public static String chatFilterWordsRaw = "";
+    public static boolean chatFilterRussian = false;
+
+    // ===== AUTO RECONNECT =====
+    public static boolean autoReconnectEnabled = false;
+    public static int autoReconnectDelay = 5;
+    public static boolean autoReconnectShowHud = true;
+    public static boolean autoReconnectRussian = false;
+
     public static String searchHistoryRaw = "";
     private static final int SEARCH_HISTORY_MAX = 8;
 
@@ -224,10 +235,10 @@ public class MyCustomScreen extends Screen {
 
     private static final int[] SECTION_PAGES = {
             7,  // 0 = HUD
-            8,  // 1 = PVP (7 → 8: PvPSafe + PickUpLogger)
+            8,  // 1 = PVP
             1,  // 2 = PVE
             8,  // 3 = Visual
-            2   // 4 = Misc
+            4   // 4 = Misc (было 3 → 4: AutoReconnect)
     };
     private static final int SECTION_COUNT = SECTION_PAGES.length;
 
@@ -377,7 +388,14 @@ public class MyCustomScreen extends Screen {
             { "клавиша", "Привязка клавиши GUI", "0", "4" },
             { "gui", "Привязка клавиши GUI", "0", "4" },
             { "конфиг", "Конфигурации", "1", "4" },
-            { "config", "Конфигурации", "1", "4" }
+            { "config", "Конфигурации", "1", "4" },
+            { "chatfilter", "ChatFilter", "2", "4" },
+            { "фильтр", "ChatFilter", "2", "4" },
+            { "стоп-слово", "ChatFilter", "2", "4" },
+            { "spam", "ChatFilter", "2", "4" },
+            { "reconnect", "AutoReconnect", "3", "4" },
+            { "автореконнект", "AutoReconnect", "3", "4" },
+            { "переподключение", "AutoReconnect", "3", "4" }
     };
 
     public MyCustomScreen() {
@@ -580,9 +598,61 @@ public class MyCustomScreen extends Screen {
                 switch (currentPage) {
                     case 0 -> initPage2(centerX, panelY);
                     case 1 -> initConfigsPage(centerX, panelY);
+                    case 2 -> initChatFilterPage(centerX, panelY);
+                    case 3 -> initAutoReconnectPage(centerX, panelY);
                 }
             }
         }
+    }
+    // =========================================================
+    // AUTO RECONNECT (Misc, index 3)
+    // =========================================================
+    private void initAutoReconnectPage(int centerX, int panelY) {
+        // ===== ВКЛ/ВЫКЛ =====
+        Checkbox enableCheckbox = Checkbox.builder(
+                        Component.literal(autoReconnectRussian ? "Включить AutoReconnect" : "Enable AutoReconnect"), this.font)
+                .pos(centerX - 100, panelY + 70)
+                .selected(autoReconnectEnabled)
+                .onValueChange((c, v) -> { autoReconnectEnabled = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(enableCheckbox);
+
+        Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
+            autoReconnectRussian = !autoReconnectRussian;
+            ConfigManager.save();
+            this.rebuildWidgets();
+        }).bounds(centerX + 120, panelY + 70, 25, 20).build();
+        this.addRenderableWidget(translateBtn);
+
+        // ===== СЛАЙДЕР ЗАДЕРЖКИ =====
+        AbstractSliderButton delaySlider = new AbstractSliderButton(
+                centerX - 100, panelY + 110, 200, 20,
+                Component.literal(autoReconnectRussian
+                        ? ("Задержка: " + autoReconnectDelay + " сек")
+                        : ("Delay: " + autoReconnectDelay + " sec")),
+                (autoReconnectDelay - 1) / 29.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(autoReconnectRussian
+                        ? ("Задержка: " + autoReconnectDelay + " сек")
+                        : ("Delay: " + autoReconnectDelay + " sec")));
+            }
+            @Override protected void applyValue() {
+                autoReconnectDelay = 1 + (int)(this.value * 29);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        };
+        this.addRenderableWidget(delaySlider);
+
+        // ===== HUD-ИНДИКАТОР =====
+        Checkbox hudCheckbox = Checkbox.builder(
+                        Component.literal(autoReconnectRussian ? "Показывать HUD-таймер" : "Show HUD timer"), this.font)
+                .pos(centerX - 100, panelY + 150)
+                .selected(autoReconnectShowHud)
+                .onValueChange((c, v) -> { autoReconnectShowHud = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(hudCheckbox);
     }
 
     // =========================================================
@@ -890,6 +960,68 @@ public class MyCustomScreen extends Screen {
                 .onValueChange((c, v) -> { shulkerPeekShowCounts = v; ConfigManager.save(); })
                 .build();
         this.addRenderableWidget(countsCheckbox);
+    }
+
+    // =========================================================
+    // CHAT FILTER (Misc, index 2)
+    // =========================================================
+    private void initChatFilterPage(int centerX, int panelY) {
+        // ===== ВКЛ/ВЫКЛ =====
+        Checkbox enableCheckbox = Checkbox.builder(
+                        Component.literal(chatFilterRussian ? "Включить ChatFilter" : "Enable ChatFilter"), this.font)
+                .pos(centerX - 100, panelY + 65)
+                .selected(chatFilterEnabled)
+                .onValueChange((c, v) -> { chatFilterEnabled = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(enableCheckbox);
+
+        Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
+            chatFilterRussian = !chatFilterRussian;
+            ConfigManager.save();
+            this.rebuildWidgets();
+        }).bounds(centerX + 120, panelY + 65, 25, 20).build();
+        this.addRenderableWidget(translateBtn);
+
+        // ===== ДОБАВЛЕНИЕ СЛОВА =====
+        EditBox wordField = new EditBox(this.font, centerX - 100, panelY + 100, 160, 20,
+                Component.literal(chatFilterRussian ? "Стоп-слово..." : "Stop word..."));
+        wordField.setMaxLength(30);
+        this.addRenderableWidget(wordField);
+
+        Button addBtn = Button.builder(Component.literal("+"), (b) -> {
+            String word = wordField.getValue().trim();
+            if (!word.isEmpty()) {
+                ChatFilterManager.addWord(word);
+                wordField.setValue("");
+                this.rebuildWidgets();
+            }
+        }).bounds(centerX + 65, panelY + 100, 35, 20).build();
+        this.addRenderableWidget(addBtn);
+
+        // ===== СПИСОК СТОП-СЛОВ (кнопки ×) =====
+        List<String> words = ChatFilterManager.getWords();
+        int listStartY = panelY + 140;
+        int rowHeight = 20;
+        int maxVisible = 9;
+
+        for (int i = 0; i < Math.min(words.size(), maxVisible); i++) {
+            final String word = words.get(i);
+            int y = listStartY + i * rowHeight;
+
+            Button delBtn = Button.builder(Component.literal("×"), (b) -> {
+                ChatFilterManager.removeWord(word);
+                this.rebuildWidgets();
+            }).bounds(centerX + 70, y, 20, 18).build();
+            this.addRenderableWidget(delBtn);
+        }
+
+        // ===== КНОПКА "ОЧИСТИТЬ ВСЁ" =====
+        Button clearBtn = Button.builder(
+                Component.literal(chatFilterRussian ? "Очистить всё" : "Clear all"), (b) -> {
+                    ChatFilterManager.clearWords();
+                    this.rebuildWidgets();
+                }).bounds(centerX - 100, panelY + 335, 200, 20).build();
+        this.addRenderableWidget(clearBtn);
     }
 
     private static void addSearchHistory(String query) {
@@ -2588,6 +2720,53 @@ public class MyCustomScreen extends Screen {
                 graphics.drawString(this.font, "§a[PickUp] §f+1 §eАлмазный меч",
                         panelX + 20, panelY + 209, 0xFFFFFFFF);
             }
+        }
+
+        // ===== CHAT FILTER: заголовок + список =====
+        if (currentSection == 4 && currentPage == 2) {
+            graphics.drawString(this.font, "§l▸ ChatFilter",
+                    panelX + 20, panelY + 40, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 52, panelX + panelWidth - 20, panelY + 53, guiColor);
+
+            List<String> words = ChatFilterManager.getWords();
+            if (words.isEmpty()) {
+                graphics.drawString(this.font, "§7Список пуст. Добавь стоп-слово выше.",
+                        panelX + 30, panelY + 140, 0xFFAAAAAA);
+            } else {
+                int listStartY = panelY + 140;
+                int rowHeight = 20;
+                int maxVisible = 9;
+
+                for (int i = 0; i < Math.min(words.size(), maxVisible); i++) {
+                    String word = words.get(i);
+                    int y = listStartY + i * rowHeight;
+
+                    graphics.drawString(this.font, "§e" + word,
+                            panelX + 30, y + 5, 0xFFFFFFFF);
+                }
+
+                if (words.size() > maxVisible) {
+                    graphics.drawString(this.font,
+                            "§7... и ещё §e" + (words.size() - maxVisible),
+                            panelX + 30, listStartY + maxVisible * rowHeight + 5, 0xFF888888);
+                }
+            }
+        }
+
+        // ===== AUTO RECONNECT: заголовок + подсказки =====
+        if (currentSection == 4 && currentPage == 3) {
+            graphics.drawString(this.font, "§l▸ AutoReconnect",
+                    panelX + 20, panelY + 40, guiTextColor);
+            graphics.fill(panelX + 20, panelY + 52, panelX + panelWidth - 20, panelY + 53, guiColor);
+
+            graphics.drawString(this.font, "§7Автоматически переподключается к серверу",
+                    panelX + 20, panelY + 195, 0xFFAAAAAA);
+            graphics.drawString(this.font, "§7после кика или потери соединения.",
+                    panelX + 20, panelY + 209, 0xFFAAAAAA);
+            graphics.drawString(this.font, "§7Отмена: §fESC",
+                    panelX + 20, panelY + 230, 0xFFFFFFFF);
+            graphics.drawString(this.font, "§c⚠ Не работает в одиночной игре",
+                    panelX + 20, panelY + 250, 0xFFFF5555);
         }
 
         if (searchOtherSectionMsg != null && !searchOtherSectionMsg.isEmpty()) {
