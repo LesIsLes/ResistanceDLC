@@ -33,8 +33,8 @@ public class MyCustomScreen extends Screen {
             7,  // 0 = HUD
             8,  // 1 = PVP
             1,  // 2 = PVE
-            9,  // 3 = Visual (было 8 → 9: Particle Blocker)
-            4   // 4 = Misc
+            9,  // 3 = Visual
+            5   // 4 = Misc (было 4 → 5: DeathCoords)
     };
 
     private static final int SECTION_COUNT = SECTION_PAGES.length;
@@ -363,7 +363,16 @@ public class MyCustomScreen extends Screen {
             { "автореконнект", "AutoReconnect", "3", "4" },
             { "авто реконнект", "AutoReconnect", "3", "4" },
             { "переподключение", "AutoReconnect", "3", "4" },
-            { "задержка реконнекта", "Задержка реконнекта", "3", "4" }
+            { "задержка реконнекта", "Задержка реконнекта", "3", "4" },
+
+            // Стр 4: DeathCoords
+            { "death", "DeathCoords", "4", "4" },
+            { "deathcoords", "DeathCoords", "4", "4" },
+            { "смерть", "DeathCoords", "4", "4" },
+            { "координаты смерти", "DeathCoords", "4", "4" },
+            { "dc", "DeathCoords", "4", "4" },
+            { "/dc", "DeathCoords", "4", "4" },
+            { "где я умер", "DeathCoords", "4", "4" }
     };
 
     public MyCustomScreen() {
@@ -569,10 +578,12 @@ public class MyCustomScreen extends Screen {
                     case 1 -> initConfigsPage(centerX, panelY);
                     case 2 -> initChatFilterPage(centerX, panelY);
                     case 3 -> initAutoReconnectPage(centerX, panelY);
+                    case 4 -> initDeathCoordsPage(centerX, panelY);
                 }
             }
         }
     }
+
     // =========================================================
     // AUTO RECONNECT (Misc, index 3)
     // =========================================================
@@ -623,7 +634,52 @@ public class MyCustomScreen extends Screen {
                 .build();
         this.addRenderableWidget(hudCheckbox);
     }
+    // =========================================================
+    // DEATH COORDS (Misc, index 4)
+    // =========================================================
+    private void initDeathCoordsPage(int centerX, int panelY) {
+        // ===== ВКЛ/ВЫКЛ =====
+        Checkbox enableCheckbox = Checkbox.builder(
+                        Component.literal(ModConfig.deathCoordsRussian
+                                ? "Включить DeathCoords"
+                                : "Enable DeathCoords"), this.font)
+                .pos(centerX - 100, panelY + 70)
+                .selected(ModConfig.deathCoordsEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.deathCoordsEnabled = v;
+                    ConfigManager.save();
+                })
+                .build();
+        this.addRenderableWidget(enableCheckbox);
 
+        Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
+            ModConfig.deathCoordsRussian = !ModConfig.deathCoordsRussian;
+            ConfigManager.save();
+            this.rebuildWidgets();
+        }).bounds(centerX + 120, panelY + 70, 25, 20).build();
+        this.addRenderableWidget(translateBtn);
+
+        // ===== КНОПКА "ПОКАЗАТЬ ПОСЛЕДНЮЮ СМЕРТЬ" =====
+        Button showBtn = Button.builder(
+                Component.literal(ModConfig.deathCoordsRussian
+                        ? "Показать последнюю точку смерти"
+                        : "Show last death point"),
+                (b) -> DeathCoordsManager.showLastDeath()
+        ).bounds(centerX - 100, panelY + 110, 200, 20).build();
+        this.addRenderableWidget(showBtn);
+
+        // ===== КНОПКА "ОЧИСТИТЬ" =====
+        Button clearBtn = Button.builder(
+                Component.literal(ModConfig.deathCoordsRussian
+                        ? "Очистить сохранённую точку"
+                        : "Clear saved death point"),
+                (b) -> {
+                    DeathCoordsManager.clearLastDeath();
+                    this.rebuildWidgets();
+                }
+        ).bounds(centerX - 100, panelY + 140, 200, 20).build();
+        this.addRenderableWidget(clearBtn);
+    }
     // =========================================================
     // TOTEM LOG (PVP, index 5)
     // =========================================================
@@ -2804,6 +2860,40 @@ public class MyCustomScreen extends Screen {
                     panelX + 20, panelY + 230, 0xFFFFFFFF);
             graphics.drawString(this.font, "§c⚠ Не работает в одиночной игре",
                     panelX + 20, panelY + 250, 0xFFFF5555);
+        }
+        // ===== DEATH COORDS: заголовок + подсказки =====
+        if (currentSection == 4 && currentPage == 4) {
+            graphics.drawString(this.font, "§l▸ DeathCoords",
+                    panelX + 20, panelY + 40, ModConfig.guiTextColor);
+            graphics.fill(panelX + 20, panelY + 52, panelX + panelWidth - 20, panelY + 53, ModConfig.guiColor);
+
+            graphics.drawString(this.font,
+                    ModConfig.deathCoordsRussian
+                            ? "§7Сохраняет координаты смерти §fтолько локально."
+                            : "§7Saves death coords §flocally only.",
+                    panelX + 20, panelY + 180, 0xFFAAAAAA);
+            graphics.drawString(this.font,
+                    ModConfig.deathCoordsRussian
+                            ? "§7Сообщение видно §fтолько тебе§7, в чат §fне уходит§7."
+                            : "§7Message is §fvisible only to you§7, not sent to chat.",
+                    panelX + 20, panelY + 194, 0xFFAAAAAA);
+            graphics.drawString(this.font,
+                    "§7Команда: §a/dc §7· §a/dc last §7· §a/dc clear",
+                    panelX + 20, panelY + 214, 0xFFFFFFFF);
+
+            if (ModConfig.lastDeathTime > 0) {
+                graphics.drawString(this.font,
+                        "§7Последняя: §e" + ModConfig.lastDeathX + ", "
+                                + ModConfig.lastDeathY + ", " + ModConfig.lastDeathZ
+                                + " §8(" + ModConfig.lastDeathDimension + ")",
+                        panelX + 20, panelY + 234, 0xFFFFFFFF);
+            } else {
+                graphics.drawString(this.font,
+                        ModConfig.deathCoordsRussian
+                                ? "§8Точек смерти пока нет"
+                                : "§8No death points yet",
+                        panelX + 20, panelY + 234, 0xFF888888);
+            }
         }
         // ===== PARTICLE BLOCKER: заголовок + подсказки =====
         if (currentSection == 3 && currentPage == 8) {

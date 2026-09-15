@@ -208,6 +208,15 @@ public class ModConfig {
     public static boolean autoReconnectShowHud = true;
     public static boolean autoReconnectRussian = false;
 
+    // ===================== DEATH COORDS =====================
+    public static boolean deathCoordsEnabled = false;
+    public static boolean deathCoordsRussian = false;
+    public static int lastDeathX = 0;
+    public static int lastDeathY = 0;
+    public static int lastDeathZ = 0;
+    public static String lastDeathDimension = "";
+    public static long lastDeathTime = 0;
+
     // ===================== ПОИСК + WAYPOINTS =====================
     public static String searchHistoryRaw = "";
     public static final int SEARCH_HISTORY_MAX = 8;

@@ -37,7 +37,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.waypoints.TrackedWaypoint;
 import net.minecraft.world.phys.Vec3;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,7 +48,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
     private static long lastAttackTime = 0;
     private static boolean tapeMouseWeHeldRMB = false;
 
-    // ===== PVP SAFE: отслеживание здоровья =====
+    // ===== PVP SAFE + DEATH COORDS: отслеживание здоровья =====
     private static float lastHealth = -1.0f;
 
     @Override
@@ -350,6 +349,43 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                     })
                             )
             );
+
+            // ===== КОМАНДА /dc (DeathCoords) =====
+            dispatcher.register(
+                    ClientCommandManager.literal("dc")
+                            .executes(context -> {
+                                DeathCoordsManager.showLastDeath();
+                                return 1;
+                            })
+                            .then(ClientCommandManager.literal("last")
+                                    .executes(context -> {
+                                        DeathCoordsManager.showLastDeath();
+                                        return 1;
+                                    })
+                            )
+                            .then(ClientCommandManager.literal("clear")
+                                    .executes(context -> {
+                                        DeathCoordsManager.clearLastDeath();
+                                        return 1;
+                                    })
+                            )
+                            .then(ClientCommandManager.literal("toggle")
+                                    .executes(context -> {
+                                        ModConfig.deathCoordsEnabled = !ModConfig.deathCoordsEnabled;
+                                        ConfigManager.save();
+                                        String state = ModConfig.deathCoordsEnabled
+                                                ? "§aвключён" : "§cвыключен";
+                                        sendMessage("§6DeathCoords " + state);
+                                        return 1;
+                                    })
+                            )
+                            .then(ClientCommandManager.literal("help")
+                                    .executes(context -> {
+                                        DeathCoordsManager.showHelp();
+                                        return 1;
+                                    })
+                            )
+            );
         });
 
         // ===== CHAT FILTER: перехват сообщений =====
@@ -377,7 +413,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
             }
         });
 
-        // ===== PVP SAFE: отслеживание здоровья =====
+        // ===== PVP SAFE + DEATH COORDS: отслеживание здоровья =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) {
                 lastHealth = -1.0f;
@@ -386,12 +422,21 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
             float currentHealth = client.player.getHealth();
 
+            // Первый тик после захода в мир — запоминаем здоровье
             if (lastHealth < 0) {
                 lastHealth = currentHealth;
                 return;
             }
 
-            if (currentHealth < lastHealth) {
+            // Смерть: здоровье упало с положительного до нуля/отрицательного
+            if (currentHealth <= 0.0f && lastHealth > 0.0f) {
+                DeathCoordsManager.onPlayerDeath(client.player);
+                lastHealth = currentHealth;
+                return;
+            }
+
+            // Урон (не смертельный) → PvPSafe
+            if (currentHealth < lastHealth && currentHealth > 0.0f) {
                 PvPSafeManager.recordHit();
             }
 

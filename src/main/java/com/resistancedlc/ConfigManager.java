@@ -263,6 +263,15 @@ public class ConfigManager {
             json.addProperty("autoReconnectShowHud", ModConfig.autoReconnectShowHud);
             json.addProperty("autoReconnectRussian", ModConfig.autoReconnectRussian);
 
+            // === DEATH COORDS ===
+            json.addProperty("deathCoordsEnabled", ModConfig.deathCoordsEnabled);
+            json.addProperty("deathCoordsRussian", ModConfig.deathCoordsRussian);
+            json.addProperty("lastDeathX", ModConfig.lastDeathX);
+            json.addProperty("lastDeathY", ModConfig.lastDeathY);
+            json.addProperty("lastDeathZ", ModConfig.lastDeathZ);
+            json.addProperty("lastDeathDimension", ModConfig.lastDeathDimension);
+            json.addProperty("lastDeathTime", ModConfig.lastDeathTime);
+
             Path file = CONFIG_DIR.resolve(name + ".json");
             synchronized (GSON) {
                 Files.writeString(file, GSON.toJson(json));
@@ -507,6 +516,15 @@ public class ConfigManager {
             ModConfig.autoReconnectShowHud = getBool(json, "autoReconnectShowHud", ModConfig.autoReconnectShowHud);
             ModConfig.autoReconnectRussian = getBool(json, "autoReconnectRussian", ModConfig.autoReconnectRussian);
 
+            // === DEATH COORDS ===
+            ModConfig.deathCoordsEnabled = getBool(json, "deathCoordsEnabled", ModConfig.deathCoordsEnabled);
+            ModConfig.deathCoordsRussian = getBool(json, "deathCoordsRussian", ModConfig.deathCoordsRussian);
+            ModConfig.lastDeathX = getInt(json, "lastDeathX", ModConfig.lastDeathX);
+            ModConfig.lastDeathY = getInt(json, "lastDeathY", ModConfig.lastDeathY);
+            ModConfig.lastDeathZ = getInt(json, "lastDeathZ", ModConfig.lastDeathZ);
+            ModConfig.lastDeathDimension = getString(json, "lastDeathDimension", ModConfig.lastDeathDimension);
+            ModConfig.lastDeathTime = getLong(json, "lastDeathTime", ModConfig.lastDeathTime);
+
             return true;
 
         } catch (Exception e) {
@@ -529,6 +547,9 @@ public class ConfigManager {
 
     private static String getString(JsonObject json, String key, String def) {
         return json.has(key) ? json.get(key).getAsString() : def;
+    }
+    private static long getLong(JsonObject json, String key, long def) {
+        return json.has(key) ? json.get(key).getAsLong() : def;
     }
 
     public static boolean remove(String name) {
