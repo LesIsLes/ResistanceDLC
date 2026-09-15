@@ -1,5 +1,7 @@
 package com.resistancedlc;
 
+import com.resistancedlc.config.ModConfig;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -25,7 +27,7 @@ public class PickUpLogger {
      * Вызывается из миксина (Netty-поток). Кладёт сообщение в очередь.
      */
     public static void queuePickup(ItemStack stack) {
-        if (!MyCustomScreen.pickupLogEnabled) return;
+        if (!ModConfig.pickupLogEnabled) return;
         if (stack == null || stack.isEmpty()) return;
         if (!shouldLog(stack)) return;
 
@@ -55,10 +57,10 @@ public class PickUpLogger {
     }
 
     public static boolean shouldLog(ItemStack stack) {
-        if (!MyCustomScreen.pickupLogEnabled) return false;
+        if (!ModConfig.pickupLogEnabled) return false;
         if (stack == null || stack.isEmpty()) return false;
 
-        int mode = MyCustomScreen.pickupLogMode;
+        int mode = ModConfig.pickupLogMode;
 
         if (mode == MODE_ALL) return true;
 
@@ -75,13 +77,13 @@ public class PickUpLogger {
     }
 
     private static boolean matchesCategory(ItemStack stack) {
-        if (MyCustomScreen.pickupLogWeapon && isWeapon(stack)) return true;
-        if (MyCustomScreen.pickupLogArmor && isArmor(stack)) return true;
-        if (MyCustomScreen.pickupLogPotions && isPotion(stack)) return true;
-        if (MyCustomScreen.pickupLogTotems && stack.is(Items.TOTEM_OF_UNDYING)) return true;
-        if (MyCustomScreen.pickupLogHeads && stack.is(Items.PLAYER_HEAD)) return true;
-        if (MyCustomScreen.pickupLogSpawners && stack.is(Items.SPAWNER)) return true;
-        if (MyCustomScreen.pickupLogStructureBlocks) {
+        if (ModConfig.pickupLogWeapon && isWeapon(stack)) return true;
+        if (ModConfig.pickupLogArmor && isArmor(stack)) return true;
+        if (ModConfig.pickupLogPotions && isPotion(stack)) return true;
+        if (ModConfig.pickupLogTotems && stack.is(Items.TOTEM_OF_UNDYING)) return true;
+        if (ModConfig.pickupLogHeads && stack.is(Items.PLAYER_HEAD)) return true;
+        if (ModConfig.pickupLogSpawners && stack.is(Items.SPAWNER)) return true;
+        if (ModConfig.pickupLogStructureBlocks) {
             if (stack.is(Items.JIGSAW) || stack.is(Items.STRUCTURE_BLOCK)) return true;
         }
         return false;

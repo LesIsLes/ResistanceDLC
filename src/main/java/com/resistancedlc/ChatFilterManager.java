@@ -1,5 +1,7 @@
 package com.resistancedlc;
 
+import com.resistancedlc.config.ModConfig;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
@@ -18,7 +20,7 @@ public class ChatFilterManager {
      * @return true, если сообщение нужно скрыть
      */
     public static boolean shouldHide(String message) {
-        if (!MyCustomScreen.chatFilterEnabled) return false;
+        if (!ModConfig.chatFilterEnabled) return false;
         if (message == null || message.isEmpty()) return false;
 
         List<String> words = getWords();
@@ -40,10 +42,10 @@ public class ChatFilterManager {
      */
     public static List<String> getWords() {
         List<String> list = new ArrayList<>();
-        if (MyCustomScreen.chatFilterWordsRaw == null
-                || MyCustomScreen.chatFilterWordsRaw.isEmpty()) return list;
+        if (ModConfig.chatFilterWordsRaw == null
+                || ModConfig.chatFilterWordsRaw.isEmpty()) return list;
 
-        for (String s : MyCustomScreen.chatFilterWordsRaw.split("\\|")) {
+        for (String s : ModConfig.chatFilterWordsRaw.split("\\|")) {
             if (!s.isEmpty()) list.add(s);
         }
         return list;
@@ -58,7 +60,7 @@ public class ChatFilterManager {
             if (i > 0) sb.append("|");
             sb.append(list.get(i).replace("|", ""));
         }
-        MyCustomScreen.chatFilterWordsRaw = sb.toString();
+        ModConfig.chatFilterWordsRaw = sb.toString();
     }
 
     /**
@@ -101,7 +103,7 @@ public class ChatFilterManager {
      * Очищает все стоп-слова.
      */
     public static void clearWords() {
-        MyCustomScreen.chatFilterWordsRaw = "";
+        ModConfig.chatFilterWordsRaw = "";
         ConfigManager.save();
     }
 

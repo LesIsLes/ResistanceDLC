@@ -1,5 +1,7 @@
 package com.resistancedlc;
 
+import com.resistancedlc.config.ModConfig;
+
 /**
  * Логика Particle Blocker — отключение частиц по категориям.
  */
@@ -11,50 +13,50 @@ public class ParticleBlockerManager {
      * @return true, если частицу нужно скрыть
      */
     public static boolean shouldBlock(String particleId) {
-        if (!MyCustomScreen.particleBlockerEnabled) return false;
+        if (!ModConfig.particleBlockerEnabled) return false;
         if (particleId == null || particleId.isEmpty()) return false;
 
         String id = particleId.toLowerCase();
 
         // === ОГОНЬ ===
-        if (MyCustomScreen.particleBlockerFire) {
+        if (ModConfig.particleBlockerFire) {
             if (id.contains("flame") || id.contains("fire")) return true;
         }
 
         // === ДЫМ ===
-        if (MyCustomScreen.particleBlockerSmoke) {
+        if (ModConfig.particleBlockerSmoke) {
             if (id.contains("smoke")) return true;
         }
 
         // === ВЗРЫВЫ ===
-        if (MyCustomScreen.particleBlockerExplosion) {
+        if (ModConfig.particleBlockerExplosion) {
             if (id.contains("explosion") || id.contains("poof")) return true;
         }
 
         // === ЗЕЛЬЯ ===
-        if (MyCustomScreen.particleBlockerPotions) {
+        if (ModConfig.particleBlockerPotions) {
             if (id.contains("spell") || id.contains("witch")
                     || id.contains("effect") || id.contains("potion")) return true;
         }
 
         // === ВОДА ===
-        if (MyCustomScreen.particleBlockerWater) {
+        if (ModConfig.particleBlockerWater) {
             if (id.contains("splash") || id.contains("bubble")
                     || id.contains("water") || id.contains("drip")) return true;
         }
 
         // === РЕДСТОУН ===
-        if (MyCustomScreen.particleBlockerRedstone) {
+        if (ModConfig.particleBlockerRedstone) {
             if (id.contains("redstone") || id.contains("dust")) return true;
         }
 
         // === ПОРТАЛ ===
-        if (MyCustomScreen.particleBlockerPortal) {
+        if (ModConfig.particleBlockerPortal) {
             if (id.contains("portal")) return true;
         }
 
         // === КРИТЫ ===
-        if (MyCustomScreen.particleBlockerCrit) {
+        if (ModConfig.particleBlockerCrit) {
             if (id.contains("crit") || id.contains("enchanted_hit")) return true;
         }
 

@@ -1,5 +1,7 @@
 package com.resistancedlc;
 
+import com.resistancedlc.config.ModConfig;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
@@ -29,10 +31,10 @@ public class PvPSafeManager {
      * Возвращает 0, если бой не активен.
      */
     public static int getRemainingSeconds() {
-        if (!MyCustomScreen.pvpSafeEnabled) return 0;
+        if (!ModConfig.pvpSafeEnabled) return 0;
         if (lastHitTime == 0) return 0;
         long elapsed = System.currentTimeMillis() - lastHitTime;
-        long total = (long) MyCustomScreen.pvpSafeTimer * 1000L;
+        long total = (long) ModConfig.pvpSafeTimer * 1000L;
         if (elapsed >= total) return 0;
         return (int) ((total - elapsed) / 1000L) + 1;
     }

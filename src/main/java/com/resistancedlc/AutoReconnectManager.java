@@ -1,5 +1,7 @@
 package com.resistancedlc;
 
+import com.resistancedlc.config.ModConfig;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ConnectScreen;
 import net.minecraft.client.multiplayer.ServerData;
@@ -32,7 +34,7 @@ public class AutoReconnectManager {
      * Вызывается при DISCONNECT — если включено, запускаем таймер.
      */
     public static void onDisconnect() {
-        if (!MyCustomScreen.autoReconnectEnabled) return;
+        if (!ModConfig.autoReconnectEnabled) return;
         if (lastServerData == null) return;
         // Только на серверы (не в одиночку)
         if (Minecraft.getInstance().hasSingleplayerServer()) return;
@@ -45,13 +47,13 @@ public class AutoReconnectManager {
      */
     public static void tick() {
         if (reconnectStartTime == 0) return;
-        if (!MyCustomScreen.autoReconnectEnabled) {
+        if (!ModConfig.autoReconnectEnabled) {
             reconnectStartTime = 0;
             return;
         }
 
         long elapsed = System.currentTimeMillis() - reconnectStartTime;
-        long delayMs = (long) MyCustomScreen.autoReconnectDelay * 1000L;
+        long delayMs = (long) ModConfig.autoReconnectDelay * 1000L;
 
         if (elapsed >= delayMs) {
             performReconnect();
@@ -102,7 +104,7 @@ public class AutoReconnectManager {
     public static int getRemainingSeconds() {
         if (reconnectStartTime == 0) return 0;
         long elapsed = System.currentTimeMillis() - reconnectStartTime;
-        long delayMs = (long) MyCustomScreen.autoReconnectDelay * 1000L;
+        long delayMs = (long) ModConfig.autoReconnectDelay * 1000L;
         if (elapsed >= delayMs) return 0;
         return (int) ((delayMs - elapsed) / 1000L) + 1;
     }
