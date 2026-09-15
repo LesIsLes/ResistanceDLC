@@ -1,5 +1,7 @@
 package com.resistancedlc;
 
+import com.resistancedlc.config.ModConfig;
+
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
@@ -64,8 +66,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
             if (!(screen instanceof PauseScreen)) return;
 
             ScreenKeyboardEvents.allowKeyPress(screen).register((s, keyEvent) -> {
-                if (!MyCustomScreen.pvpSafeEnabled) return true;
-                if (!MyCustomScreen.pvpSafeBlockQuit) return true;
+                if (!ModConfig.pvpSafeEnabled) return true;
+                if (!ModConfig.pvpSafeBlockQuit) return true;
                 if (!PvPSafeManager.isInCombat()) return true;
 
                 if (keyEvent.key() == 256) {
@@ -218,7 +220,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                             ));
                                         } else {
                                             sendMessage("§c[Waypoints] Достигнут лимит ("
-                                                    + MyCustomScreen.waypointsMax + ")");
+                                                    + ModConfig.waypointsMax + ")");
                                         }
                                         return 1;
                                     })
@@ -230,7 +232,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                             sendMessage("§7[Waypoints] Меток нет.");
                                         } else {
                                             sendMessage("§6[Waypoints] Метки (" + list.size() + "/"
-                                                    + MyCustomScreen.waypointsMax + "):");
+                                                    + ModConfig.waypointsMax + "):");
                                             for (int i = 0; i < list.size(); i++) {
                                                 MyCustomScreen.Waypoint wp = list.get(i);
                                                 sendMessage(String.format(
@@ -352,26 +354,26 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
         // ===== CHAT FILTER: перехват сообщений =====
         ClientReceiveMessageEvents.ALLOW_CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
-            if (!MyCustomScreen.chatFilterEnabled) return true;
+            if (!ModConfig.chatFilterEnabled) return true;
             return !ChatFilterManager.shouldHide(message.getString());
         });
 
         ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) -> {
-            if (!MyCustomScreen.chatFilterEnabled) return true;
+            if (!ModConfig.chatFilterEnabled) return true;
             return !ChatFilterManager.shouldHide(message.getString());
         });
 
         // ===== BPS =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player != null) {
-                double dx = client.player.getX() - MyCustomScreen.lastPlayerX;
-                double dy = client.player.getY() - MyCustomScreen.lastPlayerY;
-                double dz = client.player.getZ() - MyCustomScreen.lastPlayerZ;
+                double dx = client.player.getX() - ModConfig.lastPlayerX;
+                double dy = client.player.getY() - ModConfig.lastPlayerY;
+                double dz = client.player.getZ() - ModConfig.lastPlayerZ;
                 double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                MyCustomScreen.currentBps = distance * 20.0;
-                MyCustomScreen.lastPlayerX = client.player.getX();
-                MyCustomScreen.lastPlayerY = client.player.getY();
-                MyCustomScreen.lastPlayerZ = client.player.getZ();
+                ModConfig.currentBps = distance * 20.0;
+                ModConfig.lastPlayerX = client.player.getX();
+                ModConfig.lastPlayerY = client.player.getY();
+                ModConfig.lastPlayerZ = client.player.getZ();
             }
         });
 
@@ -407,12 +409,12 @@ public class ResistanceDLCClient implements ClientModInitializer {
             if (client.player == null) return;
             boolean keyDown = KeyBindings.zoomKey != null && KeyBindings.zoomKey.isDown();
             float targetZoom = 1.0f;
-            if (MyCustomScreen.zoomEnabled && keyDown) targetZoom = 1.0f / MyCustomScreen.zoomFactor;
-            float smooth = MyCustomScreen.zoomSmoothness;
-            if (Math.abs(MyCustomScreen.currentZoom - targetZoom) < 0.001f) {
-                MyCustomScreen.currentZoom = targetZoom;
+            if (ModConfig.zoomEnabled && keyDown) targetZoom = 1.0f / ModConfig.zoomFactor;
+            float smooth = ModConfig.zoomSmoothness;
+            if (Math.abs(ModConfig.currentZoom - targetZoom) < 0.001f) {
+                ModConfig.currentZoom = targetZoom;
             } else {
-                MyCustomScreen.currentZoom += (targetZoom - MyCustomScreen.currentZoom) * smooth;
+                ModConfig.currentZoom += (targetZoom - ModConfig.currentZoom) * smooth;
             }
         });
 
@@ -420,10 +422,10 @@ public class ResistanceDLCClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (KeyBindings.tapeMouseKey == null) return;
             while (KeyBindings.tapeMouseKey.consumeClick()) {
-                MyCustomScreen.tapeMouseEnabled = !MyCustomScreen.tapeMouseEnabled;
+                ModConfig.tapeMouseEnabled = !ModConfig.tapeMouseEnabled;
                 ConfigManager.save();
                 if (client.player != null) {
-                    String state = MyCustomScreen.tapeMouseEnabled ? "§aвключён" : "§cвыключен";
+                    String state = ModConfig.tapeMouseEnabled ? "§aвключён" : "§cвыключен";
                     client.player.displayClientMessage(Component.literal("§6TapeMouse " + state), true);
                 }
             }
@@ -435,9 +437,9 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
             if (KeyBindings.customHitSoundsKey != null) {
                 while (KeyBindings.customHitSoundsKey.consumeClick()) {
-                    MyCustomScreen.customHitSoundsEnabled = !MyCustomScreen.customHitSoundsEnabled;
+                    ModConfig.customHitSoundsEnabled = !ModConfig.customHitSoundsEnabled;
                     ConfigManager.save();
-                    String state = MyCustomScreen.customHitSoundsEnabled ? "§aвключён" : "§cвыключен";
+                    String state = ModConfig.customHitSoundsEnabled ? "§aвключён" : "§cвыключен";
                     client.player.displayClientMessage(
                             Component.literal("§6Custom Hit Sounds " + state), true);
                 }
@@ -445,9 +447,9 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
             if (KeyBindings.fastExpKey != null) {
                 while (KeyBindings.fastExpKey.consumeClick()) {
-                    MyCustomScreen.fastExpEnabled = !MyCustomScreen.fastExpEnabled;
+                    ModConfig.fastExpEnabled = !ModConfig.fastExpEnabled;
                     ConfigManager.save();
-                    String state = MyCustomScreen.fastExpEnabled ? "§aвключён" : "§cвыключен";
+                    String state = ModConfig.fastExpEnabled ? "§aвключён" : "§cвыключен";
                     client.player.displayClientMessage(
                             Component.literal("§6FastExp " + state), true);
                 }
@@ -455,9 +457,9 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
             if (KeyBindings.shiftTapKey != null) {
                 while (KeyBindings.shiftTapKey.consumeClick()) {
-                    MyCustomScreen.shiftTapEnabled = !MyCustomScreen.shiftTapEnabled;
+                    ModConfig.shiftTapEnabled = !ModConfig.shiftTapEnabled;
                     ConfigManager.save();
-                    String state = MyCustomScreen.shiftTapEnabled ? "§aвключён" : "§cвыключен";
+                    String state = ModConfig.shiftTapEnabled ? "§aвключён" : "§cвыключен";
                     client.player.displayClientMessage(
                             Component.literal("§6ShiftTap " + state), true);
                 }
@@ -465,9 +467,9 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
             if (KeyBindings.comboKey != null) {
                 while (KeyBindings.comboKey.consumeClick()) {
-                    MyCustomScreen.comboEnabled = !MyCustomScreen.comboEnabled;
+                    ModConfig.comboEnabled = !ModConfig.comboEnabled;
                     ConfigManager.save();
-                    String state = MyCustomScreen.comboEnabled ? "§aвключён" : "§cвыключен";
+                    String state = ModConfig.comboEnabled ? "§aвключён" : "§cвыключен";
                     client.player.displayClientMessage(
                             Component.literal("§6Combo Counter " + state), true);
                 }
@@ -475,9 +477,9 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
             if (KeyBindings.effectWarningsKey != null) {
                 while (KeyBindings.effectWarningsKey.consumeClick()) {
-                    MyCustomScreen.effectWarningsEnabled = !MyCustomScreen.effectWarningsEnabled;
+                    ModConfig.effectWarningsEnabled = !ModConfig.effectWarningsEnabled;
                     ConfigManager.save();
-                    String state = MyCustomScreen.effectWarningsEnabled ? "§aвключён" : "§cвыключен";
+                    String state = ModConfig.effectWarningsEnabled ? "§aвключён" : "§cвыключен";
                     client.player.displayClientMessage(
                             Component.literal("§6Effect Warnings " + state), true);
                 }
@@ -485,9 +487,9 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
             if (KeyBindings.totemLogKey != null) {
                 while (KeyBindings.totemLogKey.consumeClick()) {
-                    MyCustomScreen.totemLogEnabled = !MyCustomScreen.totemLogEnabled;
+                    ModConfig.totemLogEnabled = !ModConfig.totemLogEnabled;
                     ConfigManager.save();
-                    String state = MyCustomScreen.totemLogEnabled ? "§aвключён" : "§cвыключен";
+                    String state = ModConfig.totemLogEnabled ? "§aвключён" : "§cвыключен";
                     client.player.displayClientMessage(
                             Component.literal("§6Totem Log " + state), true);
                 }
@@ -495,9 +497,9 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
             if (KeyBindings.pickupLogKey != null) {
                 while (KeyBindings.pickupLogKey.consumeClick()) {
-                    MyCustomScreen.pickupLogEnabled = !MyCustomScreen.pickupLogEnabled;
+                    ModConfig.pickupLogEnabled = !ModConfig.pickupLogEnabled;
                     ConfigManager.save();
-                    String state = MyCustomScreen.pickupLogEnabled ? "§aвключён" : "§cвыключен";
+                    String state = ModConfig.pickupLogEnabled ? "§aвключён" : "§cвыключен";
                     client.player.displayClientMessage(
                             Component.literal("§6PickUpLogger " + state), true);
                 }
@@ -508,54 +510,54 @@ public class ResistanceDLCClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (KeyBindings.autoSwapKey == null) return;
             while (KeyBindings.autoSwapKey.consumeClick()) {
-                if (!MyCustomScreen.autoSwapEnabled) return;
+                if (!ModConfig.autoSwapEnabled) return;
                 if (client.player == null || client.level == null) return;
                 if (client.screen != null) return;
-                if (MyCustomScreen.autoSwapInProgress) return;
+                if (ModConfig.autoSwapInProgress) return;
 
                 long now = System.currentTimeMillis();
-                if (now - MyCustomScreen.autoSwapLastTime < MyCustomScreen.autoSwapCooldown) return;
+                if (now - ModConfig.autoSwapLastTime < ModConfig.autoSwapCooldown) return;
 
                 int slotToSwap = findAutoSwapSlot(client.player);
                 if (slotToSwap < 0) return;
 
-                MyCustomScreen.autoSwapInProgress = true;
-                MyCustomScreen.autoSwapStage = 0;
-                MyCustomScreen.autoSwapSlotToSwap = slotToSwap;
-                MyCustomScreen.autoSwapNextActionTime = now + 25;
+                ModConfig.autoSwapInProgress = true;
+                ModConfig.autoSwapStage = 0;
+                ModConfig.autoSwapSlotToSwap = slotToSwap;
+                ModConfig.autoSwapNextActionTime = now + 25;
             }
         });
 
         // ===== AUTOSWAP: этапы =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (!MyCustomScreen.autoSwapInProgress) return;
+            if (!ModConfig.autoSwapInProgress) return;
             if (client.player == null) {
-                MyCustomScreen.autoSwapInProgress = false;
-                MyCustomScreen.autoSwapStage = 0;
-                MyCustomScreen.autoSwapSlotToSwap = -1;
+                ModConfig.autoSwapInProgress = false;
+                ModConfig.autoSwapStage = 0;
+                ModConfig.autoSwapSlotToSwap = -1;
                 return;
             }
 
             long now = System.currentTimeMillis();
-            if (now < MyCustomScreen.autoSwapNextActionTime) return;
+            if (now < ModConfig.autoSwapNextActionTime) return;
 
-            if (MyCustomScreen.autoSwapStage == 0) {
+            if (ModConfig.autoSwapStage == 0) {
                 client.setScreen(new InventoryScreen(client.player));
-                MyCustomScreen.autoSwapStage = 1;
-                MyCustomScreen.autoSwapNextActionTime = now + 75;
-            } else if (MyCustomScreen.autoSwapStage == 1) {
-                int slot = MyCustomScreen.autoSwapSlotToSwap;
+                ModConfig.autoSwapStage = 1;
+                ModConfig.autoSwapNextActionTime = now + 75;
+            } else if (ModConfig.autoSwapStage == 1) {
+                int slot = ModConfig.autoSwapSlotToSwap;
                 if (slot >= 0 && slot < client.player.getInventory().getContainerSize()) {
                     swapOffhandWithSlot(client, slot);
                 }
-                MyCustomScreen.autoSwapStage = 2;
-                MyCustomScreen.autoSwapNextActionTime = now + 75;
-            } else if (MyCustomScreen.autoSwapStage == 2) {
+                ModConfig.autoSwapStage = 2;
+                ModConfig.autoSwapNextActionTime = now + 75;
+            } else if (ModConfig.autoSwapStage == 2) {
                 client.setScreen(null);
-                MyCustomScreen.autoSwapInProgress = false;
-                MyCustomScreen.autoSwapStage = 0;
-                MyCustomScreen.autoSwapSlotToSwap = -1;
-                MyCustomScreen.autoSwapLastTime = now;
+                ModConfig.autoSwapInProgress = false;
+                ModConfig.autoSwapStage = 0;
+                ModConfig.autoSwapSlotToSwap = -1;
+                ModConfig.autoSwapLastTime = now;
             }
         });
 
@@ -580,14 +582,14 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 } else {
                     client.player.displayClientMessage(
                             Component.literal("§c[Waypoints] Достигнут лимит меток ("
-                                    + MyCustomScreen.waypointsMax + ")"), true);
+                                    + ModConfig.waypointsMax + ")"), true);
                 }
             }
         });
 
         // ===== FASTEXP =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (!MyCustomScreen.fastExpEnabled) return;
+            if (!ModConfig.fastExpEnabled) return;
             if (client.player == null || client.level == null) return;
             if (client.screen != null) return;
             ItemStack mainHand = client.player.getMainHandItem();
@@ -601,7 +603,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
         // ===== AUTOSPRINT =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (!MyCustomScreen.autoSprintEnabled) return;
+            if (!ModConfig.autoSprintEnabled) return;
             if (client.player == null) return;
             if (client.screen != null) return;
             if (client.options.keyUp.isDown()) {
@@ -611,47 +613,47 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
         // ===== SHIFTTAP =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (!MyCustomScreen.shiftTapEnabled) return;
+            if (!ModConfig.shiftTapEnabled) return;
             if (client.player == null) return;
             if (client.screen != null) return;
             long now = System.currentTimeMillis();
-            if (MyCustomScreen.shiftTapActive) {
-                if (now - MyCustomScreen.shiftTapReleaseTime >= 50) {
+            if (ModConfig.shiftTapActive) {
+                if (now - ModConfig.shiftTapReleaseTime >= 50) {
                     client.options.keyShift.setDown(true);
-                    MyCustomScreen.shiftTapActive = false;
+                    ModConfig.shiftTapActive = false;
                 }
                 return;
             }
             if (client.options.keyAttack.isDown() && client.options.keyShift.isDown()) {
                 client.options.keyShift.setDown(false);
-                MyCustomScreen.shiftTapActive = true;
-                MyCustomScreen.shiftTapReleaseTime = now;
+                ModConfig.shiftTapActive = true;
+                ModConfig.shiftTapReleaseTime = now;
             }
         });
 
         // ===== COMBO: сброс =====
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
-            if (!MyCustomScreen.comboEnabled) return;
-            if (MyCustomScreen.currentCombo <= 0) return;
+            if (!ModConfig.comboEnabled) return;
+            if (ModConfig.currentCombo <= 0) return;
             long comboNow = System.currentTimeMillis();
-            if (comboNow - MyCustomScreen.lastComboTime > (long) MyCustomScreen.comboResetTime * 1000L) {
-                MyCustomScreen.currentCombo = 0;
+            if (comboNow - ModConfig.lastComboTime > (long) ModConfig.comboResetTime * 1000L) {
+                ModConfig.currentCombo = 0;
             }
         });
 
         // ===== TAPEMOUSE: логика (ЛКМ / ПКМ) =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (!MyCustomScreen.tapeMouseEnabled) return;
+            if (!ModConfig.tapeMouseEnabled) return;
             if (client.player == null || client.level == null) return;
             if (client.screen != null) return;
 
-            if (MyCustomScreen.tapeMouseButton == 1) {
-                if (MyCustomScreen.tapeMouseHoldRight) {
+            if (ModConfig.tapeMouseButton == 1) {
+                if (ModConfig.tapeMouseHoldRight) {
                     return;
                 }
 
                 long currentTime = System.currentTimeMillis();
-                if (currentTime - lastAttackTime < (long)(MyCustomScreen.tapeMouseDelay * 1000)) return;
+                if (currentTime - lastAttackTime < (long)(ModConfig.tapeMouseDelay * 1000)) return;
                 if (client.gameMode != null) {
                     client.gameMode.useItem(client.player, InteractionHand.MAIN_HAND);
                     lastAttackTime = currentTime;
@@ -659,15 +661,15 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 return;
             }
 
-            if (MyCustomScreen.tapeMouseRequireFullAttack) {
+            if (ModConfig.tapeMouseRequireFullAttack) {
                 if (client.player.getAttackStrengthScale(0.0f) < 1.0f) return;
             }
             Entity target = client.crosshairPickEntity;
-            if (MyCustomScreen.tapeMouseRequireTarget) {
+            if (ModConfig.tapeMouseRequireTarget) {
                 if (target == null) return;
                 boolean isPlayer = target instanceof Player;
                 boolean isMob = target instanceof LivingEntity && !isPlayer;
-                switch (MyCustomScreen.tapeMouseTarget) {
+                switch (ModConfig.tapeMouseTarget) {
                     case 1: if (!isMob) return; break;
                     case 2: if (!isPlayer) return; break;
                 }
@@ -675,14 +677,14 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 if (target != null) {
                     boolean isPlayer = target instanceof Player;
                     boolean isMob = target instanceof LivingEntity && !isPlayer;
-                    switch (MyCustomScreen.tapeMouseTarget) {
+                    switch (ModConfig.tapeMouseTarget) {
                         case 1: if (!isMob) return; break;
                         case 2: if (!isPlayer) return; break;
                     }
                 }
             }
             long currentTime = System.currentTimeMillis();
-            if (currentTime - lastAttackTime < (long)(MyCustomScreen.tapeMouseDelay * 1000)) return;
+            if (currentTime - lastAttackTime < (long)(ModConfig.tapeMouseDelay * 1000)) return;
             if (client.gameMode != null) {
                 if (target != null) client.gameMode.attack(client.player, target);
                 client.player.swing(InteractionHand.MAIN_HAND);
@@ -692,9 +694,9 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
         // ===== TAPEMOUSE: отпускание ПКМ при выключении =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            boolean shouldHold = MyCustomScreen.tapeMouseEnabled
-                    && MyCustomScreen.tapeMouseButton == 1
-                    && MyCustomScreen.tapeMouseHoldRight
+            boolean shouldHold = ModConfig.tapeMouseEnabled
+                    && ModConfig.tapeMouseButton == 1
+                    && ModConfig.tapeMouseHoldRight
                     && client.screen == null;
 
             if (shouldHold) {
@@ -720,26 +722,26 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
     // ===== HUD =====
     private static void renderHud(GuiGraphics graphics) {
-        if (!MyCustomScreen.showHud) return;
+        if (!ModConfig.showHud) return;
 
         Minecraft client = Minecraft.getInstance();
         if (client.player == null || client.options.hideGui) return;
 
-        int alpha = MyCustomScreen.hudAlpha;
-        int baseColor = MyCustomScreen.hudColor;
+        int alpha = ModConfig.hudAlpha;
+        int baseColor = ModConfig.hudColor;
         int color = (baseColor & 0x00FFFFFF) | (alpha << 24);
 
         renderWaypoints(graphics);
 
-        if (MyCustomScreen.crosshairEnabled) {
+        if (ModConfig.crosshairEnabled) {
             int chCenterX = client.getWindow().getGuiScaledWidth() / 2;
             int chCenterY = client.getWindow().getGuiScaledHeight() / 2;
 
-            int chColor = (MyCustomScreen.crosshairColor & 0x00FFFFFF) | (MyCustomScreen.crosshairAlpha << 24);
-            int size = MyCustomScreen.crosshairSize;
-            int thick = MyCustomScreen.crosshairThickness;
-            int gap = MyCustomScreen.crosshairGap;
-            int shape = MyCustomScreen.crosshairShape;
+            int chColor = (ModConfig.crosshairColor & 0x00FFFFFF) | (ModConfig.crosshairAlpha << 24);
+            int size = ModConfig.crosshairSize;
+            int thick = ModConfig.crosshairThickness;
+            int gap = ModConfig.crosshairGap;
+            int shape = ModConfig.crosshairShape;
 
             switch (shape) {
                 case 0 -> {
@@ -793,9 +795,9 @@ public class ResistanceDLCClient implements ClientModInitializer {
             }
         }
 
-        if (MyCustomScreen.showModLogo) {
-            int logoX = MyCustomScreen.modLogoX;
-            int logoY = MyCustomScreen.modLogoY;
+        if (ModConfig.showModLogo) {
+            int logoX = ModConfig.modLogoX;
+            int logoY = ModConfig.modLogoY;
 
             Identifier logoId = Identifier.fromNamespaceAndPath(
                     "resistancedlc", "textures/gui/icon.png"
@@ -814,9 +816,9 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     logoX + 20, logoY + 4, color);
         }
 
-        if (MyCustomScreen.comboEnabled && MyCustomScreen.currentCombo > 0) {
-            String comboText = "x" + MyCustomScreen.currentCombo;
-            int fontSize = MyCustomScreen.comboFontSize;
+        if (ModConfig.comboEnabled && ModConfig.currentCombo > 0) {
+            String comboText = "x" + ModConfig.currentCombo;
+            int fontSize = ModConfig.comboFontSize;
 
             float scale;
             if (fontSize == 0) scale = 1.0f;
@@ -824,69 +826,69 @@ public class ResistanceDLCClient implements ClientModInitializer {
             else scale = 2.0f;
 
             graphics.pose().pushMatrix();
-            graphics.pose().translate(MyCustomScreen.comboX, MyCustomScreen.comboY);
+            graphics.pose().translate(ModConfig.comboX, ModConfig.comboY);
             graphics.pose().scale(scale, scale);
 
-            graphics.drawString(client.font, comboText, 0, 0, MyCustomScreen.comboColor, true);
+            graphics.drawString(client.font, comboText, 0, 0, ModConfig.comboColor, true);
 
             graphics.pose().popMatrix();
         }
 
-        if (MyCustomScreen.pvpSafeEnabled
-                && MyCustomScreen.pvpSafeShowHud
+        if (ModConfig.pvpSafeEnabled
+                && ModConfig.pvpSafeShowHud
                 && PvPSafeManager.isInCombat()) {
             int remaining = PvPSafeManager.getRemainingSeconds();
             String text = "§c⚔ Бой: " + remaining + " сек";
             graphics.drawString(client.font, text,
-                    MyCustomScreen.pvpSafeHudX,
-                    MyCustomScreen.pvpSafeHudY,
-                    MyCustomScreen.pvpSafeHudColor,
+                    ModConfig.pvpSafeHudX,
+                    ModConfig.pvpSafeHudY,
+                    ModConfig.pvpSafeHudColor,
                     true);
         }
 
-        if (MyCustomScreen.showCoords) {
+        if (ModConfig.showCoords) {
             drawHudString(graphics, client.font,
                     String.format("XYZ: %d / %d / %d",
                             (int) client.player.getX(),
                             (int) client.player.getY(),
                             (int) client.player.getZ()),
-                    MyCustomScreen.coordsX, MyCustomScreen.coordsY, color);
+                    ModConfig.coordsX, ModConfig.coordsY, color);
         }
 
-        if (MyCustomScreen.showBiome) {
+        if (ModConfig.showBiome) {
             String biome = client.level.getBiome(client.player.blockPosition())
                     .unwrapKey()
                     .map(key -> key.identifier().getPath())
                     .orElse("unknown");
             drawHudString(graphics, client.font, "Биом: " + biome,
-                    MyCustomScreen.biomeX, MyCustomScreen.biomeY, color);
+                    ModConfig.biomeX, ModConfig.biomeY, color);
         }
 
-        if (MyCustomScreen.showTime) {
+        if (ModConfig.showTime) {
             long time = client.level.getDayTime() % 24000;
             String timeStr = time < 12000 ? "День" : "Ночь";
             drawHudString(graphics, client.font, "Время: " + timeStr,
-                    MyCustomScreen.timeX, MyCustomScreen.timeY, color);
+                    ModConfig.timeX, ModConfig.timeY, color);
         }
 
-        if (MyCustomScreen.showFps) {
-            String label = MyCustomScreen.fpsRussian ? "КВС" : "FPS";
+        if (ModConfig.showFps) {
+            String label = ModConfig.fpsRussian ? "КВС" : "FPS";
             drawHudString(graphics, client.font, label + ": " + client.getFps(),
-                    MyCustomScreen.fpsX, MyCustomScreen.fpsY, color);
+                    ModConfig.fpsX, ModConfig.fpsY, color);
         }
 
-        if (MyCustomScreen.showPing) {
+        if (ModConfig.showPing) {
             int ping = 0;
             if (client.getConnection() != null
                     && client.getConnection().getPlayerInfo(client.player.getUUID()) != null) {
                 ping = client.getConnection().getPlayerInfo(client.player.getUUID()).getLatency();
             }
-            String label = MyCustomScreen.pingRussian ? "Пинг" : "Ping";
+            String label = ModConfig.pingRussian ? "Пинг" : "Ping";
             drawHudString(graphics, client.font, label + ": " + ping + " ms",
-                    MyCustomScreen.pingX, MyCustomScreen.pingY, color);
+                    ModConfig.pingX, ModConfig.pingY, color);
         }
 
-        if (MyCustomScreen.showTps) {
+        if (ModConfig.showTps) {
             float tps = 20.0f;
             if (client.getSingleplayerServer() != null) {
                 long tickTime = client.getSingleplayerServer().getAverageTickTimeNanos();
@@ -894,24 +896,24 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     tps = Math.min(20.0f, 1_000_000_000.0f / tickTime);
                 }
             }
-            String label = MyCustomScreen.tpsRussian ? "ТВС" : "TPS";
+            String label = ModConfig.tpsRussian ? "ТВС" : "TPS";
             drawHudString(graphics, client.font,
                     String.format("%s: %.1f", label, tps),
-                    MyCustomScreen.tpsX, MyCustomScreen.tpsY, color);
+                    ModConfig.tpsX, ModConfig.tpsY, color);
         }
 
-        if (MyCustomScreen.showBps) {
-            String label = MyCustomScreen.bpsRussian ? "БВС" : "BPS";
+        if (ModConfig.showBps) {
+            String label = ModConfig.bpsRussian ? "БВС" : "BPS";
             drawHudString(graphics, client.font,
-                    String.format("%s: %.2f", label, MyCustomScreen.currentBps),
-                    MyCustomScreen.bpsX, MyCustomScreen.bpsY, color);
+                    String.format("%s: %.2f", label, ModConfig.currentBps),
+                    ModConfig.bpsX, ModConfig.bpsY, color);
         }
 
-        if (MyCustomScreen.showDirection) {
+        if (ModConfig.showDirection) {
             float yaw = client.player.getYRot();
             yaw = ((yaw % 360) + 360) % 360;
             String dir;
-            if (MyCustomScreen.directionRussian) {
+            if (ModConfig.directionRussian) {
                 if (yaw >= 315 || yaw < 45) dir = "Юг";
                 else if (yaw >= 45 && yaw < 135) dir = "Запад";
                 else if (yaw >= 135 && yaw < 225) dir = "Север";
@@ -922,12 +924,12 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 else if (yaw >= 135 && yaw < 225) dir = "North";
                 else dir = "East";
             }
-            String label = MyCustomScreen.directionRussian ? "Направление" : "Direction";
+            String label = ModConfig.directionRussian ? "Направление" : "Direction";
             drawHudString(graphics, client.font, label + ": " + dir,
-                    MyCustomScreen.directionX, MyCustomScreen.directionY, color);
+                    ModConfig.directionX, ModConfig.directionY, color);
         }
 
-        if (MyCustomScreen.showHitCounter) {
+        if (ModConfig.showHitCounter) {
             Entity target = client.crosshairPickEntity;
             if (target instanceof LivingEntity living) {
                 float hp = living.getHealth();
@@ -942,16 +944,16 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 var attr = client.player.getAttribute(Attributes.ATTACK_DAMAGE);
                 if (attr != null) damage = (float) attr.getValue();
                 int hitsLeft = (int) Math.ceil(hp / Math.max(damage, 0.1f));
-                String label = MyCustomScreen.hitCounterRussian ? "Удары" : "Hits";
+                String label = ModConfig.hitCounterRussian ? "Удары" : "Hits";
                 drawHudString(graphics, client.font, label + ": " + hitsLeft,
-                        MyCustomScreen.hitCounterX, MyCustomScreen.hitCounterY,
+                        ModConfig.hitCounterX, ModConfig.hitCounterY,
                         hpColor);
             }
         }
 
         // ===== AUTO RECONNECT HUD =====
         if (AutoReconnectManager.isReconnecting()
-                && MyCustomScreen.autoReconnectShowHud) {
+                && ModConfig.autoReconnectShowHud) {
             int remaining = AutoReconnectManager.getRemainingSeconds();
             String text = "§c[AutoReconnect] §fЧерез " + remaining + " сек §7(ESC — отмена)";
             graphics.drawString(client.font, text,
@@ -961,18 +963,18 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     true);
         }
 
-        if (MyCustomScreen.showPotionEffects) {
+        if (ModConfig.showPotionEffects) {
             Collection<MobEffectInstance> effects = client.player.getActiveEffects();
             if (!effects.isEmpty()) {
-                if (MyCustomScreen.potionEffectsIcons) {
+                if (ModConfig.potionEffectsIcons) {
                     int yOffset = 0;
                     for (MobEffectInstance effect : effects) {
                         MobEffect type = effect.getEffect().value();
                         Identifier effectId = BuiltInRegistries.MOB_EFFECT.getKey(type);
                         if (effectId == null) continue;
 
-                        int iconX = MyCustomScreen.potionEffectsX;
-                        int iconY = MyCustomScreen.potionEffectsY + yOffset;
+                        int iconX = ModConfig.potionEffectsX;
+                        int iconY = ModConfig.potionEffectsY + yOffset;
 
                         Identifier iconId = Identifier.fromNamespaceAndPath(
                                 effectId.getNamespace(),
@@ -1006,9 +1008,9 @@ public class ResistanceDLCClient implements ClientModInitializer {
                         yOffset += 20;
                     }
                 } else {
-                    String label = MyCustomScreen.potionEffectsRussian ? "Эффекты:" : "Effects:";
+                    String label = ModConfig.potionEffectsRussian ? "Эффекты:" : "Effects:";
                     drawHudString(graphics, client.font, label,
-                            MyCustomScreen.potionEffectsX, MyCustomScreen.potionEffectsY, color);
+                            ModConfig.potionEffectsX, ModConfig.potionEffectsY, color);
 
                     int textOffset = 12;
                     for (MobEffectInstance effect : effects) {
@@ -1023,40 +1025,40 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
                         String text = " " + name + " " + timeStr;
                         drawHudString(graphics, client.font, text,
-                                MyCustomScreen.potionEffectsX,
-                                MyCustomScreen.potionEffectsY + textOffset, color);
+                                ModConfig.potionEffectsX,
+                                ModConfig.potionEffectsY + textOffset, color);
                         textOffset += 10;
                     }
                 }
             }
         }
 
-        if (MyCustomScreen.effectWarningsEnabled) {
+        if (ModConfig.effectWarningsEnabled) {
             Collection<MobEffectInstance> warnEffects = client.player.getActiveEffects();
             int warnY = 0;
             for (MobEffectInstance effect : warnEffects) {
                 int durationSec = effect.getDuration() / 20;
-                if (durationSec > MyCustomScreen.effectWarningsThreshold) continue;
+                if (durationSec > ModConfig.effectWarningsThreshold) continue;
 
                 MobEffect type = effect.getEffect().value();
 
                 int timeColor;
-                if (durationSec > MyCustomScreen.effectWarningsThreshold * 2 / 3) {
+                if (durationSec > ModConfig.effectWarningsThreshold * 2 / 3) {
                     timeColor = 0xFF00FF00;
-                } else if (durationSec > MyCustomScreen.effectWarningsThreshold / 3) {
+                } else if (durationSec > ModConfig.effectWarningsThreshold / 3) {
                     timeColor = 0xFFFFFF00;
                 } else {
                     timeColor = 0xFFFF0000;
                 }
 
-                int finalColor = (timeColor & 0x00FFFFFF) | (MyCustomScreen.effectWarningsAlpha << 24);
-                int alphaColor = (MyCustomScreen.effectWarningsColor & 0x00FFFFFF)
-                        | (MyCustomScreen.effectWarningsAlpha << 24);
+                int finalColor = (timeColor & 0x00FFFFFF) | (ModConfig.effectWarningsAlpha << 24);
+                int alphaColor = (ModConfig.effectWarningsColor & 0x00FFFFFF)
+                        | (ModConfig.effectWarningsAlpha << 24);
 
-                int x = MyCustomScreen.effectWarningsX;
-                int y = MyCustomScreen.effectWarningsY + warnY;
+                int x = ModConfig.effectWarningsX;
+                int y = ModConfig.effectWarningsY + warnY;
 
-                if (MyCustomScreen.effectWarningsShowIcon) {
+                if (ModConfig.effectWarningsShowIcon) {
                     Identifier effectId = BuiltInRegistries.MOB_EFFECT.getKey(type);
                     if (effectId != null) {
                         Identifier iconId = Identifier.fromNamespaceAndPath(
@@ -1076,7 +1078,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     }
                 }
 
-                if (MyCustomScreen.effectWarningsShowName) {
+                if (ModConfig.effectWarningsShowName) {
                     String name = type.getDisplayName().getString();
                     graphics.drawString(client.font, name, x, y + 5, alphaColor, true);
                     x += client.font.width(name) + 4;
@@ -1089,13 +1091,13 @@ public class ResistanceDLCClient implements ClientModInitializer {
             }
         }
 
-        if (MyCustomScreen.showEquipmentHud) {
+        if (ModConfig.showEquipmentHud) {
             int guiW = client.getWindow().getGuiScaledWidth();
             int guiH = client.getWindow().getGuiScaledHeight();
             int hotbarRight = (guiW + 182) / 2;
             int hotbarBottom = guiH - 22;
-            int slotX = hotbarRight + MyCustomScreen.equipmentHudX;
-            int slotY = hotbarBottom + MyCustomScreen.equipmentHudY;
+            int slotX = hotbarRight + ModConfig.equipmentHudX;
+            int slotY = hotbarBottom + ModConfig.equipmentHudY;
 
             List<ItemStack> items = new ArrayList<>();
             ItemStack[] armor = {
@@ -1141,7 +1143,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
     }
 
     private static void renderWaypoints(GuiGraphics graphics) {
-        if (!MyCustomScreen.waypointsEnabled) return;
+        if (!ModConfig.waypointsEnabled) return;
 
         Minecraft client = Minecraft.getInstance();
         if (client.player == null || client.level == null) return;
@@ -1309,7 +1311,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
         boolean offhandAllowedHead = false;
         boolean offhandAllowedTotem = false;
 
-        switch (MyCustomScreen.autoSwapMode) {
+        switch (ModConfig.autoSwapMode) {
             case 0: offhandAllowedHead = true; break;
             case 1: offhandAllowedTotem = true; break;
             case 2: offhandAllowedHead = true; offhandAllowedTotem = true; break;
@@ -1324,9 +1326,9 @@ public class ResistanceDLCClient implements ClientModInitializer {
             ItemStack stack = player.getInventory().getItem(i);
             if (stack.isEmpty()) continue;
 
-            if (MyCustomScreen.autoSwapMode == 0) {
+            if (ModConfig.autoSwapMode == 0) {
                 if (stack.is(Items.PLAYER_HEAD)) return i;
-            } else if (MyCustomScreen.autoSwapMode == 1) {
+            } else if (ModConfig.autoSwapMode == 1) {
                 if (stack.is(Items.TOTEM_OF_UNDYING)) return i;
             } else {
                 if (offhandIsHead && stack.is(Items.TOTEM_OF_UNDYING)) return i;
@@ -1355,12 +1357,12 @@ public class ResistanceDLCClient implements ClientModInitializer {
     }
 
     private static void drawHudString(GuiGraphics graphics, Font font, String text, int x, int y, int color) {
-        if (MyCustomScreen.hudBackgroundEnabled) {
+        if (ModConfig.hudBackgroundEnabled) {
             int textWidth = font.width(text);
-            int bgAlpha = MyCustomScreen.hudBackgroundAlpha;
-            int bgBaseColor = MyCustomScreen.hudBackgroundColor;
+            int bgAlpha = ModConfig.hudBackgroundAlpha;
+            int bgBaseColor = ModConfig.hudBackgroundColor;
             int bgColor = (bgBaseColor & 0x00FFFFFF) | (bgAlpha << 24);
-            int height = MyCustomScreen.hudBackgroundHeight;
+            int height = ModConfig.hudBackgroundHeight;
             graphics.fill(x - 1, y - 1, x + textWidth + 1, y - 1 + height, bgColor);
         }
         graphics.drawString(font, text, x, y, color, true);
@@ -1369,7 +1371,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
     private static void drawEquipmentSlot(GuiGraphics graphics, ItemStack stack, int x, int y) {
         graphics.renderItem(stack, x, y);
 
-        if (MyCustomScreen.equipmentShowDurability && stack.isDamageableItem()) {
+        if (ModConfig.equipmentShowDurability && stack.isDamageableItem()) {
             int damage = stack.getDamageValue();
             int maxDamage = stack.getMaxDamage();
             if (damage > 0 && maxDamage > 0) {
