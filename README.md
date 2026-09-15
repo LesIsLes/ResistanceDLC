@@ -1,3 +1,4 @@
+```markdown
 # Resistance DLC
 
 ![Resistance DLC](src/main/resources/assets/resistancedlc/icon.png)
@@ -7,7 +8,7 @@
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.11-green.svg)](https://www.minecraft.net/)
 [![Fabric](https://img.shields.io/badge/Fabric-0.19.5+-blue.svg)](https://fabricmc.net/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.2.0-orange.svg)](https://github.com/LesIsLes/ResistanceDLC/releases)
+[![Version](https://img.shields.io/badge/Version-2.0.0--dev-orange.svg)](https://github.com/LesIsLes/ResistanceDLC/releases)
 
 ## ✨ Возможности
 
@@ -20,6 +21,7 @@
 - Effect Warnings (предупреждение о конце эффектов)
 - Кастомный прицел (5 форм)
 - Фон HUD с настройкой прозрачности
+- **DeathCoords** — сохранение координат смерти с командой `/dc`
 
 ### ⚔️ PVP
 - **Custom Hit Sounds** — 7 кастомных звуков удара
@@ -33,6 +35,10 @@
 
 ### 🖱️ PVE
 - **TapeMouse** — автокликер (ЛКМ/ПКМ, задержка, фильтр цели)
+- **ItemScroller** — быстрый перенос предметов скроллом в GUI контейнера
+  - Скролл → вся стопка
+  - Shift + скролл → 1 предмет
+  - Ctrl + скролл → все стопки такого типа
 
 ### 🎨 Visual
 - **Crosshair** — кастомный прицел (Крест / Точка / Круг / Стрелки / Крест+Точка)
@@ -43,6 +49,7 @@
 - **Camera** — NoHurtCam + NoBobbing
 - **ItemPhysics** — предметы лежат плашмя на земле
 - **Particle Blocker** — отключение частиц по 8 категориям
+- **Custom Hitbox** — изменение цвета debug-хитбоксов (F3+B)
 - **Темы GUI** — 5 пресетов
 
 ### 🔧 Misc
@@ -50,9 +57,10 @@
 - **AutoReconnect** — авто-переподключение к серверу
 - Привязка клавиш GUI
 - Конфигурации (JSON, save/load/list/remove)
+- **DeathCoords** — команда `/dc` (last / clear / toggle / help)
 
 ### 🔍 Поиск
-- **~230 записей** — находит **ВСЕ** настройки мода
+- **~250 записей** — находит **ВСЕ** настройки мода
 - История поиска — 8 последних запросов
 - Клик по результату → переход в раздел/страницу
 
@@ -92,3 +100,16 @@
 git clone https://github.com/LesIsLes/ResistanceDLC.git
 cd ResistanceDLC
 ./gradlew build
+
+📋 Планы на v2.0.0
+✅ DeathCoords — сохранение координат смерти
+
+✅ Custom Hitbox — цвет debug-хитбоксов
+
+✅ ItemScroller — быстрый перенос предметов скроллом
+
+⏳ CoolDowns — кулдауны предметов в HUD (в работе)
+
+⏳ HUD-аккордеон — переработка GUI (следующая большая цель)
+
+Лицензия: MIT, Copyright (c) 2026 lesis
