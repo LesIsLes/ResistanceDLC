@@ -46,3 +46,7 @@ src_v1.0_backup/
 gradle-log.txt
 
 *.ps1
+
+src_backup_*/
+
+build_log.txt

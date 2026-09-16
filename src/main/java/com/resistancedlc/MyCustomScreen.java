@@ -30,9 +30,9 @@ public class MyCustomScreen extends Screen {
     };
 
     private static final int[] SECTION_PAGES = {
-            7,  // 0 = HUD
+            8,  // 0 = HUD (было 7 → 8: Cooldowns)
             8,  // 1 = PVP
-            2,  // 2 = PVE (было 1 → 2: ItemScroller)
+            2,  // 2 = PVE
             10, // 3 = Visual
             5   // 4 = Misc
     };
@@ -179,6 +179,16 @@ public class MyCustomScreen extends Screen {
             { "цвет текста", "Цвет текста GUI", "6", "0" },
             { "текст gui", "Цвет текста GUI", "6", "0" },
             { "сбросить цвета", "Сбросить цвета", "6", "0" },
+
+            // Стр 7: CoolDowns
+            { "cooldown", "CoolDowns", "7", "0" },
+            { "кулдаун", "CoolDowns", "7", "0" },
+            { "перезарядка", "CoolDowns", "7", "0" },
+            { "cooldowns", "CoolDowns", "7", "0" },
+            { "таймер предмета", "CoolDowns", "7", "0" },
+            { "иконка кулдауна", "CoolDowns", "7", "0" },
+            { "только хотбар", "Только хотбар", "7", "0" },
+            { "размер кулдаунов", "Размер шрифта CoolDowns", "7", "0" },
 
             // ===================== PVP =====================
             // Стр 0: Custom Hit Sounds
@@ -559,6 +569,7 @@ public class MyCustomScreen extends Screen {
                     case 4 -> initPage14(centerX, panelY);
                     case 5 -> initPage3(centerX, panelY);
                     case 6 -> initAppearancePage(centerX, panelY);
+                    case 7 -> initCooldownsPage(centerX, panelY);
                 }
             }
             case 1 -> {
@@ -1532,10 +1543,163 @@ public class MyCustomScreen extends Screen {
         }).bounds(centerX - 100, panelY + 270, 200, 20).build();
         this.addRenderableWidget(resetColorsBtn);
     }
+    // =========================================================
+    // COOLDOWNS (HUD, index 7)
+    // =========================================================
+    private void initCooldownsPage(int centerX, int panelY) {
+        // ===== ВКЛ/ВЫКЛ =====
+        Checkbox enableCheckbox = Checkbox.builder(
+                        Component.literal(ModConfig.cooldownsRussian
+                                ? "Включить CoolDowns"
+                                : "Enable CoolDowns"), this.font)
+                .pos(centerX - 100, panelY + 55)
+                .selected(ModConfig.cooldownsEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.cooldownsEnabled = v;
+                    ConfigManager.save();
+                })
+                .build();
+        this.addRenderableWidget(enableCheckbox);
 
-    private void initPage0(int centerX, int panelY) {
+        Button translateBtn = Button.builder(Component.literal("RU"), (b) -> {
+            ModConfig.cooldownsRussian = !ModConfig.cooldownsRussian;
+            ConfigManager.save();
+            this.rebuildWidgets();
+        }).bounds(centerX + 120, panelY + 55, 25, 20).build();
+        this.addRenderableWidget(translateBtn);
+
+        // ===== ПОЗИЦИЯ =====
+        makePosEditor(centerX, panelY, 90,
+                () -> ModConfig.cooldownsX, () -> ModConfig.cooldownsY,
+                (x, y) -> { ModConfig.cooldownsX = x; ModConfig.cooldownsY = y; },
+                10, 200);
+
+        // ===== МАКС. ЭЛЕМЕНТОВ =====
+        AbstractSliderButton maxSlider = new AbstractSliderButton(
+                centerX - 100, panelY + 130, 200, 20,
+                Component.literal(ModConfig.cooldownsRussian
+                        ? "Макс. элементов: " + ModConfig.cooldownsMaxItems
+                        : "Max items: " + ModConfig.cooldownsMaxItems),
+                (ModConfig.cooldownsMaxItems - 1) / 9.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(ModConfig.cooldownsRussian
+                        ? "Макс. элементов: " + ModConfig.cooldownsMaxItems
+                        : "Max items: " + ModConfig.cooldownsMaxItems));
+            }
+            @Override protected void applyValue() {
+                ModConfig.cooldownsMaxItems = 1 + (int)(this.value * 9);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        };
+        this.addRenderableWidget(maxSlider);
+
+        // ===== ПРОЗРАЧНОСТЬ ТЕКСТА =====
+        AbstractSliderButton alphaSlider = new AbstractSliderButton(
+                centerX - 100, panelY + 160, 200, 20,
+                Component.literal(ModConfig.cooldownsRussian
+                        ? "Прозрачность: " + ModConfig.cooldownsAlpha
+                        : "Alpha: " + ModConfig.cooldownsAlpha),
+                ModConfig.cooldownsAlpha / 255.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(ModConfig.cooldownsRussian
+                        ? "Прозрачность: " + ModConfig.cooldownsAlpha
+                        : "Alpha: " + ModConfig.cooldownsAlpha));
+            }
+            @Override protected void applyValue() {
+                ModConfig.cooldownsAlpha = (int)(this.value * 255);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        };
+        this.addRenderableWidget(alphaSlider);
+
+        // ===== ЗАТЕМНЕНИЕ ИКОНКИ =====
+        AbstractSliderButton darkeningSlider = new AbstractSliderButton(
+                centerX - 100, panelY + 190, 200, 20,
+                Component.literal(ModConfig.cooldownsRussian
+                        ? "Затемнение иконки: " + ModConfig.cooldownsIconDarkening
+                        : "Icon darkening: " + ModConfig.cooldownsIconDarkening),
+                ModConfig.cooldownsIconDarkening / 255.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(ModConfig.cooldownsRussian
+                        ? "Затемнение иконки: " + ModConfig.cooldownsIconDarkening
+                        : "Icon darkening: " + ModConfig.cooldownsIconDarkening));
+            }
+            @Override protected void applyValue() {
+                ModConfig.cooldownsIconDarkening = (int)(this.value * 255);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        };
+        this.addRenderableWidget(darkeningSlider);
+
+        // ===== ЧЕКБОКСЫ ОТОБРАЖЕНИЯ (в ряд) =====
+        Checkbox iconCheckbox = Checkbox.builder(
+                        Component.literal(ModConfig.cooldownsRussian ? "Иконка" : "Icon"), this.font)
+                .pos(centerX - 100, panelY + 225)
+                .selected(ModConfig.cooldownsShowIcon)
+                .onValueChange((c, v) -> { ModConfig.cooldownsShowIcon = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(iconCheckbox);
+
+        Checkbox nameCheckbox = Checkbox.builder(
+                        Component.literal(ModConfig.cooldownsRussian ? "Название" : "Name"), this.font)
+                .pos(centerX - 20, panelY + 225)
+                .selected(ModConfig.cooldownsShowName)
+                .onValueChange((c, v) -> { ModConfig.cooldownsShowName = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(nameCheckbox);
+
+        Checkbox timeCheckbox = Checkbox.builder(
+                        Component.literal(ModConfig.cooldownsRussian ? "Таймер" : "Timer"), this.font)
+                .pos(centerX + 60, panelY + 225)
+                .selected(ModConfig.cooldownsShowTime)
+                .onValueChange((c, v) -> { ModConfig.cooldownsShowTime = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(timeCheckbox);
+
+        // ===== ТОЛЬКО ХОТБАР =====
+        Checkbox hotbarCheckbox = Checkbox.builder(
+                        Component.literal(ModConfig.cooldownsRussian
+                                ? "Только хотбар"
+                                : "Hotbar only"), this.font)
+                .pos(centerX - 100, panelY + 255)
+                .selected(ModConfig.cooldownsShowOnlyHotbar)
+                .onValueChange((c, v) -> { ModConfig.cooldownsShowOnlyHotbar = v; ConfigManager.save(); })
+                .build();
+        this.addRenderableWidget(hotbarCheckbox);
+
+        // ===== РАЗМЕР ШРИФТА =====
+        String[] sizesRu = {"Малый", "Средний", "Крупный"};
+        String[] sizesEn = {"Small", "Medium", "Large"};
+        Button sizeBtn = Button.builder(
+                Component.literal(ModConfig.cooldownsRussian
+                        ? "Размер: " + sizesRu[ModConfig.cooldownsFontSize]
+                        : "Size: " + sizesEn[ModConfig.cooldownsFontSize]),
+                (b) -> {
+                    ModConfig.cooldownsFontSize = (ModConfig.cooldownsFontSize + 1) % 3;
+                    ConfigManager.save();
+                    this.rebuildWidgets();
+                }
+        ).bounds(centerX - 100, panelY + 285, 200, 20).build();
+        this.addRenderableWidget(sizeBtn);
+
+        // ===== СБРОС ПОЗИЦИИ =====
+        Button resetPosBtn = Button.builder(
+                Component.literal(ModConfig.cooldownsRussian ? "Сбросить позицию" : "Reset position"),
+                (b) -> {
+                    ModConfig.cooldownsX = 10;
+                    ModConfig.cooldownsY = 200;
+                    ConfigManager.save();
+                    this.rebuildWidgets();
+                }
+        ).bounds(centerX - 100, panelY + 315, 200, 20).build();
+        this.addRenderableWidget(resetPosBtn);
     }
-
     private void initPage1(int centerX, int panelY) {
         Checkbox coordsCheckbox = Checkbox.builder(Component.literal("Показывать координаты"), this.font)
                 .pos(centerX - 100, panelY + 60).selected(ModConfig.showCoords)
@@ -3103,36 +3267,48 @@ public class MyCustomScreen extends Screen {
                     panelX + 20, panelY + 35, ModConfig.guiTextColor);
             graphics.fill(panelX + 20, panelY + 47, panelX + panelWidth - 20, panelY + 48, ModConfig.guiColor);
 
-            // ===== ITEM SCROLLER: заголовок + подсказки =====
-            if (currentSection == 2 && currentPage == 1) {
-                graphics.drawString(this.font, "§l▸ ItemScroller",
-                        panelX + 20, panelY + 35, ModConfig.guiTextColor);
-                graphics.fill(panelX + 20, panelY + 47, panelX + panelWidth - 20, panelY + 48, ModConfig.guiColor);
-
-                graphics.drawString(this.font,
-                        ModConfig.itemScrollerRussian
-                                ? "§7Скролл над слотом → §fвся стопка"
-                                : "§7Scroll over slot → §fwhole stack",
-                        panelX + 20, panelY + 195, 0xFFFFFFFF);
-                graphics.drawString(this.font,
-                        "§7Shift + скролл → §f1 предмет",
-                        panelX + 20, panelY + 215, 0xFFFFFFFF);
-                graphics.drawString(this.font,
-                        "§7Ctrl + скролл → §fвсе стопки такого типа",
-                        panelX + 20, panelY + 229, 0xFFFFFFFF);
-                graphics.drawString(this.font,
-                        ModConfig.itemScrollerRussian
-                                ? "§c⚠ 200ms — безопасно для большинства серверов."
-                                : "§c⚠ 200ms — safe for most servers.",
-                        panelX + 20, panelY + 255, 0xFFFF5555);
-                graphics.drawString(this.font,
-                        ModConfig.itemScrollerRussian
-                                ? "§7Меньше 100ms — риск кика/бана на серверах."
-                                : "§7Below 100ms — risk of kick/ban on servers.",
-                        panelX + 20, panelY + 269, 0xFF888888);
-            }
+            graphics.drawString(this.font,
+                    ModConfig.itemScrollerRussian
+                            ? "§7Скролл над слотом → §fвся стопка"
+                            : "§7Scroll over slot → §fwhole stack",
+                    panelX + 20, panelY + 195, 0xFFFFFFFF);
+            graphics.drawString(this.font,
+                    "§7Shift + скролл → §f1 предмет",
+                    panelX + 20, panelY + 215, 0xFFFFFFFF);
+            graphics.drawString(this.font,
+                    "§7Ctrl + скролл → §fвсе стопки такого типа",
+                    panelX + 20, panelY + 229, 0xFFFFFFFF);
+            graphics.drawString(this.font,
+                    ModConfig.itemScrollerRussian
+                            ? "§c⚠ 200ms — безопасно для большинства серверов."
+                            : "§c⚠ 200ms — safe for most servers.",
+                    panelX + 20, panelY + 255, 0xFFFF5555);
+            graphics.drawString(this.font,
+                    ModConfig.itemScrollerRussian
+                            ? "§7Меньше 100ms — риск кика/бана на серверах."
+                            : "§7Below 100ms — risk of kick/ban on servers.",
+                    panelX + 20, panelY + 269, 0xFF888888);
         }
+        // ===== COOLDOWNS (HUD, index 7) =====
+        if (currentSection == 0 && currentPage == 7) {
+            graphics.drawString(this.font, "§l▸ CoolDowns",
+                    panelX + 20, panelY + 30, ModConfig.guiTextColor);
+            graphics.fill(panelX + 20, panelY + 42, panelX + panelWidth - 20, panelY + 43, ModConfig.guiColor);
 
+            graphics.drawString(this.font,
+                    ModConfig.cooldownsRussian
+                            ? "§7Показывает предметы на кулдауне:"
+                            : "§7Shows items on cooldown:",
+                    panelX + 20, panelY + 340, 0xFFAAAAAA);
+            graphics.drawString(this.font,
+                    "§f🧪 §7Жемчуг Эндера · §f🍎 §7Хорус · §f🛡 §7Щит",
+                    panelX + 20, panelY + 356, 0xFFFFFFFF);
+            graphics.drawString(this.font,
+                    ModConfig.cooldownsRussian
+                            ? "§7Иконка + название + таймер"
+                            : "§7Icon + name + timer",
+                    panelX + 20, panelY + 372, 0xFFAAAAAA);
+        }
         if (searchOtherSectionMsg != null && !searchOtherSectionMsg.isEmpty()) {
             int msgW = this.font.width(searchOtherSectionMsg) + 16;
             int msgH = 18;

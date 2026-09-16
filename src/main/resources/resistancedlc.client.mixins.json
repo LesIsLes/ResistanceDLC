@@ -18,6 +18,7 @@
     "ParticleBlockerMixin",
     "CustomHitboxMixin",
     "ItemScrollerMixin",
+    "CooldownsMixin",
     "AbstractContainerScreenAccessor"
   ],
   "injectors": {

@@ -37,9 +37,6 @@ public class ItemScrollerManager {
         if (screen == null) return false;
         if (scrollY == 0) return false;
 
-        // Единственный лог — для отладки, что миксин работает
-        ResistanceDLC.LOGGER.info("[ItemScroller] scrollY=" + scrollY);
-
         Minecraft client = Minecraft.getInstance();
         if (client.player == null || client.gameMode == null) return false;
 

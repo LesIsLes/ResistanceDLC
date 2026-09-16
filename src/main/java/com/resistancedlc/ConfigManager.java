@@ -284,6 +284,20 @@ public class ConfigManager {
             json.addProperty("itemScrollerDelay", ModConfig.itemScrollerDelay);
             json.addProperty("itemScrollerShiftStack", ModConfig.itemScrollerShiftStack);
             json.addProperty("itemScrollerCtrlAll", ModConfig.itemScrollerCtrlAll);
+            // === COOLDOWNS ===
+            json.addProperty("cooldownsEnabled", ModConfig.cooldownsEnabled);
+            json.addProperty("cooldownsRussian", ModConfig.cooldownsRussian);
+            json.addProperty("cooldownsX", ModConfig.cooldownsX);
+            json.addProperty("cooldownsY", ModConfig.cooldownsY);
+            json.addProperty("cooldownsColor", ModConfig.cooldownsColor);
+            json.addProperty("cooldownsAlpha", ModConfig.cooldownsAlpha);
+            json.addProperty("cooldownsShowIcon", ModConfig.cooldownsShowIcon);
+            json.addProperty("cooldownsShowName", ModConfig.cooldownsShowName);
+            json.addProperty("cooldownsShowTime", ModConfig.cooldownsShowTime);
+            json.addProperty("cooldownsShowOnlyHotbar", ModConfig.cooldownsShowOnlyHotbar);
+            json.addProperty("cooldownsMaxItems", ModConfig.cooldownsMaxItems);
+            json.addProperty("cooldownsFontSize", ModConfig.cooldownsFontSize);
+            json.addProperty("cooldownsIconDarkening", ModConfig.cooldownsIconDarkening);
 
             Path file = CONFIG_DIR.resolve(name + ".json");
             synchronized (GSON) {
@@ -550,6 +564,21 @@ public class ConfigManager {
             ModConfig.itemScrollerDelay = getInt(json, "itemScrollerDelay", ModConfig.itemScrollerDelay);
             ModConfig.itemScrollerShiftStack = getBool(json, "itemScrollerShiftStack", ModConfig.itemScrollerShiftStack);
             ModConfig.itemScrollerCtrlAll = getBool(json, "itemScrollerCtrlAll", ModConfig.itemScrollerCtrlAll);
+
+            // === COOLDOWNS ===
+            ModConfig.cooldownsEnabled = getBool(json, "cooldownsEnabled", ModConfig.cooldownsEnabled);
+            ModConfig.cooldownsRussian = getBool(json, "cooldownsRussian", ModConfig.cooldownsRussian);
+            ModConfig.cooldownsX = getInt(json, "cooldownsX", ModConfig.cooldownsX);
+            ModConfig.cooldownsY = getInt(json, "cooldownsY", ModConfig.cooldownsY);
+            ModConfig.cooldownsColor = getInt(json, "cooldownsColor", ModConfig.cooldownsColor);
+            ModConfig.cooldownsAlpha = getInt(json, "cooldownsAlpha", ModConfig.cooldownsAlpha);
+            ModConfig.cooldownsShowIcon = getBool(json, "cooldownsShowIcon", ModConfig.cooldownsShowIcon);
+            ModConfig.cooldownsShowName = getBool(json, "cooldownsShowName", ModConfig.cooldownsShowName);
+            ModConfig.cooldownsShowTime = getBool(json, "cooldownsShowTime", ModConfig.cooldownsShowTime);
+            ModConfig.cooldownsShowOnlyHotbar = getBool(json, "cooldownsShowOnlyHotbar", ModConfig.cooldownsShowOnlyHotbar);
+            ModConfig.cooldownsMaxItems = getInt(json, "cooldownsMaxItems", ModConfig.cooldownsMaxItems);
+            ModConfig.cooldownsFontSize = getInt(json, "cooldownsFontSize", ModConfig.cooldownsFontSize);
+            ModConfig.cooldownsIconDarkening = getInt(json, "cooldownsIconDarkening", ModConfig.cooldownsIconDarkening);  // ← НОВОЕ
 
             return true;
 

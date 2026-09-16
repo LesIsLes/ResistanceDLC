@@ -386,6 +386,18 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                     })
                             )
             );
+
+            // ===== НОВАЯ КОМАНДА /cooldowns =====
+            dispatcher.register(
+                    ClientCommandManager.literal("cooldowns")
+                            .executes(context -> {
+                                ModConfig.cooldownsEnabled = !ModConfig.cooldownsEnabled;
+                                ConfigManager.save();
+                                sendMessage("§6CoolDowns " + (ModConfig.cooldownsEnabled
+                                        ? "§aвключён" : "§cвыключен"));
+                                return 1;
+                            })
+            );
         });
 
         // ===== CHAT FILTER: перехват сообщений =====
@@ -1135,7 +1147,59 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 warnY += 20;
             }
         }
+        // ===== COOLDOWNS =====
+        if (ModConfig.cooldownsEnabled) {
+            java.util.List<CooldownsManager.CooldownEntry> cooldowns =
+                    CooldownsManager.getActiveCooldowns();
 
+            if (!cooldowns.isEmpty()) {
+                int cdColor = (ModConfig.cooldownsColor & 0x00FFFFFF)
+                        | (ModConfig.cooldownsAlpha << 24);
+                int cdX = ModConfig.cooldownsX;
+                int cdY = ModConfig.cooldownsY;
+
+                float fontSize;
+                if (ModConfig.cooldownsFontSize == 0) fontSize = 1.0f;
+                else if (ModConfig.cooldownsFontSize == 2) fontSize = 1.5f;
+                else fontSize = 1.0f;
+
+                int rowHeight = 20;
+
+                for (CooldownsManager.CooldownEntry entry : cooldowns) {
+                    int curX = cdX;
+                    int curY = cdY;
+
+                    // Иконка предмета
+                    if (ModConfig.cooldownsShowIcon) {
+                        graphics.renderItem(entry.stack, curX, curY);
+                        // Оверлей "потемнения" поверх иконки (настраиваемый)
+                        int overlayAlpha = (int) (entry.percent * ModConfig.cooldownsIconDarkening);
+                        if (overlayAlpha > 0) {
+                            graphics.fill(curX, curY, curX + 16, curY + 16,
+                                    (overlayAlpha << 24));
+                        }
+                        curX += 20;
+                    }
+
+                    // Название
+                    if (ModConfig.cooldownsShowName) {
+                        String name = entry.stack.getHoverName().getString();
+                        graphics.drawString(client.font, name,
+                                curX, curY + 1, cdColor, true);
+                        curX += client.font.width(name) + 6;
+                    }
+
+                    // Таймер
+                    if (ModConfig.cooldownsShowTime) {
+                        String timeStr = CooldownsManager.formatTime(entry.remainingSeconds);
+                        graphics.drawString(client.font, timeStr,
+                                curX, curY + 1, cdColor, true);
+                    }
+
+                    cdY += rowHeight;
+                }
+            }
+        }
         if (ModConfig.showEquipmentHud) {
             int guiW = client.getWindow().getGuiScaledWidth();
             int guiH = client.getWindow().getGuiScaledHeight();

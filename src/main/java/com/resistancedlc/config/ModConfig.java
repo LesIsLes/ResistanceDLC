@@ -10,7 +10,7 @@ package com.resistancedlc.config;
 public class ModConfig {
 
     // ===================== HUD: ОСНОВНОЕ =====================
-    public static boolean showHud = false;
+    public static boolean showHud = true;
     public static int hudColor = 0xFF00FF00;
     public static boolean showModLogo = false;
     public static int modLogoX = 10, modLogoY = 5;
@@ -240,4 +240,19 @@ public class ModConfig {
     public static int itemScrollerDelay = 200;          // 100-500ms
     public static boolean itemScrollerShiftStack = true;  // Shift → вся стопка
     public static boolean itemScrollerCtrlAll = true;     // Ctrl → все стопки
+
+    // ===================== COOLDOWNS =====================
+    public static boolean cooldownsEnabled = false;
+    public static boolean cooldownsRussian = false;
+    public static int cooldownsX = 10;
+    public static int cooldownsY = 200;
+    public static int cooldownsColor = 0xFFFFFFFF;      // ARGB
+    public static int cooldownsAlpha = 255;             // 0-255
+    public static boolean cooldownsShowIcon = true;     // показывать иконку
+    public static boolean cooldownsShowName = true;     // показывать название
+    public static boolean cooldownsShowTime = true;     // показывать таймер
+    public static boolean cooldownsShowOnlyHotbar = false; // только предметы из хотбара
+    public static int cooldownsMaxItems = 5;            // макс. кол-во в списке (1-10)
+    public static int cooldownsFontSize = 1;            // 0=малый, 1=средний, 2=крупный
+    public static int cooldownsIconDarkening = 180;     // 0-255, сила затемнения иконки
 }
