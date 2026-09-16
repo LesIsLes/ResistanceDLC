@@ -26,16 +26,12 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 /**
- * AccordionScreen — новый GUI мода.
- * Шаг 5: все панели настроек.
- * Шаг 6: скролл контента + клиппинг + сохранение expanded.
- * Шаг 7: локальный поиск функций внутри раздела.
- * Шаг 8: глобальный поиск по всем разделам + jump-to-function.
- * Шаг 9: полировка (точные contentHeight, gap=4, hover, тень, разделители).
+ * AccordionScreen — GUI мода с аккордеон-меню.
+ * Одна панель раскрыта за раз, плавные анимации, глобальный поиск,
+ * подсветка найденного, динамические высоты панелей.
  */
 public class AccordionScreen extends Screen {
 
-    // ===================== РАЗМЕРЫ ПАНЕЛИ =====================
     private static final int PANEL_WIDTH = 620;
     private static final int PANEL_HEIGHT = 460;
     private static final int COLUMN_COLLAPSED = 60;
@@ -53,39 +49,33 @@ public class AccordionScreen extends Screen {
             "tape_mouse", "item_scroller",
             "zoom", "crosshair", "custom_hitbox", "item_physics",
             "aspect_ratio", "low_fire_shield", "particle_blocker",
-            "chat_filter", "auto_reconnect", "death_coords"
+            "chat_filter", "auto_reconnect", "death_coords", "gui_theme",
+            "waypoints", "config_manager"
     );
 
-    // ===================== ПОЗИЦИИ =====================
     private int panelX;
     private int panelY;
 
-    // ===================== СОСТОЯНИЕ =====================
     private int activeSectionIndex = 0;
     private float columnWidth = COLUMN_COLLAPSED;
     private boolean hoverColumn = false;
+    private float lastColumnWidthForWidgets = COLUMN_COLLAPSED;
 
-    // ===================== КЭШ ВИДЖЕТОВ =====================
     private final Map<String, List<AbstractWidget>> panelWidgets = new HashMap<>();
     private boolean keybindListenerRegistered = false;
 
-    // ===================== СКРОЛЛ =====================
     private int contentScroll = 0;
     private int maxContentScroll = 0;
 
-    // ===================== EXTRA HUD =====================
     private int activeExtraHudSetting = -1;
 
-    // ===================== СОХРАНЕНИЕ EXPANDED =====================
     private final Map<String, Boolean> savedExpanded = new HashMap<>();
 
-    // ===================== ЛОКАЛЬНЫЙ ПОИСК =====================
     private EditBox searchField;
     private final List<AccordionItem> filteredItems = new ArrayList<>();
     private String savedSearchText = "";
     private boolean restoringSearch = false;
 
-    // ===================== ГЛОБАЛЬНЫЙ ПОИСК =====================
     private boolean globalSearchOpen = false;
     private EditBox globalSearchField;
     private final List<String[]> globalSearchResults = new ArrayList<>();
@@ -93,7 +83,15 @@ public class AccordionScreen extends Screen {
     private int globalSearchListX, globalSearchListY, globalSearchListW, globalSearchRowH;
     private final List<AbstractWidget> globalSearchWidgets = new ArrayList<>();
 
-    // ===================== МОДЕЛЬ: ФУНКЦИЯ =====================
+    // ===== ПОДСВЕТКА НАЙДЕННОГО =====
+    /** ID функции, которую надо подсветить (null = нет подсветки). */
+    private String highlightedItemId = null;
+    /** Время начала подсветки (мс). */
+    private long highlightStartTime = 0;
+    /** Длительность подсветки (мс). */
+    private static final long HIGHLIGHT_DURATION = 2000;
+
+    // ===================== МОДЕЛЬ =====================
     public static class AccordionItem {
         public final String id;
         public final String title;
@@ -102,6 +100,7 @@ public class AccordionScreen extends Screen {
         public final Runnable toggler;
         public boolean expanded = false;
         public int contentHeight = 46;
+        public float expandProgress = 0.0f;
 
         public AccordionItem(String id, String title, String description,
                              Supplier<Boolean> statusGetter,
@@ -114,7 +113,6 @@ public class AccordionScreen extends Screen {
         }
     }
 
-    // ===================== МОДЕЛЬ: РАЗДЕЛ =====================
     public static class Section {
         public final String id;
         public final String name;
@@ -146,6 +144,19 @@ public class AccordionScreen extends Screen {
         sections.clear();
         initSections();
 
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                it.expandProgress = it.expanded ? 1.0f : 0.0f;
+            }
+        }
+
+        // [EN] и [×] — справа
+        Button closeBtn = Button.builder(
+                        Component.literal("×"),
+                        (b) -> this.onClose())
+                .bounds(panelX + PANEL_WIDTH - 42, panelY + 6, 30, 18).build();
+        this.addRenderableWidget(closeBtn);
+
         Button langBtn = Button.builder(
                         Component.literal(ModConfig.modLogoRussian ? "EN" : "RU"),
                         (b) -> {
@@ -153,14 +164,25 @@ public class AccordionScreen extends Screen {
                             ConfigManager.save();
                             rebuildWidgetsPreservingState();
                         })
-                .bounds(panelX + PANEL_WIDTH - 70, panelY + 6, 30, 18).build();
+                .bounds(panelX + PANEL_WIDTH - 78, panelY + 6, 30, 18).build();
         this.addRenderableWidget(langBtn);
 
-        Button closeBtn = Button.builder(
-                        Component.literal("×"),
-                        (b) -> this.onClose())
-                .bounds(panelX + PANEL_WIDTH - 35, panelY + 6, 30, 18).build();
-        this.addRenderableWidget(closeBtn);
+        // 5 кнопок-пресетов тем GUI — неактивные Button, клики ловим в mouseClicked
+        int themeBtnSize = 18;
+        int themeBtnGap = 4;
+        int themeBtnY = panelY + 6;
+        int themeBtnRight = panelX + PANEL_WIDTH - 92;
+        int themeBtnStartX = themeBtnRight - themeBtnSize
+                - 4 * (themeBtnSize + themeBtnGap);
+
+        for (int i = 0; i < 5; i++) {
+            int bx = themeBtnStartX + i * (themeBtnSize + themeBtnGap);
+            Button themeBtn = Button.builder(Component.literal(""), (b) -> {})
+                    .bounds(bx, themeBtnY, themeBtnSize, themeBtnSize)
+                    .build();
+            themeBtn.active = false;
+            this.addRenderableWidget(themeBtn);
+        }
 
         int searchX = panelX + PANEL_WIDTH - 12 - 145;
         int searchY = panelY + HEADER_HEIGHT + 10 + 6;
@@ -217,6 +239,11 @@ public class AccordionScreen extends Screen {
         }
 
         restoreExpanded();
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                it.expandProgress = it.expanded ? 1.0f : 0.0f;
+            }
+        }
         updateFilteredItems();
         rebuildAllPanelWidgets();
 
@@ -252,7 +279,63 @@ public class AccordionScreen extends Screen {
         this.rebuildWidgets();
     }
 
-    // ===================== ЛОКАЛЬНЫЙ ПОИСК =====================
+    // ===================== АНИМАЦИЯ =====================
+    private void tickAnimations(float delta) {
+        float safeDelta = Math.min(delta, 0.05f);
+        if (safeDelta < 0.001f) safeDelta = 0.016f;
+        float speed = 4.0f * safeDelta;
+
+        for (Section s : sections) {
+            for (AccordionItem item : s.items) {
+                float target = item.expanded ? 1.0f : 0.0f;
+                if (Math.abs(item.expandProgress - target) < 0.001f) {
+                    item.expandProgress = target;
+                    continue;
+                }
+                if (item.expandProgress < target) {
+                    item.expandProgress = Math.min(target, item.expandProgress + speed);
+                } else {
+                    item.expandProgress = Math.max(target, item.expandProgress - speed);
+                }
+            }
+        }
+    }
+
+    private void syncWidgetPositionsToColumnWidth() {
+        if (Math.abs(lastColumnWidthForWidgets - columnWidth) < 0.5f) return;
+        if (globalSearchOpen) return;
+
+        if (panelWidgets.isEmpty()) {
+            lastColumnWidthForWidgets = columnWidth;
+            return;
+        }
+
+        int deltaX = (int)(columnWidth - lastColumnWidthForWidgets);
+        if (deltaX == 0) {
+            lastColumnWidthForWidgets = columnWidth;
+            return;
+        }
+
+        for (List<AbstractWidget> widgets : panelWidgets.values()) {
+            for (AbstractWidget w : widgets) {
+                w.setX(w.getX() + deltaX);
+            }
+        }
+        lastColumnWidthForWidgets = columnWidth;
+    }
+
+    private float easeInOutQuad(float t) {
+        if (t < 0.5f) return 2.0f * t * t;
+        float u = 1.0f - t;
+        return 1.0f - 2.0f * u * u;
+    }
+
+    private int getAnimatedHeight(AccordionItem item) {
+        float eased = easeInOutQuad(item.expandProgress);
+        return (int)(item.contentHeight * eased);
+    }
+
+    // ===================== ПОИСК =====================
     private boolean matchesSearch(AccordionItem item) {
         if (searchField == null) return true;
         String query = searchField.getValue().toLowerCase().trim();
@@ -270,6 +353,26 @@ public class AccordionScreen extends Screen {
                 filteredItems.add(item);
             }
         }
+    }
+
+    // ===================== ПОДСВЕТКА НАЙДЕННОГО =====================
+    private void triggerHighlight(String itemId) {
+        this.highlightedItemId = itemId;
+        this.highlightStartTime = System.currentTimeMillis();
+    }
+
+    private boolean isHighlightActive(AccordionItem item) {
+        if (highlightedItemId == null) return false;
+        if (!highlightedItemId.equals(item.id)) return false;
+        long elapsed = System.currentTimeMillis() - highlightStartTime;
+        return elapsed < HIGHLIGHT_DURATION;
+    }
+
+    private float getHighlightProgress(AccordionItem item) {
+        if (!isHighlightActive(item)) return 0f;
+        long elapsed = System.currentTimeMillis() - highlightStartTime;
+        float t = (float) elapsed / HIGHLIGHT_DURATION;
+        return Math.max(0f, Math.min(1f, t));
     }
 
     // ===================== ГЛОБАЛЬНЫЙ ПОИСК =====================
@@ -354,6 +457,18 @@ public class AccordionScreen extends Screen {
         }
     }
 
+    private void closeAllExcept(AccordionItem keep) {
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it == keep) continue;
+                if (it.expanded) {
+                    it.expanded = false;
+                    clearPanelWidgets(it);
+                }
+            }
+        }
+    }
+
     private void jumpToFunction(String sectionId, String itemId) {
         int sectionIdx = -1;
         for (int i = 0; i < sections.size(); i++) {
@@ -364,7 +479,15 @@ public class AccordionScreen extends Screen {
         }
         if (sectionIdx < 0) return;
 
-        closeGlobalSearch();
+        globalSearchOpen = false;
+        globalSearchResults.clear();
+        globalSearchHovered = -1;
+        clearGlobalSearchWidgets();
+
+        if (searchField != null) {
+            searchField.visible = true;
+            searchField.active = true;
+        }
 
         activeSectionIndex = sectionIdx;
 
@@ -373,17 +496,31 @@ public class AccordionScreen extends Screen {
             searchField.setValue("");
             restoringSearch = false;
         }
-        updateFilteredItems();
 
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                it.expanded = false;
+                it.expandProgress = 0.0f;
+            }
+        }
         clearAllPanelWidgets();
+
         Section active = sections.get(activeSectionIndex);
         AccordionItem target = null;
         for (AccordionItem it : active.items) {
-            it.expanded = false;
-            if (it.id.equals(itemId)) target = it;
+            if (it.id.equals(itemId)) {
+                target = it;
+                break;
+            }
         }
         if (target == null) return;
         target.expanded = true;
+        target.expandProgress = 1.0f;
+
+        // === ЗАПУСКАЕМ ПОДСВЕТКУ ===
+        triggerHighlight(itemId);
+
+        updateFilteredItems();
 
         int targetOffset = 0;
         int itemH = 26, gap = 4;
@@ -392,10 +529,18 @@ public class AccordionScreen extends Screen {
             targetOffset += itemH + gap;
             if (it.expanded) targetOffset += it.contentHeight + gap;
         }
-        contentScroll = targetOffset;
+
+        int totalH = 0;
+        for (AccordionItem it : active.items) {
+            totalH += itemH + gap;
+            if (it.expanded) totalH += it.contentHeight + gap;
+        }
+        int visibleH = getListBottom() - getListTop();
+        int maxScroll = Math.max(0, totalH - visibleH);
+
+        contentScroll = Math.min(targetOffset, maxScroll);
         if (contentScroll < 0) contentScroll = 0;
 
-        updateFilteredItems();
         rebuildAllPanelWidgets();
     }
 
@@ -403,7 +548,7 @@ public class AccordionScreen extends Screen {
     private void initSections() {
         sections.clear();
 
-        // ===================== HUD =====================
+        // HUD
         Section hud = new Section("hud", "HUD",
                 ModConfig.modLogoRussian ? "Координаты, FPS, эффекты" : "Coords, FPS, effects",
                 new ItemStack(Items.COMPASS));
@@ -493,7 +638,7 @@ public class AccordionScreen extends Screen {
 
         sections.add(hud);
 
-        // ===================== PVP =====================
+        // PVP
         Section pvp = new Section("pvp", "PvP",
                 ModConfig.modLogoRussian ? "Бой, свап, звуки" : "Combat, swap, sounds",
                 new ItemStack(Items.DIAMOND_SWORD));
@@ -572,7 +717,7 @@ public class AccordionScreen extends Screen {
 
         sections.add(pvp);
 
-        // ===================== PVE =====================
+        // PVE
         Section pve = new Section("pve", "PvE",
                 ModConfig.modLogoRussian ? "Кликеры, скролл" : "Clickers, scroller",
                 new ItemStack(Items.CARROT));
@@ -597,7 +742,7 @@ public class AccordionScreen extends Screen {
 
         sections.add(pve);
 
-        // ===================== VISUAL =====================
+        // VISUAL
         Section visual = new Section("visual", "Visual",
                 ModConfig.modLogoRussian ? "Зум, прицел, эффекты" : "Zoom, crosshair, effects",
                 new ItemStack(Items.ENDER_EYE));
@@ -670,11 +815,21 @@ public class AccordionScreen extends Screen {
         pbItem.contentHeight = 130;
         visual.items.add(pbItem);
 
+        // === Waypoints в Visual ===
+        AccordionItem wpItem = new AccordionItem(
+                "waypoints", "Waypoints",
+                ModConfig.modLogoRussian ? "Метки на карте" : "Map waypoints",
+                () -> ModConfig.waypointsEnabled,
+                () -> { ModConfig.waypointsEnabled = !ModConfig.waypointsEnabled; ConfigManager.save(); }
+        );
+        wpItem.contentHeight = calcWaypointsHeight();
+        visual.items.add(wpItem);
+
         sections.add(visual);
 
-        // ===================== MISC =====================
+        // MISC
         Section misc = new Section("misc", "Misc",
-                ModConfig.modLogoRussian ? "Фильтр, автореконнект" : "Filter, auto-reconnect",
+                ModConfig.modLogoRussian ? "Конфиг, автореконнект" : "Config, auto-reconnect",
                 new ItemStack(Items.REDSTONE));
 
         AccordionItem cfItem = new AccordionItem(
@@ -704,6 +859,25 @@ public class AccordionScreen extends Screen {
         dcItem.contentHeight = 102;
         misc.items.add(dcItem);
 
+        AccordionItem themeItem = new AccordionItem(
+                "gui_theme", "GUI Theme",
+                ModConfig.modLogoRussian ? "Цветовая тема интерфейса" : "Interface color theme",
+                () -> true,
+                () -> {}
+        );
+        themeItem.contentHeight = 158;
+        misc.items.add(themeItem);
+
+        // === ConfigManager в Misc ===
+        AccordionItem cfgItem = new AccordionItem(
+                "config_manager", "Config Manager",
+                ModConfig.modLogoRussian ? "Управление конфигами" : "Config management",
+                () -> true,
+                () -> {}
+        );
+        cfgItem.contentHeight = calcConfigManagerHeight();
+        misc.items.add(cfgItem);
+
         sections.add(misc);
     }
 
@@ -715,7 +889,7 @@ public class AccordionScreen extends Screen {
     private int getListTop() { return getContentTop() + 42; }
     private int getListBottom() { return getContentBottom() - 4; }
 
-    private int[] getPanelBounds(AccordionItem target) {
+    private int[] getPanelBoundsFixed(AccordionItem target) {
         int contentLeft = getContentLeft();
         int contentTop = getContentTop();
         int contentRight = getContentRight();
@@ -750,6 +924,7 @@ public class AccordionScreen extends Screen {
             }
         }
         panelWidgets.clear();
+        lastColumnWidthForWidgets = columnWidth;
     }
 
     private void clearPanelWidgets(AccordionItem item) {
@@ -777,11 +952,27 @@ public class AccordionScreen extends Screen {
         if (globalSearchOpen) return;
         int listTop = getListTop();
         int listBottom = getListBottom();
-        for (List<AbstractWidget> widgets : panelWidgets.values()) {
-            for (AbstractWidget w : widgets) {
+
+        for (Map.Entry<String, List<AbstractWidget>> entry : panelWidgets.entrySet()) {
+            String itemId = entry.getKey();
+            AccordionItem owner = null;
+            for (Section s : sections) {
+                for (AccordionItem it : s.items) {
+                    if (it.id.equals(itemId)) {
+                        owner = it;
+                        break;
+                    }
+                }
+                if (owner != null) break;
+            }
+
+            boolean panelVisible = owner == null || owner.expandProgress > 0.6f;
+
+            for (AbstractWidget w : entry.getValue()) {
                 int wTop = w.getY();
                 int wBottom = w.getY() + w.getHeight();
-                boolean visible = wBottom > listTop && wTop < listBottom;
+                boolean inView = wBottom > listTop && wTop < listBottom;
+                boolean visible = panelVisible && inView;
                 w.visible = visible;
                 w.active = visible;
             }
@@ -789,7 +980,7 @@ public class AccordionScreen extends Screen {
     }
 
     private void buildPanelWidgets(AccordionItem item) {
-        int[] bounds = getPanelBounds(item);
+        int[] bounds = getPanelBoundsFixed(item);
         if (bounds == null) return;
 
         int left = bounds[0];
@@ -828,19 +1019,22 @@ public class AccordionScreen extends Screen {
             case "aspect_ratio" -> buildAspectRatioPanel(widgets, innerX, innerY, innerRight);
             case "low_fire_shield" -> buildLowFireShieldPanel(widgets, innerX, innerY, innerRight);
             case "particle_blocker" -> buildParticleBlockerPanel(widgets, innerX, innerY, innerRight);
+            case "waypoints" -> buildWaypointsPanel(widgets, innerX, innerY, innerRight);
             case "chat_filter" -> buildChatFilterPanel(widgets, innerX, innerY, innerRight);
             case "auto_reconnect" -> buildAutoReconnectPanel(widgets, innerX, innerY, innerRight);
             case "death_coords" -> buildDeathCoordsPanel(widgets, innerX, innerY, innerRight);
+            case "gui_theme" -> buildGuiThemePanel(widgets, innerX, innerY, innerRight);
+            case "config_manager" -> buildConfigManagerPanel(widgets, innerX, innerY, innerRight);
             default -> { }
         }
-
         for (AbstractWidget w : widgets) {
             this.addRenderableWidget(w);
         }
         panelWidgets.put(item.id, widgets);
+        lastColumnWidthForWidgets = columnWidth;
     }
 
-    // ===================== ПАНЕЛИ: ПРОСТЫЕ =====================
+    // ===================== ПАНЕЛИ =====================
     private void buildNoHurtCamPanel(List<AbstractWidget> widgets, int x, int y) {
         widgets.add(Checkbox.builder(
                         Component.literal(ModConfig.modLogoRussian ? "Включить No Hurt Cam" : "Enable No Hurt Cam"),
@@ -895,7 +1089,6 @@ public class AccordionScreen extends Screen {
                 .build());
     }
 
-    // ===================== УТИЛИТА ПОЗИЦИИ =====================
     private int addPosEditorRow(List<AbstractWidget> widgets,
                                 int x, int y, int right,
                                 Supplier<Integer> getX, Supplier<Integer> getY,
@@ -932,7 +1125,7 @@ public class AccordionScreen extends Screen {
         return y + rowH + gap;
     }
 
-    // ===================== ПАНЕЛИ: HUD =====================
+    // ===================== HUD =====================
     private void buildPotionEffectsPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int rowH = 22, rowGap = 6;
         int curY = y;
@@ -1083,7 +1276,7 @@ public class AccordionScreen extends Screen {
                     Component.literal("§6⚙"),
                     (b) -> {
                         activeExtraHudSetting = (activeExtraHudSetting == gearIdx) ? -1 : gearIdx;
-                        rebuildWidgetsPreservingState();
+                        rebuildExtraHudPanel();
                     }
             ).bounds(gearX, gearY, gearSize, gearSize).build());
         }
@@ -1140,7 +1333,22 @@ public class AccordionScreen extends Screen {
         }
     }
 
-    // ===================== ПАНЕЛИ: PVP =====================
+    private void rebuildExtraHudPanel() {
+        AccordionItem extra = null;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.id.equals("extra_hud")) { extra = it; break; }
+            }
+            if (extra != null) break;
+        }
+        if (extra == null || !extra.expanded) return;
+
+        clearPanelWidgets(extra);
+        buildPanelWidgets(extra);
+        updateWidgetsVisibility();
+    }
+
+    // ===================== PVP =====================
     private void buildCustomHitSoundsPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int curY = y;
@@ -1174,7 +1382,7 @@ public class AccordionScreen extends Screen {
                             (b) -> {
                                 ModConfig.customHitSoundPreset = preset;
                                 ConfigManager.save();
-                                rebuildWidgetsPreservingState();
+                                rebuildCustomHitSoundsPresets();
                             })
                     .bounds(x + (i - 1) * (btnW + 3), curY, btnW, 20).build());
         }
@@ -1214,6 +1422,21 @@ public class AccordionScreen extends Screen {
                 ConfigManager.save();
             }
         });
+    }
+
+    private void rebuildCustomHitSoundsPresets() {
+        AccordionItem chs = null;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.id.equals("custom_hit_sounds")) { chs = it; break; }
+            }
+            if (chs != null) break;
+        }
+        if (chs == null || !chs.expanded) return;
+
+        clearPanelWidgets(chs);
+        buildPanelWidgets(chs);
+        updateWidgetsVisibility();
     }
 
     private void buildPvPSafePanel(List<AbstractWidget> widgets, int x, int y, int right) {
@@ -1266,7 +1489,7 @@ public class AccordionScreen extends Screen {
                 .build());
     }
 
-    // ===================== ПАНЕЛИ: PVE =====================
+    // ===================== PVE =====================
     private void buildTapeMousePanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
@@ -1279,7 +1502,7 @@ public class AccordionScreen extends Screen {
                 (b) -> {
                     ModConfig.tapeMouseButton = (ModConfig.tapeMouseButton + 1) % 2;
                     ConfigManager.save();
-                    rebuildWidgetsPreservingState();
+                    rebuildTapeMousePanel();
                 }
         ).bounds(x, curY, w, 20).build());
         curY += rowH + rowGap;
@@ -1294,7 +1517,7 @@ public class AccordionScreen extends Screen {
                     (b) -> {
                         ModConfig.tapeMouseTarget = (ModConfig.tapeMouseTarget + 1) % 3;
                         ConfigManager.save();
-                        rebuildWidgetsPreservingState();
+                        rebuildTapeMousePanel();
                     }
             ).bounds(x, curY, w, 20).build());
             curY += rowH + rowGap;
@@ -1355,6 +1578,21 @@ public class AccordionScreen extends Screen {
         }
     }
 
+    private void rebuildTapeMousePanel() {
+        AccordionItem tm = null;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.id.equals("tape_mouse")) { tm = it; break; }
+            }
+            if (tm != null) break;
+        }
+        if (tm == null || !tm.expanded) return;
+
+        clearPanelWidgets(tm);
+        buildPanelWidgets(tm);
+        updateWidgetsVisibility();
+    }
+
     private void buildItemScrollerPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
@@ -1393,7 +1631,7 @@ public class AccordionScreen extends Screen {
                 .build());
     }
 
-    // ===================== ПАНЕЛИ: VISUAL =====================
+    // ===================== VISUAL =====================
     private void buildZoomPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
@@ -1463,7 +1701,7 @@ public class AccordionScreen extends Screen {
                 (b) -> {
                     ModConfig.crosshairShape = (ModConfig.crosshairShape + 1) % 5;
                     ConfigManager.save();
-                    rebuildWidgetsPreservingState();
+                    rebuildCrosshairPanel();
                 }
         ).bounds(x, curY, w, 20).build());
         curY += rowH + rowGap;
@@ -1560,6 +1798,21 @@ public class AccordionScreen extends Screen {
         }
     }
 
+    private void rebuildCrosshairPanel() {
+        AccordionItem ch = null;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.id.equals("crosshair")) { ch = it; break; }
+            }
+            if (ch != null) break;
+        }
+        if (ch == null || !ch.expanded) return;
+
+        clearPanelWidgets(ch);
+        buildPanelWidgets(ch);
+        updateWidgetsVisibility();
+    }
+
     private void buildCustomHitboxPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
@@ -1641,17 +1894,32 @@ public class AccordionScreen extends Screen {
 
         int btnW = (w - 9) / 4;
         widgets.add(Button.builder(Component.literal("4:3"), (b) -> {
-            ModConfig.aspectRatio = 1.33f; ConfigManager.save(); rebuildWidgetsPreservingState();
+            ModConfig.aspectRatio = 1.33f; ConfigManager.save(); rebuildAspectRatioPanel();
         }).bounds(x, curY, btnW, 20).build());
         widgets.add(Button.builder(Component.literal("16:9"), (b) -> {
-            ModConfig.aspectRatio = 1.0f; ConfigManager.save(); rebuildWidgetsPreservingState();
+            ModConfig.aspectRatio = 1.0f; ConfigManager.save(); rebuildAspectRatioPanel();
         }).bounds(x + btnW + 3, curY, btnW, 20).build());
         widgets.add(Button.builder(Component.literal("21:9"), (b) -> {
-            ModConfig.aspectRatio = 0.75f; ConfigManager.save(); rebuildWidgetsPreservingState();
+            ModConfig.aspectRatio = 0.75f; ConfigManager.save(); rebuildAspectRatioPanel();
         }).bounds(x + (btnW + 3) * 2, curY, btnW, 20).build());
         widgets.add(Button.builder(Component.literal("1:1"), (b) -> {
-            ModConfig.aspectRatio = 1.78f; ConfigManager.save(); rebuildWidgetsPreservingState();
+            ModConfig.aspectRatio = 1.78f; ConfigManager.save(); rebuildAspectRatioPanel();
         }).bounds(x + (btnW + 3) * 3, curY, btnW, 20).build());
+    }
+
+    private void rebuildAspectRatioPanel() {
+        AccordionItem ar = null;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.id.equals("aspect_ratio")) { ar = it; break; }
+            }
+            if (ar != null) break;
+        }
+        if (ar == null || !ar.expanded) return;
+
+        clearPanelWidgets(ar);
+        buildPanelWidgets(ar);
+        updateWidgetsVisibility();
     }
 
     private void buildLowFireShieldPanel(List<AbstractWidget> widgets, int x, int y, int right) {
@@ -1758,7 +2026,149 @@ public class AccordionScreen extends Screen {
         }
     }
 
-    // ===================== ПАНЕЛИ: MISC =====================
+    // ===================== WAYPOINTS =====================
+
+    private int calcWaypointsHeight() {
+        int base = 18 + 3 * 28;
+        int waypointsCount = WaypointManager.getWaypoints().size();
+        if (waypointsCount > 0) {
+            base += 22;
+            base += waypointsCount * 20;
+        }
+        return base;
+    }
+
+    private void rebuildWaypointsPanel() {
+        AccordionItem wp = null;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.id.equals("waypoints")) { wp = it; break; }
+            }
+            if (wp != null) break;
+        }
+        if (wp == null || !wp.expanded) return;
+
+        // 1. Удаляем ВСЕ виджеты панели
+        clearPanelWidgets(wp);
+
+        // 2. Пересчитываем высоту
+        wp.contentHeight = calcWaypointsHeight();
+
+        // 3. Сбрасываем скролл — иначе виджеты могут "уехать"
+        contentScroll = 0;
+
+        // 4. Пересобираем виджеты с новой высотой
+        buildPanelWidgets(wp);
+
+        // 5. Обновляем видимость
+        updateWidgetsVisibility();
+    }
+
+    private void buildWaypointsPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(ModConfig.modLogoRussian ? "Включить Waypoints" : "Enable Waypoints"), this.font)
+                .pos(x, curY).selected(ModConfig.waypointsEnabled)
+                .onValueChange((c, v) -> { ModConfig.waypointsEnabled = v; ConfigManager.save(); })
+                .build());
+        curY += rowH + rowGap;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal((ModConfig.modLogoRussian ? "Лимит меток: " : "Max waypoints: ") + ModConfig.waypointsMax),
+                (ModConfig.waypointsMax - 1) / 19.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal((ModConfig.modLogoRussian ? "Лимит меток: " : "Max waypoints: ") + ModConfig.waypointsMax));
+            }
+            @Override protected void applyValue() {
+                ModConfig.waypointsMax = 1 + (int)(this.value * 19);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        widgets.add(Button.builder(
+                Component.literal(ModConfig.modLogoRussian ? "Добавить метку здесь" : "Add waypoint here"),
+                (b) -> {
+                    Minecraft mc = Minecraft.getInstance();
+                    if (mc.player == null) return;
+                    double px = mc.player.getX();
+                    double py = mc.player.getY();
+                    double pz = mc.player.getZ();
+                    boolean added = WaypointManager.addWaypoint(px, py, pz);
+                    if (added) {
+                        int idx = WaypointManager.getWaypoints().size();
+                        mc.player.displayClientMessage(Component.literal(String.format(
+                                "§a[Waypoints] Добавлена метка §6WP%d§a: §e%d, %d, %d",
+                                idx, (int) px, (int) py, (int) pz)), true);
+                        contentScroll = 0;
+                        rebuildWaypointsPanel();
+                    } else {
+                        mc.player.displayClientMessage(Component.literal(
+                                "§c[Waypoints] Достигнут лимит (" + ModConfig.waypointsMax + ")"), true);
+                    }
+                }
+        ).bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        widgets.add(Button.builder(
+                Component.literal(ModConfig.modLogoRussian ? "Очистить все метки" : "Clear all waypoints"),
+                (b) -> {
+                    WaypointManager.clearWaypoints();
+                    contentScroll = 0;
+                    rebuildWaypointsPanel();
+                }
+        ).bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        List<Waypoint> list = WaypointManager.getWaypoints();
+        if (!list.isEmpty()) {
+            Button headerBtn = Button.builder(
+                    Component.literal(ModConfig.modLogoRussian
+                            ? "§eСуществующие метки (§f" + list.size() + "§e):"
+                            : "§eExisting waypoints (§f" + list.size() + "§e):"),
+                    (b) -> {}
+            ).bounds(x, curY, w, 18).build();
+            headerBtn.active = false;
+            widgets.add(headerBtn);
+            curY += 18 + 4;
+
+            for (int i = 0; i < list.size(); i++) {
+                final int index = i;
+                final Waypoint wp = list.get(i);
+                int rowY = curY;
+
+                Button label = Button.builder(
+                        Component.literal("§e" + wp.name() + " §7(" + (int) wp.x() + ", " + (int) wp.y() + ", " + (int) wp.z() + ")"),
+                        (b) -> {}
+                ).bounds(x, rowY, w - 50, 18).build();
+                label.active = false;
+                widgets.add(label);
+
+                widgets.add(Button.builder(Component.literal("✎"), (b) -> {
+                    Minecraft mc = Minecraft.getInstance();
+                    if (mc.player != null) {
+                        mc.player.displayClientMessage(Component.literal(
+                                "§7Переименование: используйте команду §e/wp rename <старое> <новое>"), false);
+                    }
+                }).bounds(x + w - 48, rowY, 22, 18).build());
+
+                widgets.add(Button.builder(Component.literal("×"), (b) -> {
+                    WaypointManager.removeWaypoint(index);
+                    contentScroll = 0;
+                    rebuildWaypointsPanel();
+                }).bounds(x + w - 24, rowY, 22, 18).build());
+
+                curY += 20;
+            }
+        }
+    }
+
+    // ===================== MISC =====================
     private void buildChatFilterPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
@@ -1774,7 +2184,7 @@ public class AccordionScreen extends Screen {
             if (!word.isEmpty()) {
                 ChatFilterManager.addWord(word);
                 wordField.setValue("");
-                rebuildWidgetsPreservingState();
+                rebuildChatFilterPanel();
             }
         }).bounds(x + w - 25, curY, 25, 20).build());
         curY += rowH + rowGap;
@@ -1792,7 +2202,7 @@ public class AccordionScreen extends Screen {
 
             widgets.add(Button.builder(Component.literal("×"), (b) -> {
                 ChatFilterManager.removeWord(word);
-                rebuildWidgetsPreservingState();
+                rebuildChatFilterPanel();
             }).bounds(x + w - 22, curY, 22, rowListH).build());
             curY += rowListH + 2;
         }
@@ -1808,8 +2218,23 @@ public class AccordionScreen extends Screen {
 
         widgets.add(Button.builder(
                 Component.literal(ModConfig.modLogoRussian ? "Очистить всё" : "Clear all"),
-                (b) -> { ChatFilterManager.clearWords(); rebuildWidgetsPreservingState(); }
+                (b) -> { ChatFilterManager.clearWords(); rebuildChatFilterPanel(); }
         ).bounds(x, curY, w, 20).build());
+    }
+
+    private void rebuildChatFilterPanel() {
+        AccordionItem cf = null;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.id.equals("chat_filter")) { cf = it; break; }
+            }
+            if (cf != null) break;
+        }
+        if (cf == null || !cf.expanded) return;
+
+        clearPanelWidgets(cf);
+        buildPanelWidgets(cf);
+        updateWidgetsVisibility();
     }
 
     private void buildAutoReconnectPanel(List<AbstractWidget> widgets, int x, int y, int right) {
@@ -1871,7 +2296,219 @@ public class AccordionScreen extends Screen {
         widgets.add(infoBtn);
     }
 
-    // ===================== ПАНЕЛИ: СЛОЖНЫЕ HUD =====================
+    // ===================== GUI THEME =====================
+    private void buildGuiThemePanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        for (int i = 0; i < THEMES.length; i++) {
+            final int idx = i;
+            final int[] theme = THEMES[i];
+            final String name = THEME_NAMES[i];
+
+            boolean isActive = (ModConfig.guiColor == theme[0]
+                    && ModConfig.guiTextColor == theme[1]
+                    && ModConfig.hudColor == theme[2]);
+
+            String prefix = isActive ? "§l✔ " : "  ";
+            String suffix = isActive ? " §7(активна)" : "";
+
+            Button themeBtn = Button.builder(
+                            Component.literal(prefix + name + suffix),
+                            (b) -> {
+                                ModConfig.guiColor = theme[0];
+                                ModConfig.guiTextColor = theme[1];
+                                ModConfig.hudColor = theme[2];
+                                ConfigManager.save();
+                                rebuildGuiThemePanel();
+                            })
+                    .bounds(x, curY, w, 20).build();
+            widgets.add(themeBtn);
+
+            curY += rowH + rowGap;
+        }
+    }
+
+    private void rebuildGuiThemePanel() {
+        AccordionItem theme = null;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.id.equals("gui_theme")) { theme = it; break; }
+            }
+            if (theme != null) break;
+        }
+        if (theme == null || !theme.expanded) return;
+
+        clearPanelWidgets(theme);
+        buildPanelWidgets(theme);
+        updateWidgetsVisibility();
+    }
+
+    // ===================== CONFIG MANAGER =====================
+
+    private int calcConfigManagerHeight() {
+        int base = 18 + 4 * 28;  // 3 кнопки + editbox = 4 ряда
+        int configsCount = ConfigManager.listConfigs().size();
+        if (configsCount > 0) {
+            base += 22;  // заголовок "Конфиги (N):"
+            base += configsCount * 20;  // ВСЕ конфиги
+        }
+        return base;
+    }
+
+    private void buildConfigManagerPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        widgets.add(Button.builder(
+                Component.literal(ModConfig.modLogoRussian ? "Открыть папку конфигов" : "Open configs folder"),
+                (b) -> {
+                    ConfigManager.openFolder();
+                    Minecraft mc = Minecraft.getInstance();
+                    if (mc.player != null) {
+                        mc.player.displayClientMessage(Component.literal(
+                                "§aПапка с конфигами открыта: §7" + ConfigManager.getConfigDirPath()), false);
+                    }
+                }
+        ).bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        widgets.add(Button.builder(
+                Component.literal(ModConfig.modLogoRussian ? "Сохранить (default)" : "Save (default)"),
+                (b) -> {
+                    ConfigManager.saveNow();
+                    Minecraft mc = Minecraft.getInstance();
+                    if (mc.player != null) {
+                        mc.player.displayClientMessage(Component.literal(
+                                "§aКонфиг §edefault §aсохранён!"), true);
+                    }
+                }
+        ).bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        widgets.add(Button.builder(
+                Component.literal(ModConfig.modLogoRussian ? "Загрузить (default)" : "Load (default)"),
+                (b) -> {
+                    if (ConfigManager.loadFrom("default")) {
+                        Minecraft mc = Minecraft.getInstance();
+                        if (mc.player != null) {
+                            mc.player.displayClientMessage(Component.literal(
+                                    "§aКонфиг §edefault §aзагружен!"), true);
+                        }
+                        contentScroll = 0;
+                        rebuildConfigManagerPanel();
+                    } else {
+                        Minecraft mc = Minecraft.getInstance();
+                        if (mc.player != null) {
+                            mc.player.displayClientMessage(Component.literal(
+                                    "§cКонфиг §edefault §cне найден!"), true);
+                        }
+                    }
+                }
+        ).bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        EditBox nameField = new EditBox(this.font, x, curY, w - 90, 20,
+                Component.literal(ModConfig.modLogoRussian ? "Имя конфига..." : "Config name..."));
+        nameField.setMaxLength(30);
+        widgets.add(nameField);
+
+        widgets.add(Button.builder(
+                Component.literal(ModConfig.modLogoRussian ? "Сохранить как" : "Save as"),
+                (b) -> {
+                    String name = nameField.getValue().trim();
+                    if (name.isEmpty()) name = "default";
+                    if (ConfigManager.saveAs(name)) {
+                        Minecraft mc = Minecraft.getInstance();
+                        if (mc.player != null) {
+                            mc.player.displayClientMessage(Component.literal(
+                                    "§aКонфиг §e" + name + " §aсохранён!"), true);
+                        }
+                        contentScroll = 0;
+                        rebuildConfigManagerPanel();
+                    } else {
+                        Minecraft mc = Minecraft.getInstance();
+                        if (mc.player != null) {
+                            mc.player.displayClientMessage(Component.literal(
+                                    "§cНе удалось сохранить конфиг §e" + name), true);
+                        }
+                    }
+                }
+        ).bounds(x + w - 85, curY, 85, 20).build());
+        curY += rowH + rowGap;
+
+        List<String> configs = ConfigManager.listConfigs();
+        if (!configs.isEmpty()) {
+            Button headerBtn = Button.builder(
+                    Component.literal(ModConfig.modLogoRussian
+                            ? "§eКонфиги (§f" + configs.size() + "§e):"
+                            : "§eConfigs (§f" + configs.size() + "§e):"),
+                    (b) -> {}
+            ).bounds(x, curY, w, 18).build();
+            headerBtn.active = false;
+            widgets.add(headerBtn);
+            curY += 18 + 4;
+
+            // Показываем ВСЕ конфиги (до 20, чтобы не улететь за экран)
+            int maxShow = Math.min(configs.size(), 20);
+            for (int i = 0; i < maxShow; i++) {
+                final String cfgName = configs.get(i);
+                int rowY = curY;
+
+                Button label = Button.builder(
+                        Component.literal("§e" + cfgName), (b) -> {}
+                ).bounds(x, rowY, w - 25, 18).build();
+                label.active = false;
+                widgets.add(label);
+
+                widgets.add(Button.builder(Component.literal("×"), (b) -> {
+                    if (ConfigManager.remove(cfgName)) {
+                        Minecraft mc = Minecraft.getInstance();
+                        if (mc.player != null) {
+                            mc.player.displayClientMessage(Component.literal(
+                                    "§aКонфиг §e" + cfgName + " §aудалён!"), true);
+                        }
+                        contentScroll = 0;
+                        rebuildConfigManagerPanel();
+                    }
+                }).bounds(x + w - 22, rowY, 22, 18).build());
+
+                curY += 20;
+            }
+
+            if (configs.size() > 20) {
+                Button moreBtn = Button.builder(
+                        Component.literal("§7... и ещё §e" + (configs.size() - 20)
+                                + " §7(см. §e/cfg list§7)"), (b) -> {}
+                ).bounds(x, curY, w, 18).build();
+                moreBtn.active = false;
+                widgets.add(moreBtn);
+                curY += 18 + 4;
+            }
+        }
+    }
+
+    private void rebuildConfigManagerPanel() {
+        AccordionItem cfg = null;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.id.equals("config_manager")) { cfg = it; break; }
+            }
+            if (cfg != null) break;
+        }
+        if (cfg == null || !cfg.expanded) return;
+
+        // Порядок важен: сначала удаляем, потом считаем высоту, потом пересобираем
+        clearPanelWidgets(cfg);
+        cfg.contentHeight = calcConfigManagerHeight();
+        contentScroll = 0;
+        buildPanelWidgets(cfg);
+        updateWidgetsVisibility();
+    }
+
+    // ===================== COOLDOWNS =====================
     private void buildCoolDownsPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
@@ -1956,7 +2593,7 @@ public class AccordionScreen extends Screen {
                 (b) -> {
                     ModConfig.cooldownsFontSize = (ModConfig.cooldownsFontSize + 1) % 3;
                     ConfigManager.save();
-                    rebuildWidgetsPreservingState();
+                    rebuildCoolDownsPanel();
                 }
         ).bounds(x, curY, w, 20).build());
         curY += rowH + rowGap;
@@ -1967,9 +2604,24 @@ public class AccordionScreen extends Screen {
                     ModConfig.cooldownsX = 10;
                     ModConfig.cooldownsY = 200;
                     ConfigManager.save();
-                    rebuildWidgetsPreservingState();
+                    rebuildCoolDownsPanel();
                 }
         ).bounds(x, curY, w, 20).build());
+    }
+
+    private void rebuildCoolDownsPanel() {
+        AccordionItem cd = null;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.id.equals("cooldowns")) { cd = it; break; }
+            }
+            if (cd != null) break;
+        }
+        if (cd == null || !cd.expanded) return;
+
+        clearPanelWidgets(cd);
+        buildPanelWidgets(cd);
+        updateWidgetsVisibility();
     }
 
     private void buildComboPanel(List<AbstractWidget> widgets, int x, int y, int right) {
@@ -2008,7 +2660,7 @@ public class AccordionScreen extends Screen {
                 (b) -> {
                     ModConfig.comboFontSize = (ModConfig.comboFontSize + 1) % 3;
                     ConfigManager.save();
-                    rebuildWidgetsPreservingState();
+                    rebuildComboPanel();
                 }
         ).bounds(x, curY, w, 20).build());
         curY += rowH + rowGap;
@@ -2041,7 +2693,22 @@ public class AccordionScreen extends Screen {
         }
     }
 
-    // ===================== ПАНЕЛИ: СЛОЖНЫЕ PVP =====================
+    private void rebuildComboPanel() {
+        AccordionItem combo = null;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.id.equals("combo")) { combo = it; break; }
+            }
+            if (combo != null) break;
+        }
+        if (combo == null || !combo.expanded) return;
+
+        clearPanelWidgets(combo);
+        buildPanelWidgets(combo);
+        updateWidgetsVisibility();
+    }
+
+    // ===================== TOTEM LOG =====================
     private void buildTotemLogPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
@@ -2085,6 +2752,7 @@ public class AccordionScreen extends Screen {
                 .build());
     }
 
+    // ===================== AUTOSWAP =====================
     private void buildAutoSwapPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
@@ -2102,7 +2770,7 @@ public class AccordionScreen extends Screen {
                     (b) -> {
                         ModConfig.autoSwapMode = idx;
                         ConfigManager.save();
-                        rebuildWidgetsPreservingState();
+                        rebuildAutoSwapPanel();
                     }
             ).bounds(x + col * (halfW + 3), curY + row * (rowH - 2), halfW, 20).build());
         }
@@ -2156,6 +2824,22 @@ public class AccordionScreen extends Screen {
         });
     }
 
+    private void rebuildAutoSwapPanel() {
+        AccordionItem as = null;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.id.equals("auto_swap")) { as = it; break; }
+            }
+            if (as != null) break;
+        }
+        if (as == null || !as.expanded) return;
+
+        clearPanelWidgets(as);
+        buildPanelWidgets(as);
+        updateWidgetsVisibility();
+    }
+
+    // ===================== PICKUP LOGGER =====================
     private void buildPickUpLoggerPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
@@ -2184,7 +2868,7 @@ public class AccordionScreen extends Screen {
                 (b) -> {
                     ModConfig.pickupLogMode = (ModConfig.pickupLogMode + 1) % 3;
                     ConfigManager.save();
-                    rebuildWidgetsPreservingState();
+                    rebuildPickUpLoggerPanel();
                 }
         ).bounds(x, curY, w, 20).build());
         curY += rowH + rowGap;
@@ -2227,16 +2911,43 @@ public class AccordionScreen extends Screen {
         }
     }
 
+    private void rebuildPickUpLoggerPanel() {
+        AccordionItem pl = null;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.id.equals("pickup_logger")) { pl = it; break; }
+            }
+            if (pl != null) break;
+        }
+        if (pl == null || !pl.expanded) return;
+
+        clearPanelWidgets(pl);
+        buildPanelWidgets(pl);
+        updateWidgetsVisibility();
+    }
+
     // ===================== РЕНДЕР =====================
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+        tickAnimations(delta);
+
         hoverColumn = isMouseOverColumn(mouseX, mouseY);
-        float targetWidth = hoverColumn ? COLUMN_EXPANDED : COLUMN_COLLAPSED;
-        columnWidth += (targetWidth - columnWidth) * 0.25f;
+
+        boolean anyExpanded = false;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.expanded) { anyExpanded = true; break; }
+            }
+            if (anyExpanded) break;
+        }
+
+        if (!anyExpanded) {
+            float targetWidth = hoverColumn ? COLUMN_EXPANDED : COLUMN_COLLAPSED;
+            columnWidth += (targetWidth - columnWidth) * 0.25f;
+        }
 
         graphics.fill(0, 0, this.width, this.height, 0x80000000);
 
-        // Тень под панелью
         graphics.fill(panelX + 4, panelY + 4,
                 panelX + PANEL_WIDTH + 4, panelY + PANEL_HEIGHT + 4, 0x40000000);
 
@@ -2256,9 +2967,105 @@ public class AccordionScreen extends Screen {
 
         updateWidgetsVisibility();
 
+        drawThemeButtons(graphics, mouseX, mouseY);
+
         if (globalSearchOpen) {
             drawGlobalSearchForeground(graphics, mouseX, mouseY);
         }
+    }
+
+    /** Цвета 5 пресетов тем: [guiColor, guiTextColor, hudColor]. */
+    private static final int[][] THEMES = {
+            {0xFF00FF00, 0xFFFFFFFF, 0xFF00FF00},  // Vanilla
+            {0xFF808080, 0xFFDDDDDD, 0xFF808080},  // Dark
+            {0xFF00FFFF, 0xFF00FF00, 0xFF00FFFF},  // Neon
+            {0xFFFF69B4, 0xFFFFFFFF, 0xFFFF69B4},  // Candy
+            {0xFFFF0000, 0xFFFFFFFF, 0xFFFF0000},  // Blood
+    };
+
+    /** Прямоугольники theme-кнопок: [x, y, size]. Заполняется в drawThemeButtons. */
+    private final int[][] themeButtonRects = new int[5][3];
+
+    /** Названия пресетов тем. */
+    private static final String[] THEME_NAMES = {
+            "Vanilla", "Dark", "Neon", "Candy", "Blood"
+    };
+
+    private void drawThemeButtons(GuiGraphics graphics, int mouseX, int mouseY) {
+        int themeBtnSize = 18;
+        int themeBtnGap = 4;
+        int themeBtnY = panelY + 6;
+        int themeBtnRight = panelX + PANEL_WIDTH - 92;
+        int themeBtnStartX = themeBtnRight - themeBtnSize
+                - 4 * (themeBtnSize + themeBtnGap);
+
+        int hoveredIndex = -1;
+
+        for (int i = 0; i < THEMES.length; i++) {
+            int bx = themeBtnStartX + i * (themeBtnSize + themeBtnGap);
+            themeButtonRects[i][0] = bx;
+            themeButtonRects[i][1] = themeBtnY;
+            themeButtonRects[i][2] = themeBtnSize;
+
+            int color = THEMES[i][0];
+
+            boolean isHovered = mouseX >= bx && mouseX <= bx + themeBtnSize
+                    && mouseY >= themeBtnY && mouseY <= themeBtnY + themeBtnSize;
+
+            if (isHovered) {
+                hoveredIndex = i;
+            }
+
+            graphics.fill(bx, themeBtnY, bx + themeBtnSize, themeBtnY + themeBtnSize,
+                    0xFF000000);
+            graphics.fill(bx + 1, themeBtnY + 1,
+                    bx + themeBtnSize - 1, themeBtnY + themeBtnSize - 1, color);
+
+            if (isHovered) {
+                graphics.fill(bx + 1, themeBtnY + 1,
+                        bx + themeBtnSize - 1, themeBtnY + themeBtnSize - 1, 0x40FFFFFF);
+            }
+
+            boolean isActive = (ModConfig.guiColor == THEMES[i][0]
+                    && ModConfig.guiTextColor == THEMES[i][1]
+                    && ModConfig.hudColor == THEMES[i][2]);
+            int borderColor;
+            if (isActive) borderColor = 0xFFFFFFFF;
+            else if (isHovered) borderColor = 0xFFA0A0FF;
+            else borderColor = 0xFF505050;
+
+            graphics.fill(bx, themeBtnY, bx + themeBtnSize, themeBtnY + 1, borderColor);
+            graphics.fill(bx, themeBtnY + themeBtnSize - 1,
+                    bx + themeBtnSize, themeBtnY + themeBtnSize, borderColor);
+            graphics.fill(bx, themeBtnY, bx + 1, themeBtnY + themeBtnSize, borderColor);
+            graphics.fill(bx + themeBtnSize - 1, themeBtnY,
+                    bx + themeBtnSize, themeBtnY + themeBtnSize, borderColor);
+        }
+
+        if (hoveredIndex >= 0) {
+            drawTooltip(graphics, THEME_NAMES[hoveredIndex], mouseX, mouseY);
+        }
+    }
+
+    /** Простой tooltip в стиле Minecraft — фон + рамка + текст. */
+    private void drawTooltip(GuiGraphics graphics, String text, int mouseX, int mouseY) {
+        int w = this.font.width(text) + 8;
+        int h = 14;
+        int x = mouseX + 10;
+        int y = mouseY + 8;
+
+        if (x + w > this.width - 4) x = mouseX - w - 10;
+        if (y + h > this.height - 4) y = mouseY - h - 10;
+        if (x < 4) x = 4;
+        if (y < 4) y = 4;
+
+        graphics.fill(x, y, x + w, y + h, 0xF0100010);
+        graphics.fill(x, y, x + w, y + 1, ModConfig.guiColor);
+        graphics.fill(x, y + h - 1, x + w, y + h, ModConfig.guiColor);
+        graphics.fill(x, y, x + 1, y + h, ModConfig.guiColor);
+        graphics.fill(x + w - 1, y, x + w, y + h, ModConfig.guiColor);
+
+        graphics.drawString(this.font, text, x + 4, y + 3, 0xFFFFFFFF, false);
     }
 
     private void drawPanelBorders(GuiGraphics graphics) {
@@ -2333,7 +3140,6 @@ public class AccordionScreen extends Screen {
             }
         }
 
-        // Поиск внизу колонки
         int searchRowHeight = iconSize + 12;
         int separatorY = colBottom - searchRowHeight - 10;
         graphics.fill(colLeft + 8, separatorY, colRight - 8, separatorY + 1, 0xFF505050);
@@ -2396,7 +3202,6 @@ public class AccordionScreen extends Screen {
         graphics.drawString(this.font, "§7" + active.description,
                 contentLeft + 15, contentTop + 22, 0xFFAAAAAA, false);
 
-        // Разделитель под заголовком
         graphics.fill(contentLeft + 15, contentTop + 36,
                 contentRight - 15, contentTop + 37, 0x40FFFFFF);
 
@@ -2422,7 +3227,8 @@ public class AccordionScreen extends Screen {
         int gap = 4;
         for (AccordionItem item : filteredItems) {
             totalHeight += itemHeight + gap;
-            if (item.expanded) totalHeight += item.contentHeight + gap;
+            int animH = getAnimatedHeight(item);
+            if (animH > 0) totalHeight += animH + gap;
         }
         int visibleHeight = listBottom - listTop;
         maxContentScroll = Math.max(0, totalHeight - visibleHeight);
@@ -2437,7 +3243,6 @@ public class AccordionScreen extends Screen {
             int itemTop = itemY;
             int itemBottom = itemY + itemHeight;
 
-            // Разделитель между функциями
             if (drawIndex > 0 && itemTop > listTop && itemTop < listBottom) {
                 graphics.fill(listLeft + 10, itemTop - 1,
                         listRight - 10, itemTop, 0x30FFFFFF);
@@ -2454,16 +3259,17 @@ public class AccordionScreen extends Screen {
 
             itemY += itemHeight + gap;
 
-            if (item.expanded) {
+            int animH = getAnimatedHeight(item);
+            if (animH > 0) {
                 int panelTop = itemY;
-                int panelBottom = itemY + item.contentHeight;
+                int panelBottom = itemY + animH;
 
                 if (panelBottom > listTop && panelTop < listBottom) {
                     drawItemPanelClipped(graphics, item, listLeft - 10, panelTop,
-                            listRight + 10, listTop, listBottom);
+                            listRight + 10, listTop, listBottom, animH);
                 }
 
-                itemY += item.contentHeight + gap;
+                itemY += animH + gap;
             }
             drawIndex++;
         }
@@ -2527,9 +3333,9 @@ public class AccordionScreen extends Screen {
 
     private void drawItemPanelClipped(GuiGraphics graphics, AccordionItem item,
                                       int left, int panelY, int right,
-                                      int clipTop, int clipBottom) {
+                                      int clipTop, int clipBottom, int panelHeight) {
         int top = panelY;
-        int bottom = panelY + item.contentHeight;
+        int bottom = panelY + panelHeight;
 
         int visibleTop = Math.max(top, clipTop);
         int visibleBottom = Math.min(bottom, clipBottom);
@@ -2583,14 +3389,36 @@ public class AccordionScreen extends Screen {
         int statusWidth = this.font.width(statusText);
         graphics.drawString(this.font, statusText, right - statusWidth - 10, top + 6, 0xFFFFFFFF, true);
 
-        // Стрелка «→» при hover
         if (isHover && !item.expanded) {
             int arrowX = right - statusWidth - 26;
             graphics.drawString(this.font, "§7→", arrowX, top + 10, 0xFFAAAAAA, false);
         }
+
+        // === ПОДСВЕТКА НАЙДЕННОГО (толстая пульсирующая рамка) ===
+        if (isHighlightActive(item)) {
+            float progress = getHighlightProgress(item);
+            float pulse = 0.7f + 0.3f * (float)Math.sin(progress * Math.PI * 6);
+            float fade = 1.0f - progress * 0.5f;
+            int alpha = (int)(0xFF * pulse * fade);
+
+            int r = 0xFF;
+            int g = 0xFF;
+            int b = 0x80;
+            int highlightColor = (alpha << 24) | (r << 16) | (g << 8) | b;
+
+            int thickness = 3;
+            graphics.fill(left - thickness, top - thickness, right + thickness, top, highlightColor);
+            graphics.fill(left - thickness, bottom, right + thickness, bottom + thickness, highlightColor);
+            graphics.fill(left - thickness, top, left, bottom, highlightColor);
+            graphics.fill(right, top, right + thickness, bottom, highlightColor);
+
+            int innerColor = (Math.min(255, alpha + 40) << 24) | 0xFFFFFF;
+            graphics.fill(left, top, right, top + 1, innerColor);
+            graphics.fill(left, bottom - 1, right, bottom, innerColor);
+        }
     }
 
-    // ===================== OVERLAY ГЛОБАЛЬНОГО ПОИСКА =====================
+    // ===================== OVERLAY =====================
     private void drawGlobalSearchBackground(GuiGraphics graphics) {
         int overlayX = panelX + (PANEL_WIDTH - OVERLAY_W) / 2;
         int overlayY = panelY + (PANEL_HEIGHT - OVERLAY_H) / 2;
@@ -2714,6 +3542,19 @@ public class AccordionScreen extends Screen {
         double mouseX = event.x();
         double mouseY = event.y();
 
+        for (int i = 0; i < themeButtonRects.length; i++) {
+            int[] r = themeButtonRects[i];
+            if (r[2] > 0
+                    && mouseX >= r[0] && mouseX <= r[0] + r[2]
+                    && mouseY >= r[1] && mouseY <= r[1] + r[2]) {
+                ModConfig.guiColor = THEMES[i][0];
+                ModConfig.guiTextColor = THEMES[i][1];
+                ModConfig.hudColor = THEMES[i][2];
+                ConfigManager.save();
+                return true;
+            }
+        }
+
         if (globalSearchOpen) {
             if (globalSearchHovered >= 0 && globalSearchHovered < globalSearchResults.size()) {
                 String[] r = globalSearchResults.get(globalSearchHovered);
@@ -2762,6 +3603,7 @@ public class AccordionScreen extends Screen {
                     for (Section s : sections) {
                         for (AccordionItem it : s.items) {
                             it.expanded = false;
+                            it.expandProgress = 0.0f;
                         }
                     }
                     activeSectionIndex = i;
@@ -2816,14 +3658,15 @@ public class AccordionScreen extends Screen {
 
         for (AccordionItem item : filteredItems) {
             checkY += itemHeight + gap;
-            if (item.expanded) {
+            int animH = getAnimatedHeight(item);
+            if (animH > 0) {
                 int panelTop = checkY;
-                int panelBottom = checkY + item.contentHeight;
+                int panelBottom = checkY + animH;
                 if (mouseX >= contentLeft + 15 && mouseX <= contentRight - 15
                         && mouseY >= panelTop && mouseY <= panelBottom) {
                     return false;
                 }
-                checkY += item.contentHeight + gap;
+                checkY += animH + gap;
             }
         }
 
@@ -2838,18 +3681,22 @@ public class AccordionScreen extends Screen {
 
                 if (bottom < contentTop + 42 || top > contentBottom) {
                     itemY += itemHeight + gap;
-                    if (item.expanded) itemY += item.contentHeight + gap;
+                    int animH = getAnimatedHeight(item);
+                    if (animH > 0) itemY += animH + gap;
                     continue;
                 }
 
                 if (button == 1) {
                     item.toggler.run();
                 } else {
-                    item.expanded = !item.expanded;
-                    if (item.expanded) {
+                    boolean wasExpanded = item.expanded;
+
+                    closeAllExcept(null);
+
+                    if (!wasExpanded) {
+                        contentScroll = 0;
+                        item.expanded = true;
                         buildPanelWidgets(item);
-                    } else {
-                        clearPanelWidgets(item);
                     }
                     updateWidgetsVisibility();
                 }
@@ -2857,8 +3704,9 @@ public class AccordionScreen extends Screen {
             }
 
             itemY += itemHeight + gap;
-            if (item.expanded) {
-                itemY += item.contentHeight + gap;
+            int animH = getAnimatedHeight(item);
+            if (animH > 0) {
+                itemY += animH + gap;
             }
         }
 

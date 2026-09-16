@@ -64,38 +64,6 @@ public class MyCustomScreen extends Screen {
     private int renameDialogIndex = -1;
     private String renameDialogOldName = "";
 
-    public static record Waypoint(String name, double x, double y, double z) {
-        public String serialize() {
-            return name.replace(":", "_").replace("|", "_")
-                    + ":" + x + ":" + y + ":" + z;
-        }
-
-        public static Waypoint deserialize(String s) {
-            try {
-                String[] parts = s.split(":");
-                if (parts.length != 4) return null;
-                String name = parts[0];
-                double x = Double.parseDouble(parts[1]);
-                double y = Double.parseDouble(parts[2]);
-                double z = Double.parseDouble(parts[3]);
-                return new Waypoint(name, x, y, z);
-            } catch (Exception e) {
-                return null;
-            }
-        }
-
-        public String displayName() {
-            return name + " (" + (int) x + ", " + (int) y + ", " + (int) z + ")";
-        }
-
-        public double distanceTo(double px, double py, double pz) {
-            double dx = x - px;
-            double dy = y - py;
-            double dz = z - pz;
-            return Math.sqrt(dx * dx + dy * dy + dz * dz);
-        }
-    }
-
     private static final String[][] SEARCH_INDEX = {
             // ===================== HUD =====================
             // Стр 0: Элементы
@@ -1264,70 +1232,29 @@ public class MyCustomScreen extends Screen {
         return history;
     }
 
+    // ===== ДЕЛЕГАТЫ В WaypointManager (для обратной совместимости) =====
     public static List<Waypoint> getWaypoints() {
-        List<Waypoint> list = new ArrayList<>();
-        if (ModConfig.waypointsRaw == null || ModConfig.waypointsRaw.isEmpty()) return list;
-        for (String s : ModConfig.waypointsRaw.split("\\|")) {
-            if (s.isEmpty()) continue;
-            Waypoint wp = Waypoint.deserialize(s);
-            if (wp != null) list.add(wp);
-        }
-        return list;
+        return WaypointManager.getWaypoints();
     }
 
     public static void setWaypoints(List<Waypoint> list) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < list.size(); i++) {
-            if (i > 0) sb.append("|");
-            sb.append(list.get(i).serialize());
-        }
-        ModConfig.waypointsRaw = sb.toString();
+        WaypointManager.setWaypoints(list);
     }
 
     public static boolean addWaypoint(double x, double y, double z) {
-        List<Waypoint> list = getWaypoints();
-        if (list.size() >= ModConfig.waypointsMax) return false;
-        String name = "WP" + (list.size() + 1);
-        list.add(new Waypoint(name, x, y, z));
-        setWaypoints(list);
-        ConfigManager.save();
-        return true;
+        return WaypointManager.addWaypoint(x, y, z);
     }
 
     public static boolean removeWaypoint(int index) {
-        List<Waypoint> list = getWaypoints();
-        if (index < 0 || index >= list.size()) return false;
-        list.remove(index);
-        setWaypoints(list);
-        ConfigManager.save();
-        return true;
+        return WaypointManager.removeWaypoint(index);
     }
 
     public static void clearWaypoints() {
-        ModConfig.waypointsRaw = "";
-        ConfigManager.save();
+        WaypointManager.clearWaypoints();
     }
 
     public static boolean renameWaypoint(String oldName, String newName) {
-        if (oldName == null || newName == null) return false;
-        if (oldName.isEmpty() || newName.isEmpty()) return false;
-
-        String safeNewName = newName.replace(":", "_").replace("|", "_");
-
-        List<Waypoint> list = getWaypoints();
-        boolean renamed = false;
-        for (int i = 0; i < list.size(); i++) {
-            Waypoint wp = list.get(i);
-            if (wp.name().equals(oldName)) {
-                list.set(i, new Waypoint(safeNewName, wp.x(), wp.y(), wp.z()));
-                renamed = true;
-            }
-        }
-        if (renamed) {
-            setWaypoints(list);
-            ConfigManager.save();
-        }
-        return renamed;
+        return WaypointManager.renameWaypoint(oldName, newName);
     }
 
     private void openRenameDialog(int index, String oldName) {
@@ -1547,7 +1474,6 @@ public class MyCustomScreen extends Screen {
     // COOLDOWNS (HUD, index 7)
     // =========================================================
     private void initCooldownsPage(int centerX, int panelY) {
-        // ===== ВКЛ/ВЫКЛ =====
         Checkbox enableCheckbox = Checkbox.builder(
                         Component.literal(ModConfig.cooldownsRussian
                                 ? "Включить CoolDowns"
@@ -1568,13 +1494,11 @@ public class MyCustomScreen extends Screen {
         }).bounds(centerX + 120, panelY + 55, 25, 20).build();
         this.addRenderableWidget(translateBtn);
 
-        // ===== ПОЗИЦИЯ =====
         makePosEditor(centerX, panelY, 90,
                 () -> ModConfig.cooldownsX, () -> ModConfig.cooldownsY,
                 (x, y) -> { ModConfig.cooldownsX = x; ModConfig.cooldownsY = y; },
                 10, 200);
 
-        // ===== МАКС. ЭЛЕМЕНТОВ =====
         AbstractSliderButton maxSlider = new AbstractSliderButton(
                 centerX - 100, panelY + 130, 200, 20,
                 Component.literal(ModConfig.cooldownsRussian
@@ -1595,7 +1519,6 @@ public class MyCustomScreen extends Screen {
         };
         this.addRenderableWidget(maxSlider);
 
-        // ===== ПРОЗРАЧНОСТЬ ТЕКСТА =====
         AbstractSliderButton alphaSlider = new AbstractSliderButton(
                 centerX - 100, panelY + 160, 200, 20,
                 Component.literal(ModConfig.cooldownsRussian
@@ -1616,7 +1539,6 @@ public class MyCustomScreen extends Screen {
         };
         this.addRenderableWidget(alphaSlider);
 
-        // ===== ЗАТЕМНЕНИЕ ИКОНКИ =====
         AbstractSliderButton darkeningSlider = new AbstractSliderButton(
                 centerX - 100, panelY + 190, 200, 20,
                 Component.literal(ModConfig.cooldownsRussian
@@ -1637,7 +1559,6 @@ public class MyCustomScreen extends Screen {
         };
         this.addRenderableWidget(darkeningSlider);
 
-        // ===== ЧЕКБОКСЫ ОТОБРАЖЕНИЯ (в ряд) =====
         Checkbox iconCheckbox = Checkbox.builder(
                         Component.literal(ModConfig.cooldownsRussian ? "Иконка" : "Icon"), this.font)
                 .pos(centerX - 100, panelY + 225)
@@ -1662,7 +1583,6 @@ public class MyCustomScreen extends Screen {
                 .build();
         this.addRenderableWidget(timeCheckbox);
 
-        // ===== ТОЛЬКО ХОТБАР =====
         Checkbox hotbarCheckbox = Checkbox.builder(
                         Component.literal(ModConfig.cooldownsRussian
                                 ? "Только хотбар"
@@ -1673,7 +1593,6 @@ public class MyCustomScreen extends Screen {
                 .build();
         this.addRenderableWidget(hotbarCheckbox);
 
-        // ===== РАЗМЕР ШРИФТА =====
         String[] sizesRu = {"Малый", "Средний", "Крупный"};
         String[] sizesEn = {"Small", "Medium", "Large"};
         Button sizeBtn = Button.builder(
@@ -1688,7 +1607,6 @@ public class MyCustomScreen extends Screen {
         ).bounds(centerX - 100, panelY + 285, 200, 20).build();
         this.addRenderableWidget(sizeBtn);
 
-        // ===== СБРОС ПОЗИЦИИ =====
         Button resetPosBtn = Button.builder(
                 Component.literal(ModConfig.cooldownsRussian ? "Сбросить позицию" : "Reset position"),
                 (b) -> {
@@ -1955,7 +1873,6 @@ public class MyCustomScreen extends Screen {
     // ITEM SCROLLER (PVE, index 1)
     // =========================================================
     private void initItemScrollerPage(int centerX, int panelY) {
-        // ===== ВКЛ/ВЫКЛ =====
         Checkbox enableCheckbox = Checkbox.builder(
                         Component.literal(ModConfig.itemScrollerRussian
                                 ? "Включить ItemScroller"
@@ -1976,7 +1893,6 @@ public class MyCustomScreen extends Screen {
         }).bounds(centerX + 120, panelY + 55, 25, 20).build();
         this.addRenderableWidget(translateBtn);
 
-        // ===== ЗАДЕРЖКА =====
         AbstractSliderButton delaySlider = new AbstractSliderButton(
                 centerX - 100, panelY + 95, 200, 20,
                 Component.literal(ModConfig.itemScrollerRussian
@@ -1997,7 +1913,6 @@ public class MyCustomScreen extends Screen {
         };
         this.addRenderableWidget(delaySlider);
 
-        // ===== SHIFT → СТОПКА =====
         Checkbox shiftCheckbox = Checkbox.builder(
                         Component.literal(ModConfig.itemScrollerRussian
                                 ? "Shift → вся стопка"
@@ -2011,7 +1926,6 @@ public class MyCustomScreen extends Screen {
                 .build();
         this.addRenderableWidget(shiftCheckbox);
 
-        // ===== CTRL → ВСЁ =====
         Checkbox ctrlCheckbox = Checkbox.builder(
                         Component.literal(ModConfig.itemScrollerRussian
                                 ? "Ctrl → все стопки"
@@ -2816,9 +2730,9 @@ public class MyCustomScreen extends Screen {
                 double y = Double.parseDouble(yField.getValue().trim());
                 double z = Double.parseDouble(zField.getValue().trim());
 
-                boolean added = MyCustomScreen.addWaypoint(x, y, z);
+                boolean added = WaypointManager.addWaypoint(x, y, z);
                 if (added && Minecraft.getInstance().player != null) {
-                    int newIndex = MyCustomScreen.getWaypoints().size();
+                    int newIndex = WaypointManager.getWaypoints().size();
                     Minecraft.getInstance().player.displayClientMessage(
                             Component.literal(String.format(
                                     "§a[Waypoints] Добавлена метка §6WP%d§a: §e%d, %d, %d",
@@ -2840,19 +2754,19 @@ public class MyCustomScreen extends Screen {
         this.addRenderableWidget(addBtn);
 
         Button clearBtn = Button.builder(Component.literal("Очистить все метки"), (b) -> {
-            MyCustomScreen.clearWaypoints();
+            WaypointManager.clearWaypoints();
             this.rebuildWidgets();
         }).bounds(centerX - 100, panelY + 105, 200, 20).build();
         this.addRenderableWidget(clearBtn);
 
-        List<MyCustomScreen.Waypoint> waypoints = MyCustomScreen.getWaypoints();
+        List<Waypoint> waypoints = WaypointManager.getWaypoints();
 
         int listStartY = panelY + 155;
         int rowHeight = 22;
 
         for (int i = 0; i < waypoints.size(); i++) {
             final int index = i;
-            final MyCustomScreen.Waypoint wp = waypoints.get(i);
+            final Waypoint wp = waypoints.get(i);
             int y = listStartY + i * rowHeight;
 
             Button renameBtn = Button.builder(Component.literal("✎"), (b) -> {
@@ -2861,7 +2775,7 @@ public class MyCustomScreen extends Screen {
             this.addRenderableWidget(renameBtn);
 
             Button delBtn = Button.builder(Component.literal("×"), (b) -> {
-                MyCustomScreen.removeWaypoint(index);
+                WaypointManager.removeWaypoint(index);
                 this.rebuildWidgets();
             }).bounds(centerX + 80, y, 20, 18).build();
             this.addRenderableWidget(delBtn);
@@ -2881,10 +2795,10 @@ public class MyCustomScreen extends Screen {
                     closeRenameDialog();
                     return;
                 }
-                List<MyCustomScreen.Waypoint> list = MyCustomScreen.getWaypoints();
+                List<Waypoint> list = WaypointManager.getWaypoints();
                 if (renameDialogIndex >= 0 && renameDialogIndex < list.size()) {
-                    MyCustomScreen.Waypoint old = list.get(renameDialogIndex);
-                    MyCustomScreen.renameWaypoint(old.name(), newName);
+                    Waypoint old = list.get(renameDialogIndex);
+                    WaypointManager.renameWaypoint(old.name(), newName);
                 }
                 closeRenameDialog();
             }).bounds(centerX - 100, panelY + 342, 95, 18).build();
@@ -3044,7 +2958,7 @@ public class MyCustomScreen extends Screen {
                     panelX + 20, panelY + 130, ModConfig.guiTextColor);
             graphics.fill(panelX + 20, panelY + 142, panelX + panelWidth - 20, panelY + 143, ModConfig.guiColor);
 
-            List<MyCustomScreen.Waypoint> waypoints = MyCustomScreen.getWaypoints();
+            List<Waypoint> waypoints = WaypointManager.getWaypoints();
 
             if (waypoints.isEmpty()) {
                 graphics.drawString(this.font, "§7Меток нет. Нажмите B или введите координаты.",
@@ -3054,7 +2968,7 @@ public class MyCustomScreen extends Screen {
                 int rowHeight = 22;
 
                 for (int i = 0; i < waypoints.size(); i++) {
-                    MyCustomScreen.Waypoint wp = waypoints.get(i);
+                    Waypoint wp = waypoints.get(i);
                     int y = listStartY + i * rowHeight;
 
                     String text = String.format("§e%s §7(%d, %d, %d)",

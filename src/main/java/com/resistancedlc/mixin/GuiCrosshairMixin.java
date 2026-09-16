@@ -2,7 +2,6 @@ package com.resistancedlc.mixin;
 
 import com.resistancedlc.config.ModConfig;
 
-import com.resistancedlc.MyCustomScreen;
 import net.minecraft.client.gui.Gui;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

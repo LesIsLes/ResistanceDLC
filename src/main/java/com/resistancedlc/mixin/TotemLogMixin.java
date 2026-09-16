@@ -2,7 +2,6 @@ package com.resistancedlc.mixin;
 
 import com.resistancedlc.config.ModConfig;
 
-import com.resistancedlc.MyCustomScreen;
 import com.resistancedlc.TotemTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;

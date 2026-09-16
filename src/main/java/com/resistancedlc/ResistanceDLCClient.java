@@ -113,17 +113,18 @@ public class ResistanceDLCClient implements ClientModInitializer {
         // ===== КОМАНДЫ =====
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             dispatcher.register(
-                    ClientCommandManager.literal("resistancedlc")
-                            .then(ClientCommandManager.literal("gui")
+                    ClientCommandManager.literal("cfg")
+                            // /cfg без аргументов → справка
+                            .executes(context -> {
+                                showCfgHelp();
+                                return 1;
+                            })
+                            .then(ClientCommandManager.literal("help")
                                     .executes(context -> {
-                                        Minecraft.getInstance().setScreen(new MyCustomScreen());
+                                        showCfgHelp();
                                         return 1;
                                     })
                             )
-            );
-
-            dispatcher.register(
-                    ClientCommandManager.literal("cfg")
                             .then(ClientCommandManager.literal("dir")
                                     .executes(context -> {
                                         ConfigManager.openFolder();
@@ -137,7 +138,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                         if (configs.isEmpty()) {
                                             sendMessage("§7Сохранённых конфигов нет.");
                                         } else {
-                                            sendMessage("§6Сохранённые конфиги:");
+                                            sendMessage("§6Сохранённые конфиги (§e" + configs.size() + "§6):");
                                             for (String name : configs) {
                                                 sendMessage("§7 - §e" + name);
                                             }
@@ -164,8 +165,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                                 String name = StringArgumentType.getString(context, "name");
                                                 if (ConfigManager.loadFrom(name)) {
                                                     sendMessage("§aКонфиг §e" + name + " §aзагружен!");
-                                                    if (Minecraft.getInstance().screen instanceof MyCustomScreen) {
-                                                        Minecraft.getInstance().setScreen(new MyCustomScreen());
+                                                    if (Minecraft.getInstance().screen instanceof AccordionScreen) {
+                                                        Minecraft.getInstance().setScreen(new AccordionScreen());
                                                     }
                                                 } else {
                                                     sendMessage("§cКонфиг §e" + name + " §cне найден!");
@@ -185,108 +186,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                                 }
                                                 return 1;
                                             })
-                                    )
-                            )
-            );
-
-            dispatcher.register(
-                    ClientCommandManager.literal("wp")
-                            .executes(context -> {
-                                showWaypointsHelp();
-                                return 1;
-                            })
-                            .then(ClientCommandManager.literal("help")
-                                    .executes(context -> {
-                                        showWaypointsHelp();
-                                        return 1;
-                                    })
-                            )
-                            .then(ClientCommandManager.literal("add")
-                                    .executes(context -> {
-                                        Minecraft mc = Minecraft.getInstance();
-                                        if (mc.player == null) return 0;
-
-                                        double x = mc.player.getX();
-                                        double y = mc.player.getY();
-                                        double z = mc.player.getZ();
-
-                                        boolean added = MyCustomScreen.addWaypoint(x, y, z);
-                                        if (added) {
-                                            int newIndex = MyCustomScreen.getWaypoints().size();
-                                            sendMessage(String.format(
-                                                    "§a[Waypoints] Добавлена метка §6WP%d§a: §e%d, %d, %d",
-                                                    newIndex, (int) x, (int) y, (int) z
-                                            ));
-                                        } else {
-                                            sendMessage("§c[Waypoints] Достигнут лимит ("
-                                                    + ModConfig.waypointsMax + ")");
-                                        }
-                                        return 1;
-                                    })
-                            )
-                            .then(ClientCommandManager.literal("list")
-                                    .executes(context -> {
-                                        List<MyCustomScreen.Waypoint> list = MyCustomScreen.getWaypoints();
-                                        if (list.isEmpty()) {
-                                            sendMessage("§7[Waypoints] Меток нет.");
-                                        } else {
-                                            sendMessage("§6[Waypoints] Метки (" + list.size() + "/"
-                                                    + ModConfig.waypointsMax + "):");
-                                            for (int i = 0; i < list.size(); i++) {
-                                                MyCustomScreen.Waypoint wp = list.get(i);
-                                                sendMessage(String.format(
-                                                        "§7  %d. §e%s §7(%d, %d, %d)",
-                                                        i + 1, wp.name(),
-                                                        (int) wp.x(), (int) wp.y(), (int) wp.z()
-                                                ));
-                                            }
-                                        }
-                                        return 1;
-                                    })
-                            )
-                            .then(ClientCommandManager.literal("clear")
-                                    .executes(context -> {
-                                        MyCustomScreen.clearWaypoints();
-                                        sendMessage("§a[Waypoints] Все метки удалены.");
-                                        return 1;
-                                    })
-                            )
-                            .then(ClientCommandManager.literal("remove")
-                                    .then(ClientCommandManager.argument("name", StringArgumentType.string())
-                                            .executes(context -> {
-                                                String name = StringArgumentType.getString(context, "name");
-                                                List<MyCustomScreen.Waypoint> list = MyCustomScreen.getWaypoints();
-                                                int removed = 0;
-                                                for (int i = list.size() - 1; i >= 0; i--) {
-                                                    if (list.get(i).name().equals(name)) {
-                                                        MyCustomScreen.removeWaypoint(i);
-                                                        removed++;
-                                                    }
-                                                }
-                                                if (removed > 0) {
-                                                    sendMessage("§a[Waypoints] Удалено меток: §e" + removed);
-                                                } else {
-                                                    sendMessage("§c[Waypoints] Метка §e" + name + "§c не найдена.");
-                                                }
-                                                return 1;
-                                            })
-                                    )
-                            )
-                            .then(ClientCommandManager.literal("rename")
-                                    .then(ClientCommandManager.argument("old", StringArgumentType.string())
-                                            .then(ClientCommandManager.argument("new", StringArgumentType.string())
-                                                    .executes(context -> {
-                                                        String oldName = StringArgumentType.getString(context, "old");
-                                                        String newName = StringArgumentType.getString(context, "new");
-
-                                                        if (MyCustomScreen.renameWaypoint(oldName, newName)) {
-                                                            sendMessage("§a[Waypoints] Метка §e" + oldName + "§a переименована в §6" + newName);
-                                                        } else {
-                                                            sendMessage("§c[Waypoints] Метка §e" + oldName + "§c не найдена.");
-                                                        }
-                                                        return 1;
-                                                    })
-                                            )
                                     )
                             )
             );
@@ -628,9 +527,10 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 double y = client.player.getY();
                 double z = client.player.getZ();
 
-                boolean added = MyCustomScreen.addWaypoint(x, y, z);
+                // ИЗМЕНЕНО: WaypointManager
+                boolean added = WaypointManager.addWaypoint(x, y, z);
                 if (added) {
-                    int newIndex = MyCustomScreen.getWaypoints().size();
+                    int newIndex = WaypointManager.getWaypoints().size();
                     client.player.displayClientMessage(
                             Component.literal(String.format(
                                     "§a[Waypoints] Добавлена метка §6WP%d§a: §e%d, %d, %d",
@@ -1250,7 +1150,25 @@ public class ResistanceDLCClient implements ClientModInitializer {
         sendMessage("§7В GUI у каждой метки есть кнопки §e✎§7 (§7переименовать§7) и §c× §7(удалить)");
         sendMessage("§6§l════════════════════════════════");
     }
-
+    private static void showCfgHelp() {
+        sendMessage("§6§l══════ ConfigManager — команды ══════");
+        sendMessage("§e/cfg §7— эта справка");
+        sendMessage("§e/cfg help §7— эта справка");
+        sendMessage("§e/cfg dir §7— открыть папку с конфигами");
+        sendMessage("§e/cfg list §7— список сохранённых конфигов");
+        sendMessage("§e/cfg save <имя> §7— сохранить конфиг под именем");
+        sendMessage("§e/cfg load <имя> §7— загрузить конфиг по имени");
+        sendMessage("§e/cfg remove <имя> §7— удалить конфиг по имени");
+        sendMessage("§7");
+        sendMessage("§7Что такое ConfigManager?");
+        sendMessage("§7Это система сохранения всех настроек мода в JSON-файлы.");
+        sendMessage("§7Каждый конфиг хранится в §e.run/config/resistancedlc/<имя>.json");
+        sendMessage("§7Можно создавать разные пресеты (PvP, PvE, HUD-only)");
+        sendMessage("§7и переключаться между ними на лету.");
+        sendMessage("§7");
+        sendMessage("§7GUI-версия: §eG §7→ раздел §6Misc §7→ §6Config Manager");
+        sendMessage("§6§l════════════════════════════════════");
+    }
     private static void renderWaypoints(GuiGraphics graphics) {
         if (!ModConfig.waypointsEnabled) return;
 
@@ -1258,7 +1176,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
         if (client.player == null || client.level == null) return;
         if (client.options.hideGui) return;
 
-        List<MyCustomScreen.Waypoint> waypoints = MyCustomScreen.getWaypoints();
+        // ИЗМЕНЕНО: List<Waypoint> + WaypointManager
+        List<Waypoint> waypoints = WaypointManager.getWaypoints();
         if (waypoints.isEmpty()) return;
 
         int screenW = graphics.guiWidth();
@@ -1272,7 +1191,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
         int EDGE_MARGIN = 20;
 
-        for (MyCustomScreen.Waypoint wp : waypoints) {
+        // ИЗМЕНЕНО: for (Waypoint wp : waypoints)
+        for (Waypoint wp : waypoints) {
             double dist = wp.distanceTo(px, py, pz);
 
             int wpColor;

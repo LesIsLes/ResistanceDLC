@@ -2,7 +2,6 @@ package com.resistancedlc.mixin;
 
 import com.resistancedlc.config.ModConfig;
 
-import com.resistancedlc.MyCustomScreen;
 import com.resistancedlc.ParticleBlockerManager;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleEngine;
