@@ -11,6 +11,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -28,6 +29,9 @@ import java.util.function.Supplier;
  * AccordionScreen — новый GUI мода.
  * Шаг 5: все панели настроек.
  * Шаг 6: скролл контента + клиппинг + сохранение expanded.
+ * Шаг 7: локальный поиск функций внутри раздела.
+ * Шаг 8: глобальный поиск по всем разделам + jump-to-function.
+ * Шаг 9: полировка (точные contentHeight, gap=4, hover, тень, разделители).
  */
 public class AccordionScreen extends Screen {
 
@@ -38,7 +42,9 @@ public class AccordionScreen extends Screen {
     private static final int COLUMN_EXPANDED = 220;
     private static final int HEADER_HEIGHT = 30;
 
-    // ===================== РЕАЛИЗОВАННЫЕ ПАНЕЛИ =====================
+    private static final int OVERLAY_W = 460;
+    private static final int OVERLAY_H = 380;
+
     private static final Set<String> IMPLEMENTED_PANELS = Set.of(
             "no_hurt_cam", "no_bobbing", "cooldowns", "combo",
             "potion_effects", "equipment_hud", "effect_warnings", "extra_hud",
@@ -63,16 +69,29 @@ public class AccordionScreen extends Screen {
     private final Map<String, List<AbstractWidget>> panelWidgets = new HashMap<>();
     private boolean keybindListenerRegistered = false;
 
-    // ===================== СКРОЛЛ КОНТЕНТА =====================
+    // ===================== СКРОЛЛ =====================
     private int contentScroll = 0;
     private int maxContentScroll = 0;
 
-    // ===================== EXTRA HUD: АКТИВНАЯ НАСТРОЙКА =====================
-    /** 0=FPS, 1=Ping, 2=TPS, 3=BPS, 4=Dir, 5=Hits, -1=ничего. */
+    // ===================== EXTRA HUD =====================
     private int activeExtraHudSetting = -1;
 
     // ===================== СОХРАНЕНИЕ EXPANDED =====================
     private final Map<String, Boolean> savedExpanded = new HashMap<>();
+
+    // ===================== ЛОКАЛЬНЫЙ ПОИСК =====================
+    private EditBox searchField;
+    private final List<AccordionItem> filteredItems = new ArrayList<>();
+    private String savedSearchText = "";
+    private boolean restoringSearch = false;
+
+    // ===================== ГЛОБАЛЬНЫЙ ПОИСК =====================
+    private boolean globalSearchOpen = false;
+    private EditBox globalSearchField;
+    private final List<String[]> globalSearchResults = new ArrayList<>();
+    private int globalSearchHovered = -1;
+    private int globalSearchListX, globalSearchListY, globalSearchListW, globalSearchRowH;
+    private final List<AbstractWidget> globalSearchWidgets = new ArrayList<>();
 
     // ===================== МОДЕЛЬ: ФУНКЦИЯ =====================
     public static class AccordionItem {
@@ -82,7 +101,7 @@ public class AccordionScreen extends Screen {
         public final Supplier<Boolean> statusGetter;
         public final Runnable toggler;
         public boolean expanded = false;
-        public int contentHeight = 100;
+        public int contentHeight = 46;
 
         public AccordionItem(String id, String title, String description,
                              Supplier<Boolean> statusGetter,
@@ -143,6 +162,26 @@ public class AccordionScreen extends Screen {
                 .bounds(panelX + PANEL_WIDTH - 35, panelY + 6, 30, 18).build();
         this.addRenderableWidget(closeBtn);
 
+        int searchX = panelX + PANEL_WIDTH - 12 - 145;
+        int searchY = panelY + HEADER_HEIGHT + 10 + 6;
+        this.searchField = new EditBox(this.font, searchX, searchY, 140, 18,
+                Component.literal(ModConfig.modLogoRussian ? "Поиск..." : "Search..."));
+        this.searchField.setMaxLength(30);
+
+        this.searchField.setResponder(text -> {
+            if (restoringSearch) return;
+            contentScroll = 0;
+            updateFilteredItems();
+            rebuildAllPanelWidgets();
+        });
+
+        if (!savedSearchText.isEmpty()) {
+            restoringSearch = true;
+            this.searchField.setValue(savedSearchText);
+            restoringSearch = false;
+        }
+        this.addRenderableWidget(this.searchField);
+
         if (!keybindListenerRegistered) {
             keybindListenerRegistered = true;
             ScreenKeyboardEvents.allowKeyPress(this).register((screen, keyEvent) -> {
@@ -177,13 +216,16 @@ public class AccordionScreen extends Screen {
             });
         }
 
-        // Восстанавливаем expanded-флаги после rebuildWidgets()
         restoreExpanded();
-
+        updateFilteredItems();
         rebuildAllPanelWidgets();
+
+        if (globalSearchOpen) {
+            buildGlobalSearchWidgets();
+        }
     }
 
-    /** Сохраняет expanded-флаги всех функций. */
+    // ===================== СОХРАНЕНИЕ =====================
     private void saveExpanded() {
         savedExpanded.clear();
         for (Section s : sections) {
@@ -191,9 +233,11 @@ public class AccordionScreen extends Screen {
                 savedExpanded.put(it.id, it.expanded);
             }
         }
+        if (searchField != null) {
+            savedSearchText = searchField.getValue();
+        }
     }
 
-    /** Восстанавливает expanded-флаги. */
     private void restoreExpanded() {
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
@@ -203,10 +247,156 @@ public class AccordionScreen extends Screen {
         }
     }
 
-    /** rebuildWidgets() с сохранением expanded-флагов. */
     private void rebuildWidgetsPreservingState() {
         saveExpanded();
         this.rebuildWidgets();
+    }
+
+    // ===================== ЛОКАЛЬНЫЙ ПОИСК =====================
+    private boolean matchesSearch(AccordionItem item) {
+        if (searchField == null) return true;
+        String query = searchField.getValue().toLowerCase().trim();
+        if (query.isEmpty()) return true;
+        return item.title.toLowerCase().contains(query)
+                || item.description.toLowerCase().contains(query);
+    }
+
+    private void updateFilteredItems() {
+        filteredItems.clear();
+        if (sections.isEmpty()) return;
+        Section active = sections.get(activeSectionIndex);
+        for (AccordionItem item : active.items) {
+            if (matchesSearch(item)) {
+                filteredItems.add(item);
+            }
+        }
+    }
+
+    // ===================== ГЛОБАЛЬНЫЙ ПОИСК =====================
+    private void openGlobalSearch() {
+        globalSearchOpen = true;
+        globalSearchResults.clear();
+        globalSearchHovered = -1;
+
+        for (List<AbstractWidget> widgets : panelWidgets.values()) {
+            for (AbstractWidget w : widgets) {
+                w.visible = false;
+                w.active = false;
+            }
+        }
+        if (searchField != null) {
+            searchField.visible = false;
+            searchField.active = false;
+        }
+
+        buildGlobalSearchWidgets();
+    }
+
+    private void closeGlobalSearch() {
+        globalSearchOpen = false;
+        globalSearchResults.clear();
+        globalSearchHovered = -1;
+        clearGlobalSearchWidgets();
+
+        if (searchField != null) {
+            searchField.visible = true;
+            searchField.active = true;
+        }
+        rebuildAllPanelWidgets();
+    }
+
+    private void buildGlobalSearchWidgets() {
+        clearGlobalSearchWidgets();
+
+        int overlayX = panelX + (PANEL_WIDTH - OVERLAY_W) / 2;
+        int overlayY = panelY + (PANEL_HEIGHT - OVERLAY_H) / 2;
+
+        EditBox field = new EditBox(this.font, overlayX + 15, overlayY + 40,
+                OVERLAY_W - 60, 22, Component.literal(
+                ModConfig.modLogoRussian ? "Поиск по всем настройкам..." : "Search all settings..."));
+        field.setMaxLength(40);
+        field.setResponder(this::performGlobalSearch);
+        this.globalSearchField = field;
+        this.addRenderableWidget(field);
+        this.setFocused(field);
+        globalSearchWidgets.add(field);
+
+        Button close = Button.builder(Component.literal("×"),
+                        (b) -> closeGlobalSearch())
+                .bounds(overlayX + OVERLAY_W - 40, overlayY + 40, 25, 22).build();
+        this.addRenderableWidget(close);
+        globalSearchWidgets.add(close);
+    }
+
+    private void clearGlobalSearchWidgets() {
+        for (AbstractWidget w : globalSearchWidgets) {
+            this.removeWidget(w);
+        }
+        globalSearchWidgets.clear();
+        this.globalSearchField = null;
+    }
+
+    private void performGlobalSearch(String query) {
+        globalSearchResults.clear();
+        if (query == null || query.trim().isEmpty()) return;
+
+        String q = query.toLowerCase().trim();
+        for (Section section : sections) {
+            for (AccordionItem item : section.items) {
+                if (item.title.toLowerCase().contains(q)
+                        || item.description.toLowerCase().contains(q)) {
+                    globalSearchResults.add(new String[]{
+                            section.id, item.id, item.title, item.description
+                    });
+                    if (globalSearchResults.size() >= 12) return;
+                }
+            }
+        }
+    }
+
+    private void jumpToFunction(String sectionId, String itemId) {
+        int sectionIdx = -1;
+        for (int i = 0; i < sections.size(); i++) {
+            if (sections.get(i).id.equals(sectionId)) {
+                sectionIdx = i;
+                break;
+            }
+        }
+        if (sectionIdx < 0) return;
+
+        closeGlobalSearch();
+
+        activeSectionIndex = sectionIdx;
+
+        if (searchField != null) {
+            restoringSearch = true;
+            searchField.setValue("");
+            restoringSearch = false;
+        }
+        updateFilteredItems();
+
+        clearAllPanelWidgets();
+        Section active = sections.get(activeSectionIndex);
+        AccordionItem target = null;
+        for (AccordionItem it : active.items) {
+            it.expanded = false;
+            if (it.id.equals(itemId)) target = it;
+        }
+        if (target == null) return;
+        target.expanded = true;
+
+        int targetOffset = 0;
+        int itemH = 26, gap = 4;
+        for (AccordionItem it : active.items) {
+            if (it == target) break;
+            targetOffset += itemH + gap;
+            if (it.expanded) targetOffset += it.contentHeight + gap;
+        }
+        contentScroll = targetOffset;
+        if (contentScroll < 0) contentScroll = 0;
+
+        updateFilteredItems();
+        rebuildAllPanelWidgets();
     }
 
     // ===================== РАЗДЕЛЫ =====================
@@ -218,18 +408,23 @@ public class AccordionScreen extends Screen {
                 ModConfig.modLogoRussian ? "Координаты, FPS, эффекты" : "Coords, FPS, effects",
                 new ItemStack(Items.COMPASS));
 
-        hud.items.add(new AccordionItem(
+        AccordionItem nhcItem = new AccordionItem(
                 "no_hurt_cam", "No Hurt Cam",
                 ModConfig.modLogoRussian ? "Убирает тряску при уроне" : "Removes damage shake",
                 () -> ModConfig.noHurtCamEnabled,
                 () -> { ModConfig.noHurtCamEnabled = !ModConfig.noHurtCamEnabled; ConfigManager.save(); }
-        ));
-        hud.items.add(new AccordionItem(
+        );
+        nhcItem.contentHeight = 46;
+        hud.items.add(nhcItem);
+
+        AccordionItem nbItem = new AccordionItem(
                 "no_bobbing", "No Bobbing",
                 ModConfig.modLogoRussian ? "Убирает покачивание камеры" : "Removes camera bobbing",
                 () -> ModConfig.noBobbingEnabled,
                 () -> { ModConfig.noBobbingEnabled = !ModConfig.noBobbingEnabled; ConfigManager.save(); }
-        ));
+        );
+        nbItem.contentHeight = 46;
+        hud.items.add(nbItem);
 
         AccordionItem cdItem = new AccordionItem(
                 "cooldowns", "CoolDowns",
@@ -237,7 +432,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.cooldownsEnabled,
                 () -> { ModConfig.cooldownsEnabled = !ModConfig.cooldownsEnabled; ConfigManager.save(); }
         );
-        cdItem.contentHeight = 260;
+        cdItem.contentHeight = 270;
         hud.items.add(cdItem);
 
         AccordionItem comboItem = new AccordionItem(
@@ -246,7 +441,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.comboEnabled,
                 () -> { ModConfig.comboEnabled = !ModConfig.comboEnabled; ConfigManager.save(); }
         );
-        comboItem.contentHeight = 170;
+        comboItem.contentHeight = 130;
         hud.items.add(comboItem);
 
         AccordionItem peItem = new AccordionItem(
@@ -255,7 +450,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.showPotionEffects,
                 () -> { ModConfig.showPotionEffects = !ModConfig.showPotionEffects; ConfigManager.save(); }
         );
-        peItem.contentHeight = 110;
+        peItem.contentHeight = 102;
         hud.items.add(peItem);
 
         AccordionItem eqItem = new AccordionItem(
@@ -264,7 +459,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.showEquipmentHud,
                 () -> { ModConfig.showEquipmentHud = !ModConfig.showEquipmentHud; ConfigManager.save(); }
         );
-        eqItem.contentHeight = 110;
+        eqItem.contentHeight = 102;
         hud.items.add(eqItem);
 
         AccordionItem ewItem = new AccordionItem(
@@ -273,7 +468,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.effectWarningsEnabled,
                 () -> { ModConfig.effectWarningsEnabled = !ModConfig.effectWarningsEnabled; ConfigManager.save(); }
         );
-        ewItem.contentHeight = 200;
+        ewItem.contentHeight = 158;
         hud.items.add(ewItem);
 
         AccordionItem ehItem = new AccordionItem(
@@ -293,7 +488,7 @@ public class AccordionScreen extends Screen {
                     ConfigManager.save();
                 }
         );
-        ehItem.contentHeight = 230;
+        ehItem.contentHeight = 130;
         hud.items.add(ehItem);
 
         sections.add(hud);
@@ -309,7 +504,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.customHitSoundsEnabled,
                 () -> { ModConfig.customHitSoundsEnabled = !ModConfig.customHitSoundsEnabled; ConfigManager.save(); }
         );
-        chsItem.contentHeight = 200;
+        chsItem.contentHeight = 158;
         pvp.items.add(chsItem);
 
         AccordionItem totemItem = new AccordionItem(
@@ -318,7 +513,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.totemLogEnabled,
                 () -> { ModConfig.totemLogEnabled = !ModConfig.totemLogEnabled; ConfigManager.save(); }
         );
-        totemItem.contentHeight = 120;
+        totemItem.contentHeight = 102;
         pvp.items.add(totemItem);
 
         AccordionItem asItem = new AccordionItem(
@@ -327,7 +522,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.autoSwapEnabled,
                 () -> { ModConfig.autoSwapEnabled = !ModConfig.autoSwapEnabled; ConfigManager.save(); }
         );
-        asItem.contentHeight = 170;
+        asItem.contentHeight = 158;
         pvp.items.add(asItem);
 
         AccordionItem feItem = new AccordionItem(
@@ -336,7 +531,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.fastExpEnabled,
                 () -> { ModConfig.fastExpEnabled = !ModConfig.fastExpEnabled; ConfigManager.save(); }
         );
-        feItem.contentHeight = 70;
+        feItem.contentHeight = 46;
         pvp.items.add(feItem);
 
         AccordionItem stItem = new AccordionItem(
@@ -345,7 +540,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.shiftTapEnabled,
                 () -> { ModConfig.shiftTapEnabled = !ModConfig.shiftTapEnabled; ConfigManager.save(); }
         );
-        stItem.contentHeight = 70;
+        stItem.contentHeight = 46;
         pvp.items.add(stItem);
 
         AccordionItem aspItem = new AccordionItem(
@@ -354,7 +549,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.autoSprintEnabled,
                 () -> { ModConfig.autoSprintEnabled = !ModConfig.autoSprintEnabled; ConfigManager.save(); }
         );
-        aspItem.contentHeight = 70;
+        aspItem.contentHeight = 46;
         pvp.items.add(aspItem);
 
         AccordionItem psItem = new AccordionItem(
@@ -363,7 +558,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.pvpSafeEnabled,
                 () -> { ModConfig.pvpSafeEnabled = !ModConfig.pvpSafeEnabled; ConfigManager.save(); }
         );
-        psItem.contentHeight = 170;
+        psItem.contentHeight = 158;
         pvp.items.add(psItem);
 
         AccordionItem plItem = new AccordionItem(
@@ -372,7 +567,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.pickupLogEnabled,
                 () -> { ModConfig.pickupLogEnabled = !ModConfig.pickupLogEnabled; ConfigManager.save(); }
         );
-        plItem.contentHeight = 220;
+        plItem.contentHeight = 158;
         pvp.items.add(plItem);
 
         sections.add(pvp);
@@ -388,7 +583,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.tapeMouseEnabled,
                 () -> { ModConfig.tapeMouseEnabled = !ModConfig.tapeMouseEnabled; ConfigManager.save(); }
         );
-        tmItem.contentHeight = 200;
+        tmItem.contentHeight = 186;
         pve.items.add(tmItem);
 
         AccordionItem isItem = new AccordionItem(
@@ -397,7 +592,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.itemScrollerEnabled,
                 () -> { ModConfig.itemScrollerEnabled = !ModConfig.itemScrollerEnabled; ConfigManager.save(); }
         );
-        isItem.contentHeight = 120;
+        isItem.contentHeight = 102;
         pve.items.add(isItem);
 
         sections.add(pve);
@@ -413,7 +608,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.zoomEnabled,
                 () -> { ModConfig.zoomEnabled = !ModConfig.zoomEnabled; ConfigManager.save(); }
         );
-        zoomItem.contentHeight = 120;
+        zoomItem.contentHeight = 102;
         visual.items.add(zoomItem);
 
         AccordionItem chItem = new AccordionItem(
@@ -422,7 +617,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.crosshairEnabled,
                 () -> { ModConfig.crosshairEnabled = !ModConfig.crosshairEnabled; ConfigManager.save(); }
         );
-        chItem.contentHeight = 260;
+        chItem.contentHeight = 214;
         visual.items.add(chItem);
 
         AccordionItem hbItem = new AccordionItem(
@@ -431,15 +626,17 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.customHitboxEnabled,
                 () -> { ModConfig.customHitboxEnabled = !ModConfig.customHitboxEnabled; ConfigManager.save(); }
         );
-        hbItem.contentHeight = 90;
+        hbItem.contentHeight = 74;
         visual.items.add(hbItem);
 
-        visual.items.add(new AccordionItem(
+        AccordionItem ipItem = new AccordionItem(
                 "item_physics", "ItemPhysics",
                 ModConfig.modLogoRussian ? "Предметы лежат плашмя" : "Items lie flat",
                 () -> ModConfig.itemPhysicsEnabled,
                 () -> { ModConfig.itemPhysicsEnabled = !ModConfig.itemPhysicsEnabled; ConfigManager.save(); }
-        ));
+        );
+        ipItem.contentHeight = 46;
+        visual.items.add(ipItem);
 
         AccordionItem arItem = new AccordionItem(
                 "aspect_ratio", "Aspect Ratio",
@@ -447,7 +644,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.aspectRatioEnabled,
                 () -> { ModConfig.aspectRatioEnabled = !ModConfig.aspectRatioEnabled; ConfigManager.save(); }
         );
-        arItem.contentHeight = 120;
+        arItem.contentHeight = 102;
         visual.items.add(arItem);
 
         AccordionItem lfsItem = new AccordionItem(
@@ -470,7 +667,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.particleBlockerEnabled,
                 () -> { ModConfig.particleBlockerEnabled = !ModConfig.particleBlockerEnabled; ConfigManager.save(); }
         );
-        pbItem.contentHeight = 170;
+        pbItem.contentHeight = 130;
         visual.items.add(pbItem);
 
         sections.add(visual);
@@ -486,7 +683,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.chatFilterEnabled,
                 () -> { ModConfig.chatFilterEnabled = !ModConfig.chatFilterEnabled; ConfigManager.save(); }
         );
-        cfItem.contentHeight = 180;
+        cfItem.contentHeight = 186;
         misc.items.add(cfItem);
 
         AccordionItem arcItem = new AccordionItem(
@@ -495,7 +692,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.autoReconnectEnabled,
                 () -> { ModConfig.autoReconnectEnabled = !ModConfig.autoReconnectEnabled; ConfigManager.save(); }
         );
-        arcItem.contentHeight = 90;
+        arcItem.contentHeight = 74;
         misc.items.add(arcItem);
 
         AccordionItem dcItem = new AccordionItem(
@@ -504,17 +701,19 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.deathCoordsEnabled,
                 () -> { ModConfig.deathCoordsEnabled = !ModConfig.deathCoordsEnabled; ConfigManager.save(); }
         );
-        dcItem.contentHeight = 110;
+        dcItem.contentHeight = 102;
         misc.items.add(dcItem);
 
         sections.add(misc);
     }
 
-    // ===================== ГРАНИЦЫ КОНТЕНТА =====================
+    // ===================== ГРАНИЦЫ =====================
     private int getContentLeft() { return panelX + (int) columnWidth + 10; }
     private int getContentTop() { return panelY + HEADER_HEIGHT + 10; }
     private int getContentRight() { return panelX + PANEL_WIDTH - 12; }
     private int getContentBottom() { return panelY + PANEL_HEIGHT - 12; }
+    private int getListTop() { return getContentTop() + 42; }
+    private int getListBottom() { return getContentBottom() - 4; }
 
     private int[] getPanelBounds(AccordionItem target) {
         int contentLeft = getContentLeft();
@@ -523,11 +722,13 @@ public class AccordionScreen extends Screen {
 
         int itemY = contentTop + 42 - contentScroll;
         int itemHeight = 26;
-        int gap = 2;
+        int gap = 4;
 
-        Section active = sections.get(activeSectionIndex);
-        for (AccordionItem item : active.items) {
-            if (item == target && item.expanded) {
+        updateFilteredItems();
+
+        for (AccordionItem item : filteredItems) {
+            if (item == target) {
+                if (!item.expanded) return null;
                 int panelTop = itemY + itemHeight + gap;
                 int panelLeft = contentLeft + 15;
                 int panelRight = contentRight - 15;
@@ -562,11 +763,27 @@ public class AccordionScreen extends Screen {
 
     private void rebuildAllPanelWidgets() {
         clearAllPanelWidgets();
-        for (Section section : sections) {
-            for (AccordionItem item : section.items) {
-                if (item.expanded) {
-                    buildPanelWidgets(item);
-                }
+        if (globalSearchOpen) return;
+        updateFilteredItems();
+        for (AccordionItem item : filteredItems) {
+            if (item.expanded) {
+                buildPanelWidgets(item);
+            }
+        }
+        updateWidgetsVisibility();
+    }
+
+    private void updateWidgetsVisibility() {
+        if (globalSearchOpen) return;
+        int listTop = getListTop();
+        int listBottom = getListBottom();
+        for (List<AbstractWidget> widgets : panelWidgets.values()) {
+            for (AbstractWidget w : widgets) {
+                int wTop = w.getY();
+                int wBottom = w.getY() + w.getHeight();
+                boolean visible = wBottom > listTop && wTop < listBottom;
+                w.visible = visible;
+                w.active = visible;
             }
         }
     }
@@ -580,7 +797,7 @@ public class AccordionScreen extends Screen {
         int right = bounds[2];
 
         int innerX = left + 15;
-        int innerY = top + 12;
+        int innerY = top + 10;
         int innerRight = right - 15;
 
         List<AbstractWidget> widgets = new ArrayList<>();
@@ -678,7 +895,7 @@ public class AccordionScreen extends Screen {
                 .build());
     }
 
-    // ===================== УТИЛИТА: ПОЗИЦИЯ =====================
+    // ===================== УТИЛИТА ПОЗИЦИИ =====================
     private int addPosEditorRow(List<AbstractWidget> widgets,
                                 int x, int y, int right,
                                 Supplier<Integer> getX, Supplier<Integer> getY,
@@ -716,7 +933,6 @@ public class AccordionScreen extends Screen {
     }
 
     // ===================== ПАНЕЛИ: HUD =====================
-
     private void buildPotionEffectsPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int rowH = 22, rowGap = 6;
         int curY = y;
@@ -925,7 +1141,6 @@ public class AccordionScreen extends Screen {
     }
 
     // ===================== ПАНЕЛИ: PVP =====================
-
     private void buildCustomHitSoundsPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int curY = y;
@@ -965,10 +1180,8 @@ public class AccordionScreen extends Screen {
         }
         curY += rowH + rowGap;
 
-        widgets.add(new AbstractSliderButton(
-                x, curY, w, 20,
-                Component.literal(String.format(
-                        ModConfig.modLogoRussian ? "Громкость: %.1f" : "Volume: %.1f",
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(String.format(ModConfig.modLogoRussian ? "Громкость: %.1f" : "Volume: %.1f",
                         ModConfig.customHitSoundVolume)),
                 (ModConfig.customHitSoundVolume - 0.1f) / 1.9f
         ) {
@@ -985,10 +1198,8 @@ public class AccordionScreen extends Screen {
         });
         curY += rowH + rowGap;
 
-        widgets.add(new AbstractSliderButton(
-                x, curY, w, 20,
-                Component.literal(String.format(
-                        ModConfig.modLogoRussian ? "Тон: %.1f" : "Pitch: %.1f",
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(String.format(ModConfig.modLogoRussian ? "Тон: %.1f" : "Pitch: %.1f",
                         ModConfig.customHitSoundPitch)),
                 (ModConfig.customHitSoundPitch - 0.5f) / 1.5f
         ) {
@@ -1017,11 +1228,9 @@ public class AccordionScreen extends Screen {
                 .build());
         curY += rowH + rowGap;
 
-        widgets.add(new AbstractSliderButton(
-                x, curY, w, 20,
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal((ModConfig.modLogoRussian ? "Таймер боя: " : "Combat timer: ")
-                        + ModConfig.pvpSafeTimer
-                        + (ModConfig.modLogoRussian ? " сек" : " sec")),
+                        + ModConfig.pvpSafeTimer + (ModConfig.modLogoRussian ? " сек" : " sec")),
                 (ModConfig.pvpSafeTimer - 10) / 50.0
         ) {
             @Override protected void updateMessage() {
@@ -1058,7 +1267,6 @@ public class AccordionScreen extends Screen {
     }
 
     // ===================== ПАНЕЛИ: PVE =====================
-
     private void buildTapeMousePanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
@@ -1113,8 +1321,7 @@ public class AccordionScreen extends Screen {
         ).bounds(x, curY, w, 20).build());
         curY += rowH + rowGap;
 
-        widgets.add(new AbstractSliderButton(
-                x, curY, w, 20,
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(String.format(ModConfig.modLogoRussian ? "Задержка: %.1f сек" : "Delay: %.1f sec",
                         ModConfig.tapeMouseDelay)),
                 (ModConfig.tapeMouseDelay - 0.1f) / 4.9f
@@ -1153,8 +1360,7 @@ public class AccordionScreen extends Screen {
         int rowH = 22, rowGap = 6;
         int curY = y;
 
-        widgets.add(new AbstractSliderButton(
-                x, curY, w, 20,
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal((ModConfig.modLogoRussian ? "Задержка: " : "Delay: ")
                         + ModConfig.itemScrollerDelay
                         + (ModConfig.modLogoRussian ? " мс" : " ms")),
@@ -1188,14 +1394,12 @@ public class AccordionScreen extends Screen {
     }
 
     // ===================== ПАНЕЛИ: VISUAL =====================
-
     private void buildZoomPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
         int curY = y;
 
-        widgets.add(new AbstractSliderButton(
-                x, curY, w, 20,
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(String.format(ModConfig.modLogoRussian ? "Сила зума: %.1fx" : "Zoom factor: %.1fx",
                         ModConfig.zoomFactor)),
                 (ModConfig.zoomFactor - 1.5f) / 8.5f
@@ -1213,8 +1417,7 @@ public class AccordionScreen extends Screen {
         });
         curY += rowH + rowGap;
 
-        widgets.add(new AbstractSliderButton(
-                x, curY, w, 20,
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(String.format(ModConfig.modLogoRussian ? "Плавность: %.2f" : "Smoothness: %.2f",
                         ModConfig.zoomSmoothness)),
                 (ModConfig.zoomSmoothness - 0.05f) / 0.95f
@@ -1520,14 +1723,9 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         String[][] cats = {
-                {"Огонь", "Fire"},
-                {"Дым", "Smoke"},
-                {"Взрывы", "Explosions"},
-                {"Зелья", "Potions"},
-                {"Вода", "Water"},
-                {"Редстоун", "Redstone"},
-                {"Портал", "Portal"},
-                {"Криты", "Crits"}
+                {"Огонь", "Fire"}, {"Дым", "Smoke"}, {"Взрывы", "Explosions"},
+                {"Зелья", "Potions"}, {"Вода", "Water"}, {"Редстоун", "Redstone"},
+                {"Портал", "Portal"}, {"Криты", "Crits"}
         };
         boolean[] vals = {
                 ModConfig.particleBlockerFire, ModConfig.particleBlockerSmoke,
@@ -1561,7 +1759,6 @@ public class AccordionScreen extends Screen {
     }
 
     // ===================== ПАНЕЛИ: MISC =====================
-
     private void buildChatFilterPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
@@ -1583,7 +1780,7 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         java.util.List<String> words = ChatFilterManager.getWords();
-        int maxShow = 4;
+        int maxShow = 3;
         int rowListH = 18;
 
         for (int i = 0; i < Math.min(words.size(), maxShow); i++) {
@@ -1674,8 +1871,7 @@ public class AccordionScreen extends Screen {
         widgets.add(infoBtn);
     }
 
-    // ===================== ПАНЕЛИ: СЛОЖНЫЕ (HUD) =====================
-
+    // ===================== ПАНЕЛИ: СЛОЖНЫЕ HUD =====================
     private void buildCoolDownsPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
@@ -1845,8 +2041,7 @@ public class AccordionScreen extends Screen {
         }
     }
 
-    // ===================== ПАНЕЛИ: СЛОЖНЫЕ (PVP) =====================
-
+    // ===================== ПАНЕЛИ: СЛОЖНЫЕ PVP =====================
     private void buildTotemLogPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
@@ -2040,6 +2235,11 @@ public class AccordionScreen extends Screen {
         columnWidth += (targetWidth - columnWidth) * 0.25f;
 
         graphics.fill(0, 0, this.width, this.height, 0x80000000);
+
+        // Тень под панелью
+        graphics.fill(panelX + 4, panelY + 4,
+                panelX + PANEL_WIDTH + 4, panelY + PANEL_HEIGHT + 4, 0x40000000);
+
         graphics.fill(panelX, panelY, panelX + PANEL_WIDTH, panelY + PANEL_HEIGHT, 0xC0000000);
 
         drawPanelBorders(graphics);
@@ -2048,7 +2248,17 @@ public class AccordionScreen extends Screen {
         drawColumn(graphics, mouseX, mouseY);
         drawContent(graphics, mouseX, mouseY);
 
+        if (globalSearchOpen) {
+            drawGlobalSearchBackground(graphics);
+        }
+
         super.render(graphics, mouseX, mouseY, delta);
+
+        updateWidgetsVisibility();
+
+        if (globalSearchOpen) {
+            drawGlobalSearchForeground(graphics, mouseX, mouseY);
+        }
     }
 
     private void drawPanelBorders(GuiGraphics graphics) {
@@ -2123,6 +2333,7 @@ public class AccordionScreen extends Screen {
             }
         }
 
+        // Поиск внизу колонки
         int searchRowHeight = iconSize + 12;
         int separatorY = colBottom - searchRowHeight - 10;
         graphics.fill(colLeft + 8, separatorY, colRight - 8, separatorY + 1, 0xFF505050);
@@ -2162,7 +2373,7 @@ public class AccordionScreen extends Screen {
             graphics.drawString(this.font, ModConfig.modLogoRussian ? "§lПоиск" : "§lSearch",
                     searchTextX, searchNameY, 0xFFEEEEEE, true);
             if (columnWidth > 140) {
-                graphics.drawString(this.font, ModConfig.modLogoRussian ? "§7Найти настройку" : "§7Find a setting",
+                graphics.drawString(this.font, ModConfig.modLogoRussian ? "§7Все разделы" : "§7All sections",
                         searchTextX, searchNameY + 12, 0xFFAAAAAA, false);
             }
         }
@@ -2185,15 +2396,31 @@ public class AccordionScreen extends Screen {
         graphics.drawString(this.font, "§7" + active.description,
                 contentLeft + 15, contentTop + 22, 0xFFAAAAAA, false);
 
-        int listTop = contentTop + 42;
-        int listBottom = contentBottom - 4;
+        // Разделитель под заголовком
+        graphics.fill(contentLeft + 15, contentTop + 36,
+                contentRight - 15, contentTop + 37, 0x40FFFFFF);
+
+        updateFilteredItems();
+
+        int listTop = getListTop();
+        int listBottom = getListBottom();
         int listLeft = contentLeft + 5;
         int listRight = contentRight - 5;
 
+        boolean searchActive = searchField != null && !searchField.getValue().trim().isEmpty();
+        if (searchActive && filteredItems.isEmpty()) {
+            String noResults = ModConfig.modLogoRussian ? "§7Ничего не найдено" : "§7Nothing found";
+            graphics.drawString(this.font, noResults,
+                    listLeft + 15, listTop + 10, 0xFFAAAAAA, false);
+            maxContentScroll = 0;
+            contentScroll = 0;
+            return;
+        }
+
         int totalHeight = 0;
         int itemHeight = 26;
-        int gap = 2;
-        for (AccordionItem item : active.items) {
+        int gap = 4;
+        for (AccordionItem item : filteredItems) {
             totalHeight += itemHeight + gap;
             if (item.expanded) totalHeight += item.contentHeight + gap;
         }
@@ -2201,12 +2428,20 @@ public class AccordionScreen extends Screen {
         maxContentScroll = Math.max(0, totalHeight - visibleHeight);
 
         if (contentScroll > maxContentScroll) contentScroll = maxContentScroll;
+        if (contentScroll < 0) contentScroll = 0;
 
         int itemY = listTop - contentScroll;
 
-        for (AccordionItem item : active.items) {
+        int drawIndex = 0;
+        for (AccordionItem item : filteredItems) {
             int itemTop = itemY;
             int itemBottom = itemY + itemHeight;
+
+            // Разделитель между функциями
+            if (drawIndex > 0 && itemTop > listTop && itemTop < listBottom) {
+                graphics.fill(listLeft + 10, itemTop - 1,
+                        listRight - 10, itemTop, 0x30FFFFFF);
+            }
 
             if (itemBottom > listTop && itemTop < listBottom) {
                 boolean isHover = mouseX >= listLeft && mouseX <= listRight
@@ -2230,6 +2465,7 @@ public class AccordionScreen extends Screen {
 
                 itemY += item.contentHeight + gap;
             }
+            drawIndex++;
         }
 
         if (maxContentScroll > 0) {
@@ -2325,8 +2561,17 @@ public class AccordionScreen extends Screen {
         graphics.fill(left, top, left + 1, bottom, 0xFF404040);
         graphics.fill(right - 1, top, right, bottom, 0xFF404040);
 
-        if (isHover) graphics.fill(left, top, right, bottom, 0x30FFFFFF);
-        if (item.expanded) graphics.fill(left, top, left + 3, bottom, ModConfig.guiColor);
+        if (isHover) {
+            graphics.fill(left, top, right, bottom, 0x40FFFFFF);
+            graphics.fill(left, top, right, top + 1, 0xB0FFFFFF);
+            graphics.fill(left, bottom - 1, right, bottom, 0xB0FFFFFF);
+        }
+
+        if (item.expanded) {
+            graphics.fill(left, top, left + 3, bottom, ModConfig.guiColor);
+        } else if (isHover) {
+            graphics.fill(left, top, left + 2, bottom, ModConfig.guiColor);
+        }
 
         String arrow = item.expanded ? "▼" : "▶";
         graphics.drawString(this.font, arrow, left + 8, top + 8, ModConfig.guiColor, true);
@@ -2337,12 +2582,103 @@ public class AccordionScreen extends Screen {
         String statusText = status ? "§a[ON]" : "§7[OFF]";
         int statusWidth = this.font.width(statusText);
         graphics.drawString(this.font, statusText, right - statusWidth - 10, top + 6, 0xFFFFFFFF, true);
+
+        // Стрелка «→» при hover
+        if (isHover && !item.expanded) {
+            int arrowX = right - statusWidth - 26;
+            graphics.drawString(this.font, "§7→", arrowX, top + 10, 0xFFAAAAAA, false);
+        }
+    }
+
+    // ===================== OVERLAY ГЛОБАЛЬНОГО ПОИСКА =====================
+    private void drawGlobalSearchBackground(GuiGraphics graphics) {
+        int overlayX = panelX + (PANEL_WIDTH - OVERLAY_W) / 2;
+        int overlayY = panelY + (PANEL_HEIGHT - OVERLAY_H) / 2;
+
+        graphics.fill(0, 0, this.width, this.height, 0xB0000000);
+        graphics.fill(overlayX, overlayY, overlayX + OVERLAY_W, overlayY + OVERLAY_H, 0xF0000000);
+        graphics.fill(overlayX, overlayY, overlayX + OVERLAY_W, overlayY + 2, ModConfig.guiColor);
+        graphics.fill(overlayX, overlayY + OVERLAY_H - 2, overlayX + OVERLAY_W, overlayY + OVERLAY_H, ModConfig.guiColor);
+        graphics.fill(overlayX, overlayY, overlayX + 2, overlayY + OVERLAY_H, ModConfig.guiColor);
+        graphics.fill(overlayX + OVERLAY_W - 2, overlayY, overlayX + OVERLAY_W, overlayY + OVERLAY_H, ModConfig.guiColor);
+
+        graphics.drawString(this.font,
+                ModConfig.modLogoRussian ? "§l🔍 Глобальный поиск" : "§l🔍 Global Search",
+                overlayX + 15, overlayY + 15, ModConfig.guiColor, true);
+    }
+
+    private void drawGlobalSearchForeground(GuiGraphics graphics, int mouseX, int mouseY) {
+        int overlayX = panelX + (PANEL_WIDTH - OVERLAY_W) / 2;
+        int overlayY = panelY + (PANEL_HEIGHT - OVERLAY_H) / 2;
+
+        graphics.drawString(this.font,
+                ModConfig.modLogoRussian
+                        ? "§7Найдено: §e" + globalSearchResults.size()
+                        : "§7Found: §e" + globalSearchResults.size(),
+                overlayX + 15, overlayY + 70, 0xFFAAAAAA, false);
+
+        globalSearchListX = overlayX + 15;
+        globalSearchListY = overlayY + 90;
+        globalSearchListW = OVERLAY_W - 30;
+        globalSearchRowH = 22;
+
+        globalSearchHovered = -1;
+
+        String query = globalSearchField != null ? globalSearchField.getValue().trim() : "";
+
+        if (query.isEmpty()) {
+            graphics.drawString(this.font,
+                    ModConfig.modLogoRussian
+                            ? "§7Начни вводить название или описание..."
+                            : "§7Start typing a name or description...",
+                    globalSearchListX + 5, globalSearchListY + 10, 0xFF888888, false);
+        } else if (globalSearchResults.isEmpty()) {
+            graphics.drawString(this.font,
+                    ModConfig.modLogoRussian ? "§7Ничего не найдено" : "§7Nothing found",
+                    globalSearchListX + 5, globalSearchListY + 10, 0xFF888888, false);
+        } else {
+            for (int i = 0; i < globalSearchResults.size(); i++) {
+                String[] r = globalSearchResults.get(i);
+                int rowY = globalSearchListY + i * globalSearchRowH;
+                boolean hovered = mouseX >= globalSearchListX && mouseX <= globalSearchListX + globalSearchListW
+                        && mouseY >= rowY && mouseY < rowY + globalSearchRowH;
+
+                if (hovered) {
+                    globalSearchHovered = i;
+                    graphics.fill(globalSearchListX, rowY, globalSearchListX + globalSearchListW,
+                            rowY + globalSearchRowH, 0x40FFFFFF);
+                    graphics.fill(globalSearchListX, rowY, globalSearchListX + 3,
+                            rowY + globalSearchRowH, ModConfig.guiColor);
+                }
+
+                String sectionName = r[0];
+                for (Section s : sections) {
+                    if (s.id.equals(r[0])) { sectionName = s.name; break; }
+                }
+
+                String text = "§f" + r[2] + " §7· §e" + sectionName;
+                graphics.drawString(this.font, text, globalSearchListX + 10, rowY + 6, 0xFFFFFFFF, false);
+
+                String desc = r[3];
+                if (desc.length() > 40) desc = desc.substring(0, 40) + "...";
+                graphics.drawString(this.font, "§8" + desc,
+                        globalSearchListX + 10 + this.font.width(text) + 8, rowY + 6, 0xFF888888, false);
+            }
+        }
+
+        graphics.drawString(this.font,
+                ModConfig.modLogoRussian
+                        ? "§7Кликни по результату — перейдёшь в раздел. §eESC §7— закрыть."
+                        : "§7Click a result — jump to section. §eESC §7— close.",
+                overlayX + 15, overlayY + OVERLAY_H - 18, 0xFFAAAAAA, false);
     }
 
     // ===================== СКРОЛЛ =====================
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY,
                                  double horizontalAmount, double verticalAmount) {
+        if (globalSearchOpen) return true;
+
         int contentLeft = getContentLeft();
         int contentTop = getContentTop();
         int contentRight = getContentRight();
@@ -2352,10 +2688,20 @@ public class AccordionScreen extends Screen {
                 && mouseY >= contentTop && mouseY <= contentBottom;
 
         if (overContent && maxContentScroll > 0) {
+            int oldScroll = contentScroll;
             contentScroll -= (int)(verticalAmount * 20);
             if (contentScroll < 0) contentScroll = 0;
             if (contentScroll > maxContentScroll) contentScroll = maxContentScroll;
-            rebuildAllPanelWidgets();
+
+            int delta = oldScroll - contentScroll;
+            if (delta != 0) {
+                for (List<AbstractWidget> widgets : panelWidgets.values()) {
+                    for (AbstractWidget w : widgets) {
+                        w.setY(w.getY() + delta);
+                    }
+                }
+                updateWidgetsVisibility();
+            }
             return true;
         }
 
@@ -2367,6 +2713,27 @@ public class AccordionScreen extends Screen {
     public boolean mouseClicked(MouseButtonEvent event, boolean isDoubleClick) {
         double mouseX = event.x();
         double mouseY = event.y();
+
+        if (globalSearchOpen) {
+            if (globalSearchHovered >= 0 && globalSearchHovered < globalSearchResults.size()) {
+                String[] r = globalSearchResults.get(globalSearchHovered);
+                jumpToFunction(r[0], r[1]);
+                return true;
+            }
+
+            if (super.mouseClicked(event, isDoubleClick)) {
+                return true;
+            }
+
+            int overlayX = panelX + (PANEL_WIDTH - OVERLAY_W) / 2;
+            int overlayY = panelY + (PANEL_HEIGHT - OVERLAY_H) / 2;
+            boolean inOverlay = mouseX >= overlayX && mouseX <= overlayX + OVERLAY_W
+                    && mouseY >= overlayY && mouseY <= overlayY + OVERLAY_H;
+            if (!inOverlay) {
+                closeGlobalSearch();
+            }
+            return true;
+        }
 
         float currentTargetWidth = hoverColumn ? COLUMN_EXPANDED : COLUMN_COLLAPSED;
         int colLeft = panelX + 2;
@@ -2399,6 +2766,12 @@ public class AccordionScreen extends Screen {
                     }
                     activeSectionIndex = i;
                     contentScroll = 0;
+                    if (searchField != null) {
+                        restoringSearch = true;
+                        searchField.setValue("");
+                        restoringSearch = false;
+                    }
+                    updateFilteredItems();
                     return true;
                 }
             }
@@ -2413,10 +2786,7 @@ public class AccordionScreen extends Screen {
 
             if (mouseX >= searchRowLeft && mouseX <= searchRowRight
                     && mouseY >= searchRowTop && mouseY <= searchRowBottom) {
-                if (Minecraft.getInstance().player != null) {
-                    Minecraft.getInstance().player.displayClientMessage(
-                            Component.literal("§e[Search] §7Поиск — в разработке (Шаг 8)"), true);
-                }
+                openGlobalSearch();
                 return true;
             }
             return true;
@@ -2438,14 +2808,13 @@ public class AccordionScreen extends Screen {
         if (mouseX < contentLeft || mouseX > contentRight) return false;
         if (mouseY < contentTop || mouseY > contentBottom) return false;
 
-        Section active = sections.get(activeSectionIndex);
+        updateFilteredItems();
 
-        // Защита: клик внутри раскрытой панели — не наш
         int checkY = contentTop + 42 - contentScroll;
         int itemHeight = 26;
-        int gap = 2;
+        int gap = 4;
 
-        for (AccordionItem item : active.items) {
+        for (AccordionItem item : filteredItems) {
             checkY += itemHeight + gap;
             if (item.expanded) {
                 int panelTop = checkY;
@@ -2460,7 +2829,7 @@ public class AccordionScreen extends Screen {
 
         int itemY = contentTop + 42 - contentScroll;
 
-        for (AccordionItem item : active.items) {
+        for (AccordionItem item : filteredItems) {
             int top = itemY;
             int bottom = itemY + itemHeight;
 
@@ -2482,6 +2851,7 @@ public class AccordionScreen extends Screen {
                     } else {
                         clearPanelWidgets(item);
                     }
+                    updateWidgetsVisibility();
                 }
                 return true;
             }
@@ -2493,6 +2863,19 @@ public class AccordionScreen extends Screen {
         }
 
         return false;
+    }
+
+    // ===================== КЛАВИШИ =====================
+    @Override
+    public boolean keyPressed(KeyEvent event) {
+        if (globalSearchOpen) {
+            if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+                closeGlobalSearch();
+                return true;
+            }
+            return super.keyPressed(event);
+        }
+        return super.keyPressed(event);
     }
 
     private boolean isMouseOverColumn(double mouseX, double mouseY) {
