@@ -121,7 +121,7 @@ public class KeyBindings {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (openGuiKey.consumeClick()) {
-                Minecraft.getInstance().setScreen(new MyCustomScreen());
+                Minecraft.getInstance().setScreen(new AccordionScreen());
             }
         });
     }
