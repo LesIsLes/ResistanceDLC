@@ -28,7 +28,7 @@ import java.util.function.Supplier;
 /**
  * AccordionScreen — GUI мода с аккордеон-меню.
  * Одна панель раскрыта за раз, плавные анимации, глобальный поиск,
- * подсветка найденного, динамические высоты панелей.
+ * подсветка найденного, fade-in overlay, fade-in разделов.
  */
 public class AccordionScreen extends Screen {
 
@@ -84,12 +84,24 @@ public class AccordionScreen extends Screen {
     private final List<AbstractWidget> globalSearchWidgets = new ArrayList<>();
 
     // ===== ПОДСВЕТКА НАЙДЕННОГО =====
-    /** ID функции, которую надо подсветить (null = нет подсветки). */
     private String highlightedItemId = null;
-    /** Время начала подсветки (мс). */
     private long highlightStartTime = 0;
-    /** Длительность подсветки (мс). */
     private static final long HIGHLIGHT_DURATION = 2000;
+
+    // ===== FADE-IN OVERLAY (глобальный поиск) =====
+    /** 0.0 = полностью прозрачно, 1.0 = полностью видно. */
+    private float globalSearchFadeProgress = 0.0f;
+    /** Скорость fade-in (единиц за секунду). 4.0 ≈ 250 мс. */
+    private static final float GLOBAL_SEARCH_FADE_SPEED = 4.0f;
+    /** Нужно ли закрывать overlay после fade-out (для ESC). */
+    private boolean globalSearchClosing = false;
+
+    // === FADE-IN СПИСКА ПРИ СМЕНЕ РАЗДЕЛА ===
+    private float sectionFadeProgress = 1.0f;
+    private static final float SECTION_FADE_SPEED = 3.0f;   // медленнее — заметнее
+    /** Сдвиг списка по Y при fade-in (px). 0 = финальная позиция. */
+    private float sectionSlideOffset = 0.0f;
+    private static final float SECTION_SLIDE_DISTANCE = 15.0f;  // максимальный сдвиг вверх
 
     // ===================== МОДЕЛЬ =====================
     public static class AccordionItem {
@@ -299,6 +311,40 @@ public class AccordionScreen extends Screen {
                 }
             }
         }
+
+        // === FADE-IN OVERLAY ===
+        if (globalSearchOpen) {
+            if (globalSearchFadeProgress < 1.0f) {
+                globalSearchFadeProgress = Math.min(1.0f,
+                        globalSearchFadeProgress + safeDelta * GLOBAL_SEARCH_FADE_SPEED);
+            }
+        } else if (globalSearchClosing) {
+            // Fade-out при закрытии
+            globalSearchFadeProgress -= safeDelta * GLOBAL_SEARCH_FADE_SPEED;
+            if (globalSearchFadeProgress <= 0.0f) {
+                globalSearchFadeProgress = 0.0f;
+                globalSearchClosing = false;
+                // Реально закрываем
+                globalSearchResults.clear();
+                globalSearchHovered = -1;
+                clearGlobalSearchWidgets();
+                if (searchField != null) {
+                    searchField.visible = true;
+                    searchField.active = true;
+                }
+                rebuildAllPanelWidgets();
+            }
+        }
+
+        // === FADE-IN СПИСКА ПРИ СМЕНЕ РАЗДЕЛА ===
+        if (sectionFadeProgress < 1.0f) {
+            sectionFadeProgress = Math.min(1.0f,
+                    sectionFadeProgress + safeDelta * SECTION_FADE_SPEED);
+            // Сдвиг = (1 - progress) * distance. При progress=1 → 0
+            sectionSlideOffset = (1.0f - sectionFadeProgress) * SECTION_SLIDE_DISTANCE;
+        } else {
+            sectionSlideOffset = 0.0f;
+        }
     }
 
     private void syncWidgetPositionsToColumnWidth() {
@@ -378,6 +424,8 @@ public class AccordionScreen extends Screen {
     // ===================== ГЛОБАЛЬНЫЙ ПОИСК =====================
     private void openGlobalSearch() {
         globalSearchOpen = true;
+        globalSearchClosing = false;
+        globalSearchFadeProgress = 0.0f;  // начинаем с прозрачного
         globalSearchResults.clear();
         globalSearchHovered = -1;
 
@@ -396,16 +444,16 @@ public class AccordionScreen extends Screen {
     }
 
     private void closeGlobalSearch() {
+        // Запускаем fade-out, реальное закрытие — в tickAnimations
+        globalSearchClosing = true;
         globalSearchOpen = false;
-        globalSearchResults.clear();
         globalSearchHovered = -1;
-        clearGlobalSearchWidgets();
 
-        if (searchField != null) {
-            searchField.visible = true;
-            searchField.active = true;
+        // Прячем виджеты overlay сразу
+        for (AbstractWidget w : globalSearchWidgets) {
+            w.visible = false;
+            w.active = false;
         }
-        rebuildAllPanelWidgets();
     }
 
     private void buildGlobalSearchWidgets() {
@@ -479,7 +527,10 @@ public class AccordionScreen extends Screen {
         }
         if (sectionIdx < 0) return;
 
+        // Мгновенно закрываем overlay (без fade-out, т.к. сразу прыгаем)
         globalSearchOpen = false;
+        globalSearchClosing = false;
+        globalSearchFadeProgress = 0.0f;
         globalSearchResults.clear();
         globalSearchHovered = -1;
         clearGlobalSearchWidgets();
@@ -490,6 +541,8 @@ public class AccordionScreen extends Screen {
         }
 
         activeSectionIndex = sectionIdx;
+        sectionFadeProgress = 0.0f;  // запускаем fade-in списка
+        sectionSlideOffset = SECTION_SLIDE_DISTANCE;
 
         if (searchField != null) {
             restoringSearch = true;
@@ -517,7 +570,6 @@ public class AccordionScreen extends Screen {
         target.expanded = true;
         target.expandProgress = 1.0f;
 
-        // === ЗАПУСКАЕМ ПОДСВЕТКУ ===
         triggerHighlight(itemId);
 
         updateFilteredItems();
@@ -2048,19 +2100,10 @@ public class AccordionScreen extends Screen {
         }
         if (wp == null || !wp.expanded) return;
 
-        // 1. Удаляем ВСЕ виджеты панели
         clearPanelWidgets(wp);
-
-        // 2. Пересчитываем высоту
         wp.contentHeight = calcWaypointsHeight();
-
-        // 3. Сбрасываем скролл — иначе виджеты могут "уехать"
         contentScroll = 0;
-
-        // 4. Пересобираем виджеты с новой высотой
         buildPanelWidgets(wp);
-
-        // 5. Обновляем видимость
         updateWidgetsVisibility();
     }
 
@@ -2348,11 +2391,11 @@ public class AccordionScreen extends Screen {
     // ===================== CONFIG MANAGER =====================
 
     private int calcConfigManagerHeight() {
-        int base = 18 + 4 * 28;  // 3 кнопки + editbox = 4 ряда
+        int base = 18 + 4 * 28;
         int configsCount = ConfigManager.listConfigs().size();
         if (configsCount > 0) {
-            base += 22;  // заголовок "Конфиги (N):"
-            base += configsCount * 20;  // ВСЕ конфиги
+            base += 22;
+            base += configsCount * 20;
         }
         return base;
     }
@@ -2451,7 +2494,6 @@ public class AccordionScreen extends Screen {
             widgets.add(headerBtn);
             curY += 18 + 4;
 
-            // Показываем ВСЕ конфиги (до 20, чтобы не улететь за экран)
             int maxShow = Math.min(configs.size(), 20);
             for (int i = 0; i < maxShow; i++) {
                 final String cfgName = configs.get(i);
@@ -2500,7 +2542,6 @@ public class AccordionScreen extends Screen {
         }
         if (cfg == null || !cfg.expanded) return;
 
-        // Порядок важен: сначала удаляем, потом считаем высоту, потом пересобираем
         clearPanelWidgets(cfg);
         cfg.contentHeight = calcConfigManagerHeight();
         contentScroll = 0;
@@ -2959,7 +3000,7 @@ public class AccordionScreen extends Screen {
         drawColumn(graphics, mouseX, mouseY);
         drawContent(graphics, mouseX, mouseY);
 
-        if (globalSearchOpen) {
+        if (globalSearchOpen || globalSearchClosing) {
             drawGlobalSearchBackground(graphics);
         }
 
@@ -2969,7 +3010,7 @@ public class AccordionScreen extends Screen {
 
         drawThemeButtons(graphics, mouseX, mouseY);
 
-        if (globalSearchOpen) {
+        if (globalSearchOpen || globalSearchClosing) {
             drawGlobalSearchForeground(graphics, mouseX, mouseY);
         }
     }
@@ -3236,8 +3277,7 @@ public class AccordionScreen extends Screen {
         if (contentScroll > maxContentScroll) contentScroll = maxContentScroll;
         if (contentScroll < 0) contentScroll = 0;
 
-        int itemY = listTop - contentScroll;
-
+        int itemY = listTop - contentScroll + (int)sectionSlideOffset;
         int drawIndex = 0;
         for (AccordionItem item : filteredItems) {
             int itemTop = itemY;
@@ -3304,11 +3344,17 @@ public class AccordionScreen extends Screen {
         int visibleTop = Math.max(top, clipTop);
         int visibleBottom = Math.min(bottom, clipBottom);
 
-        graphics.fill(left, visibleTop, right, visibleBottom, 0x50000000);
-        graphics.fill(left, visibleTop, right, visibleTop + 1, 0xFF404040);
-        graphics.fill(left, visibleBottom - 1, right, visibleBottom, 0xFF404040);
-        graphics.fill(left, visibleTop, left + 1, visibleBottom, 0xFF404040);
-        graphics.fill(right - 1, visibleTop, right, visibleBottom, 0xFF404040);
+        int alpha = (int)(0xFF * sectionFadeProgress);
+        int bgColor = (alpha << 24) | 0x000000;
+        int borderColor = (alpha << 24) | 0x404040;
+        int textColor = (alpha << 24) | 0xFFFFFF;
+        int descColor = (alpha << 24) | 0xAAAAAA;
+
+        graphics.fill(left, visibleTop, right, visibleBottom, bgColor);
+        graphics.fill(left, visibleTop, right, visibleTop + 1, borderColor);
+        graphics.fill(left, visibleBottom - 1, right, visibleBottom, borderColor);
+        graphics.fill(left, visibleTop, left + 1, visibleBottom, borderColor);
+        graphics.fill(right - 1, visibleTop, right, visibleBottom, borderColor);
 
         if (isHover) graphics.fill(left, visibleTop, right, visibleBottom, 0x30FFFFFF);
         if (item.expanded) graphics.fill(left, visibleTop, left + 3, visibleBottom, ModConfig.guiColor);
@@ -3318,16 +3364,16 @@ public class AccordionScreen extends Screen {
             graphics.drawString(this.font, arrow, left + 8, top + 8, ModConfig.guiColor, true);
         }
         if (top + 3 >= clipTop && top + 3 <= clipBottom) {
-            graphics.drawString(this.font, "§l" + item.title, left + 22, top + 3, 0xFFFFFFFF, true);
+            graphics.drawString(this.font, "§l" + item.title, left + 22, top + 3, textColor, true);
         }
         if (top + 14 >= clipTop && top + 14 <= clipBottom) {
-            graphics.drawString(this.font, "§7" + item.description, left + 22, top + 14, 0xFFAAAAAA, false);
+            graphics.drawString(this.font, "§7" + item.description, left + 22, top + 14, descColor, false);
         }
         if (top + 6 >= clipTop && top + 6 <= clipBottom) {
             boolean status = item.statusGetter.get();
             String statusText = status ? "§a[ON]" : "§7[OFF]";
             int statusWidth = this.font.width(statusText);
-            graphics.drawString(this.font, statusText, right - statusWidth - 10, top + 6, 0xFFFFFFFF, true);
+            graphics.drawString(this.font, statusText, right - statusWidth - 10, top + 6, textColor, true);
         }
     }
 
@@ -3361,11 +3407,18 @@ public class AccordionScreen extends Screen {
         int top = itemY;
         int bottom = itemY + itemHeight;
 
-        graphics.fill(left, top, right, bottom, 0x50000000);
-        graphics.fill(left, top, right, top + 1, 0xFF404040);
-        graphics.fill(left, bottom - 1, right, bottom, 0xFF404040);
-        graphics.fill(left, top, left + 1, bottom, 0xFF404040);
-        graphics.fill(right - 1, top, right, bottom, 0xFF404040);
+        // === FADE-IN СПИСКА ===
+        int alpha = (int)(0xFF * sectionFadeProgress);
+        int bgColor = (alpha << 24) | 0x000000;
+        int borderColor = (alpha << 24) | 0x404040;
+        int textColor = (alpha << 24) | 0xFFFFFF;
+        int descColor = (alpha << 24) | 0xAAAAAA;
+
+        graphics.fill(left, top, right, bottom, bgColor);
+        graphics.fill(left, top, right, top + 1, borderColor);
+        graphics.fill(left, bottom - 1, right, bottom, borderColor);
+        graphics.fill(left, top, left + 1, bottom, borderColor);
+        graphics.fill(right - 1, top, right, bottom, borderColor);
 
         if (isHover) {
             graphics.fill(left, top, right, bottom, 0x40FFFFFF);
@@ -3381,17 +3434,17 @@ public class AccordionScreen extends Screen {
 
         String arrow = item.expanded ? "▼" : "▶";
         graphics.drawString(this.font, arrow, left + 8, top + 8, ModConfig.guiColor, true);
-        graphics.drawString(this.font, "§l" + item.title, left + 22, top + 3, 0xFFFFFFFF, true);
-        graphics.drawString(this.font, "§7" + item.description, left + 22, top + 14, 0xFFAAAAAA, false);
+        graphics.drawString(this.font, "§l" + item.title, left + 22, top + 3, textColor, true);
+        graphics.drawString(this.font, "§7" + item.description, left + 22, top + 14, descColor, false);
 
         boolean status = item.statusGetter.get();
         String statusText = status ? "§a[ON]" : "§7[OFF]";
         int statusWidth = this.font.width(statusText);
-        graphics.drawString(this.font, statusText, right - statusWidth - 10, top + 6, 0xFFFFFFFF, true);
+        graphics.drawString(this.font, statusText, right - statusWidth - 10, top + 6, textColor, true);
 
         if (isHover && !item.expanded) {
             int arrowX = right - statusWidth - 26;
-            graphics.drawString(this.font, "§7→", arrowX, top + 10, 0xFFAAAAAA, false);
+            graphics.drawString(this.font, "§7→", arrowX, top + 10, descColor, false);
         }
 
         // === ПОДСВЕТКА НАЙДЕННОГО (толстая пульсирующая рамка) ===
@@ -3399,12 +3452,12 @@ public class AccordionScreen extends Screen {
             float progress = getHighlightProgress(item);
             float pulse = 0.7f + 0.3f * (float)Math.sin(progress * Math.PI * 6);
             float fade = 1.0f - progress * 0.5f;
-            int alpha = (int)(0xFF * pulse * fade);
+            int hiAlpha = (int)(0xFF * pulse * fade);
 
             int r = 0xFF;
             int g = 0xFF;
             int b = 0x80;
-            int highlightColor = (alpha << 24) | (r << 16) | (g << 8) | b;
+            int highlightColor = (hiAlpha << 24) | (r << 16) | (g << 8) | b;
 
             int thickness = 3;
             graphics.fill(left - thickness, top - thickness, right + thickness, top, highlightColor);
@@ -3412,7 +3465,7 @@ public class AccordionScreen extends Screen {
             graphics.fill(left - thickness, top, left, bottom, highlightColor);
             graphics.fill(right, top, right + thickness, bottom, highlightColor);
 
-            int innerColor = (Math.min(255, alpha + 40) << 24) | 0xFFFFFF;
+            int innerColor = (Math.min(255, hiAlpha + 40) << 24) | 0xFFFFFF;
             graphics.fill(left, top, right, top + 1, innerColor);
             graphics.fill(left, bottom - 1, right, bottom, innerColor);
         }
@@ -3423,27 +3476,37 @@ public class AccordionScreen extends Screen {
         int overlayX = panelX + (PANEL_WIDTH - OVERLAY_W) / 2;
         int overlayY = panelY + (PANEL_HEIGHT - OVERLAY_H) / 2;
 
-        graphics.fill(0, 0, this.width, this.height, 0xB0000000);
-        graphics.fill(overlayX, overlayY, overlayX + OVERLAY_W, overlayY + OVERLAY_H, 0xF0000000);
-        graphics.fill(overlayX, overlayY, overlayX + OVERLAY_W, overlayY + 2, ModConfig.guiColor);
-        graphics.fill(overlayX, overlayY + OVERLAY_H - 2, overlayX + OVERLAY_W, overlayY + OVERLAY_H, ModConfig.guiColor);
-        graphics.fill(overlayX, overlayY, overlayX + 2, overlayY + OVERLAY_H, ModConfig.guiColor);
-        graphics.fill(overlayX + OVERLAY_W - 2, overlayY, overlayX + OVERLAY_W, overlayY + OVERLAY_H, ModConfig.guiColor);
+        // === FADE-IN OVERLAY ===
+        int alpha = (int)(0xFF * globalSearchFadeProgress);
+        int bgAlpha = (int)(0xB0 * globalSearchFadeProgress);
+        int panelAlpha = (int)(0xF0 * globalSearchFadeProgress);
+
+        graphics.fill(0, 0, this.width, this.height, (bgAlpha << 24));
+        graphics.fill(overlayX, overlayY, overlayX + OVERLAY_W, overlayY + OVERLAY_H,
+                (panelAlpha << 24) | 0x000000);
+
+        int borderColor = (alpha << 24) | (ModConfig.guiColor & 0x00FFFFFF);
+        graphics.fill(overlayX, overlayY, overlayX + OVERLAY_W, overlayY + 2, borderColor);
+        graphics.fill(overlayX, overlayY + OVERLAY_H - 2, overlayX + OVERLAY_W, overlayY + OVERLAY_H, borderColor);
+        graphics.fill(overlayX, overlayY, overlayX + 2, overlayY + OVERLAY_H, borderColor);
+        graphics.fill(overlayX + OVERLAY_W - 2, overlayY, overlayX + OVERLAY_W, overlayY + OVERLAY_H, borderColor);
 
         graphics.drawString(this.font,
                 ModConfig.modLogoRussian ? "§l🔍 Глобальный поиск" : "§l🔍 Global Search",
-                overlayX + 15, overlayY + 15, ModConfig.guiColor, true);
+                overlayX + 15, overlayY + 15, borderColor, true);
     }
 
     private void drawGlobalSearchForeground(GuiGraphics graphics, int mouseX, int mouseY) {
         int overlayX = panelX + (PANEL_WIDTH - OVERLAY_W) / 2;
         int overlayY = panelY + (PANEL_HEIGHT - OVERLAY_H) / 2;
 
+        int alpha = (int)(0xFF * globalSearchFadeProgress);
+
         graphics.drawString(this.font,
                 ModConfig.modLogoRussian
                         ? "§7Найдено: §e" + globalSearchResults.size()
                         : "§7Found: §e" + globalSearchResults.size(),
-                overlayX + 15, overlayY + 70, 0xFFAAAAAA, false);
+                overlayX + 15, overlayY + 70, (alpha << 24) | 0xAAAAAA, false);
 
         globalSearchListX = overlayX + 15;
         globalSearchListY = overlayY + 90;
@@ -3459,11 +3522,11 @@ public class AccordionScreen extends Screen {
                     ModConfig.modLogoRussian
                             ? "§7Начни вводить название или описание..."
                             : "§7Start typing a name or description...",
-                    globalSearchListX + 5, globalSearchListY + 10, 0xFF888888, false);
+                    globalSearchListX + 5, globalSearchListY + 10, (alpha << 24) | 0x888888, false);
         } else if (globalSearchResults.isEmpty()) {
             graphics.drawString(this.font,
                     ModConfig.modLogoRussian ? "§7Ничего не найдено" : "§7Nothing found",
-                    globalSearchListX + 5, globalSearchListY + 10, 0xFF888888, false);
+                    globalSearchListX + 5, globalSearchListY + 10, (alpha << 24) | 0x888888, false);
         } else {
             for (int i = 0; i < globalSearchResults.size(); i++) {
                 String[] r = globalSearchResults.get(i);
@@ -3474,9 +3537,9 @@ public class AccordionScreen extends Screen {
                 if (hovered) {
                     globalSearchHovered = i;
                     graphics.fill(globalSearchListX, rowY, globalSearchListX + globalSearchListW,
-                            rowY + globalSearchRowH, 0x40FFFFFF);
+                            rowY + globalSearchRowH, (int)(0x40 * globalSearchFadeProgress) << 24);
                     graphics.fill(globalSearchListX, rowY, globalSearchListX + 3,
-                            rowY + globalSearchRowH, ModConfig.guiColor);
+                            rowY + globalSearchRowH, (alpha << 24) | (ModConfig.guiColor & 0x00FFFFFF));
                 }
 
                 String sectionName = r[0];
@@ -3485,12 +3548,12 @@ public class AccordionScreen extends Screen {
                 }
 
                 String text = "§f" + r[2] + " §7· §e" + sectionName;
-                graphics.drawString(this.font, text, globalSearchListX + 10, rowY + 6, 0xFFFFFFFF, false);
+                graphics.drawString(this.font, text, globalSearchListX + 10, rowY + 6, (alpha << 24) | 0xFFFFFF, false);
 
                 String desc = r[3];
                 if (desc.length() > 40) desc = desc.substring(0, 40) + "...";
                 graphics.drawString(this.font, "§8" + desc,
-                        globalSearchListX + 10 + this.font.width(text) + 8, rowY + 6, 0xFF888888, false);
+                        globalSearchListX + 10 + this.font.width(text) + 8, rowY + 6, (alpha << 24) | 0x888888, false);
             }
         }
 
@@ -3498,7 +3561,7 @@ public class AccordionScreen extends Screen {
                 ModConfig.modLogoRussian
                         ? "§7Кликни по результату — перейдёшь в раздел. §eESC §7— закрыть."
                         : "§7Click a result — jump to section. §eESC §7— close.",
-                overlayX + 15, overlayY + OVERLAY_H - 18, 0xFFAAAAAA, false);
+                overlayX + 15, overlayY + OVERLAY_H - 18, (alpha << 24) | 0xAAAAAA, false);
     }
 
     // ===================== СКРОЛЛ =====================
@@ -3608,6 +3671,8 @@ public class AccordionScreen extends Screen {
                     }
                     activeSectionIndex = i;
                     contentScroll = 0;
+                    sectionFadeProgress = 0.0f;  // запускаем fade-in списка
+                    sectionSlideOffset = SECTION_SLIDE_DISTANCE;
                     if (searchField != null) {
                         restoringSearch = true;
                         searchField.setValue("");
