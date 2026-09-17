@@ -19,7 +19,8 @@
     "CustomHitboxMixin",
     "ItemScrollerMixin",
     "CooldownsMixin",
-    "AbstractContainerScreenAccessor"
+    "AbstractContainerScreenAccessor",
+    "PvPSafeHurtMixin"
   ],
   "injectors": {
     "defaultRequire": 1

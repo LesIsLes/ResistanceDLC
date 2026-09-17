@@ -22,13 +22,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Supplier;
 
 /**
  * AccordionScreen — GUI мода с аккордеон-меню.
  * Одна панель раскрыта за раз, плавные анимации, глобальный поиск,
  * подсветка найденного, fade-in overlay, fade-in разделов.
+ *
+ * ВСЕ строки локализованы через LocalizationManager.
  */
 public class AccordionScreen extends Screen {
 
@@ -40,18 +41,6 @@ public class AccordionScreen extends Screen {
 
     private static final int OVERLAY_W = 460;
     private static final int OVERLAY_H = 380;
-
-    private static final Set<String> IMPLEMENTED_PANELS = Set.of(
-            "no_hurt_cam", "no_bobbing", "cooldowns", "combo",
-            "potion_effects", "equipment_hud", "effect_warnings", "extra_hud",
-            "totem_log", "auto_swap", "custom_hit_sounds", "fast_exp",
-            "shift_tap", "auto_sprint", "pvp_safe", "pickup_logger",
-            "tape_mouse", "item_scroller",
-            "zoom", "crosshair", "custom_hitbox", "item_physics",
-            "aspect_ratio", "low_fire_shield", "particle_blocker",
-            "chat_filter", "auto_reconnect", "death_coords", "gui_theme",
-            "waypoints", "config_manager"
-    );
 
     private int panelX;
     private int panelY;
@@ -83,25 +72,18 @@ public class AccordionScreen extends Screen {
     private int globalSearchListX, globalSearchListY, globalSearchListW, globalSearchRowH;
     private final List<AbstractWidget> globalSearchWidgets = new ArrayList<>();
 
-    // ===== ПОДСВЕТКА НАЙДЕННОГО =====
     private String highlightedItemId = null;
     private long highlightStartTime = 0;
     private static final long HIGHLIGHT_DURATION = 2000;
 
-    // ===== FADE-IN OVERLAY (глобальный поиск) =====
-    /** 0.0 = полностью прозрачно, 1.0 = полностью видно. */
     private float globalSearchFadeProgress = 0.0f;
-    /** Скорость fade-in (единиц за секунду). 4.0 ≈ 250 мс. */
     private static final float GLOBAL_SEARCH_FADE_SPEED = 4.0f;
-    /** Нужно ли закрывать overlay после fade-out (для ESC). */
     private boolean globalSearchClosing = false;
 
-    // === FADE-IN СПИСКА ПРИ СМЕНЕ РАЗДЕЛА ===
     private float sectionFadeProgress = 1.0f;
-    private static final float SECTION_FADE_SPEED = 3.0f;   // медленнее — заметнее
-    /** Сдвиг списка по Y при fade-in (px). 0 = финальная позиция. */
+    private static final float SECTION_FADE_SPEED = 3.0f;
     private float sectionSlideOffset = 0.0f;
-    private static final float SECTION_SLIDE_DISTANCE = 15.0f;  // максимальный сдвиг вверх
+    private static final float SECTION_SLIDE_DISTANCE = 15.0f;
 
     // ===================== МОДЕЛЬ =====================
     public static class AccordionItem {
@@ -143,7 +125,7 @@ public class AccordionScreen extends Screen {
     private final List<Section> sections = new ArrayList<>();
 
     public AccordionScreen() {
-        super(Component.literal("Resistance DLC"));
+        super(Component.literal(LocalizationManager.get("gui.resistancedlc.title")));
     }
 
     // ===================== INIT =====================
@@ -162,7 +144,6 @@ public class AccordionScreen extends Screen {
             }
         }
 
-        // [EN] и [×] — справа
         Button closeBtn = Button.builder(
                         Component.literal("×"),
                         (b) -> this.onClose())
@@ -174,12 +155,12 @@ public class AccordionScreen extends Screen {
                         (b) -> {
                             ModConfig.modLogoRussian = !ModConfig.modLogoRussian;
                             ConfigManager.save();
+                            LocalizationManager.reload();
                             rebuildWidgetsPreservingState();
                         })
                 .bounds(panelX + PANEL_WIDTH - 78, panelY + 6, 30, 18).build();
         this.addRenderableWidget(langBtn);
 
-        // 5 кнопок-пресетов тем GUI — неактивные Button, клики ловим в mouseClicked
         int themeBtnSize = 18;
         int themeBtnGap = 4;
         int themeBtnY = panelY + 6;
@@ -199,7 +180,7 @@ public class AccordionScreen extends Screen {
         int searchX = panelX + PANEL_WIDTH - 12 - 145;
         int searchY = panelY + HEADER_HEIGHT + 10 + 6;
         this.searchField = new EditBox(this.font, searchX, searchY, 140, 18,
-                Component.literal(ModConfig.modLogoRussian ? "Поиск..." : "Search..."));
+                Component.literal(LocalizationManager.get("gui.resistancedlc.search.hint")));
         this.searchField.setMaxLength(30);
 
         this.searchField.setResponder(text -> {
@@ -312,19 +293,16 @@ public class AccordionScreen extends Screen {
             }
         }
 
-        // === FADE-IN OVERLAY ===
         if (globalSearchOpen) {
             if (globalSearchFadeProgress < 1.0f) {
                 globalSearchFadeProgress = Math.min(1.0f,
                         globalSearchFadeProgress + safeDelta * GLOBAL_SEARCH_FADE_SPEED);
             }
         } else if (globalSearchClosing) {
-            // Fade-out при закрытии
             globalSearchFadeProgress -= safeDelta * GLOBAL_SEARCH_FADE_SPEED;
             if (globalSearchFadeProgress <= 0.0f) {
                 globalSearchFadeProgress = 0.0f;
                 globalSearchClosing = false;
-                // Реально закрываем
                 globalSearchResults.clear();
                 globalSearchHovered = -1;
                 clearGlobalSearchWidgets();
@@ -336,11 +314,9 @@ public class AccordionScreen extends Screen {
             }
         }
 
-        // === FADE-IN СПИСКА ПРИ СМЕНЕ РАЗДЕЛА ===
         if (sectionFadeProgress < 1.0f) {
             sectionFadeProgress = Math.min(1.0f,
                     sectionFadeProgress + safeDelta * SECTION_FADE_SPEED);
-            // Сдвиг = (1 - progress) * distance. При progress=1 → 0
             sectionSlideOffset = (1.0f - sectionFadeProgress) * SECTION_SLIDE_DISTANCE;
         } else {
             sectionSlideOffset = 0.0f;
@@ -401,7 +377,7 @@ public class AccordionScreen extends Screen {
         }
     }
 
-    // ===================== ПОДСВЕТКА НАЙДЕННОГО =====================
+    // ===================== ПОДСВЕТКА =====================
     private void triggerHighlight(String itemId) {
         this.highlightedItemId = itemId;
         this.highlightStartTime = System.currentTimeMillis();
@@ -425,7 +401,7 @@ public class AccordionScreen extends Screen {
     private void openGlobalSearch() {
         globalSearchOpen = true;
         globalSearchClosing = false;
-        globalSearchFadeProgress = 0.0f;  // начинаем с прозрачного
+        globalSearchFadeProgress = 0.0f;
         globalSearchResults.clear();
         globalSearchHovered = -1;
 
@@ -444,12 +420,10 @@ public class AccordionScreen extends Screen {
     }
 
     private void closeGlobalSearch() {
-        // Запускаем fade-out, реальное закрытие — в tickAnimations
         globalSearchClosing = true;
         globalSearchOpen = false;
         globalSearchHovered = -1;
 
-        // Прячем виджеты overlay сразу
         for (AbstractWidget w : globalSearchWidgets) {
             w.visible = false;
             w.active = false;
@@ -464,7 +438,7 @@ public class AccordionScreen extends Screen {
 
         EditBox field = new EditBox(this.font, overlayX + 15, overlayY + 40,
                 OVERLAY_W - 60, 22, Component.literal(
-                ModConfig.modLogoRussian ? "Поиск по всем настройкам..." : "Search all settings..."));
+                LocalizationManager.get("gui.resistancedlc.search.global.hint")));
         field.setMaxLength(40);
         field.setResponder(this::performGlobalSearch);
         this.globalSearchField = field;
@@ -527,7 +501,6 @@ public class AccordionScreen extends Screen {
         }
         if (sectionIdx < 0) return;
 
-        // Мгновенно закрываем overlay (без fade-out, т.к. сразу прыгаем)
         globalSearchOpen = false;
         globalSearchClosing = false;
         globalSearchFadeProgress = 0.0f;
@@ -541,7 +514,7 @@ public class AccordionScreen extends Screen {
         }
 
         activeSectionIndex = sectionIdx;
-        sectionFadeProgress = 0.0f;  // запускаем fade-in списка
+        sectionFadeProgress = 0.0f;
         sectionSlideOffset = SECTION_SLIDE_DISTANCE;
 
         if (searchField != null) {
@@ -601,13 +574,15 @@ public class AccordionScreen extends Screen {
         sections.clear();
 
         // HUD
-        Section hud = new Section("hud", "HUD",
-                ModConfig.modLogoRussian ? "Координаты, FPS, эффекты" : "Coords, FPS, effects",
+        Section hud = new Section("hud",
+                LocalizationManager.get("gui.resistancedlc.section.hud"),
+                LocalizationManager.get("gui.resistancedlc.section.hud.desc"),
                 new ItemStack(Items.COMPASS));
 
         AccordionItem nhcItem = new AccordionItem(
-                "no_hurt_cam", "No Hurt Cam",
-                ModConfig.modLogoRussian ? "Убирает тряску при уроне" : "Removes damage shake",
+                "no_hurt_cam",
+                LocalizationManager.get("gui.resistancedlc.item.no_hurt_cam.title"),
+                LocalizationManager.get("gui.resistancedlc.item.no_hurt_cam.desc"),
                 () -> ModConfig.noHurtCamEnabled,
                 () -> { ModConfig.noHurtCamEnabled = !ModConfig.noHurtCamEnabled; ConfigManager.save(); }
         );
@@ -615,8 +590,9 @@ public class AccordionScreen extends Screen {
         hud.items.add(nhcItem);
 
         AccordionItem nbItem = new AccordionItem(
-                "no_bobbing", "No Bobbing",
-                ModConfig.modLogoRussian ? "Убирает покачивание камеры" : "Removes camera bobbing",
+                "no_bobbing",
+                LocalizationManager.get("gui.resistancedlc.item.no_bobbing.title"),
+                LocalizationManager.get("gui.resistancedlc.item.no_bobbing.desc"),
                 () -> ModConfig.noBobbingEnabled,
                 () -> { ModConfig.noBobbingEnabled = !ModConfig.noBobbingEnabled; ConfigManager.save(); }
         );
@@ -624,8 +600,9 @@ public class AccordionScreen extends Screen {
         hud.items.add(nbItem);
 
         AccordionItem cdItem = new AccordionItem(
-                "cooldowns", "CoolDowns",
-                ModConfig.modLogoRussian ? "Кулдауны предметов" : "Item cooldowns",
+                "cooldowns",
+                LocalizationManager.get("gui.resistancedlc.item.cooldowns.title"),
+                LocalizationManager.get("gui.resistancedlc.item.cooldowns.desc"),
                 () -> ModConfig.cooldownsEnabled,
                 () -> { ModConfig.cooldownsEnabled = !ModConfig.cooldownsEnabled; ConfigManager.save(); }
         );
@@ -633,8 +610,9 @@ public class AccordionScreen extends Screen {
         hud.items.add(cdItem);
 
         AccordionItem comboItem = new AccordionItem(
-                "combo", "Combo Counter",
-                ModConfig.modLogoRussian ? "Счётчик комбо" : "Combo counter",
+                "combo",
+                LocalizationManager.get("gui.resistancedlc.item.combo.title"),
+                LocalizationManager.get("gui.resistancedlc.item.combo.desc"),
                 () -> ModConfig.comboEnabled,
                 () -> { ModConfig.comboEnabled = !ModConfig.comboEnabled; ConfigManager.save(); }
         );
@@ -642,8 +620,9 @@ public class AccordionScreen extends Screen {
         hud.items.add(comboItem);
 
         AccordionItem peItem = new AccordionItem(
-                "potion_effects", "Potion Effects",
-                ModConfig.modLogoRussian ? "Эффекты зелий" : "Potion effects",
+                "potion_effects",
+                LocalizationManager.get("gui.resistancedlc.item.potion_effects.title"),
+                LocalizationManager.get("gui.resistancedlc.item.potion_effects.desc"),
                 () -> ModConfig.showPotionEffects,
                 () -> { ModConfig.showPotionEffects = !ModConfig.showPotionEffects; ConfigManager.save(); }
         );
@@ -651,8 +630,9 @@ public class AccordionScreen extends Screen {
         hud.items.add(peItem);
 
         AccordionItem eqItem = new AccordionItem(
-                "equipment_hud", "Equipment HUD",
-                ModConfig.modLogoRussian ? "Экипировка игрока" : "Player equipment",
+                "equipment_hud",
+                LocalizationManager.get("gui.resistancedlc.item.equipment_hud.title"),
+                LocalizationManager.get("gui.resistancedlc.item.equipment_hud.desc"),
                 () -> ModConfig.showEquipmentHud,
                 () -> { ModConfig.showEquipmentHud = !ModConfig.showEquipmentHud; ConfigManager.save(); }
         );
@@ -660,8 +640,9 @@ public class AccordionScreen extends Screen {
         hud.items.add(eqItem);
 
         AccordionItem ewItem = new AccordionItem(
-                "effect_warnings", "Effect Warnings",
-                ModConfig.modLogoRussian ? "Предупреждение о конце эффектов" : "Effect expiring warnings",
+                "effect_warnings",
+                LocalizationManager.get("gui.resistancedlc.item.effect_warnings.title"),
+                LocalizationManager.get("gui.resistancedlc.item.effect_warnings.desc"),
                 () -> ModConfig.effectWarningsEnabled,
                 () -> { ModConfig.effectWarningsEnabled = !ModConfig.effectWarningsEnabled; ConfigManager.save(); }
         );
@@ -669,8 +650,9 @@ public class AccordionScreen extends Screen {
         hud.items.add(ewItem);
 
         AccordionItem ehItem = new AccordionItem(
-                "extra_hud", "Extra HUD",
-                ModConfig.modLogoRussian ? "FPS, Ping, TPS, BPS, Direction, Hits" : "FPS, Ping, TPS, BPS, Direction, Hits",
+                "extra_hud",
+                LocalizationManager.get("gui.resistancedlc.item.extra_hud.title"),
+                LocalizationManager.get("gui.resistancedlc.item.extra_hud.desc"),
                 () -> ModConfig.showFps || ModConfig.showPing || ModConfig.showTps
                         || ModConfig.showBps || ModConfig.showDirection || ModConfig.showHitCounter,
                 () -> {
@@ -691,13 +673,15 @@ public class AccordionScreen extends Screen {
         sections.add(hud);
 
         // PVP
-        Section pvp = new Section("pvp", "PvP",
-                ModConfig.modLogoRussian ? "Бой, свап, звуки" : "Combat, swap, sounds",
+        Section pvp = new Section("pvp",
+                LocalizationManager.get("gui.resistancedlc.section.pvp"),
+                LocalizationManager.get("gui.resistancedlc.section.pvp.desc"),
                 new ItemStack(Items.DIAMOND_SWORD));
 
         AccordionItem chsItem = new AccordionItem(
-                "custom_hit_sounds", "Custom Hit Sounds",
-                ModConfig.modLogoRussian ? "Кастомные звуки удара" : "Custom hit sounds",
+                "custom_hit_sounds",
+                LocalizationManager.get("gui.resistancedlc.item.custom_hit_sounds.title"),
+                LocalizationManager.get("gui.resistancedlc.item.custom_hit_sounds.desc"),
                 () -> ModConfig.customHitSoundsEnabled,
                 () -> { ModConfig.customHitSoundsEnabled = !ModConfig.customHitSoundsEnabled; ConfigManager.save(); }
         );
@@ -705,8 +689,9 @@ public class AccordionScreen extends Screen {
         pvp.items.add(chsItem);
 
         AccordionItem totemItem = new AccordionItem(
-                "totem_log", "Totem Log",
-                ModConfig.modLogoRussian ? "Лог сбитых тотемов" : "Log of broken totems",
+                "totem_log",
+                LocalizationManager.get("gui.resistancedlc.item.totem_log.title"),
+                LocalizationManager.get("gui.resistancedlc.item.totem_log.desc"),
                 () -> ModConfig.totemLogEnabled,
                 () -> { ModConfig.totemLogEnabled = !ModConfig.totemLogEnabled; ConfigManager.save(); }
         );
@@ -714,8 +699,9 @@ public class AccordionScreen extends Screen {
         pvp.items.add(totemItem);
 
         AccordionItem asItem = new AccordionItem(
-                "auto_swap", "AutoSwap",
-                ModConfig.modLogoRussian ? "Свап offhand ↔ инвентарь" : "Offhand ↔ inventory swap",
+                "auto_swap",
+                LocalizationManager.get("gui.resistancedlc.item.auto_swap.title"),
+                LocalizationManager.get("gui.resistancedlc.item.auto_swap.desc"),
                 () -> ModConfig.autoSwapEnabled,
                 () -> { ModConfig.autoSwapEnabled = !ModConfig.autoSwapEnabled; ConfigManager.save(); }
         );
@@ -723,8 +709,9 @@ public class AccordionScreen extends Screen {
         pvp.items.add(asItem);
 
         AccordionItem feItem = new AccordionItem(
-                "fast_exp", "FastExp",
-                ModConfig.modLogoRussian ? "Быстрое использование опыта" : "Fast exp usage",
+                "fast_exp",
+                LocalizationManager.get("gui.resistancedlc.item.fast_exp.title"),
+                LocalizationManager.get("gui.resistancedlc.item.fast_exp.desc"),
                 () -> ModConfig.fastExpEnabled,
                 () -> { ModConfig.fastExpEnabled = !ModConfig.fastExpEnabled; ConfigManager.save(); }
         );
@@ -732,8 +719,9 @@ public class AccordionScreen extends Screen {
         pvp.items.add(feItem);
 
         AccordionItem stItem = new AccordionItem(
-                "shift_tap", "ShiftTap",
-                ModConfig.modLogoRussian ? "Крит через шифт" : "Crit via shift",
+                "shift_tap",
+                LocalizationManager.get("gui.resistancedlc.item.shift_tap.title"),
+                LocalizationManager.get("gui.resistancedlc.item.shift_tap.desc"),
                 () -> ModConfig.shiftTapEnabled,
                 () -> { ModConfig.shiftTapEnabled = !ModConfig.shiftTapEnabled; ConfigManager.save(); }
         );
@@ -741,8 +729,9 @@ public class AccordionScreen extends Screen {
         pvp.items.add(stItem);
 
         AccordionItem aspItem = new AccordionItem(
-                "auto_sprint", "AutoSprint",
-                ModConfig.modLogoRussian ? "Автобег" : "Auto sprint",
+                "auto_sprint",
+                LocalizationManager.get("gui.resistancedlc.item.auto_sprint.title"),
+                LocalizationManager.get("gui.resistancedlc.item.auto_sprint.desc"),
                 () -> ModConfig.autoSprintEnabled,
                 () -> { ModConfig.autoSprintEnabled = !ModConfig.autoSprintEnabled; ConfigManager.save(); }
         );
@@ -750,17 +739,19 @@ public class AccordionScreen extends Screen {
         pvp.items.add(aspItem);
 
         AccordionItem psItem = new AccordionItem(
-                "pvp_safe", "PvPSafe",
-                ModConfig.modLogoRussian ? "Защита от выхода в бою" : "Combat quit protection",
+                "pvp_safe",
+                LocalizationManager.get("gui.resistancedlc.item.pvp_safe.title"),
+                LocalizationManager.get("gui.resistancedlc.item.pvp_safe.desc"),
                 () -> ModConfig.pvpSafeEnabled,
                 () -> { ModConfig.pvpSafeEnabled = !ModConfig.pvpSafeEnabled; ConfigManager.save(); }
         );
-        psItem.contentHeight = 158;
+        psItem.contentHeight = 186;
         pvp.items.add(psItem);
 
         AccordionItem plItem = new AccordionItem(
-                "pickup_logger", "PickUpLogger",
-                ModConfig.modLogoRussian ? "Лог подобранных предметов" : "Pickup log",
+                "pickup_logger",
+                LocalizationManager.get("gui.resistancedlc.item.pickup_logger.title"),
+                LocalizationManager.get("gui.resistancedlc.item.pickup_logger.desc"),
                 () -> ModConfig.pickupLogEnabled,
                 () -> { ModConfig.pickupLogEnabled = !ModConfig.pickupLogEnabled; ConfigManager.save(); }
         );
@@ -770,13 +761,15 @@ public class AccordionScreen extends Screen {
         sections.add(pvp);
 
         // PVE
-        Section pve = new Section("pve", "PvE",
-                ModConfig.modLogoRussian ? "Кликеры, скролл" : "Clickers, scroller",
+        Section pve = new Section("pve",
+                LocalizationManager.get("gui.resistancedlc.section.pve"),
+                LocalizationManager.get("gui.resistancedlc.section.pve.desc"),
                 new ItemStack(Items.CARROT));
 
         AccordionItem tmItem = new AccordionItem(
-                "tape_mouse", "TapeMouse",
-                ModConfig.modLogoRussian ? "Автокликер" : "Autoclicker",
+                "tape_mouse",
+                LocalizationManager.get("gui.resistancedlc.item.tape_mouse.title"),
+                LocalizationManager.get("gui.resistancedlc.item.tape_mouse.desc"),
                 () -> ModConfig.tapeMouseEnabled,
                 () -> { ModConfig.tapeMouseEnabled = !ModConfig.tapeMouseEnabled; ConfigManager.save(); }
         );
@@ -784,8 +777,9 @@ public class AccordionScreen extends Screen {
         pve.items.add(tmItem);
 
         AccordionItem isItem = new AccordionItem(
-                "item_scroller", "ItemScroller",
-                ModConfig.modLogoRussian ? "Быстрый перенос скроллом" : "Fast scroll transfer",
+                "item_scroller",
+                LocalizationManager.get("gui.resistancedlc.item.item_scroller.title"),
+                LocalizationManager.get("gui.resistancedlc.item.item_scroller.desc"),
                 () -> ModConfig.itemScrollerEnabled,
                 () -> { ModConfig.itemScrollerEnabled = !ModConfig.itemScrollerEnabled; ConfigManager.save(); }
         );
@@ -795,13 +789,15 @@ public class AccordionScreen extends Screen {
         sections.add(pve);
 
         // VISUAL
-        Section visual = new Section("visual", "Visual",
-                ModConfig.modLogoRussian ? "Зум, прицел, эффекты" : "Zoom, crosshair, effects",
+        Section visual = new Section("visual",
+                LocalizationManager.get("gui.resistancedlc.section.visual"),
+                LocalizationManager.get("gui.resistancedlc.section.visual.desc"),
                 new ItemStack(Items.ENDER_EYE));
 
         AccordionItem zoomItem = new AccordionItem(
-                "zoom", "Zoom",
-                ModConfig.modLogoRussian ? "Плавное приближение" : "Smooth zoom",
+                "zoom",
+                LocalizationManager.get("gui.resistancedlc.item.zoom.title"),
+                LocalizationManager.get("gui.resistancedlc.item.zoom.desc"),
                 () -> ModConfig.zoomEnabled,
                 () -> { ModConfig.zoomEnabled = !ModConfig.zoomEnabled; ConfigManager.save(); }
         );
@@ -809,8 +805,9 @@ public class AccordionScreen extends Screen {
         visual.items.add(zoomItem);
 
         AccordionItem chItem = new AccordionItem(
-                "crosshair", "Custom Crosshair",
-                ModConfig.modLogoRussian ? "Кастомный прицел" : "Custom crosshair",
+                "crosshair",
+                LocalizationManager.get("gui.resistancedlc.item.crosshair.title"),
+                LocalizationManager.get("gui.resistancedlc.item.crosshair.desc"),
                 () -> ModConfig.crosshairEnabled,
                 () -> { ModConfig.crosshairEnabled = !ModConfig.crosshairEnabled; ConfigManager.save(); }
         );
@@ -818,8 +815,9 @@ public class AccordionScreen extends Screen {
         visual.items.add(chItem);
 
         AccordionItem hbItem = new AccordionItem(
-                "custom_hitbox", "Custom Hitbox",
-                ModConfig.modLogoRussian ? "Цвет debug-хитбоксов" : "Debug hitbox color",
+                "custom_hitbox",
+                LocalizationManager.get("gui.resistancedlc.item.custom_hitbox.title"),
+                LocalizationManager.get("gui.resistancedlc.item.custom_hitbox.desc"),
                 () -> ModConfig.customHitboxEnabled,
                 () -> { ModConfig.customHitboxEnabled = !ModConfig.customHitboxEnabled; ConfigManager.save(); }
         );
@@ -827,8 +825,9 @@ public class AccordionScreen extends Screen {
         visual.items.add(hbItem);
 
         AccordionItem ipItem = new AccordionItem(
-                "item_physics", "ItemPhysics",
-                ModConfig.modLogoRussian ? "Предметы лежат плашмя" : "Items lie flat",
+                "item_physics",
+                LocalizationManager.get("gui.resistancedlc.item.item_physics.title"),
+                LocalizationManager.get("gui.resistancedlc.item.item_physics.desc"),
                 () -> ModConfig.itemPhysicsEnabled,
                 () -> { ModConfig.itemPhysicsEnabled = !ModConfig.itemPhysicsEnabled; ConfigManager.save(); }
         );
@@ -836,8 +835,9 @@ public class AccordionScreen extends Screen {
         visual.items.add(ipItem);
 
         AccordionItem arItem = new AccordionItem(
-                "aspect_ratio", "Aspect Ratio",
-                ModConfig.modLogoRussian ? "Растяг FOV" : "FOV stretch",
+                "aspect_ratio",
+                LocalizationManager.get("gui.resistancedlc.item.aspect_ratio.title"),
+                LocalizationManager.get("gui.resistancedlc.item.aspect_ratio.desc"),
                 () -> ModConfig.aspectRatioEnabled,
                 () -> { ModConfig.aspectRatioEnabled = !ModConfig.aspectRatioEnabled; ConfigManager.save(); }
         );
@@ -845,8 +845,9 @@ public class AccordionScreen extends Screen {
         visual.items.add(arItem);
 
         AccordionItem lfsItem = new AccordionItem(
-                "low_fire_shield", "Low Fire / Shield",
-                ModConfig.modLogoRussian ? "Низкий огонь и щит" : "Low fire and shield",
+                "low_fire_shield",
+                LocalizationManager.get("gui.resistancedlc.item.low_fire_shield.title"),
+                LocalizationManager.get("gui.resistancedlc.item.low_fire_shield.desc"),
                 () -> ModConfig.lowFireEnabled || ModConfig.lowShieldEnabled,
                 () -> {
                     boolean any = ModConfig.lowFireEnabled || ModConfig.lowShieldEnabled;
@@ -859,18 +860,19 @@ public class AccordionScreen extends Screen {
         visual.items.add(lfsItem);
 
         AccordionItem pbItem = new AccordionItem(
-                "particle_blocker", "Particle Blocker",
-                ModConfig.modLogoRussian ? "Отключение частиц" : "Particle blocking",
+                "particle_blocker",
+                LocalizationManager.get("gui.resistancedlc.item.particle_blocker.title"),
+                LocalizationManager.get("gui.resistancedlc.item.particle_blocker.desc"),
                 () -> ModConfig.particleBlockerEnabled,
                 () -> { ModConfig.particleBlockerEnabled = !ModConfig.particleBlockerEnabled; ConfigManager.save(); }
         );
         pbItem.contentHeight = 130;
         visual.items.add(pbItem);
 
-        // === Waypoints в Visual ===
         AccordionItem wpItem = new AccordionItem(
-                "waypoints", "Waypoints",
-                ModConfig.modLogoRussian ? "Метки на карте" : "Map waypoints",
+                "waypoints",
+                LocalizationManager.get("gui.resistancedlc.item.waypoints.title"),
+                LocalizationManager.get("gui.resistancedlc.item.waypoints.desc"),
                 () -> ModConfig.waypointsEnabled,
                 () -> { ModConfig.waypointsEnabled = !ModConfig.waypointsEnabled; ConfigManager.save(); }
         );
@@ -880,13 +882,15 @@ public class AccordionScreen extends Screen {
         sections.add(visual);
 
         // MISC
-        Section misc = new Section("misc", "Misc",
-                ModConfig.modLogoRussian ? "Конфиг, автореконнект" : "Config, auto-reconnect",
+        Section misc = new Section("misc",
+                LocalizationManager.get("gui.resistancedlc.section.misc"),
+                LocalizationManager.get("gui.resistancedlc.section.misc.desc"),
                 new ItemStack(Items.REDSTONE));
 
         AccordionItem cfItem = new AccordionItem(
-                "chat_filter", "ChatFilter",
-                ModConfig.modLogoRussian ? "Фильтр чата" : "Chat filter",
+                "chat_filter",
+                LocalizationManager.get("gui.resistancedlc.item.chat_filter.title"),
+                LocalizationManager.get("gui.resistancedlc.item.chat_filter.desc"),
                 () -> ModConfig.chatFilterEnabled,
                 () -> { ModConfig.chatFilterEnabled = !ModConfig.chatFilterEnabled; ConfigManager.save(); }
         );
@@ -894,8 +898,9 @@ public class AccordionScreen extends Screen {
         misc.items.add(cfItem);
 
         AccordionItem arcItem = new AccordionItem(
-                "auto_reconnect", "AutoReconnect",
-                ModConfig.modLogoRussian ? "Авто-переподключение" : "Auto reconnection",
+                "auto_reconnect",
+                LocalizationManager.get("gui.resistancedlc.item.auto_reconnect.title"),
+                LocalizationManager.get("gui.resistancedlc.item.auto_reconnect.desc"),
                 () -> ModConfig.autoReconnectEnabled,
                 () -> { ModConfig.autoReconnectEnabled = !ModConfig.autoReconnectEnabled; ConfigManager.save(); }
         );
@@ -903,8 +908,9 @@ public class AccordionScreen extends Screen {
         misc.items.add(arcItem);
 
         AccordionItem dcItem = new AccordionItem(
-                "death_coords", "DeathCoords",
-                ModConfig.modLogoRussian ? "Координаты смерти" : "Death coords",
+                "death_coords",
+                LocalizationManager.get("gui.resistancedlc.item.death_coords.title"),
+                LocalizationManager.get("gui.resistancedlc.item.death_coords.desc"),
                 () -> ModConfig.deathCoordsEnabled,
                 () -> { ModConfig.deathCoordsEnabled = !ModConfig.deathCoordsEnabled; ConfigManager.save(); }
         );
@@ -912,18 +918,19 @@ public class AccordionScreen extends Screen {
         misc.items.add(dcItem);
 
         AccordionItem themeItem = new AccordionItem(
-                "gui_theme", "GUI Theme",
-                ModConfig.modLogoRussian ? "Цветовая тема интерфейса" : "Interface color theme",
+                "gui_theme",
+                LocalizationManager.get("gui.resistancedlc.item.gui_theme.title"),
+                LocalizationManager.get("gui.resistancedlc.item.gui_theme.desc"),
                 () -> true,
                 () -> {}
         );
         themeItem.contentHeight = 158;
         misc.items.add(themeItem);
 
-        // === ConfigManager в Misc ===
         AccordionItem cfgItem = new AccordionItem(
-                "config_manager", "Config Manager",
-                ModConfig.modLogoRussian ? "Управление конфигами" : "Config management",
+                "config_manager",
+                LocalizationManager.get("gui.resistancedlc.item.config_manager.title"),
+                LocalizationManager.get("gui.resistancedlc.item.config_manager.desc"),
                 () -> true,
                 () -> {}
         );
@@ -1089,7 +1096,7 @@ public class AccordionScreen extends Screen {
     // ===================== ПАНЕЛИ =====================
     private void buildNoHurtCamPanel(List<AbstractWidget> widgets, int x, int y) {
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Включить No Hurt Cam" : "Enable No Hurt Cam"),
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.checkbox", "No Hurt Cam")),
                         this.font)
                 .pos(x, y).selected(ModConfig.noHurtCamEnabled)
                 .onValueChange((c, v) -> { ModConfig.noHurtCamEnabled = v; ConfigManager.save(); })
@@ -1098,7 +1105,7 @@ public class AccordionScreen extends Screen {
 
     private void buildNoBobbingPanel(List<AbstractWidget> widgets, int x, int y) {
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Включить No Bobbing" : "Enable No Bobbing"),
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.checkbox", "No Bobbing")),
                         this.font)
                 .pos(x, y).selected(ModConfig.noBobbingEnabled)
                 .onValueChange((c, v) -> { ModConfig.noBobbingEnabled = v; ConfigManager.save(); })
@@ -1107,7 +1114,7 @@ public class AccordionScreen extends Screen {
 
     private void buildItemPhysicsPanel(List<AbstractWidget> widgets, int x, int y) {
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Включить ItemPhysics" : "Enable ItemPhysics"),
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.checkbox", "ItemPhysics")),
                         this.font)
                 .pos(x, y).selected(ModConfig.itemPhysicsEnabled)
                 .onValueChange((c, v) -> { ModConfig.itemPhysicsEnabled = v; ConfigManager.save(); })
@@ -1116,7 +1123,7 @@ public class AccordionScreen extends Screen {
 
     private void buildAutoSprintPanel(List<AbstractWidget> widgets, int x, int y) {
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Включить AutoSprint" : "Enable AutoSprint"),
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.checkbox", "AutoSprint")),
                         this.font)
                 .pos(x, y).selected(ModConfig.autoSprintEnabled)
                 .onValueChange((c, v) -> { ModConfig.autoSprintEnabled = v; ConfigManager.save(); })
@@ -1125,7 +1132,7 @@ public class AccordionScreen extends Screen {
 
     private void buildFastExpPanel(List<AbstractWidget> widgets, int x, int y) {
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Включить FastExp" : "Enable FastExp"),
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.checkbox", "FastExp")),
                         this.font)
                 .pos(x, y).selected(ModConfig.fastExpEnabled)
                 .onValueChange((c, v) -> { ModConfig.fastExpEnabled = v; ConfigManager.save(); })
@@ -1134,7 +1141,7 @@ public class AccordionScreen extends Screen {
 
     private void buildShiftTapPanel(List<AbstractWidget> widgets, int x, int y) {
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Включить ShiftTap" : "Enable ShiftTap"),
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.checkbox", "ShiftTap")),
                         this.font)
                 .pos(x, y).selected(ModConfig.shiftTapEnabled)
                 .onValueChange((c, v) -> { ModConfig.shiftTapEnabled = v; ConfigManager.save(); })
@@ -1151,12 +1158,12 @@ public class AccordionScreen extends Screen {
         int gap = 6;
 
         EditBox posField = new EditBox(this.font, x, y, w - 50, 18,
-                Component.literal("X, Y"));
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.pos_hint")));
         posField.setMaxLength(20);
         posField.setValue(getX.get() + ", " + getY.get());
         widgets.add(posField);
 
-        widgets.add(Button.builder(Component.literal("OK"), (b) -> {
+        Button applyBtn = Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.apply")), (b) -> {
             try {
                 String[] parts = posField.getValue().split(",");
                 if (parts.length == 2) {
@@ -1166,13 +1173,19 @@ public class AccordionScreen extends Screen {
                     ConfigManager.save();
                 }
             } catch (Exception ignored) {}
-        }).bounds(x + w - 45, y, 20, 18).build());
+        }).bounds(x + w - 45, y, 20, 18).build();
+        applyBtn.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                Component.literal(LocalizationManager.get("gui.resistancedlc.tooltip.apply"))));
+        widgets.add(applyBtn);
 
-        widgets.add(Button.builder(Component.literal("↺"), (b) -> {
+        Button resetBtn = Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.pos_reset")), (b) -> {
             setXY.accept(defX, defY);
             posField.setValue(defX + ", " + defY);
             ConfigManager.save();
-        }).bounds(x + w - 22, y, 22, 18).build());
+        }).bounds(x + w - 22, y, 22, 18).build();
+        resetBtn.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                Component.literal(LocalizationManager.get("gui.resistancedlc.tooltip.reset"))));
+        widgets.add(resetBtn);
 
         return y + rowH + gap;
     }
@@ -1183,14 +1196,14 @@ public class AccordionScreen extends Screen {
         int curY = y;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Показывать эффекты" : "Show effects"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.pos_show_effects")), this.font)
                 .pos(x, curY).selected(ModConfig.showPotionEffects)
                 .onValueChange((c, v) -> { ModConfig.showPotionEffects = v; ConfigManager.save(); })
                 .build());
         curY += rowH;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Показывать иконки" : "Show icons"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.pos_show_icons")), this.font)
                 .pos(x, curY).selected(ModConfig.potionEffectsIcons)
                 .onValueChange((c, v) -> { ModConfig.potionEffectsIcons = v; ConfigManager.save(); })
                 .build());
@@ -1207,14 +1220,14 @@ public class AccordionScreen extends Screen {
         int curY = y;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Показывать экипировку" : "Show equipment"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.equipment_show")), this.font)
                 .pos(x, curY).selected(ModConfig.showEquipmentHud)
                 .onValueChange((c, v) -> { ModConfig.showEquipmentHud = v; ConfigManager.save(); })
                 .build());
         curY += rowH;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Показывать прочность" : "Show durability"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.equipment_durability")), this.font)
                 .pos(x, curY).selected(ModConfig.equipmentShowDurability)
                 .onValueChange((c, v) -> { ModConfig.equipmentShowDurability = v; ConfigManager.save(); })
                 .build());
@@ -1232,20 +1245,20 @@ public class AccordionScreen extends Screen {
         int curY = y;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Включить Effect Warnings" : "Enable Effect Warnings"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.checkbox", "Effect Warnings")), this.font)
                 .pos(x, curY).selected(ModConfig.effectWarningsEnabled)
                 .onValueChange((c, v) -> { ModConfig.effectWarningsEnabled = v; ConfigManager.save(); })
                 .build());
         curY += rowH;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Показывать название" : "Show name"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.pos_show")), this.font)
                 .pos(x, curY).selected(ModConfig.effectWarningsShowName)
                 .onValueChange((c, v) -> { ModConfig.effectWarningsShowName = v; ConfigManager.save(); })
                 .build());
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Показывать иконку" : "Show icon"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.pos_show_icons")), this.font)
                 .pos(x + w / 2, curY).selected(ModConfig.effectWarningsShowIcon)
                 .onValueChange((c, v) -> { ModConfig.effectWarningsShowIcon = v; ConfigManager.save(); })
                 .build());
@@ -1253,15 +1266,12 @@ public class AccordionScreen extends Screen {
 
         widgets.add(new AbstractSliderButton(
                 x, curY, w, 20,
-                Component.literal((ModConfig.modLogoRussian ? "Порог: " : "Threshold: ")
-                        + ModConfig.effectWarningsThreshold
-                        + (ModConfig.modLogoRussian ? " сек" : " sec")),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.threshold", ModConfig.effectWarningsThreshold)),
                 (ModConfig.effectWarningsThreshold - 3) / 12.0
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal((ModConfig.modLogoRussian ? "Порог: " : "Threshold: ")
-                        + ModConfig.effectWarningsThreshold
-                        + (ModConfig.modLogoRussian ? " сек" : " sec")));
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.threshold",
+                        ModConfig.effectWarningsThreshold)));
             }
             @Override protected void applyValue() {
                 ModConfig.effectWarningsThreshold = 3 + (int)(this.value * 12);
@@ -1284,8 +1294,14 @@ public class AccordionScreen extends Screen {
         int cbW = (w - 6) / 3;
         int gearSize = 16;
 
-        String[] namesRu = {"КВС", "Пинг", "ТВС", "БВС", "Направление", "Удары"};
-        String[] namesEn = {"FPS", "Ping", "TPS", "BPS", "Direction", "Hits"};
+        String[] names = {
+                LocalizationManager.get("gui.resistancedlc.hud.fps"),
+                LocalizationManager.get("gui.resistancedlc.hud.ping"),
+                LocalizationManager.get("gui.resistancedlc.hud.tps"),
+                LocalizationManager.get("gui.resistancedlc.hud.bps"),
+                LocalizationManager.get("gui.resistancedlc.hud.direction"),
+                LocalizationManager.get("gui.resistancedlc.hud.hits")
+        };
         Supplier<Boolean>[] getters = new Supplier[]{
                 (Supplier<Boolean>) () -> ModConfig.showFps,
                 (Supplier<Boolean>) () -> ModConfig.showPing,
@@ -1311,7 +1327,7 @@ public class AccordionScreen extends Screen {
             int cbY = curY + row * rowH;
 
             widgets.add(Checkbox.builder(
-                            Component.literal(ModConfig.modLogoRussian ? namesRu[i] : namesEn[i]), this.font)
+                            Component.literal(names[i]), this.font)
                     .pos(cbX, cbY)
                     .selected(getters[i].get())
                     .onValueChange((c, v) -> {
@@ -1325,7 +1341,7 @@ public class AccordionScreen extends Screen {
             int gearY = cbY + 1;
 
             widgets.add(Button.builder(
-                    Component.literal("§6⚙"),
+                    Component.literal("§6" + LocalizationManager.get("gui.resistancedlc.panel.gear")),
                     (b) -> {
                         activeExtraHudSetting = (activeExtraHudSetting == gearIdx) ? -1 : gearIdx;
                         rebuildExtraHudPanel();
@@ -1336,10 +1352,10 @@ public class AccordionScreen extends Screen {
 
         if (activeExtraHudSetting >= 0) {
             final int idx = activeExtraHudSetting;
-            String settingName = ModConfig.modLogoRussian ? namesRu[idx] : namesEn[idx];
+            String settingName = names[idx];
 
             Button labelBtn = Button.builder(
-                    Component.literal((ModConfig.modLogoRussian ? "§eНастройка: §f" : "§eSetting: §f") + settingName),
+                    Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.setting", settingName)),
                     (b) -> {}
             ).bounds(x, curY, w, 18).build();
             labelBtn.active = false;
@@ -1407,7 +1423,7 @@ public class AccordionScreen extends Screen {
         int rowH = 22, rowGap = 6;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Включить" : "Enable"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.enable")), this.font)
                 .pos(x, curY).selected(ModConfig.customHitSoundsEnabled)
                 .onValueChange((c, v) -> { ModConfig.customHitSoundsEnabled = v; ConfigManager.save(); })
                 .build());
@@ -1417,12 +1433,12 @@ public class AccordionScreen extends Screen {
                 ? KeyBindings.customHitSoundsKey.getTranslatedKeyMessage().getString() : "J";
         widgets.add(Button.builder(
                 Component.literal(ModConfig.isBindingKey && ModConfig.bindingTarget == 4
-                        ? (ModConfig.modLogoRussian ? "Нажмите клавишу..." : "Press a key...")
-                        : (ModConfig.modLogoRussian ? "Клавиша: " : "Key: ") + keyName),
+                        ? LocalizationManager.get("gui.resistancedlc.panel.press_key")
+                        : LocalizationManager.get("gui.resistancedlc.panel.key", keyName)),
                 (b) -> {
                     ModConfig.isBindingKey = true;
                     ModConfig.bindingTarget = 4;
-                    b.setMessage(Component.literal(ModConfig.modLogoRussian ? "Нажмите клавишу..." : "Press a key..."));
+                    b.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.press_key")));
                 }
         ).bounds(x, curY, w, 20).build());
         curY += rowH + rowGap;
@@ -1430,24 +1446,25 @@ public class AccordionScreen extends Screen {
         int btnW = (w - 18) / 7;
         for (int i = 1; i <= 7; i++) {
             final int preset = i;
-            widgets.add(Button.builder(Component.literal(String.valueOf(i)),
+            Button soundBtn = Button.builder(Component.literal(String.valueOf(i)),
                             (b) -> {
                                 ModConfig.customHitSoundPreset = preset;
                                 ConfigManager.save();
                                 rebuildCustomHitSoundsPresets();
                             })
-                    .bounds(x + (i - 1) * (btnW + 3), curY, btnW, 20).build());
+                    .bounds(x + (i - 1) * (btnW + 3), curY, btnW, 20).build();
+            soundBtn.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                    Component.literal(LocalizationManager.get("gui.resistancedlc.tooltip.sound_preset", preset))));
+            widgets.add(soundBtn);
         }
         curY += rowH + rowGap;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal(String.format(ModConfig.modLogoRussian ? "Громкость: %.1f" : "Volume: %.1f",
-                        ModConfig.customHitSoundVolume)),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.volume", ModConfig.customHitSoundVolume)),
                 (ModConfig.customHitSoundVolume - 0.1f) / 1.9f
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal(String.format(
-                        ModConfig.modLogoRussian ? "Громкость: %.1f" : "Volume: %.1f",
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.volume",
                         ModConfig.customHitSoundVolume)));
             }
             @Override protected void applyValue() {
@@ -1459,13 +1476,11 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal(String.format(ModConfig.modLogoRussian ? "Тон: %.1f" : "Pitch: %.1f",
-                        ModConfig.customHitSoundPitch)),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.pitch", ModConfig.customHitSoundPitch)),
                 (ModConfig.customHitSoundPitch - 0.5f) / 1.5f
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal(String.format(
-                        ModConfig.modLogoRussian ? "Тон: %.1f" : "Pitch: %.1f",
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.pitch",
                         ModConfig.customHitSoundPitch)));
             }
             @Override protected void applyValue() {
@@ -1497,20 +1512,19 @@ public class AccordionScreen extends Screen {
         int rowH = 22, rowGap = 6;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Включить PvPSafe" : "Enable PvPSafe"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.checkbox", "PvPSafe")), this.font)
                 .pos(x, curY).selected(ModConfig.pvpSafeEnabled)
                 .onValueChange((c, v) -> { ModConfig.pvpSafeEnabled = v; ConfigManager.save(); })
                 .build());
         curY += rowH + rowGap;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal((ModConfig.modLogoRussian ? "Таймер боя: " : "Combat timer: ")
-                        + ModConfig.pvpSafeTimer + (ModConfig.modLogoRussian ? " сек" : " sec")),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.combat_timer", ModConfig.pvpSafeTimer)),
                 (ModConfig.pvpSafeTimer - 10) / 50.0
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal((ModConfig.modLogoRussian ? "Таймер боя: " : "Combat timer: ")
-                        + ModConfig.pvpSafeTimer + (ModConfig.modLogoRussian ? " сек" : " sec")));
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.combat_timer",
+                        ModConfig.pvpSafeTimer)));
             }
             @Override protected void applyValue() {
                 ModConfig.pvpSafeTimer = 10 + (int)(this.value * 50);
@@ -1521,24 +1535,41 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Блокировать выход (ESC)" : "Block quit (ESC)"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.pos_show")), this.font)
                 .pos(x, curY).selected(ModConfig.pvpSafeBlockQuit)
                 .onValueChange((c, v) -> { ModConfig.pvpSafeBlockQuit = v; ConfigManager.save(); })
                 .build());
         curY += rowH;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Блокировать команды" : "Block commands"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.pos_show_slot")), this.font)
                 .pos(x, curY).selected(ModConfig.pvpSafeBlockCommands)
                 .onValueChange((c, v) -> { ModConfig.pvpSafeBlockCommands = v; ConfigManager.save(); })
                 .build());
         curY += rowH;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Показывать HUD-таймер" : "Show HUD timer"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_reconnect_hud")), this.font)
                 .pos(x, curY).selected(ModConfig.pvpSafeShowHud)
                 .onValueChange((c, v) -> { ModConfig.pvpSafeShowHud = v; ConfigManager.save(); })
                 .build());
+        curY += rowH + rowGap;
+
+        // === ПРЕДУПРЕЖДЕНИЕ О ПЕРКАХ/СПЕЦ-ПРЕДМЕТАХ ===
+        Button warnBtn = Button.builder(
+                Component.literal("§c⚠ " + LocalizationManager.get("gui.resistancedlc.panel.pvp_safe_warning")),
+                (b) -> {}
+        ).bounds(x, curY, w, 18).build();
+        warnBtn.active = false;
+        widgets.add(warnBtn);
+        curY += 18 + 4;
+
+        Button warnBtn2 = Button.builder(
+                Component.literal("§7" + LocalizationManager.get("gui.resistancedlc.panel.pvp_safe_warning2")),
+                (b) -> {}
+        ).bounds(x, curY, w, 18).build();
+        warnBtn2.active = false;
+        widgets.add(warnBtn2);
     }
 
     // ===================== PVE =====================
@@ -1549,8 +1580,8 @@ public class AccordionScreen extends Screen {
 
         widgets.add(Button.builder(
                 Component.literal(ModConfig.tapeMouseButton == 0
-                        ? (ModConfig.modLogoRussian ? "Кнопка: ЛКМ (атака)" : "Button: LMB (attack)")
-                        : (ModConfig.modLogoRussian ? "Кнопка: ПКМ (использование)" : "Button: RMB (use)")),
+                        ? LocalizationManager.get("gui.resistancedlc.panel.button", "LMB (attack)")
+                        : LocalizationManager.get("gui.resistancedlc.panel.button", "RMB (use)")),
                 (b) -> {
                     ModConfig.tapeMouseButton = (ModConfig.tapeMouseButton + 1) % 2;
                     ConfigManager.save();
@@ -1560,12 +1591,14 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         if (ModConfig.tapeMouseButton == 0) {
-            String[] targetsRu = {"Все", "Только мобы", "Только игроки"};
-            String[] targetsEn = {"All", "Mobs only", "Players only"};
+            String[] targets = {
+                    LocalizationManager.get("gui.resistancedlc.panel.target", "All"),
+                    LocalizationManager.get("gui.resistancedlc.panel.target", "Mobs only"),
+                    LocalizationManager.get("gui.resistancedlc.panel.target", "Players only")
+            };
             int tgt = Math.max(0, Math.min(2, ModConfig.tapeMouseTarget));
             widgets.add(Button.builder(
-                    Component.literal((ModConfig.modLogoRussian ? "Цель: " : "Target: ")
-                            + (ModConfig.modLogoRussian ? targetsRu[tgt] : targetsEn[tgt])),
+                    Component.literal(targets[tgt]),
                     (b) -> {
                         ModConfig.tapeMouseTarget = (ModConfig.tapeMouseTarget + 1) % 3;
                         ConfigManager.save();
@@ -1575,7 +1608,7 @@ public class AccordionScreen extends Screen {
             curY += rowH + rowGap;
         } else {
             widgets.add(Checkbox.builder(
-                            Component.literal(ModConfig.modLogoRussian ? "Зажать ПКМ" : "Hold RMB"), this.font)
+                            Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hold_rmb")), this.font)
                     .pos(x, curY).selected(ModConfig.tapeMouseHoldRight)
                     .onValueChange((c, v) -> { ModConfig.tapeMouseHoldRight = v; ConfigManager.save(); })
                     .build());
@@ -1586,24 +1619,22 @@ public class AccordionScreen extends Screen {
                 ? KeyBindings.tapeMouseKey.getTranslatedKeyMessage().getString() : "R";
         widgets.add(Button.builder(
                 Component.literal(ModConfig.isBindingKey && ModConfig.bindingTarget == 2
-                        ? (ModConfig.modLogoRussian ? "Нажмите клавишу..." : "Press a key...")
-                        : (ModConfig.modLogoRussian ? "Клавиша: " : "Key: ") + tmKeyName),
+                        ? LocalizationManager.get("gui.resistancedlc.panel.press_key")
+                        : LocalizationManager.get("gui.resistancedlc.panel.key", tmKeyName)),
                 (b) -> {
                     ModConfig.isBindingKey = true;
                     ModConfig.bindingTarget = 2;
-                    b.setMessage(Component.literal(ModConfig.modLogoRussian ? "Нажмите клавишу..." : "Press a key..."));
+                    b.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.press_key")));
                 }
         ).bounds(x, curY, w, 20).build());
         curY += rowH + rowGap;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal(String.format(ModConfig.modLogoRussian ? "Задержка: %.1f сек" : "Delay: %.1f sec",
-                        ModConfig.tapeMouseDelay)),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.delay", ModConfig.tapeMouseDelay)),
                 (ModConfig.tapeMouseDelay - 0.1f) / 4.9f
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal(String.format(
-                        ModConfig.modLogoRussian ? "Задержка: %.1f сек" : "Delay: %.1f sec",
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.delay",
                         ModConfig.tapeMouseDelay)));
             }
             @Override protected void applyValue() {
@@ -1616,14 +1647,14 @@ public class AccordionScreen extends Screen {
 
         if (ModConfig.tapeMouseButton == 0) {
             widgets.add(Checkbox.builder(
-                            Component.literal(ModConfig.modLogoRussian ? "Бить только при наведении" : "Only when aiming"), this.font)
+                            Component.literal(LocalizationManager.get("gui.resistancedlc.panel.only_aiming")), this.font)
                     .pos(x, curY).selected(ModConfig.tapeMouseRequireTarget)
                     .onValueChange((c, v) -> { ModConfig.tapeMouseRequireTarget = v; ConfigManager.save(); })
                     .build());
             curY += rowH;
 
             widgets.add(Checkbox.builder(
-                            Component.literal(ModConfig.modLogoRussian ? "Бить только при заряженной атаке" : "Only on full charge"), this.font)
+                            Component.literal(LocalizationManager.get("gui.resistancedlc.panel.only_full_charge")), this.font)
                     .pos(x, curY).selected(ModConfig.tapeMouseRequireFullAttack)
                     .onValueChange((c, v) -> { ModConfig.tapeMouseRequireFullAttack = v; ConfigManager.save(); })
                     .build());
@@ -1651,15 +1682,12 @@ public class AccordionScreen extends Screen {
         int curY = y;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal((ModConfig.modLogoRussian ? "Задержка: " : "Delay: ")
-                        + ModConfig.itemScrollerDelay
-                        + (ModConfig.modLogoRussian ? " мс" : " ms")),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.delay_ms", ModConfig.itemScrollerDelay)),
                 (ModConfig.itemScrollerDelay - 100) / 400.0
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal((ModConfig.modLogoRussian ? "Задержка: " : "Delay: ")
-                        + ModConfig.itemScrollerDelay
-                        + (ModConfig.modLogoRussian ? " мс" : " ms")));
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.delay_ms",
+                        ModConfig.itemScrollerDelay)));
             }
             @Override protected void applyValue() {
                 ModConfig.itemScrollerDelay = 100 + (int)(this.value * 400);
@@ -1670,14 +1698,14 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Shift → вся стопка" : "Shift → whole stack"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.shift_stack")), this.font)
                 .pos(x, curY).selected(ModConfig.itemScrollerShiftStack)
                 .onValueChange((c, v) -> { ModConfig.itemScrollerShiftStack = v; ConfigManager.save(); })
                 .build());
         curY += rowH;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Ctrl → все стопки" : "Ctrl → all stacks"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.ctrl_all")), this.font)
                 .pos(x, curY).selected(ModConfig.itemScrollerCtrlAll)
                 .onValueChange((c, v) -> { ModConfig.itemScrollerCtrlAll = v; ConfigManager.save(); })
                 .build());
@@ -1690,13 +1718,11 @@ public class AccordionScreen extends Screen {
         int curY = y;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal(String.format(ModConfig.modLogoRussian ? "Сила зума: %.1fx" : "Zoom factor: %.1fx",
-                        ModConfig.zoomFactor)),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.zoom", ModConfig.zoomFactor)),
                 (ModConfig.zoomFactor - 1.5f) / 8.5f
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal(String.format(
-                        ModConfig.modLogoRussian ? "Сила зума: %.1fx" : "Zoom factor: %.1fx",
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.zoom",
                         ModConfig.zoomFactor)));
             }
             @Override protected void applyValue() {
@@ -1708,13 +1734,11 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal(String.format(ModConfig.modLogoRussian ? "Плавность: %.2f" : "Smoothness: %.2f",
-                        ModConfig.zoomSmoothness)),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.smoothness", ModConfig.zoomSmoothness)),
                 (ModConfig.zoomSmoothness - 0.05f) / 0.95f
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal(String.format(
-                        ModConfig.modLogoRussian ? "Плавность: %.2f" : "Smoothness: %.2f",
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.smoothness",
                         ModConfig.zoomSmoothness)));
             }
             @Override protected void applyValue() {
@@ -1729,12 +1753,12 @@ public class AccordionScreen extends Screen {
                 ? KeyBindings.zoomKey.getTranslatedKeyMessage().getString() : "C";
         widgets.add(Button.builder(
                 Component.literal(ModConfig.isBindingKey && ModConfig.bindingTarget == 1
-                        ? (ModConfig.modLogoRussian ? "Нажмите клавишу..." : "Press a key...")
-                        : (ModConfig.modLogoRussian ? "Клавиша: " : "Key: ") + keyName),
+                        ? LocalizationManager.get("gui.resistancedlc.panel.press_key")
+                        : LocalizationManager.get("gui.resistancedlc.panel.key", keyName)),
                 (b) -> {
                     ModConfig.isBindingKey = true;
                     ModConfig.bindingTarget = 1;
-                    b.setMessage(Component.literal(ModConfig.modLogoRussian ? "Нажмите клавишу..." : "Press a key..."));
+                    b.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.press_key")));
                 }
         ).bounds(x, curY, w, 20).build());
     }
@@ -1744,12 +1768,17 @@ public class AccordionScreen extends Screen {
         int rowH = 22, rowGap = 6;
         int curY = y;
 
-        String[] shapesRu = {"Крест", "Точка", "Круг", "Стрелки", "Крест + Точка"};
-        String[] shapesEn = {"Cross", "Dot", "Circle", "Arrows", "Cross + Dot"};
+        String[] shapes = {
+                LocalizationManager.get("gui.resistancedlc.panel.crosshair_shape", "Cross"),
+                LocalizationManager.get("gui.resistancedlc.panel.crosshair_shape", "Dot"),
+                LocalizationManager.get("gui.resistancedlc.panel.crosshair_shape", "Circle"),
+                LocalizationManager.get("gui.resistancedlc.panel.crosshair_shape",
+                        LocalizationManager.get("gui.resistancedlc.panel.crosshair_arrow")),
+                LocalizationManager.get("gui.resistancedlc.panel.crosshair_shape", "Cross + Dot")
+        };
         int shape = Math.max(0, Math.min(4, ModConfig.crosshairShape));
         widgets.add(Button.builder(
-                Component.literal((ModConfig.modLogoRussian ? "Форма: " : "Shape: ")
-                        + (ModConfig.modLogoRussian ? shapesRu[shape] : shapesEn[shape])),
+                Component.literal(shapes[shape]),
                 (b) -> {
                     ModConfig.crosshairShape = (ModConfig.crosshairShape + 1) % 5;
                     ConfigManager.save();
@@ -1759,12 +1788,12 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal((ModConfig.modLogoRussian ? "Размер: " : "Size: ") + ModConfig.crosshairSize + " px"),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.size", ModConfig.crosshairSize)),
                 (ModConfig.crosshairSize - 4) / 16.0
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal((ModConfig.modLogoRussian ? "Размер: " : "Size: ")
-                        + ModConfig.crosshairSize + " px"));
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.size",
+                        ModConfig.crosshairSize)));
             }
             @Override protected void applyValue() {
                 ModConfig.crosshairSize = 4 + (int)(this.value * 16);
@@ -1775,12 +1804,12 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal((ModConfig.modLogoRussian ? "Толщина: " : "Thickness: ") + ModConfig.crosshairThickness + " px"),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.thickness", ModConfig.crosshairThickness)),
                 (ModConfig.crosshairThickness - 1) / 4.0
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal((ModConfig.modLogoRussian ? "Толщина: " : "Thickness: ")
-                        + ModConfig.crosshairThickness + " px"));
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.thickness",
+                        ModConfig.crosshairThickness)));
             }
             @Override protected void applyValue() {
                 ModConfig.crosshairThickness = 1 + (int)(this.value * 4);
@@ -1791,12 +1820,12 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal((ModConfig.modLogoRussian ? "Зазор: " : "Gap: ") + ModConfig.crosshairGap + " px"),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.gap", ModConfig.crosshairGap)),
                 ModConfig.crosshairGap / 10.0
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal((ModConfig.modLogoRussian ? "Зазор: " : "Gap: ")
-                        + ModConfig.crosshairGap + " px"));
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.gap",
+                        ModConfig.crosshairGap)));
             }
             @Override protected void applyValue() {
                 ModConfig.crosshairGap = (int)(this.value * 10);
@@ -1807,12 +1836,12 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal((ModConfig.modLogoRussian ? "Прозрачность: " : "Alpha: ") + ModConfig.crosshairAlpha),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha", ModConfig.crosshairAlpha)),
                 ModConfig.crosshairAlpha / 255.0
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal((ModConfig.modLogoRussian ? "Прозрачность: " : "Alpha: ")
-                        + ModConfig.crosshairAlpha));
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha",
+                        ModConfig.crosshairAlpha)));
             }
             @Override protected void applyValue() {
                 ModConfig.crosshairAlpha = (int)(this.value * 255);
@@ -1822,12 +1851,13 @@ public class AccordionScreen extends Screen {
         });
         curY += rowH + rowGap;
 
-        EditBox hexField = new EditBox(this.font, x, curY, 80, 18, Component.literal("#RRGGBB"));
+        EditBox hexField = new EditBox(this.font, x, curY, 80, 18,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hex")));
         hexField.setMaxLength(7);
         hexField.setValue(String.format("#%06X", ModConfig.crosshairColor & 0xFFFFFF));
         widgets.add(hexField);
 
-        widgets.add(Button.builder(Component.literal("OK"), (b) -> {
+        widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.apply")), (b) -> {
             String hex = hexField.getValue().replace("#", "").trim();
             try {
                 ModConfig.crosshairColor = 0xFF000000 | Integer.parseInt(hex, 16);
@@ -1838,15 +1868,25 @@ public class AccordionScreen extends Screen {
         int presetX = x + 125;
         int presetW = (right - presetX - 9) / 4;
         String[] pn = {"R", "G", "B", "W"};
+        String[] pnTip = {
+                LocalizationManager.get("gui.resistancedlc.tooltip.color_r"),
+                LocalizationManager.get("gui.resistancedlc.tooltip.color_g"),
+                LocalizationManager.get("gui.resistancedlc.tooltip.color_b"),
+                LocalizationManager.get("gui.resistancedlc.tooltip.color_w")
+        };
         int[] pc = {0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 0xFFFFFFFF};
         for (int i = 0; i < 4; i++) {
             final int color = pc[i];
             final String hex = String.format("#%06X", color & 0xFFFFFF);
-            widgets.add(Button.builder(Component.literal(pn[i]), (b) -> {
+            final String tip = pnTip[i];
+            Button presetBtn = Button.builder(Component.literal(pn[i]), (b) -> {
                 hexField.setValue(hex);
                 ModConfig.crosshairColor = color;
                 ConfigManager.save();
-            }).bounds(presetX + i * (presetW + 3), curY, presetW, 18).build());
+            }).bounds(presetX + i * (presetW + 3), curY, presetW, 18).build();
+            presetBtn.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                    Component.literal(tip)));
+            widgets.add(presetBtn);
         }
     }
 
@@ -1870,12 +1910,13 @@ public class AccordionScreen extends Screen {
         int rowH = 22, rowGap = 6;
         int curY = y;
 
-        EditBox hexField = new EditBox(this.font, x, curY, 80, 18, Component.literal("#RRGGBB"));
+        EditBox hexField = new EditBox(this.font, x, curY, 80, 18,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hex")));
         hexField.setMaxLength(7);
         hexField.setValue(String.format("#%06X", ModConfig.customHitboxColor & 0xFFFFFF));
         widgets.add(hexField);
 
-        widgets.add(Button.builder(Component.literal("OK"), (b) -> {
+        widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.apply")), (b) -> {
             String hex = hexField.getValue().replace("#", "").trim();
             try {
                 ModConfig.customHitboxColor = 0xFF000000 | Integer.parseInt(hex, 16);
@@ -1886,25 +1927,35 @@ public class AccordionScreen extends Screen {
         int presetX = x + 125;
         int presetW = (right - presetX - 9) / 4;
         String[] pn = {"R", "G", "B", "W"};
+        String[] pnTip = {
+                LocalizationManager.get("gui.resistancedlc.tooltip.color_r"),
+                LocalizationManager.get("gui.resistancedlc.tooltip.color_g"),
+                LocalizationManager.get("gui.resistancedlc.tooltip.color_b"),
+                LocalizationManager.get("gui.resistancedlc.tooltip.color_w")
+        };
         int[] pc = {0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 0xFFFFFFFF};
         for (int i = 0; i < 4; i++) {
             final int color = pc[i];
             final String hex = String.format("#%06X", color & 0xFFFFFF);
-            widgets.add(Button.builder(Component.literal(pn[i]), (b) -> {
+            final String tip = pnTip[i];
+            Button presetBtn = Button.builder(Component.literal(pn[i]), (b) -> {
                 hexField.setValue(hex);
-                ModConfig.customHitboxColor = color;
+                ModConfig.crosshairColor = color;
                 ConfigManager.save();
-            }).bounds(presetX + i * (presetW + 3), curY, presetW, 18).build());
+            }).bounds(presetX + i * (presetW + 3), curY, presetW, 18).build();
+            presetBtn.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                    Component.literal(tip)));
+            widgets.add(presetBtn);
         }
         curY += rowH + rowGap;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal((ModConfig.modLogoRussian ? "Прозрачность: " : "Alpha: ") + ModConfig.customHitboxAlpha),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha", ModConfig.customHitboxAlpha)),
                 ModConfig.customHitboxAlpha / 255.0
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal((ModConfig.modLogoRussian ? "Прозрачность: " : "Alpha: ")
-                        + ModConfig.customHitboxAlpha));
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha",
+                        ModConfig.customHitboxAlpha)));
             }
             @Override protected void applyValue() {
                 ModConfig.customHitboxAlpha = (int)(this.value * 255);
@@ -1920,20 +1971,18 @@ public class AccordionScreen extends Screen {
         int curY = y;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Включить растяг" : "Enable stretch"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.enable_stretch")), this.font)
                 .pos(x, curY).selected(ModConfig.aspectRatioEnabled)
                 .onValueChange((c, v) -> { ModConfig.aspectRatioEnabled = v; ConfigManager.save(); })
                 .build());
         curY += rowH + rowGap;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal(String.format(ModConfig.modLogoRussian ? "Соотношение: %.2f" : "Ratio: %.2f",
-                        ModConfig.aspectRatio)),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.aspect_ratio", ModConfig.aspectRatio)),
                 (ModConfig.aspectRatio - 0.5f) / 1.5f
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal(String.format(
-                        ModConfig.modLogoRussian ? "Соотношение: %.2f" : "Ratio: %.2f",
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.aspect_ratio",
                         ModConfig.aspectRatio)));
             }
             @Override protected void applyValue() {
@@ -1945,16 +1994,16 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         int btnW = (w - 9) / 4;
-        widgets.add(Button.builder(Component.literal("4:3"), (b) -> {
+        widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.ratio_4_3")), (b) -> {
             ModConfig.aspectRatio = 1.33f; ConfigManager.save(); rebuildAspectRatioPanel();
         }).bounds(x, curY, btnW, 20).build());
-        widgets.add(Button.builder(Component.literal("16:9"), (b) -> {
+        widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.ratio_16_9")), (b) -> {
             ModConfig.aspectRatio = 1.0f; ConfigManager.save(); rebuildAspectRatioPanel();
         }).bounds(x + btnW + 3, curY, btnW, 20).build());
-        widgets.add(Button.builder(Component.literal("21:9"), (b) -> {
+        widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.ratio_21_9")), (b) -> {
             ModConfig.aspectRatio = 0.75f; ConfigManager.save(); rebuildAspectRatioPanel();
         }).bounds(x + (btnW + 3) * 2, curY, btnW, 20).build());
-        widgets.add(Button.builder(Component.literal("1:1"), (b) -> {
+        widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.ratio_1_1")), (b) -> {
             ModConfig.aspectRatio = 1.78f; ConfigManager.save(); rebuildAspectRatioPanel();
         }).bounds(x + (btnW + 3) * 3, curY, btnW, 20).build());
     }
@@ -1980,20 +2029,18 @@ public class AccordionScreen extends Screen {
         int curY = y;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Низкий огонь" : "Low Fire"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.low_fire")), this.font)
                 .pos(x, curY).selected(ModConfig.lowFireEnabled)
                 .onValueChange((c, v) -> { ModConfig.lowFireEnabled = v; ConfigManager.save(); })
                 .build());
         curY += rowH;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal(String.format(ModConfig.modLogoRussian ? "Смещение огня: %.2f" : "Fire offset: %.2f",
-                        ModConfig.lowFireOffset)),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.low_fire_offset", ModConfig.lowFireOffset)),
                 ModConfig.lowFireOffset
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal(String.format(
-                        ModConfig.modLogoRussian ? "Смещение огня: %.2f" : "Fire offset: %.2f",
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.low_fire_offset",
                         ModConfig.lowFireOffset)));
             }
             @Override protected void applyValue() {
@@ -2005,20 +2052,18 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Низкий щит" : "Low Shield"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.low_shield")), this.font)
                 .pos(x, curY).selected(ModConfig.lowShieldEnabled)
                 .onValueChange((c, v) -> { ModConfig.lowShieldEnabled = v; ConfigManager.save(); })
                 .build());
         curY += rowH;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal(String.format(ModConfig.modLogoRussian ? "Смещение щита: %.2f" : "Shield offset: %.2f",
-                        ModConfig.lowShieldOffset)),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.low_shield_offset", ModConfig.lowShieldOffset)),
                 ModConfig.lowShieldOffset
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal(String.format(
-                        ModConfig.modLogoRussian ? "Смещение щита: %.2f" : "Shield offset: %.2f",
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.low_shield_offset",
                         ModConfig.lowShieldOffset)));
             }
             @Override protected void applyValue() {
@@ -2036,17 +2081,13 @@ public class AccordionScreen extends Screen {
         int cbW = (w - 6) / 3;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Включить Particle Blocker" : "Enable Particle Blocker"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.particle_show")), this.font)
                 .pos(x, curY).selected(ModConfig.particleBlockerEnabled)
                 .onValueChange((c, v) -> { ModConfig.particleBlockerEnabled = v; ConfigManager.save(); })
                 .build());
         curY += rowH + rowGap;
 
-        String[][] cats = {
-                {"Огонь", "Fire"}, {"Дым", "Smoke"}, {"Взрывы", "Explosions"},
-                {"Зелья", "Potions"}, {"Вода", "Water"}, {"Редстоун", "Redstone"},
-                {"Портал", "Portal"}, {"Криты", "Crits"}
-        };
+        String[] cats = {"Fire", "Smoke", "Explosions", "Potions", "Water", "Redstone", "Portal", "Crits"};
         boolean[] vals = {
                 ModConfig.particleBlockerFire, ModConfig.particleBlockerSmoke,
                 ModConfig.particleBlockerExplosion, ModConfig.particleBlockerPotions,
@@ -2058,7 +2099,7 @@ public class AccordionScreen extends Screen {
             int col = i % 3;
             int row = i / 3;
             widgets.add(Checkbox.builder(
-                            Component.literal(ModConfig.modLogoRussian ? cats[i][0] : cats[i][1]), this.font)
+                            Component.literal(cats[i]), this.font)
                     .pos(x + col * (cbW + 3), curY + row * rowH)
                     .selected(vals[i])
                     .onValueChange((c, v) -> {
@@ -2079,11 +2120,12 @@ public class AccordionScreen extends Screen {
     }
 
     // ===================== WAYPOINTS =====================
-
     private int calcWaypointsHeight() {
-        int base = 18 + 3 * 28;
+        // 4 строки: enable, max, add, clear
+        int base = 18 + 4 * 28;
         int waypointsCount = WaypointManager.getWaypoints().size();
         if (waypointsCount > 0) {
+            // header + waypoints * row
             base += 22;
             base += waypointsCount * 20;
         }
@@ -2113,18 +2155,19 @@ public class AccordionScreen extends Screen {
         int curY = y;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Включить Waypoints" : "Enable Waypoints"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.checkbox", "Waypoints")), this.font)
                 .pos(x, curY).selected(ModConfig.waypointsEnabled)
                 .onValueChange((c, v) -> { ModConfig.waypointsEnabled = v; ConfigManager.save(); })
                 .build());
         curY += rowH + rowGap;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal((ModConfig.modLogoRussian ? "Лимит меток: " : "Max waypoints: ") + ModConfig.waypointsMax),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.waypoints_max", ModConfig.waypointsMax)),
                 (ModConfig.waypointsMax - 1) / 19.0
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal((ModConfig.modLogoRussian ? "Лимит меток: " : "Max waypoints: ") + ModConfig.waypointsMax));
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.waypoints_max",
+                        ModConfig.waypointsMax)));
             }
             @Override protected void applyValue() {
                 ModConfig.waypointsMax = 1 + (int)(this.value * 19);
@@ -2135,7 +2178,7 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         widgets.add(Button.builder(
-                Component.literal(ModConfig.modLogoRussian ? "Добавить метку здесь" : "Add waypoint here"),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.waypoints_add")),
                 (b) -> {
                     Minecraft mc = Minecraft.getInstance();
                     if (mc.player == null) return;
@@ -2159,7 +2202,7 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         widgets.add(Button.builder(
-                Component.literal(ModConfig.modLogoRussian ? "Очистить все метки" : "Clear all waypoints"),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.waypoints_clear")),
                 (b) -> {
                     WaypointManager.clearWaypoints();
                     contentScroll = 0;
@@ -2171,9 +2214,8 @@ public class AccordionScreen extends Screen {
         List<Waypoint> list = WaypointManager.getWaypoints();
         if (!list.isEmpty()) {
             Button headerBtn = Button.builder(
-                    Component.literal(ModConfig.modLogoRussian
-                            ? "§eСуществующие метки (§f" + list.size() + "§e):"
-                            : "§eExisting waypoints (§f" + list.size() + "§e):"),
+                    Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.existing")
+                            + " (§f" + list.size() + "§e):"),
                     (b) -> {}
             ).bounds(x, curY, w, 18).build();
             headerBtn.active = false;
@@ -2192,7 +2234,7 @@ public class AccordionScreen extends Screen {
                 label.active = false;
                 widgets.add(label);
 
-                widgets.add(Button.builder(Component.literal("✎"), (b) -> {
+                widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.rename")), (b) -> {
                     Minecraft mc = Minecraft.getInstance();
                     if (mc.player != null) {
                         mc.player.displayClientMessage(Component.literal(
@@ -2200,7 +2242,7 @@ public class AccordionScreen extends Screen {
                     }
                 }).bounds(x + w - 48, rowY, 22, 18).build());
 
-                widgets.add(Button.builder(Component.literal("×"), (b) -> {
+                widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.remove")), (b) -> {
                     WaypointManager.removeWaypoint(index);
                     contentScroll = 0;
                     rebuildWaypointsPanel();
@@ -2218,11 +2260,11 @@ public class AccordionScreen extends Screen {
         int curY = y;
 
         EditBox wordField = new EditBox(this.font, x, curY, w - 30, 20,
-                Component.literal(ModConfig.modLogoRussian ? "Стоп-слово..." : "Stop word..."));
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.chat_filter_placeholder")));
         wordField.setMaxLength(30);
         widgets.add(wordField);
 
-        widgets.add(Button.builder(Component.literal("+"), (b) -> {
+        widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.add")), (b) -> {
             String word = wordField.getValue().trim();
             if (!word.isEmpty()) {
                 ChatFilterManager.addWord(word);
@@ -2243,7 +2285,7 @@ public class AccordionScreen extends Screen {
             wordLabel.active = false;
             widgets.add(wordLabel);
 
-            widgets.add(Button.builder(Component.literal("×"), (b) -> {
+            widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.remove")), (b) -> {
                 ChatFilterManager.removeWord(word);
                 rebuildChatFilterPanel();
             }).bounds(x + w - 22, curY, 22, rowListH).build());
@@ -2260,7 +2302,7 @@ public class AccordionScreen extends Screen {
         }
 
         widgets.add(Button.builder(
-                Component.literal(ModConfig.modLogoRussian ? "Очистить всё" : "Clear all"),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.chat_filter_clear")),
                 (b) -> { ChatFilterManager.clearWords(); rebuildChatFilterPanel(); }
         ).bounds(x, curY, w, 20).build());
     }
@@ -2286,13 +2328,13 @@ public class AccordionScreen extends Screen {
         int curY = y;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal((ModConfig.modLogoRussian ? "Задержка: " : "Delay: ")
-                        + ModConfig.autoReconnectDelay + (ModConfig.modLogoRussian ? " сек" : " sec")),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_reconnect_delay",
+                        ModConfig.autoReconnectDelay)),
                 (ModConfig.autoReconnectDelay - 1) / 29.0
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal((ModConfig.modLogoRussian ? "Задержка: " : "Delay: ")
-                        + ModConfig.autoReconnectDelay + (ModConfig.modLogoRussian ? " сек" : " sec")));
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_reconnect_delay",
+                        ModConfig.autoReconnectDelay)));
             }
             @Override protected void applyValue() {
                 ModConfig.autoReconnectDelay = 1 + (int)(this.value * 29);
@@ -2303,7 +2345,7 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Показывать HUD-таймер" : "Show HUD timer"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_reconnect_hud")), this.font)
                 .pos(x, curY).selected(ModConfig.autoReconnectShowHud)
                 .onValueChange((c, v) -> { ModConfig.autoReconnectShowHud = v; ConfigManager.save(); })
                 .build());
@@ -2315,23 +2357,23 @@ public class AccordionScreen extends Screen {
         int curY = y;
 
         widgets.add(Button.builder(
-                Component.literal(ModConfig.modLogoRussian ? "Показать последнюю точку смерти" : "Show last death point"),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.show_last_death")),
                 (b) -> DeathCoordsManager.showLastDeath()
         ).bounds(x, curY, w, 20).build());
         curY += rowH + rowGap;
 
         widgets.add(Button.builder(
-                Component.literal(ModConfig.modLogoRussian ? "Очистить сохранённую точку" : "Clear saved death point"),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.clear_last_death")),
                 (b) -> DeathCoordsManager.clearLastDeath()
         ).bounds(x, curY, w, 20).build());
         curY += rowH + rowGap;
 
         String info;
         if (ModConfig.lastDeathTime > 0) {
-            info = (ModConfig.modLogoRussian ? "§7Последняя: §e" : "§7Last: §e")
-                    + ModConfig.lastDeathX + ", " + ModConfig.lastDeathY + ", " + ModConfig.lastDeathZ;
+            info = "§7" + LocalizationManager.get("gui.resistancedlc.panel.last_death",
+                    ModConfig.lastDeathX, ModConfig.lastDeathY, ModConfig.lastDeathZ);
         } else {
-            info = ModConfig.modLogoRussian ? "§8Точек смерти пока нет" : "§8No death points yet";
+            info = "§8" + LocalizationManager.get("gui.resistancedlc.panel.no_death");
         }
         Button infoBtn = Button.builder(Component.literal(info), (b) -> {})
                 .bounds(x, curY, w, 20).build();
@@ -2355,7 +2397,7 @@ public class AccordionScreen extends Screen {
                     && ModConfig.hudColor == theme[2]);
 
             String prefix = isActive ? "§l✔ " : "  ";
-            String suffix = isActive ? " §7(активна)" : "";
+            String suffix = isActive ? " §7" + LocalizationManager.get("gui.resistancedlc.panel.theme_active") : "";
 
             Button themeBtn = Button.builder(
                             Component.literal(prefix + name + suffix),
@@ -2389,13 +2431,18 @@ public class AccordionScreen extends Screen {
     }
 
     // ===================== CONFIG MANAGER =====================
-
     private int calcConfigManagerHeight() {
+        // 4 строки: open folder, save, load, name+save_as
         int base = 18 + 4 * 28;
         int configsCount = ConfigManager.listConfigs().size();
         if (configsCount > 0) {
+            // header + configs * row + (опционально "ещё N")
             base += 22;
-            base += configsCount * 20;
+            int shown = Math.min(configsCount, 20);
+            base += shown * 20;
+            if (configsCount > 20) {
+                base += 22;
+            }
         }
         return base;
     }
@@ -2406,39 +2453,40 @@ public class AccordionScreen extends Screen {
         int curY = y;
 
         widgets.add(Button.builder(
-                Component.literal(ModConfig.modLogoRussian ? "Открыть папку конфигов" : "Open configs folder"),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.config_open_folder")),
                 (b) -> {
                     ConfigManager.openFolder();
                     Minecraft mc = Minecraft.getInstance();
                     if (mc.player != null) {
                         mc.player.displayClientMessage(Component.literal(
-                                "§aПапка с конфигами открыта: §7" + ConfigManager.getConfigDirPath()), false);
+                                "§a" + LocalizationManager.get("gui.resistancedlc.message.folder_opened",
+                                        ConfigManager.getConfigDirPath())), false);
                     }
                 }
         ).bounds(x, curY, w, 20).build());
         curY += rowH + rowGap;
 
         widgets.add(Button.builder(
-                Component.literal(ModConfig.modLogoRussian ? "Сохранить (default)" : "Save (default)"),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.config_save")),
                 (b) -> {
                     ConfigManager.saveNow();
                     Minecraft mc = Minecraft.getInstance();
                     if (mc.player != null) {
                         mc.player.displayClientMessage(Component.literal(
-                                "§aКонфиг §edefault §aсохранён!"), true);
+                                "§a" + LocalizationManager.get("gui.resistancedlc.message.config_saved", "default")), true);
                     }
                 }
         ).bounds(x, curY, w, 20).build());
         curY += rowH + rowGap;
 
         widgets.add(Button.builder(
-                Component.literal(ModConfig.modLogoRussian ? "Загрузить (default)" : "Load (default)"),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.config_load")),
                 (b) -> {
                     if (ConfigManager.loadFrom("default")) {
                         Minecraft mc = Minecraft.getInstance();
                         if (mc.player != null) {
                             mc.player.displayClientMessage(Component.literal(
-                                    "§aКонфиг §edefault §aзагружен!"), true);
+                                    "§a" + LocalizationManager.get("gui.resistancedlc.message.config_loaded", "default")), true);
                         }
                         contentScroll = 0;
                         rebuildConfigManagerPanel();
@@ -2446,7 +2494,7 @@ public class AccordionScreen extends Screen {
                         Minecraft mc = Minecraft.getInstance();
                         if (mc.player != null) {
                             mc.player.displayClientMessage(Component.literal(
-                                    "§cКонфиг §edefault §cне найден!"), true);
+                                    "§c" + LocalizationManager.get("gui.resistancedlc.message.config_not_found", "default")), true);
                         }
                     }
                 }
@@ -2454,12 +2502,12 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         EditBox nameField = new EditBox(this.font, x, curY, w - 90, 20,
-                Component.literal(ModConfig.modLogoRussian ? "Имя конфига..." : "Config name..."));
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.config_name")));
         nameField.setMaxLength(30);
         widgets.add(nameField);
 
         widgets.add(Button.builder(
-                Component.literal(ModConfig.modLogoRussian ? "Сохранить как" : "Save as"),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.config_save_as")),
                 (b) -> {
                     String name = nameField.getValue().trim();
                     if (name.isEmpty()) name = "default";
@@ -2467,7 +2515,7 @@ public class AccordionScreen extends Screen {
                         Minecraft mc = Minecraft.getInstance();
                         if (mc.player != null) {
                             mc.player.displayClientMessage(Component.literal(
-                                    "§aКонфиг §e" + name + " §aсохранён!"), true);
+                                    "§a" + LocalizationManager.get("gui.resistancedlc.message.config_saved", name)), true);
                         }
                         contentScroll = 0;
                         rebuildConfigManagerPanel();
@@ -2475,7 +2523,7 @@ public class AccordionScreen extends Screen {
                         Minecraft mc = Minecraft.getInstance();
                         if (mc.player != null) {
                             mc.player.displayClientMessage(Component.literal(
-                                    "§cНе удалось сохранить конфиг §e" + name), true);
+                                    "§c" + LocalizationManager.get("gui.resistancedlc.message.config_save_failed", name)), true);
                         }
                     }
                 }
@@ -2485,9 +2533,8 @@ public class AccordionScreen extends Screen {
         List<String> configs = ConfigManager.listConfigs();
         if (!configs.isEmpty()) {
             Button headerBtn = Button.builder(
-                    Component.literal(ModConfig.modLogoRussian
-                            ? "§eКонфиги (§f" + configs.size() + "§e):"
-                            : "§eConfigs (§f" + configs.size() + "§e):"),
+                    Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.config_list")
+                            + " (§f" + configs.size() + "§e):"),
                     (b) -> {}
             ).bounds(x, curY, w, 18).build();
             headerBtn.active = false;
@@ -2505,12 +2552,12 @@ public class AccordionScreen extends Screen {
                 label.active = false;
                 widgets.add(label);
 
-                widgets.add(Button.builder(Component.literal("×"), (b) -> {
+                widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.remove")), (b) -> {
                     if (ConfigManager.remove(cfgName)) {
                         Minecraft mc = Minecraft.getInstance();
                         if (mc.player != null) {
                             mc.player.displayClientMessage(Component.literal(
-                                    "§aКонфиг §e" + cfgName + " §aудалён!"), true);
+                                    "§a" + LocalizationManager.get("gui.resistancedlc.message.config_removed", cfgName)), true);
                         }
                         contentScroll = 0;
                         rebuildConfigManagerPanel();
@@ -2561,12 +2608,12 @@ public class AccordionScreen extends Screen {
                 10, 200);
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal((ModConfig.modLogoRussian ? "Макс. элементов: " : "Max items: ") + ModConfig.cooldownsMaxItems),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.max_items", ModConfig.cooldownsMaxItems)),
                 (ModConfig.cooldownsMaxItems - 1) / 9.0
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal((ModConfig.modLogoRussian ? "Макс. элементов: " : "Max items: ")
-                        + ModConfig.cooldownsMaxItems));
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.max_items",
+                        ModConfig.cooldownsMaxItems)));
             }
             @Override protected void applyValue() {
                 ModConfig.cooldownsMaxItems = 1 + (int)(this.value * 9);
@@ -2577,12 +2624,12 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal((ModConfig.modLogoRussian ? "Прозрачность: " : "Alpha: ") + ModConfig.cooldownsAlpha),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha", ModConfig.cooldownsAlpha)),
                 ModConfig.cooldownsAlpha / 255.0
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal((ModConfig.modLogoRussian ? "Прозрачность: " : "Alpha: ")
-                        + ModConfig.cooldownsAlpha));
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha",
+                        ModConfig.cooldownsAlpha)));
             }
             @Override protected void applyValue() {
                 ModConfig.cooldownsAlpha = (int)(this.value * 255);
@@ -2593,12 +2640,12 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal((ModConfig.modLogoRussian ? "Затемнение иконки: " : "Icon darkening: ") + ModConfig.cooldownsIconDarkening),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.icon_darkening", ModConfig.cooldownsIconDarkening)),
                 ModConfig.cooldownsIconDarkening / 255.0
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal((ModConfig.modLogoRussian ? "Затемнение иконки: " : "Icon darkening: ")
-                        + ModConfig.cooldownsIconDarkening));
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.icon_darkening",
+                        ModConfig.cooldownsIconDarkening)));
             }
             @Override protected void applyValue() {
                 ModConfig.cooldownsIconDarkening = (int)(this.value * 255);
@@ -2609,28 +2656,30 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         int cbW = (w - 6) / 3;
-        widgets.add(Checkbox.builder(Component.literal(ModConfig.modLogoRussian ? "Иконка" : "Icon"), this.font)
+        widgets.add(Checkbox.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.icon")), this.font)
                 .pos(x, curY).selected(ModConfig.cooldownsShowIcon)
                 .onValueChange((c, v) -> { ModConfig.cooldownsShowIcon = v; ConfigManager.save(); }).build());
-        widgets.add(Checkbox.builder(Component.literal(ModConfig.modLogoRussian ? "Название" : "Name"), this.font)
+        widgets.add(Checkbox.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.name")), this.font)
                 .pos(x + cbW + 3, curY).selected(ModConfig.cooldownsShowName)
                 .onValueChange((c, v) -> { ModConfig.cooldownsShowName = v; ConfigManager.save(); }).build());
-        widgets.add(Checkbox.builder(Component.literal(ModConfig.modLogoRussian ? "Таймер" : "Timer"), this.font)
+        widgets.add(Checkbox.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.timer")), this.font)
                 .pos(x + (cbW + 3) * 2, curY).selected(ModConfig.cooldownsShowTime)
                 .onValueChange((c, v) -> { ModConfig.cooldownsShowTime = v; ConfigManager.save(); }).build());
         curY += rowH + rowGap;
 
-        widgets.add(Checkbox.builder(Component.literal(ModConfig.modLogoRussian ? "Только хотбар" : "Hotbar only"), this.font)
+        widgets.add(Checkbox.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hotbar_only")), this.font)
                 .pos(x, curY).selected(ModConfig.cooldownsShowOnlyHotbar)
                 .onValueChange((c, v) -> { ModConfig.cooldownsShowOnlyHotbar = v; ConfigManager.save(); }).build());
         curY += rowH + rowGap;
 
-        String[] sizesRu = {"Малый", "Средний", "Крупный"};
-        String[] sizesEn = {"Small", "Medium", "Large"};
+        String[] sizes = {
+                LocalizationManager.get("gui.resistancedlc.panel.font_size", "Small"),
+                LocalizationManager.get("gui.resistancedlc.panel.font_size", "Medium"),
+                LocalizationManager.get("gui.resistancedlc.panel.font_size", "Large")
+        };
         int fs = Math.max(0, Math.min(2, ModConfig.cooldownsFontSize));
         widgets.add(Button.builder(
-                Component.literal((ModConfig.modLogoRussian ? "Размер: " : "Size: ")
-                        + (ModConfig.modLogoRussian ? sizesRu[fs] : sizesEn[fs])),
+                Component.literal(sizes[fs]),
                 (b) -> {
                     ModConfig.cooldownsFontSize = (ModConfig.cooldownsFontSize + 1) % 3;
                     ConfigManager.save();
@@ -2640,7 +2689,7 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         widgets.add(Button.builder(
-                Component.literal(ModConfig.modLogoRussian ? "Сбросить позицию" : "Reset position"),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.reset")),
                 (b) -> {
                     ModConfig.cooldownsX = 10;
                     ModConfig.cooldownsY = 200;
@@ -2676,13 +2725,12 @@ public class AccordionScreen extends Screen {
                 10, 185);
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal((ModConfig.modLogoRussian ? "Время сброса: " : "Reset time: ")
-                        + ModConfig.comboResetTime + (ModConfig.modLogoRussian ? " сек" : " sec")),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.timer", ModConfig.comboResetTime)),
                 (ModConfig.comboResetTime - 1) / 4.0
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal((ModConfig.modLogoRussian ? "Время сброса: " : "Reset time: ")
-                        + ModConfig.comboResetTime + (ModConfig.modLogoRussian ? " сек" : " sec")));
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.timer",
+                        ModConfig.comboResetTime)));
             }
             @Override protected void applyValue() {
                 ModConfig.comboResetTime = 1 + (int)(this.value * 4);
@@ -2692,12 +2740,14 @@ public class AccordionScreen extends Screen {
         });
         curY += rowH + rowGap;
 
-        String[] sizesRu = {"Малый", "Средний", "Крупный"};
-        String[] sizesEn = {"Small", "Medium", "Large"};
+        String[] sizes = {
+                LocalizationManager.get("gui.resistancedlc.panel.font_size", "Small"),
+                LocalizationManager.get("gui.resistancedlc.panel.font_size", "Medium"),
+                LocalizationManager.get("gui.resistancedlc.panel.font_size", "Large")
+        };
         int fs = Math.max(0, Math.min(2, ModConfig.comboFontSize));
         widgets.add(Button.builder(
-                Component.literal((ModConfig.modLogoRussian ? "Размер: " : "Size: ")
-                        + (ModConfig.modLogoRussian ? sizesRu[fs] : sizesEn[fs])),
+                Component.literal(sizes[fs]),
                 (b) -> {
                     ModConfig.comboFontSize = (ModConfig.comboFontSize + 1) % 3;
                     ConfigManager.save();
@@ -2706,12 +2756,13 @@ public class AccordionScreen extends Screen {
         ).bounds(x, curY, w, 20).build());
         curY += rowH + rowGap;
 
-        EditBox hexField = new EditBox(this.font, x, curY, 80, 18, Component.literal("#RRGGBB"));
+        EditBox hexField = new EditBox(this.font, x, curY, 80, 18,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hex")));
         hexField.setMaxLength(7);
         hexField.setValue(String.format("#%06X", ModConfig.comboColor & 0xFFFFFF));
         widgets.add(hexField);
 
-        widgets.add(Button.builder(Component.literal("OK"), (b) -> {
+        widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.apply")), (b) -> {
             String hex = hexField.getValue().replace("#", "").trim();
             try {
                 ModConfig.comboColor = 0xFF000000 | Integer.parseInt(hex, 16);
@@ -2759,24 +2810,23 @@ public class AccordionScreen extends Screen {
                 ? KeyBindings.totemLogKey.getTranslatedKeyMessage().getString() : "O";
         widgets.add(Button.builder(
                 Component.literal(ModConfig.isBindingKey && ModConfig.bindingTarget == 10
-                        ? (ModConfig.modLogoRussian ? "Нажмите клавишу..." : "Press a key...")
-                        : (ModConfig.modLogoRussian ? "Клавиша: " : "Key: ") + keyName),
+                        ? LocalizationManager.get("gui.resistancedlc.panel.press_key")
+                        : LocalizationManager.get("gui.resistancedlc.panel.key", keyName)),
                 (b) -> {
                     ModConfig.isBindingKey = true;
                     ModConfig.bindingTarget = 10;
-                    b.setMessage(Component.literal(ModConfig.modLogoRussian ? "Нажмите клавишу..." : "Press a key..."));
+                    b.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.press_key")));
                 }
         ).bounds(x, curY, w, 20).build());
         curY += rowH + rowGap;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal((ModConfig.modLogoRussian ? "Радиус: " : "Radius: ")
-                        + ModConfig.totemLogRadius + (ModConfig.modLogoRussian ? " блоков" : " blocks")),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.radius", ModConfig.totemLogRadius)),
                 (ModConfig.totemLogRadius - 5) / 15.0
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal((ModConfig.modLogoRussian ? "Радиус: " : "Radius: ")
-                        + ModConfig.totemLogRadius + (ModConfig.modLogoRussian ? " блоков" : " blocks")));
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.radius",
+                        ModConfig.totemLogRadius)));
             }
             @Override protected void applyValue() {
                 ModConfig.totemLogRadius = 5 + (int)(this.value * 15.0);
@@ -2787,7 +2837,7 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(ModConfig.modLogoRussian ? "Звук-уведомление" : "Sound notification"), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.sound_notify")), this.font)
                 .pos(x, curY).selected(ModConfig.totemLogSound)
                 .onValueChange((c, v) -> { ModConfig.totemLogSound = v; ConfigManager.save(); })
                 .build());
@@ -2799,15 +2849,19 @@ public class AccordionScreen extends Screen {
         int rowH = 22, rowGap = 6;
         int curY = y;
 
-        String[] modesRu = {"Шар ↔ Шар", "Тотем ↔ Тотем", "Шар ↔ Тотем", "Тотем ↔ Шар"};
-        String[] modesEn = {"Head ↔ Head", "Totem ↔ Totem", "Head ↔ Totem", "Totem ↔ Head"};
+        String[] modes = {
+                LocalizationManager.get("gui.resistancedlc.panel.mode_head_head"),
+                LocalizationManager.get("gui.resistancedlc.panel.mode_totem_totem"),
+                LocalizationManager.get("gui.resistancedlc.panel.mode_head_totem"),
+                LocalizationManager.get("gui.resistancedlc.panel.mode_totem_head")
+        };
         int halfW = (w - 3) / 2;
         for (int i = 0; i < 4; i++) {
             final int idx = i;
             int col = i % 2;
             int row = i / 2;
             widgets.add(Button.builder(
-                    Component.literal(ModConfig.modLogoRussian ? modesRu[i] : modesEn[i]),
+                    Component.literal(modes[i]),
                     (b) -> {
                         ModConfig.autoSwapMode = idx;
                         ConfigManager.save();
@@ -2821,24 +2875,23 @@ public class AccordionScreen extends Screen {
                 ? KeyBindings.autoSwapKey.getTranslatedKeyMessage().getString() : "H";
         widgets.add(Button.builder(
                 Component.literal(ModConfig.isBindingKey && ModConfig.bindingTarget == 3
-                        ? (ModConfig.modLogoRussian ? "Нажмите клавишу..." : "Press a key...")
-                        : (ModConfig.modLogoRussian ? "Клавиша: " : "Key: ") + keyName),
+                        ? LocalizationManager.get("gui.resistancedlc.panel.press_key")
+                        : LocalizationManager.get("gui.resistancedlc.panel.key", keyName)),
                 (b) -> {
                     ModConfig.isBindingKey = true;
                     ModConfig.bindingTarget = 3;
-                    b.setMessage(Component.literal(ModConfig.modLogoRussian ? "Нажмите клавишу..." : "Press a key..."));
+                    b.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.press_key")));
                 }
         ).bounds(x, curY, w, 20).build());
         curY += rowH + rowGap;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal((ModConfig.modLogoRussian ? "Задержка открытия: " : "Open delay: ")
-                        + ModConfig.autoSwapOpenDelay + (ModConfig.modLogoRussian ? " мс" : " ms")),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.delay_ms", ModConfig.autoSwapOpenDelay)),
                 (ModConfig.autoSwapOpenDelay - 50) / 450.0
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal((ModConfig.modLogoRussian ? "Задержка открытия: " : "Open delay: ")
-                        + ModConfig.autoSwapOpenDelay + (ModConfig.modLogoRussian ? " мс" : " ms")));
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.delay_ms",
+                        ModConfig.autoSwapOpenDelay)));
             }
             @Override protected void applyValue() {
                 ModConfig.autoSwapOpenDelay = 50 + (int)(this.value * 450);
@@ -2849,13 +2902,11 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal((ModConfig.modLogoRussian ? "Cooldown: " : "Cooldown: ")
-                        + ModConfig.autoSwapCooldown + (ModConfig.modLogoRussian ? " мс" : " ms")),
+                Component.literal("Cooldown: " + ModConfig.autoSwapCooldown + " ms"),
                 (ModConfig.autoSwapCooldown - 100) / 1900.0
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal((ModConfig.modLogoRussian ? "Cooldown: " : "Cooldown: ")
-                        + ModConfig.autoSwapCooldown + (ModConfig.modLogoRussian ? " мс" : " ms")));
+                this.setMessage(Component.literal("Cooldown: " + ModConfig.autoSwapCooldown + " ms"));
             }
             @Override protected void applyValue() {
                 ModConfig.autoSwapCooldown = 100 + (int)(this.value * 1900);
@@ -2890,22 +2941,24 @@ public class AccordionScreen extends Screen {
                 ? KeyBindings.pickupLogKey.getTranslatedKeyMessage().getString() : "P";
         widgets.add(Button.builder(
                 Component.literal(ModConfig.isBindingKey && ModConfig.bindingTarget == 11
-                        ? (ModConfig.modLogoRussian ? "Нажмите клавишу..." : "Press a key...")
-                        : (ModConfig.modLogoRussian ? "Клавиша: " : "Key: ") + keyName),
+                        ? LocalizationManager.get("gui.resistancedlc.panel.press_key")
+                        : LocalizationManager.get("gui.resistancedlc.panel.key", keyName)),
                 (b) -> {
                     ModConfig.isBindingKey = true;
                     ModConfig.bindingTarget = 11;
-                    b.setMessage(Component.literal(ModConfig.modLogoRussian ? "Нажмите клавишу..." : "Press a key..."));
+                    b.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.press_key")));
                 }
         ).bounds(x, curY, w, 20).build());
         curY += rowH + rowGap;
 
-        String[] modesRu = {"Все предметы", "Только ценные", "По категориям"};
-        String[] modesEn = {"All items", "Valuable only", "By categories"};
+        String[] modes = {
+                LocalizationManager.get("gui.resistancedlc.panel.mode", "All items"),
+                LocalizationManager.get("gui.resistancedlc.panel.mode", "Valuable only"),
+                LocalizationManager.get("gui.resistancedlc.panel.mode", "By categories")
+        };
         int mode = Math.max(0, Math.min(2, ModConfig.pickupLogMode));
         widgets.add(Button.builder(
-                Component.literal((ModConfig.modLogoRussian ? "Режим: " : "Mode: ")
-                        + (ModConfig.modLogoRussian ? modesRu[mode] : modesEn[mode])),
+                Component.literal(modes[mode]),
                 (b) -> {
                     ModConfig.pickupLogMode = (ModConfig.pickupLogMode + 1) % 3;
                     ConfigManager.save();
@@ -2916,11 +2969,7 @@ public class AccordionScreen extends Screen {
 
         if (ModConfig.pickupLogMode == 2) {
             int cbW = (w - 6) / 3;
-            String[][] cats = {
-                    {"Оружие", "Weapon"}, {"Броня", "Armor"}, {"Зелья", "Potions"},
-                    {"Талисманы", "Totems"}, {"Головы", "Heads"}, {"Спавнеры", "Spawners"},
-                    {"Блоки структур", "Structure blocks"}
-            };
+            String[] cats = {"Weapon", "Armor", "Potions", "Totems", "Heads", "Spawners", "Structure blocks"};
             boolean[] vals = {
                     ModConfig.pickupLogWeapon, ModConfig.pickupLogArmor,
                     ModConfig.pickupLogPotions, ModConfig.pickupLogTotems,
@@ -2932,7 +2981,7 @@ public class AccordionScreen extends Screen {
                 int col = i % 3;
                 int row = i / 3;
                 widgets.add(Checkbox.builder(
-                                Component.literal(ModConfig.modLogoRussian ? cats[i][0] : cats[i][1]), this.font)
+                                Component.literal(cats[i]), this.font)
                         .pos(x + col * (cbW + 3), curY + row * rowH)
                         .selected(vals[i])
                         .onValueChange((c, v) -> {
@@ -2995,7 +3044,8 @@ public class AccordionScreen extends Screen {
         graphics.fill(panelX, panelY, panelX + PANEL_WIDTH, panelY + PANEL_HEIGHT, 0xC0000000);
 
         drawPanelBorders(graphics);
-        graphics.drawString(this.font, "§lResistance DLC", panelX + 15, panelY + 11, ModConfig.guiColor, true);
+        graphics.drawString(this.font, "§l" + LocalizationManager.get("gui.resistancedlc.title"),
+                panelX + 15, panelY + 11, ModConfig.guiColor, true);
 
         drawColumn(graphics, mouseX, mouseY);
         drawContent(graphics, mouseX, mouseY);
@@ -3015,19 +3065,16 @@ public class AccordionScreen extends Screen {
         }
     }
 
-    /** Цвета 5 пресетов тем: [guiColor, guiTextColor, hudColor]. */
     private static final int[][] THEMES = {
-            {0xFF00FF00, 0xFFFFFFFF, 0xFF00FF00},  // Vanilla
-            {0xFF808080, 0xFFDDDDDD, 0xFF808080},  // Dark
-            {0xFF00FFFF, 0xFF00FF00, 0xFF00FFFF},  // Neon
-            {0xFFFF69B4, 0xFFFFFFFF, 0xFFFF69B4},  // Candy
-            {0xFFFF0000, 0xFFFFFFFF, 0xFFFF0000},  // Blood
+            {0xFF00FF00, 0xFFFFFFFF, 0xFF00FF00},
+            {0xFF808080, 0xFFDDDDDD, 0xFF808080},
+            {0xFF00FFFF, 0xFF00FF00, 0xFF00FFFF},
+            {0xFFFF69B4, 0xFFFFFFFF, 0xFFFF69B4},
+            {0xFFFF0000, 0xFFFFFFFF, 0xFFFF0000},
     };
 
-    /** Прямоугольники theme-кнопок: [x, y, size]. Заполняется в drawThemeButtons. */
     private final int[][] themeButtonRects = new int[5][3];
 
-    /** Названия пресетов тем. */
     private static final String[] THEME_NAMES = {
             "Vanilla", "Dark", "Neon", "Candy", "Blood"
     };
@@ -3088,7 +3135,6 @@ public class AccordionScreen extends Screen {
         }
     }
 
-    /** Простой tooltip в стиле Minecraft — фон + рамка + текст. */
     private void drawTooltip(GuiGraphics graphics, String text, int mouseX, int mouseY) {
         int w = this.font.width(text) + 8;
         int h = 14;
@@ -3217,10 +3263,10 @@ public class AccordionScreen extends Screen {
         if (columnWidth > 100) {
             int searchTextX = searchIconX + iconSize + 10;
             int searchNameY = searchIconY + (iconSize - 8) / 2 - 6;
-            graphics.drawString(this.font, ModConfig.modLogoRussian ? "§lПоиск" : "§lSearch",
+            graphics.drawString(this.font, "§l" + LocalizationManager.get("gui.resistancedlc.search"),
                     searchTextX, searchNameY, 0xFFEEEEEE, true);
             if (columnWidth > 140) {
-                graphics.drawString(this.font, ModConfig.modLogoRussian ? "§7Все разделы" : "§7All sections",
+                graphics.drawString(this.font, "§7" + LocalizationManager.get("gui.resistancedlc.search.all"),
                         searchTextX, searchNameY + 12, 0xFFAAAAAA, false);
             }
         }
@@ -3255,7 +3301,7 @@ public class AccordionScreen extends Screen {
 
         boolean searchActive = searchField != null && !searchField.getValue().trim().isEmpty();
         if (searchActive && filteredItems.isEmpty()) {
-            String noResults = ModConfig.modLogoRussian ? "§7Ничего не найдено" : "§7Nothing found";
+            String noResults = "§7" + LocalizationManager.get("gui.resistancedlc.search.nothing");
             graphics.drawString(this.font, noResults,
                     listLeft + 15, listTop + 10, 0xFFAAAAAA, false);
             maxContentScroll = 0;
@@ -3407,7 +3453,6 @@ public class AccordionScreen extends Screen {
         int top = itemY;
         int bottom = itemY + itemHeight;
 
-        // === FADE-IN СПИСКА ===
         int alpha = (int)(0xFF * sectionFadeProgress);
         int bgColor = (alpha << 24) | 0x000000;
         int borderColor = (alpha << 24) | 0x404040;
@@ -3447,7 +3492,6 @@ public class AccordionScreen extends Screen {
             graphics.drawString(this.font, "§7→", arrowX, top + 10, descColor, false);
         }
 
-        // === ПОДСВЕТКА НАЙДЕННОГО (толстая пульсирующая рамка) ===
         if (isHighlightActive(item)) {
             float progress = getHighlightProgress(item);
             float pulse = 0.7f + 0.3f * (float)Math.sin(progress * Math.PI * 6);
@@ -3476,7 +3520,6 @@ public class AccordionScreen extends Screen {
         int overlayX = panelX + (PANEL_WIDTH - OVERLAY_W) / 2;
         int overlayY = panelY + (PANEL_HEIGHT - OVERLAY_H) / 2;
 
-        // === FADE-IN OVERLAY ===
         int alpha = (int)(0xFF * globalSearchFadeProgress);
         int bgAlpha = (int)(0xB0 * globalSearchFadeProgress);
         int panelAlpha = (int)(0xF0 * globalSearchFadeProgress);
@@ -3492,7 +3535,7 @@ public class AccordionScreen extends Screen {
         graphics.fill(overlayX + OVERLAY_W - 2, overlayY, overlayX + OVERLAY_W, overlayY + OVERLAY_H, borderColor);
 
         graphics.drawString(this.font,
-                ModConfig.modLogoRussian ? "§l🔍 Глобальный поиск" : "§l🔍 Global Search",
+                "§l🔍 " + LocalizationManager.get("gui.resistancedlc.search.global"),
                 overlayX + 15, overlayY + 15, borderColor, true);
     }
 
@@ -3503,9 +3546,7 @@ public class AccordionScreen extends Screen {
         int alpha = (int)(0xFF * globalSearchFadeProgress);
 
         graphics.drawString(this.font,
-                ModConfig.modLogoRussian
-                        ? "§7Найдено: §e" + globalSearchResults.size()
-                        : "§7Found: §e" + globalSearchResults.size(),
+                "§7" + LocalizationManager.get("gui.resistancedlc.search.found", globalSearchResults.size()),
                 overlayX + 15, overlayY + 70, (alpha << 24) | 0xAAAAAA, false);
 
         globalSearchListX = overlayX + 15;
@@ -3519,13 +3560,11 @@ public class AccordionScreen extends Screen {
 
         if (query.isEmpty()) {
             graphics.drawString(this.font,
-                    ModConfig.modLogoRussian
-                            ? "§7Начни вводить название или описание..."
-                            : "§7Start typing a name or description...",
+                    "§7" + LocalizationManager.get("gui.resistancedlc.search.start"),
                     globalSearchListX + 5, globalSearchListY + 10, (alpha << 24) | 0x888888, false);
         } else if (globalSearchResults.isEmpty()) {
             graphics.drawString(this.font,
-                    ModConfig.modLogoRussian ? "§7Ничего не найдено" : "§7Nothing found",
+                    "§7" + LocalizationManager.get("gui.resistancedlc.search.nothing"),
                     globalSearchListX + 5, globalSearchListY + 10, (alpha << 24) | 0x888888, false);
         } else {
             for (int i = 0; i < globalSearchResults.size(); i++) {
@@ -3558,9 +3597,7 @@ public class AccordionScreen extends Screen {
         }
 
         graphics.drawString(this.font,
-                ModConfig.modLogoRussian
-                        ? "§7Кликни по результату — перейдёшь в раздел. §eESC §7— закрыть."
-                        : "§7Click a result — jump to section. §eESC §7— close.",
+                "§7" + LocalizationManager.get("gui.resistancedlc.search.click"),
                 overlayX + 15, overlayY + OVERLAY_H - 18, (alpha << 24) | 0xAAAAAA, false);
     }
 
@@ -3671,7 +3708,7 @@ public class AccordionScreen extends Screen {
                     }
                     activeSectionIndex = i;
                     contentScroll = 0;
-                    sectionFadeProgress = 0.0f;  // запускаем fade-in списка
+                    sectionFadeProgress = 0.0f;
                     sectionSlideOffset = SECTION_SLIDE_DISTANCE;
                     if (searchField != null) {
                         restoringSearch = true;
