@@ -20,7 +20,9 @@
     "ItemScrollerMixin",
     "CooldownsMixin",
     "AbstractContainerScreenAccessor",
-    "PvPSafeHurtMixin"
+    "PvPSafeHurtMixin",
+    "AutoGGMixin",
+    "MusicPlayerHudMixin"
   ],
   "injectors": {
     "defaultRequire": 1

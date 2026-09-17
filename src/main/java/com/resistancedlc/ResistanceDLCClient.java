@@ -62,14 +62,23 @@ public class ResistanceDLCClient implements ClientModInitializer {
         ConfigManager.load();
         KeyBindings.register();
 
-        // ===== PVP SAFE: когда МЫ ударили ИГРОКА =====
+        // Инициализация MusicPlayer (сканирование папки music/)
+        MusicPlayerManager.init();
+
+        // ===== PVP SAFE + STRIKE RANGE: когда МЫ ударили сущность =====
         AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
-            if (!ModConfig.pvpSafeEnabled) {
-                return InteractionResult.PASS;
+            // StrikeRange — записываем дистанцию до цели
+            if (ModConfig.strikeRangeEnabled && entity != null) {
+                double dist = player.distanceTo(entity);
+                StrikeRangeManager.onHit(dist);
+                ModConfig.strikeRangeLastTarget = entity.getName().getString();
             }
-            if (entity instanceof Player && entity != player) {
+
+            // PvPSafe — только для игроков
+            if (ModConfig.pvpSafeEnabled && entity instanceof Player && entity != player) {
                 PvPSafeManager.recordHit();
             }
+
             return InteractionResult.PASS;
         });
 
@@ -111,12 +120,21 @@ public class ResistanceDLCClient implements ClientModInitializer {
             ConfigManager.saveNow();
             TotemTracker.clear();
             PvPSafeManager.reset();
+            AutoGGManager.reset();
+            StrikeRangeManager.reset();
+            MusicPlayerManager.stop();
             lastHealth = -1.0f;
             AutoReconnectManager.onDisconnect();
         });
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
             AutoReconnectManager.onJoin();
+
+            // Восстановление MusicPlayer
+            MusicPlayerManager.rescan();
+            if (ModConfig.musicPlayerEnabled && ModConfig.musicAutoPlay) {
+                MusicPlayerManager.play();
+            }
         });
 
         // ===== КОМАНДЫ =====
@@ -270,6 +288,55 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                 return 1;
                             })
             );
+
+            // === MUSIC КОМАНДЫ ===
+            dispatcher.register(
+                    ClientCommandManager.literal("music")
+                            .executes(context -> {
+                                ModConfig.musicPlayerEnabled = !ModConfig.musicPlayerEnabled;
+                                ConfigManager.save();
+                                String state = ModConfig.musicPlayerEnabled ? "§aвключён" : "§cвыключен";
+                                sendMessage("§6MusicPlayer " + state);
+                                return 1;
+                            })
+                            .then(ClientCommandManager.literal("play")
+                                    .executes(context -> { MusicPlayerManager.play(); return 1; }))
+                            .then(ClientCommandManager.literal("pause")
+                                    .executes(context -> { MusicPlayerManager.pause(); return 1; }))
+                            .then(ClientCommandManager.literal("stop")
+                                    .executes(context -> { MusicPlayerManager.stop(); return 1; }))
+                            .then(ClientCommandManager.literal("next")
+                                    .executes(context -> { MusicPlayerManager.next(); return 1; }))
+                            .then(ClientCommandManager.literal("prev")
+                                    .executes(context -> { MusicPlayerManager.prev(); return 1; }))
+                            .then(ClientCommandManager.literal("rescan")
+                                    .executes(context -> {
+                                        MusicPlayerManager.rescan();
+                                        sendMessage("§a[Music] Плейлист обновлён: §e"
+                                                + MusicPlayerManager.getPlaylist().size() + " §aтреков");
+                                        return 1;
+                                    }))
+                            .then(ClientCommandManager.literal("folder")
+                                    .executes(context -> {
+                                        MusicPlayerManager.openMusicFolder();
+                                        sendMessage("§a[Music] Папка открыта: §e"
+                                                + MusicPlayerManager.getMusicDirPath());
+                                        return 1;
+                                    }))
+                            .then(ClientCommandManager.literal("list")
+                                    .executes(context -> {
+                                        List<MusicTrack> tracks = MusicPlayerManager.getPlaylist();
+                                        if (tracks.isEmpty()) {
+                                            sendMessage("§7[Music] Плейлист пуст.");
+                                        } else {
+                                            sendMessage("§6[Music] Треки (" + tracks.size() + "):");
+                                            for (int i = 0; i < tracks.size(); i++) {
+                                                sendMessage("§7 " + (i + 1) + ". §e" + tracks.get(i).displayFull());
+                                            }
+                                        }
+                                        return 1;
+                                    }))
+            );
         });
 
         // ===== CHAT FILTER =====
@@ -290,6 +357,15 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
             PvPSafeManager.onChatMessage(message.getString());
+        });
+
+        // ===== AUTO GG: парсинг чата =====
+        ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
+            AutoGGManager.onChatMessage(message.getString());
+        });
+
+        ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
+            AutoGGManager.onChatMessage(message.getString());
         });
 
         // ===== BPS =====
@@ -324,6 +400,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> PickUpLogger.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> AutoReconnectManager.tick());
+        ClientTickEvents.END_CLIENT_TICK.register(client -> AutoGGManager.tick());
 
         // ===== ZOOM =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -642,8 +719,14 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "hud"),
                 (graphics, tickCounter) -> renderHud(graphics)
         );
-    }
 
+        // ===== MUSIC HUD (отдельный слой, чтобы рисовался поверх) =====
+        HudElementRegistry.attachElementBefore(
+                VanillaHudElements.CHAT,
+                Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "music_hud"),
+                (graphics, tickCounter) -> MusicPlayerHud.render(graphics)
+        );
+    }
     // ===== HUD =====
     private static void renderHud(GuiGraphics graphics) {
         if (!ModConfig.showHud) return;
@@ -983,6 +1066,36 @@ public class ResistanceDLCClient implements ClientModInitializer {
             if (arrowCount > 0) {
                 drawHudString(graphics, client.font, "➤ " + arrowCount, slotX, renderY + 4, color);
             }
+        }
+
+        // ===== STRIKE RANGE =====
+        if (ModConfig.strikeRangeEnabled && StrikeRangeManager.isActive()) {
+            double dist = StrikeRangeManager.getDistance();
+            String targetName = ModConfig.strikeRangeLastTarget;
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(String.format("%.2f", dist));
+            if (ModConfig.strikeRangeShowBlocks) {
+                sb.append(" ").append(LocalizationManager.get("gui.resistancedlc.hud.strike_range_blocks"));
+            }
+            if (ModConfig.strikeRangeShowTarget && targetName != null && !targetName.isEmpty()) {
+                sb.append(" §7(").append(targetName).append(")");
+            }
+
+            float fade = StrikeRangeManager.getFadeProgress();
+            int srAlpha = (int)(ModConfig.strikeRangeAlpha * fade);
+            int srColor = (ModConfig.strikeRangeColor & 0x00FFFFFF) | (srAlpha << 24);
+
+            float scale;
+            if (ModConfig.strikeRangeFontSize == 0) scale = 1.0f;
+            else if (ModConfig.strikeRangeFontSize == 1) scale = 1.5f;
+            else scale = 2.0f;
+
+            graphics.pose().pushMatrix();
+            graphics.pose().translate(ModConfig.strikeRangeX, ModConfig.strikeRangeY);
+            graphics.pose().scale(scale, scale);
+            graphics.drawString(client.font, sb.toString(), 0, 0, srColor, true);
+            graphics.pose().popMatrix();
         }
     }
 

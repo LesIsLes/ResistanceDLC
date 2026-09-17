@@ -26,5 +26,9 @@
   "custom_hit_7": {
     "sounds": ["resistancedlc:hit_7"],
     "subtitle": "subtitles.resistancedlc.custom_hit"
+  },
+  "denied": {
+    "sounds": ["resistancedlc:denied"],
+    "subtitle": "subtitles.resistancedlc.denied"
   }
 }

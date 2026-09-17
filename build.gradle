@@ -50,6 +50,7 @@ dependencies {
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+    implementation 'com.github.trilarion:java-vorbis-support:1.2.1'
 
     // === ВНЕШНИЕ МОДЫ ===
     // Раскомментируйте и замените ID на актуальные для 1.21.11

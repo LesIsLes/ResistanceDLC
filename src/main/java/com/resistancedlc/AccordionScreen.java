@@ -42,6 +42,10 @@ public class AccordionScreen extends Screen {
     private static final int OVERLAY_W = 460;
     private static final int OVERLAY_H = 380;
 
+    // ===== ПЕРЕХОД ИЗ HUD MUSIC =====
+    public static String pendingJumpToSection = null;
+    public static String pendingJumpToItem = null;
+
     private int panelX;
     private int panelY;
 
@@ -242,6 +246,43 @@ public class AccordionScreen extends Screen {
 
         if (globalSearchOpen) {
             buildGlobalSearchWidgets();
+        }
+
+        // ===== ОБРАБОТКА ПЕРЕХОДА ИЗ HUD =====
+        if (pendingJumpToSection != null) {
+            String targetSection = pendingJumpToSection;
+            String targetItem = pendingJumpToItem;
+            pendingJumpToSection = null;
+            pendingJumpToItem = null;
+
+            for (int i = 0; i < sections.size(); i++) {
+                if (sections.get(i).id.equals(targetSection)) {
+                    activeSectionIndex = i;
+                    sectionFadeProgress = 0.0f;
+                    sectionSlideOffset = SECTION_SLIDE_DISTANCE;
+                    contentScroll = 0;
+                    break;
+                }
+            }
+
+            if (targetItem != null) {
+                Section active = sections.get(activeSectionIndex);
+                AccordionItem toExpand = null;
+                for (AccordionItem it : active.items) {
+                    if (it.id.equals(targetItem)) {
+                        toExpand = it;
+                        break;
+                    }
+                }
+                if (toExpand != null) {
+                    closeAllExcept(toExpand);
+                    toExpand.expanded = true;
+                    toExpand.expandProgress = 1.0f;
+                    updateFilteredItems();
+                    rebuildAllPanelWidgets();
+                    triggerHighlight(targetItem);
+                }
+            }
         }
     }
 
@@ -758,6 +799,26 @@ public class AccordionScreen extends Screen {
         plItem.contentHeight = 158;
         pvp.items.add(plItem);
 
+        AccordionItem aggItem = new AccordionItem(
+                "auto_gg",
+                LocalizationManager.get("gui.resistancedlc.item.auto_gg.title"),
+                LocalizationManager.get("gui.resistancedlc.item.auto_gg.desc"),
+                () -> ModConfig.autoGgEnabled,
+                () -> { ModConfig.autoGgEnabled = !ModConfig.autoGgEnabled; ConfigManager.save(); }
+        );
+        aggItem.contentHeight = 158;
+        pvp.items.add(aggItem);
+
+        AccordionItem eggItem = new AccordionItem(
+                "killaura_egg",
+                LocalizationManager.get("gui.resistancedlc.item.killaura_egg.title"),
+                LocalizationManager.get("gui.resistancedlc.item.killaura_egg.desc"),
+                () -> ModConfig.killAuraEggEnabled,
+                () -> { ModConfig.killAuraEggEnabled = !ModConfig.killAuraEggEnabled; ConfigManager.save(); }
+        );
+        eggItem.contentHeight = 74;
+        pvp.items.add(eggItem);
+
         sections.add(pvp);
 
         // PVE
@@ -879,6 +940,16 @@ public class AccordionScreen extends Screen {
         wpItem.contentHeight = calcWaypointsHeight();
         visual.items.add(wpItem);
 
+        AccordionItem srItem = new AccordionItem(
+                "strike_range",
+                LocalizationManager.get("gui.resistancedlc.item.strike_range.title"),
+                LocalizationManager.get("gui.resistancedlc.item.strike_range.desc"),
+                () -> ModConfig.strikeRangeEnabled,
+                () -> { ModConfig.strikeRangeEnabled = !ModConfig.strikeRangeEnabled; ConfigManager.save(); }
+        );
+        srItem.contentHeight = 214;
+        visual.items.add(srItem);
+
         sections.add(visual);
 
         // MISC
@@ -938,6 +1009,24 @@ public class AccordionScreen extends Screen {
         misc.items.add(cfgItem);
 
         sections.add(misc);
+
+        // ===================== MUSIC =====================
+        Section music = new Section("music",
+                LocalizationManager.get("gui.resistancedlc.section.music"),
+                LocalizationManager.get("gui.resistancedlc.section.music.desc"),
+                new ItemStack(Items.MUSIC_DISC_CAT));
+
+        AccordionItem mpItem = new AccordionItem(
+                "music_player",
+                LocalizationManager.get("gui.resistancedlc.item.music_player.title"),
+                LocalizationManager.get("gui.resistancedlc.item.music_player.desc"),
+                () -> ModConfig.musicPlayerEnabled,
+                () -> { ModConfig.musicPlayerEnabled = !ModConfig.musicPlayerEnabled; ConfigManager.save(); }
+        );
+        mpItem.contentHeight = calcMusicPlayerHeight();
+        music.items.add(mpItem);
+
+        sections.add(music);
     }
 
     // ===================== ГРАНИЦЫ =====================
@@ -1084,6 +1173,10 @@ public class AccordionScreen extends Screen {
             case "death_coords" -> buildDeathCoordsPanel(widgets, innerX, innerY, innerRight);
             case "gui_theme" -> buildGuiThemePanel(widgets, innerX, innerY, innerRight);
             case "config_manager" -> buildConfigManagerPanel(widgets, innerX, innerY, innerRight);
+            case "auto_gg" -> buildAutoGGPanel(widgets, innerX, innerY, innerRight);
+            case "strike_range" -> buildStrikeRangePanel(widgets, innerX, innerY, innerRight);
+            case "killaura_egg" -> buildKillAuraPanel(widgets, innerX, innerY, innerRight);
+            case "music_player" -> buildMusicPlayerPanel(widgets, innerX, innerY, innerRight);
             default -> { }
         }
         for (AbstractWidget w : widgets) {
@@ -3841,5 +3934,364 @@ public class AccordionScreen extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+    // ===================== AUTO GG =====================
+    private void buildAutoGGPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.enable")), this.font)
+                .pos(x, curY).selected(ModConfig.autoGgEnabled)
+                .onValueChange((c, v) -> { ModConfig.autoGgEnabled = v; ConfigManager.save(); })
+                .build());
+        curY += rowH + rowGap;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_gg_only_players")), this.font)
+                .pos(x, curY).selected(ModConfig.autoGgOnlyPlayers)
+                .onValueChange((c, v) -> { ModConfig.autoGgOnlyPlayers = v; ConfigManager.save(); })
+                .build());
+        curY += rowH + rowGap;
+
+        EditBox templateField = new EditBox(this.font, x, curY, w, 18,
+                Component.literal("GG %s"));
+        templateField.setMaxLength(80);
+        templateField.setValue(ModConfig.autoGgTemplate);
+        templateField.setResponder(text -> {
+            ModConfig.autoGgTemplate = text;
+            ConfigManager.save();
+        });
+        widgets.add(templateField);
+        curY += rowH + rowGap;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_gg_delay", ModConfig.autoGgDelay)),
+                ModConfig.autoGgDelay / 5.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_gg_delay",
+                        ModConfig.autoGgDelay)));
+            }
+            @Override protected void applyValue() {
+                ModConfig.autoGgDelay = (float)(this.value * 5.0);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+    }
+
+    // ===================== STRIKE RANGE =====================
+    private void buildStrikeRangePanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.enable")), this.font)
+                .pos(x, curY).selected(ModConfig.strikeRangeEnabled)
+                .onValueChange((c, v) -> { ModConfig.strikeRangeEnabled = v; ConfigManager.save(); })
+                .build());
+        curY += rowH + rowGap;
+
+        addPosEditorRow(widgets, x, curY, right,
+                () -> ModConfig.strikeRangeX, () -> ModConfig.strikeRangeY,
+                (nx, ny) -> { ModConfig.strikeRangeX = nx; ModConfig.strikeRangeY = ny; },
+                10, 300);
+        curY += 26 + rowGap;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha", ModConfig.strikeRangeAlpha)),
+                ModConfig.strikeRangeAlpha / 255.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha",
+                        ModConfig.strikeRangeAlpha)));
+            }
+            @Override protected void applyValue() {
+                ModConfig.strikeRangeAlpha = (int)(this.value * 255);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.strike_range_show_time", ModConfig.strikeRangeShowTime)),
+                ModConfig.strikeRangeShowTime / 5000.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.strike_range_show_time",
+                        ModConfig.strikeRangeShowTime)));
+            }
+            @Override protected void applyValue() {
+                ModConfig.strikeRangeShowTime = 200 + (int)(this.value * 4800);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        String[] sizes = {
+                LocalizationManager.get("gui.resistancedlc.panel.font_size", "Small"),
+                LocalizationManager.get("gui.resistancedlc.panel.font_size", "Medium"),
+                LocalizationManager.get("gui.resistancedlc.panel.font_size", "Large")
+        };
+        int fs = Math.max(0, Math.min(2, ModConfig.strikeRangeFontSize));
+        widgets.add(Button.builder(
+                Component.literal(sizes[fs]),
+                (b) -> {
+                    ModConfig.strikeRangeFontSize = (ModConfig.strikeRangeFontSize + 1) % 3;
+                    ConfigManager.save();
+                    rebuildStrikeRangePanel();
+                }
+        ).bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.strike_range_show_blocks")), this.font)
+                .pos(x, curY).selected(ModConfig.strikeRangeShowBlocks)
+                .onValueChange((c, v) -> { ModConfig.strikeRangeShowBlocks = v; ConfigManager.save(); })
+                .build());
+        curY += rowH;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.strike_range_show_target")), this.font)
+                .pos(x, curY).selected(ModConfig.strikeRangeShowTarget)
+                .onValueChange((c, v) -> { ModConfig.strikeRangeShowTarget = v; ConfigManager.save(); })
+                .build());
+    }
+
+    private void rebuildStrikeRangePanel() {
+        AccordionItem sr = null;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.id.equals("strike_range")) { sr = it; break; }
+            }
+            if (sr != null) break;
+        }
+        if (sr == null || !sr.expanded) return;
+
+        clearPanelWidgets(sr);
+        buildPanelWidgets(sr);
+        updateWidgetsVisibility();
+    }
+
+    // ===================== MUSIC PLAYER =====================
+    private int calcMusicPlayerHeight() {
+        int base = 18 + 10 * 28;
+        int trackCount = MusicPlayerManager.getPlaylist().size();
+        if (trackCount > 0) {
+            base += 22;
+            int shown = Math.min(trackCount, 5);
+            base += shown * 20;
+            if (trackCount > 5) base += 22;
+        }
+        return base;
+    }
+
+    private void buildMusicPlayerPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.checkbox", "Music Player")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.musicPlayerEnabled)
+                .onValueChange((c, v) -> { ModConfig.musicPlayerEnabled = v; ConfigManager.save(); })
+                .build());
+        curY += rowH + rowGap;
+
+        int btnW = (w - 12) / 5;
+        widgets.add(Button.builder(
+                        Component.literal("▶"),
+                        (b) -> MusicPlayerManager.play())
+                .bounds(x, curY, btnW, 20).build());
+        widgets.add(Button.builder(
+                        Component.literal("⏸"),
+                        (b) -> MusicPlayerManager.pause())
+                .bounds(x + btnW + 3, curY, btnW, 20).build());
+        widgets.add(Button.builder(
+                        Component.literal("⏮"),
+                        (b) -> MusicPlayerManager.prev())
+                .bounds(x + (btnW + 3) * 2, curY, btnW, 20).build());
+        widgets.add(Button.builder(
+                        Component.literal("⏭"),
+                        (b) -> MusicPlayerManager.next())
+                .bounds(x + (btnW + 3) * 3, curY, btnW, 20).build());
+        widgets.add(Button.builder(
+                        Component.literal("⏹"),
+                        (b) -> MusicPlayerManager.stop())
+                .bounds(x + (btnW + 3) * 4, curY, btnW, 20).build());
+        curY += rowH + rowGap;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.music_volume",
+                        (int)(ModConfig.musicVolume * 100))),
+                ModConfig.musicVolume
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.music_volume",
+                        (int)(ModConfig.musicVolume * 100))));
+            }
+            @Override protected void applyValue() {
+                MusicPlayerManager.setVolume((float) this.value);
+                this.updateMessage();
+            }
+        });
+        curY += rowH + rowGap;
+
+        String[] repeatNames = {
+                LocalizationManager.get("gui.resistancedlc.panel.music_repeat_off"),
+                LocalizationManager.get("gui.resistancedlc.panel.music_repeat_one"),
+                LocalizationManager.get("gui.resistancedlc.panel.music_repeat_all")
+        };
+        int rMode = Math.max(0, Math.min(2, ModConfig.musicRepeat));
+        widgets.add(Button.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.music_repeat", repeatNames[rMode])),
+                        (b) -> {
+                            MusicPlayerManager.cycleRepeat();
+                            rebuildMusicPlayerPanel();
+                        })
+                .bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.music_shuffle")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.musicShuffle)
+                .onValueChange((c, v) -> { MusicPlayerManager.toggleShuffle(); })
+                .build());
+        curY += rowH + rowGap;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.music_show_hud")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.musicShowHud)
+                .onValueChange((c, v) -> { ModConfig.musicShowHud = v; ConfigManager.save(); })
+                .build());
+        curY += rowH + rowGap;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.music_autoplay")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.musicAutoPlay)
+                .onValueChange((c, v) -> { ModConfig.musicAutoPlay = v; ConfigManager.save(); })
+                .build());
+        curY += rowH + rowGap;
+
+        int halfW = (w - 3) / 2;
+        widgets.add(Button.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.music_open_folder")),
+                        (b) -> MusicPlayerManager.openMusicFolder())
+                .bounds(x, curY, halfW, 20).build());
+        widgets.add(Button.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.music_rescan")),
+                        (b) -> {
+                            MusicPlayerManager.rescan();
+                            rebuildMusicPlayerPanel();
+                        })
+                .bounds(x + halfW + 3, curY, halfW, 20).build());
+        curY += rowH + rowGap;
+
+        MusicTrack current = MusicPlayerManager.getCurrentTrack();
+        String infoText;
+        if (current != null) {
+            infoText = "§a♪ §f" + current.displayFull();
+            if (infoText.length() > 60) infoText = infoText.substring(0, 58) + "…";
+        } else {
+            infoText = "§7" + LocalizationManager.get("gui.resistancedlc.panel.music_nothing_playing");
+        }
+        Button infoBtn = Button.builder(Component.literal(infoText), (b) -> {})
+                .bounds(x, curY, w, 18).build();
+        infoBtn.active = false;
+        widgets.add(infoBtn);
+        curY += 18 + rowGap;
+
+        List<MusicTrack> tracks = MusicPlayerManager.getPlaylist();
+        if (!tracks.isEmpty()) {
+            Button headerBtn = Button.builder(
+                            Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.music_tracks")
+                                    + " (§f" + tracks.size() + "§e):"),
+                            (b) -> {})
+                    .bounds(x, curY, w, 18).build();
+            headerBtn.active = false;
+            widgets.add(headerBtn);
+            curY += 18 + 4;
+
+            int maxShow = Math.min(tracks.size(), 5);
+            for (int i = 0; i < maxShow; i++) {
+                final int idx = i;
+                MusicTrack t = tracks.get(i);
+                String label = "§7" + (i + 1) + ". §f" + t.displayFull();
+                if (label.length() > 55) label = label.substring(0, 53) + "…";
+
+                boolean isCurrent = (i == MusicPlayerManager.getCurrentIndex());
+                if (isCurrent) label = "§a▶ " + label;
+
+                widgets.add(Button.builder(
+                                Component.literal(label),
+                                (b) -> MusicPlayerManager.playTrackAt(idx))
+                        .bounds(x, curY, w, 18).build());
+                curY += 20;
+            }
+
+            if (tracks.size() > 5) {
+                Button moreBtn = Button.builder(
+                        Component.literal("§7... §e" + (tracks.size() - 5) + " §7ещё"),
+                        (b) -> {}).bounds(x, curY, w, 18).build();
+                moreBtn.active = false;
+                widgets.add(moreBtn);
+            }
+        } else {
+            Button emptyBtn = Button.builder(
+                    Component.literal("§7" + LocalizationManager.get("gui.resistancedlc.panel.music_empty")),
+                    (b) -> {}).bounds(x, curY, w, 18).build();
+            emptyBtn.active = false;
+            widgets.add(emptyBtn);
+        }
+    }
+
+    private void rebuildMusicPlayerPanel() {
+        AccordionItem mp = null;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.id.equals("music_player")) { mp = it; break; }
+            }
+            if (mp != null) break;
+        }
+        if (mp == null || !mp.expanded) return;
+
+        clearPanelWidgets(mp);
+        mp.contentHeight = calcMusicPlayerHeight();
+        contentScroll = 0;
+        buildPanelWidgets(mp);
+        updateWidgetsVisibility();
+    }
+    // ===================== EASTER EGG (KILLAURA) =====================
+    private void buildKillAuraPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        // === Кнопка "Установить модуль KillAura" ===
+        widgets.add(Button.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.killaura_button")),
+                        (b) -> EasterEggManager.onKillAuraClick())
+                .bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        // === Hint-кнопка ===
+        String defaultHint = LocalizationManager.get("gui.resistancedlc.panel.killaura_hint");
+        Button hintBtn = Button.builder(
+                Component.literal("§7" + defaultHint),
+                (b) -> {}
+        ).bounds(x, curY, w, 18).build();
+        hintBtn.active = false;
+        widgets.add(hintBtn);
+
+        EasterEggManager.registerHintButton(hintBtn);
     }
 }

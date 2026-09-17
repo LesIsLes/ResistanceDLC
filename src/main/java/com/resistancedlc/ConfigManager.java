@@ -252,6 +252,25 @@ public class ConfigManager {
             json.addProperty("pickupLogStructureBlocks", ModConfig.pickupLogStructureBlocks);
             json.addProperty("pickupLogRussian", ModConfig.pickupLogRussian);
 
+            // === AUTO GG ===
+            json.addProperty("autoGgEnabled", ModConfig.autoGgEnabled);
+            json.addProperty("autoGgTemplate", ModConfig.autoGgTemplate);
+            json.addProperty("autoGgDelay", ModConfig.autoGgDelay);
+            json.addProperty("autoGgOnlyPlayers", ModConfig.autoGgOnlyPlayers);
+
+            // === MUSIC PLAYER ===
+            json.addProperty("musicPlayerEnabled", ModConfig.musicPlayerEnabled);
+            json.addProperty("musicVolume", ModConfig.musicVolume);
+            json.addProperty("musicRepeat", ModConfig.musicRepeat);
+            json.addProperty("musicShuffle", ModConfig.musicShuffle);
+            json.addProperty("musicHudX", ModConfig.musicHudX);
+            json.addProperty("musicHudY", ModConfig.musicHudY);
+            json.addProperty("musicHudAlpha", ModConfig.musicHudAlpha);
+            json.addProperty("musicShowHud", ModConfig.musicShowHud);
+            json.addProperty("musicLastIndex", ModConfig.musicLastIndex);
+            json.addProperty("musicAutoPlay", ModConfig.musicAutoPlay);
+            json.addProperty("musicRussian", ModConfig.musicRussian);
+
             // === CHAT FILTER ===
             json.addProperty("chatFilterEnabled", ModConfig.chatFilterEnabled);
             json.addProperty("chatFilterWordsRaw", ModConfig.chatFilterWordsRaw);
@@ -272,6 +291,17 @@ public class ConfigManager {
             json.addProperty("lastDeathDimension", ModConfig.lastDeathDimension);
             json.addProperty("lastDeathTime", ModConfig.lastDeathTime);
 
+            // === STRIKE RANGE ===
+            json.addProperty("strikeRangeEnabled", ModConfig.strikeRangeEnabled);
+            json.addProperty("strikeRangeX", ModConfig.strikeRangeX);
+            json.addProperty("strikeRangeY", ModConfig.strikeRangeY);
+            json.addProperty("strikeRangeColor", ModConfig.strikeRangeColor);
+            json.addProperty("strikeRangeAlpha", ModConfig.strikeRangeAlpha);
+            json.addProperty("strikeRangeFontSize", ModConfig.strikeRangeFontSize);
+            json.addProperty("strikeRangeShowTime", ModConfig.strikeRangeShowTime);
+            json.addProperty("strikeRangeShowBlocks", ModConfig.strikeRangeShowBlocks);
+            json.addProperty("strikeRangeShowTarget", ModConfig.strikeRangeShowTarget);
+
             // === CUSTOM HITBOX ===
             json.addProperty("customHitboxEnabled", ModConfig.customHitboxEnabled);
             json.addProperty("customHitboxRussian", ModConfig.customHitboxRussian);
@@ -284,6 +314,7 @@ public class ConfigManager {
             json.addProperty("itemScrollerDelay", ModConfig.itemScrollerDelay);
             json.addProperty("itemScrollerShiftStack", ModConfig.itemScrollerShiftStack);
             json.addProperty("itemScrollerCtrlAll", ModConfig.itemScrollerCtrlAll);
+
             // === COOLDOWNS ===
             json.addProperty("cooldownsEnabled", ModConfig.cooldownsEnabled);
             json.addProperty("cooldownsRussian", ModConfig.cooldownsRussian);
@@ -532,6 +563,25 @@ public class ConfigManager {
             ModConfig.pickupLogStructureBlocks = getBool(json, "pickupLogStructureBlocks", ModConfig.pickupLogStructureBlocks);
             ModConfig.pickupLogRussian = getBool(json, "pickupLogRussian", ModConfig.pickupLogRussian);
 
+            // === AUTO GG ===
+            ModConfig.autoGgEnabled = getBool(json, "autoGgEnabled", ModConfig.autoGgEnabled);
+            ModConfig.autoGgTemplate = getString(json, "autoGgTemplate", ModConfig.autoGgTemplate);
+            ModConfig.autoGgDelay = getFloat(json, "autoGgDelay", ModConfig.autoGgDelay);
+            ModConfig.autoGgOnlyPlayers = getBool(json, "autoGgOnlyPlayers", ModConfig.autoGgOnlyPlayers);
+
+            // === MUSIC PLAYER ===
+            ModConfig.musicPlayerEnabled = getBool(json, "musicPlayerEnabled", ModConfig.musicPlayerEnabled);
+            ModConfig.musicVolume = getFloat(json, "musicVolume", ModConfig.musicVolume);
+            ModConfig.musicRepeat = getInt(json, "musicRepeat", ModConfig.musicRepeat);
+            ModConfig.musicShuffle = getBool(json, "musicShuffle", ModConfig.musicShuffle);
+            ModConfig.musicHudX = getInt(json, "musicHudX", ModConfig.musicHudX);
+            ModConfig.musicHudY = getInt(json, "musicHudY", ModConfig.musicHudY);
+            ModConfig.musicHudAlpha = getInt(json, "musicHudAlpha", ModConfig.musicHudAlpha);
+            ModConfig.musicShowHud = getBool(json, "musicShowHud", ModConfig.musicShowHud);
+            ModConfig.musicLastIndex = getInt(json, "musicLastIndex", ModConfig.musicLastIndex);
+            ModConfig.musicAutoPlay = getBool(json, "musicAutoPlay", ModConfig.musicAutoPlay);
+            ModConfig.musicRussian = getBool(json, "musicRussian", ModConfig.musicRussian);
+
             // === CHAT FILTER ===
             ModConfig.chatFilterEnabled = getBool(json, "chatFilterEnabled", ModConfig.chatFilterEnabled);
             ModConfig.chatFilterWordsRaw = getString(json, "chatFilterWordsRaw", ModConfig.chatFilterWordsRaw);
@@ -551,6 +601,17 @@ public class ConfigManager {
             ModConfig.lastDeathZ = getInt(json, "lastDeathZ", ModConfig.lastDeathZ);
             ModConfig.lastDeathDimension = getString(json, "lastDeathDimension", ModConfig.lastDeathDimension);
             ModConfig.lastDeathTime = getLong(json, "lastDeathTime", ModConfig.lastDeathTime);
+
+            // === STRIKE RANGE ===
+            ModConfig.strikeRangeEnabled = getBool(json, "strikeRangeEnabled", ModConfig.strikeRangeEnabled);
+            ModConfig.strikeRangeX = getInt(json, "strikeRangeX", ModConfig.strikeRangeX);
+            ModConfig.strikeRangeY = getInt(json, "strikeRangeY", ModConfig.strikeRangeY);
+            ModConfig.strikeRangeColor = getInt(json, "strikeRangeColor", ModConfig.strikeRangeColor);
+            ModConfig.strikeRangeAlpha = getInt(json, "strikeRangeAlpha", ModConfig.strikeRangeAlpha);
+            ModConfig.strikeRangeFontSize = getInt(json, "strikeRangeFontSize", ModConfig.strikeRangeFontSize);
+            ModConfig.strikeRangeShowTime = getInt(json, "strikeRangeShowTime", ModConfig.strikeRangeShowTime);
+            ModConfig.strikeRangeShowBlocks = getBool(json, "strikeRangeShowBlocks", ModConfig.strikeRangeShowBlocks);
+            ModConfig.strikeRangeShowTarget = getBool(json, "strikeRangeShowTarget", ModConfig.strikeRangeShowTarget);
 
             // === CUSTOM HITBOX ===
             ModConfig.customHitboxEnabled = getBool(json, "customHitboxEnabled", ModConfig.customHitboxEnabled);
@@ -578,7 +639,7 @@ public class ConfigManager {
             ModConfig.cooldownsShowOnlyHotbar = getBool(json, "cooldownsShowOnlyHotbar", ModConfig.cooldownsShowOnlyHotbar);
             ModConfig.cooldownsMaxItems = getInt(json, "cooldownsMaxItems", ModConfig.cooldownsMaxItems);
             ModConfig.cooldownsFontSize = getInt(json, "cooldownsFontSize", ModConfig.cooldownsFontSize);
-            ModConfig.cooldownsIconDarkening = getInt(json, "cooldownsIconDarkening", ModConfig.cooldownsIconDarkening);  // ← НОВОЕ
+            ModConfig.cooldownsIconDarkening = getInt(json, "cooldownsIconDarkening", ModConfig.cooldownsIconDarkening);
 
             return true;
 

@@ -139,6 +139,13 @@ public class ModConfig {
     public static boolean pickupLogStructureBlocks = true;
     public static boolean pickupLogRussian = false;
 
+    // ===================== AUTO GG =====================
+    public static boolean autoGgEnabled = false;
+    public static String autoGgTemplate = "GG %s";
+    public static float autoGgDelay = 0.5f;
+    public static boolean autoGgOnlyPlayers = true;
+    public static String autoGgLastVictim = "";
+
     // ===================== PVE =====================
     public static boolean tapeMouseEnabled = false;
     public static int tapeMouseTarget = 0;
@@ -198,6 +205,34 @@ public class ModConfig {
     public static boolean particleBlockerCrit = false;
     public static boolean particleBlockerRussian = false;
 
+    // ===================== STRIKE RANGE =====================
+    public static boolean strikeRangeEnabled = false;
+    public static int strikeRangeX = 10;
+    public static int strikeRangeY = 300;
+    public static int strikeRangeColor = 0xFFFFFF00;
+    public static int strikeRangeAlpha = 255;
+    public static int strikeRangeFontSize = 1;
+    public static int strikeRangeShowTime = 1500;
+    public static boolean strikeRangeShowBlocks = true;
+    public static boolean strikeRangeShowTarget = true;
+    public static String strikeRangeLastTarget = "";
+
+    // ===================== MUSIC PLAYER =====================
+    public static boolean musicPlayerEnabled = false;
+    public static float musicVolume = 0.5f;
+    public static int musicRepeat = 0;                // 0=off, 1=one, 2=all
+    public static boolean musicShuffle = false;
+    public static int musicHudX = -1;                 // -1 = auto (правый верхний)
+    public static int musicHudY = 10;
+    public static int musicHudAlpha = 255;
+    public static boolean musicShowHud = true;
+    public static int musicLastIndex = -1;            // для восстановления при входе в мир
+    public static boolean musicAutoPlay = false;
+    public static boolean musicRussian = false;
+
+    // ===================== EASTER EGG (KILLAURA) =====================
+    public static boolean killAuraEggEnabled = true;
+
     // ===================== MISC =====================
     public static boolean chatFilterEnabled = false;
     public static String chatFilterWordsRaw = "";
@@ -231,28 +266,28 @@ public class ModConfig {
     // ===================== CUSTOM HITBOX =====================
     public static boolean customHitboxEnabled = false;
     public static boolean customHitboxRussian = false;
-    public static int customHitboxColor = 0xFFFFFFFF;   // ARGB
-    public static int customHitboxAlpha = 180;          // 0-255
+    public static int customHitboxColor = 0xFFFFFFFF;
+    public static int customHitboxAlpha = 180;
 
     // ===================== ITEM SCROLLER =====================
     public static boolean itemScrollerEnabled = false;
     public static boolean itemScrollerRussian = false;
-    public static int itemScrollerDelay = 200;          // 100-500ms
-    public static boolean itemScrollerShiftStack = true;  // Shift → вся стопка
-    public static boolean itemScrollerCtrlAll = true;     // Ctrl → все стопки
+    public static int itemScrollerDelay = 200;
+    public static boolean itemScrollerShiftStack = true;
+    public static boolean itemScrollerCtrlAll = true;
 
     // ===================== COOLDOWNS =====================
     public static boolean cooldownsEnabled = false;
     public static boolean cooldownsRussian = false;
     public static int cooldownsX = 10;
     public static int cooldownsY = 200;
-    public static int cooldownsColor = 0xFFFFFFFF;      // ARGB
-    public static int cooldownsAlpha = 255;             // 0-255
-    public static boolean cooldownsShowIcon = true;     // показывать иконку
-    public static boolean cooldownsShowName = true;     // показывать название
-    public static boolean cooldownsShowTime = true;     // показывать таймер
-    public static boolean cooldownsShowOnlyHotbar = false; // только предметы из хотбара
-    public static int cooldownsMaxItems = 5;            // макс. кол-во в списке (1-10)
-    public static int cooldownsFontSize = 1;            // 0=малый, 1=средний, 2=крупный
-    public static int cooldownsIconDarkening = 180;     // 0-255, сила затемнения иконки
+    public static int cooldownsColor = 0xFFFFFFFF;
+    public static int cooldownsAlpha = 255;
+    public static boolean cooldownsShowIcon = true;
+    public static boolean cooldownsShowName = true;
+    public static boolean cooldownsShowTime = true;
+    public static boolean cooldownsShowOnlyHotbar = false;
+    public static int cooldownsMaxItems = 5;
+    public static int cooldownsFontSize = 1;
+    public static int cooldownsIconDarkening = 180;
 }
