@@ -1,115 +1,150 @@
-```markdown
-# Resistance DLC
+# 🎮 ResistanceDLC
 
-![Resistance DLC](src/main/resources/assets/resistancedlc/icon.png)
+**A lightweight visual client mod for Minecraft 1.21.11 (Fabric)** with 33 features across 6 sections: HUD, PvP, PvE, Visual, Misc, and Music.
 
-Визуальный клиентский мод для Minecraft **1.21.11** на **Fabric**.
+![Version](https://img.shields.io/badge/version-2.3.0-green)
+![Minecraft](https://img.shields.io/badge/Minecraft-1.21.11-blue)
+![Loader](https://img.shields.io/badge/Loader-Fabric-orange)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Languages](https://img.shields.io/badge/languages-EN%20%7C%20RU-red)
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.11-green.svg)](https://www.minecraft.net/)
-[![Fabric](https://img.shields.io/badge/Fabric-0.19.5+-blue.svg)](https://fabricmc.net/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-2.0.0--dev-orange.svg)](https://github.com/LesIsLes/ResistanceDLC/releases)
+---
 
-## ✨ Возможности
+## ✨ Features
 
-### 🎯 HUD (14+ элементов)
-- Координаты · Биом · Время · FPS · Ping · TPS · BPS · Направление
-- Счётчик ударов до смерти
-- Эффекты зелий с иконками
-- Экипировка с прочностью
-- Combo Counter
-- Effect Warnings (предупреждение о конце эффектов)
-- Кастомный прицел (5 форм)
-- Фон HUD с настройкой прозрачности
-- **DeathCoords** — сохранение координат смерти с командой `/dc`
+### 🎵 Music Player
+- Play your own `.ogg` files from `config/resistancedlc/music/`
+- Beautiful HUD widget with rotating vinyl
+- Drag-to-adjust volume slider
+- Repeat (off / one / all), shuffle, auto-skip broken files
+- Full control from chat or GUI
+- Format: **OGG Vorbis**
 
-### ⚔️ PVP
-- **Custom Hit Sounds** — 7 кастомных звуков удара
-- **AutoSwap** — свап offhand ↔ инвентарь (4 режима)
-- **FastExp** — быстрое использование бутылочек опыта
-- **ShiftTap** — авто-крит через отпускание Shift
-- **AutoSprint** — авто-бег
-- **Totem Log** — лог тотемов в радиусе 5–20 блоков
-- **PvPSafe** — блокировка выхода и опасных команд в бою
-- **PickUpLogger** — лог подобранных предметов (3 режима)
-
-### 🖱️ PVE
-- **TapeMouse** — автокликер (ЛКМ/ПКМ, задержка, фильтр цели)
-- **ItemScroller** — быстрый перенос предметов скроллом в GUI контейнера
-  - Скролл → вся стопка
-  - Shift + скролл → 1 предмет
-  - Ctrl + скролл → все стопки такого типа
+### 🎯 PvP Tools
+- **PvPSafe** — blocks `/hub`, `/logout`, `/suicide` during combat
+- **AutoGG** — auto-sends "GG" after kills
+- **AutoSwap** — instant offhand ↔ inventory swap
+- **FastExp** — fast XP bottle usage
+- **ShiftTap** — crits via shift
+- **Custom Hit Sounds** — 7 built-in presets
+- **Totem Log** — logs broken totems
+- **PickUpLogger** — tracks valuable pickups
+- **KillAura Easter Egg** — a harmless joke 🎭
 
 ### 🎨 Visual
-- **Crosshair** — кастомный прицел (Крест / Точка / Круг / Стрелки / Крест+Точка)
-- **FOV / Aspect Ratio** — множитель FOV
-- **Low Fire / Low Shield** — низкий огонь и щит
-- **Zoom** — плавный зум (клавиша C)
-- **Waypoints** — метки с рендером + стрелками на краю экрана
-- **Camera** — NoHurtCam + NoBobbing
-- **ItemPhysics** — предметы лежат плашмя на земле
-- **Particle Blocker** — отключение частиц по 8 категориям
-- **Custom Hitbox** — изменение цвета debug-хитбоксов (F3+B)
-- **Темы GUI** — 5 пресетов
+- **Zoom** — smooth zoom with keybind
+- **Custom Crosshair** — 5 shapes, full color control
+- **Strike Range** — shows attack distance in real time
+- **Custom Hitbox** — colored debug hitboxes
+- **Aspect Ratio** — stretch FOV
+- **Low Fire / Shield** — lower flames and shield
+- **Particle Blocker** — hide particles by category
+- **Waypoints** — on-screen markers with distance
+- **Item Physics** — items lie flat
 
-### 🔧 Misc
-- **ChatFilter** — фильтр чата по стоп-словам
-- **AutoReconnect** — авто-переподключение к серверу
-- Привязка клавиш GUI
-- Конфигурации (JSON, save/load/list/remove)
-- **DeathCoords** — команда `/dc` (last / clear / toggle / help)
+### 🖥️ HUD
+- Coordinates, biome, time, FPS, ping, TPS, BPS
+- Potion effects with icons and timers
+- Equipment HUD with durability
+- Combo Counter
+- Cooldowns
+- Effect Warnings
+- Fully customizable position and colors
 
-### 🔍 Поиск
-- **~250 записей** — находит **ВСЕ** настройки мода
-- История поиска — 8 последних запросов
-- Клик по результату → переход в раздел/страницу
+### ⚙️ Misc
+- **ChatFilter** — regex-based chat filtering
+- **AutoReconnect** — reconnects after kicks
+- **DeathCoords** — saves death location with `/dc`
+- **GUI Themes** — 5 themes (Vanilla, Dark, Neon, Candy, Blood)
+- **Config Manager** — save/load configs with `/cfg`
 
-## 🔑 Кейбинды
+---
 
-| Клавиша | Действие |
-|---------|----------|
-| `G` | Открыть GUI |
-| `C` | Zoom |
-| `R` | TapeMouse |
-| `H` | AutoSwap |
-| `J` | Custom Hit Sounds |
-| `K` | FastExp |
-| `L` | ShiftTap |
-| `M` | Combo Counter |
-| `N` | Effect Warnings |
-| `B` | Добавить метку |
-| `O` | Totem Log |
-| `P` | PickUpLogger |
+## 🌍 Languages
 
-## 📦 Установка
+- 🇬🇧 English
+- 🇷🇺 Russian
 
-1. Установи [Fabric Loader](https://fabricmc.net/use/) для **Minecraft 1.21.11**
-2. Скачай [Fabric API](https://modrinth.com/mod/fabric-api) версии **0.141.6+**
-3. Положи `.jar` мода в `.minecraft/mods/`
-4. Запусти игру
+Switch language in GUI: **G → top-right `RU`/`EN` button**
 
-**Требования:**
-- Minecraft **1.21.11**
-- Fabric Loader **0.19.5+**
-- Fabric API **0.141.6+**
-- Java **21**
+---
 
-## 🛠️ Сборка из исходников
+## 🎮 How to use
+
+### Installation
+1. Install **Fabric Loader 0.19.5+** for Minecraft **1.21.11**
+2. Install **Fabric API**
+3. Download `resistancedlc-2.3.0.jar` from [Releases](../../releases)
+4. Put it in `.minecraft/mods/`
+5. Launch the game
+
+### Opening the GUI
+Press **`G`** in game to open the main mod GUI.
+
+### Music Player setup
+1. Open GUI → **Music** section → **Music Player** → **Enable**
+2. Click **"Open folder"** — music folder will open
+3. Drop your `.ogg` files there (e.g. `Artist - Title.ogg`)
+4. Click **"Rescan"** to reload the playlist
+5. Press `▶` to play
+
+---
+
+## 🛠️ Requirements
+
+- **Minecraft:** 1.21.11
+- **Fabric Loader:** 0.19.5 or newer
+- **Fabric API:** latest for 1.21.11
+- **Java:** 21+
+
+---
+
+## 📦 Installation from source
 
 ```bash
 git clone https://github.com/LesIsLes/ResistanceDLC.git
 cd ResistanceDLC
-./gradlew build
+./gradlew clean build
+Output .jar: build/libs/resistancedlc-2.3.0.jar
 
-📋 Планы на v2.0.0
-✅ DeathCoords — сохранение координат смерти
+🎨 GUI Themes
+Theme	Color	Description
+Vanilla	#00FF00	Classic green
+Dark	#808080	Dark grey
+Neon	#00FFFF	Cyberpunk
+Candy	#FF69B4	Pink
+Blood	#FF0000	Red
+📝 Commands
+Command	Description
+/cfg	Config manager help
+/cfg dir	Open config folder
+/cfg list	List saved configs
+/cfg save <name>	Save current config
+/cfg load <name>	Load config
+/dc	Show last death coords
+/dc clear	Clear saved death coords
+/chatfilter add <word>	Add stop-word
+/music	Toggle MusicPlayer
+/music list	List playlist
+/music folder	Open music folder
+🤝 Contributing
+Found a bug or want a new feature? Open an Issue.
 
-✅ Custom Hitbox — цвет debug-хитбоксов
+Pull requests welcome!
 
-✅ ItemScroller — быстрый перенос предметов скроллом
+📜 License
+MIT License — Copyright (c) 2026 lesis
 
-⏳ CoolDowns — кулдауны предметов в HUD (в работе)
+See LICENSE for details.
 
-⏳ HUD-аккордеон — переработка GUI (следующая большая цель)
+💖 Credits
+Author: lesis
 
-Лицензия: MIT, Copyright (c) 2026 lesis
+AI assistance: Claude (Anthropic) — for code review, refactoring, and debugging
+
+Libraries: java-vorbis-support by Trilarion
+
+⚠️ AI Disclosure
+This mod contains AI-generated code (assisted development). All features, textures, and descriptions were reviewed and tested by the human author. Declared in compliance with Modrinth's content rules.
+
+Made with 💚 by lesis
