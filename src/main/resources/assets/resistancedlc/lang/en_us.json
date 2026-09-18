@@ -354,6 +354,10 @@
   "gui.resistancedlc.egg.killaura.msg2": "§c[ResistanceDLC] §fDenied. Play fair.",
   "gui.resistancedlc.egg.killaura.msg3": "§c[ResistanceDLC] §fKillAura is not for this mod.",
 
+  "gui.resistancedlc.item.mod_logo.title": "Mod Logo & Name",
+  "gui.resistancedlc.item.mod_logo.desc": "Show mod logo and name on HUD",
+  "gui.resistancedlc.panel.mod_logo_show": "Show logo + name",
+
   "gui.resistancedlc.autoreconnect.cancelled": "[AutoReconnect] Cancelled",
 
   "gui.resistancedlc.pickup.prefix": "[PickUp]"

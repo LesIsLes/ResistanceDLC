@@ -11,12 +11,11 @@ import java.io.File;
 /**
  * OggPlayback — обёртка над Java Sound для проигрывания OGG.
  *
- * Использует SPI из java-vorbis-support (com.github.trilarion),
- * поэтому AudioSystem.getAudioInputStream() возвращает OGG-поток,
- * как если бы это был WAV.
+ * ВАЖНО: Fabric ClassLoader не видит META-INF/services,
+ * поэтому используем VorbisAudioFileReader НАПРЯМУЮ (без AudioSystem/SPI).
  *
  * Особенности:
- *   - Пауза через пересоздание потока + ручной skip байтов (фалбэк).
+ *   - Пауза через пересоздание потока + ручной skip байтов.
  *   - Громкость через MASTER_GAIN (в децибелах).
  *   - Потокобезопасность: чтение в отдельном потоке, стоп через volatile-флаг.
  */
@@ -68,7 +67,6 @@ public class OggPlayback {
             line.stop();
             line.flush();
         }
-        // Поток чтения сам завершится, увидев running=false
     }
 
     /**
@@ -105,12 +103,44 @@ public class OggPlayback {
 
     // ===================== ВНУТРЕННЯЯ ЛОГИКА =====================
 
+    /**
+     * Открывает OGG-поток через VorbisAudioFileReader НАПРЯМУЮ.
+     * Fallback: если не сработал — пробует AudioSystem.
+     */
+    private AudioInputStream openVorbisStream(File file) throws Exception {
+        // ✅ ПРЯМОЙ ВЫЗОВ VorbisAudioFileReader (без AudioSystem/SPI)
+        try {
+            Class<?> readerClass = Class.forName(
+                    "com.github.trilarion.sound.vorbis.sampled.spi.VorbisAudioFileReader"
+            );
+            Object reader = readerClass.getDeclaredConstructor().newInstance();
+            java.lang.reflect.Method getStreamMethod = readerClass.getMethod(
+                    "getAudioInputStream", java.io.File.class
+            );
+            AudioInputStream stream = (AudioInputStream) getStreamMethod.invoke(reader, file);
+            ResistanceDLC.LOGGER.info("[OggPlayback] Opened via VorbisAudioFileReader: " + file.getName());
+            return stream;
+        } catch (Exception e) {
+            ResistanceDLC.LOGGER.warn("[OggPlayback] Direct reader failed, trying AudioSystem: " + e.getMessage());
+        }
+
+        // Fallback: AudioSystem
+        try {
+            AudioInputStream stream = AudioSystem.getAudioInputStream(file);
+            ResistanceDLC.LOGGER.info("[OggPlayback] Opened via AudioSystem: " + file.getName());
+            return stream;
+        } catch (Exception e) {
+            ResistanceDLC.LOGGER.error("[OggPlayback] AudioSystem also failed: " + e.getMessage());
+            throw e;
+        }
+    }
+
     private boolean startThread(long skipBytes) {
         final long skip = skipBytes;
 
         try {
-            // Открываем поток заново (fallback вместо skip на старом потоке)
-            AudioInputStream raw = AudioSystem.getAudioInputStream(currentFile);
+            // ✅ Открываем OGG-поток через VorbisAudioFileReader
+            AudioInputStream raw = openVorbisStream(currentFile);
             AudioFormat baseFormat = raw.getFormat();
 
             // Конвертируем в PCM_SIGNED 16-bit — стандарт для SourceDataLine
@@ -171,7 +201,6 @@ public class OggPlayback {
                 }
 
                 if (running) {
-                    // Трек закончился сам
                     localLine.drain();
                     running = false;
                     if (onTrackFinished != null) {
@@ -206,10 +235,6 @@ public class OggPlayback {
 
     // ===================== ГРОМКОСТЬ =====================
 
-    /**
-     * Установка громкости (0.0 - 1.0).
-     * Через MASTER_GAIN. Если контрол недоступен — fallback на линейное преобразование.
-     */
     public void setVolume(float v) {
         this.volume = Math.max(0.0f, Math.min(1.0f, v));
         applyVolume();
@@ -240,9 +265,6 @@ public class OggPlayback {
     public long getPositionBytes() { return positionBytes; }
     public long getTotalBytes() { return totalBytes; }
 
-    /**
-     * Прогресс 0.0 - 1.0.
-     */
     public float getProgress() {
         if (totalBytes <= 0) return 0.0f;
         return Math.max(0.0f, Math.min(1.0f, (float) positionBytes / totalBytes));

@@ -640,6 +640,18 @@ public class AccordionScreen extends Screen {
         nbItem.contentHeight = 46;
         hud.items.add(nbItem);
 
+        // ===== НОВОЕ: Mod Logo & Name =====
+        AccordionItem logoItem = new AccordionItem(
+                "mod_logo",
+                LocalizationManager.get("gui.resistancedlc.item.mod_logo.title"),
+                LocalizationManager.get("gui.resistancedlc.item.mod_logo.desc"),
+                () -> ModConfig.showModLogo,
+                () -> { ModConfig.showModLogo = !ModConfig.showModLogo; ConfigManager.save(); }
+        );
+        logoItem.contentHeight = 74;
+        hud.items.add(logoItem);
+        // ===== КОНЕЦ НОВОГО =====
+
         AccordionItem cdItem = new AccordionItem(
                 "cooldowns",
                 LocalizationManager.get("gui.resistancedlc.item.cooldowns.title"),
@@ -1144,6 +1156,7 @@ public class AccordionScreen extends Screen {
         switch (item.id) {
             case "no_hurt_cam" -> buildNoHurtCamPanel(widgets, innerX, innerY);
             case "no_bobbing" -> buildNoBobbingPanel(widgets, innerX, innerY);
+            case "mod_logo" -> buildModLogoPanel(widgets, innerX, innerY, innerRight);
             case "cooldowns" -> buildCoolDownsPanel(widgets, innerX, innerY, innerRight);
             case "combo" -> buildComboPanel(widgets, innerX, innerY, innerRight);
             case "potion_effects" -> buildPotionEffectsPanel(widgets, innerX, innerY, innerRight);
@@ -1203,6 +1216,24 @@ public class AccordionScreen extends Screen {
                 .pos(x, y).selected(ModConfig.noBobbingEnabled)
                 .onValueChange((c, v) -> { ModConfig.noBobbingEnabled = v; ConfigManager.save(); })
                 .build());
+    }
+
+    // ===== НОВОЕ: панель Mod Logo =====
+    private void buildModLogoPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.mod_logo_show")), this.font)
+                .pos(x, curY).selected(ModConfig.showModLogo)
+                .onValueChange((c, v) -> { ModConfig.showModLogo = v; ConfigManager.save(); })
+                .build());
+        curY += rowH + rowGap;
+
+        addPosEditorRow(widgets, x, curY, right,
+                () -> ModConfig.modLogoX, () -> ModConfig.modLogoY,
+                (nx, ny) -> { ModConfig.modLogoX = nx; ModConfig.modLogoY = ny; },
+                10, 5);
     }
 
     private void buildItemPhysicsPanel(List<AbstractWidget> widgets, int x, int y) {

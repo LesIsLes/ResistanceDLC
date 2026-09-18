@@ -354,6 +354,10 @@
   "gui.resistancedlc.egg.killaura.msg2": "§c[ResistanceDLC] §fОтказано. Играй честно.",
   "gui.resistancedlc.egg.killaura.msg3": "§c[ResistanceDLC] §fKillAura — не для этого мода.",
 
+  "gui.resistancedlc.item.mod_logo.title": "Логотип и название мода",
+  "gui.resistancedlc.item.mod_logo.desc": "Показывать логотип и название мода на HUD",
+  "gui.resistancedlc.panel.mod_logo_show": "Показывать логотип + название",
+
   "gui.resistancedlc.autoreconnect.cancelled": "[AutoReconnect] Отменено",
 
   "gui.resistancedlc.pickup.prefix": "[PickUp]"
