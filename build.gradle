@@ -45,21 +45,20 @@ repositories {
     mavenLocal()
 }
 
+// ===================== OGG LIBS =====================
+configurations {
+    oggLibs
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-    implementation 'com.github.trilarion:java-vorbis-support:1.2.1'
 
-    // === ВНЕШНИЕ МОДЫ ===
-    // Раскомментируйте и замените ID на актуальные для 1.21.11
-
-    // Пример: Decent Freelook
-    // modImplementation "curse.maven:decent-freelook-1458133:7612834"
-
-    // Пример: Freelook с Modrinth
-    // modImplementation "maven.modrinth:freelook:1.1.0+1.21.11"
+    // === OGG-библиотека (вшивается в .jar через jar { from { ... } }) ===
+    oggLibs files('libs/java-vorbis-support-1.2.1.jar')
+    implementation files('libs/java-vorbis-support-1.2.1.jar')
 }
 
 processResources {
@@ -85,6 +84,12 @@ jar {
     from("LICENSE") {
         rename { "${it}_${project.archives_base_name}" }
     }
+
+    // ✅ Вшиваем OGG-библиотеку (с сохранением META-INF/services — важно для SPI!)
+    from {
+        configurations.oggLibs.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
 publishing {
@@ -95,6 +100,5 @@ publishing {
     }
 
     repositories {
-        // Репозитории для публикации
     }
 }
