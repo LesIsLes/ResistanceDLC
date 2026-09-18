@@ -290,4 +290,20 @@ public class ModConfig {
     public static int cooldownsMaxItems = 5;
     public static int cooldownsFontSize = 1;
     public static int cooldownsIconDarkening = 180;
+
+    // ===================== GAMMA UTIL =====================
+    public static boolean gammaUtilEnabled = false;
+    public static float gammaValue = 1.0f;
+
+    // ===================== TARGET ESP =====================
+    public static boolean targetEspEnabled = false;
+    public static String targetEspVariant = "crystals";
+    public static int targetEspColor = 0xFFAA00FF;
+    public static int targetEspAlpha = 220;           // 0..255 — эмулируется размером
+    public static float targetEspSize = 1.0f;         // 0.5..2.0
+    public static float targetEspRotationSpeed = 1.0f; // 0.0..3.0
+    public static float targetEspPulse = 0.15f;       // 0.0..0.5
+    public static boolean targetEspHurt = true;
+    public static boolean targetEspHideHitboxes = true;
+    public static boolean targetEspRussian = false;
 }

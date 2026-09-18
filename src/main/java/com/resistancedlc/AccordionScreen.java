@@ -351,7 +351,7 @@ public class AccordionScreen extends Screen {
                     searchField.visible = true;
                     searchField.active = true;
                 }
-                rebuildAllPanelWidgets();
+                // УБРАНО: rebuildAllPanelWidgets(); — правило №11, краш
             }
         }
 
@@ -831,6 +831,18 @@ public class AccordionScreen extends Screen {
         eggItem.contentHeight = 74;
         pvp.items.add(eggItem);
 
+        // ===== TARGET ESP =====
+        AccordionItem targetEspItem = new AccordionItem(
+                "target_esp",
+                LocalizationManager.get("gui.resistancedlc.item.target_esp.title"),
+                LocalizationManager.get("gui.resistancedlc.item.target_esp.desc"),
+                () -> ModConfig.targetEspEnabled,
+                () -> { ModConfig.targetEspEnabled = !ModConfig.targetEspEnabled; ConfigManager.save(); }
+        );
+        targetEspItem.contentHeight = 280;
+        pvp.items.add(targetEspItem);
+        // ===== END TARGET ESP =====
+
         sections.add(pvp);
 
         // PVE
@@ -959,6 +971,15 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.strikeRangeEnabled,
                 () -> { ModConfig.strikeRangeEnabled = !ModConfig.strikeRangeEnabled; ConfigManager.save(); }
         );
+        AccordionItem gammaItem = new AccordionItem(
+                "gamma_util",
+                LocalizationManager.get("gui.resistancedlc.item.gamma_util.title"),
+                LocalizationManager.get("gui.resistancedlc.item.gamma_util.desc"),
+                () -> ModConfig.gammaUtilEnabled,
+                () -> { ModConfig.gammaUtilEnabled = !ModConfig.gammaUtilEnabled; ConfigManager.save(); }
+        );
+        gammaItem.contentHeight = 74;
+        visual.items.add(gammaItem);
         srItem.contentHeight = 214;
         visual.items.add(srItem);
 
@@ -1189,7 +1210,9 @@ public class AccordionScreen extends Screen {
             case "auto_gg" -> buildAutoGGPanel(widgets, innerX, innerY, innerRight);
             case "strike_range" -> buildStrikeRangePanel(widgets, innerX, innerY, innerRight);
             case "killaura_egg" -> buildKillAuraPanel(widgets, innerX, innerY, innerRight);
+            case "target_esp" -> buildTargetEspPanel(widgets, innerX, innerY, innerRight);
             case "music_player" -> buildMusicPlayerPanel(widgets, innerX, innerY, innerRight);
+            case "gamma_util" -> buildGammaUtilPanel(widgets, innerX, innerY, innerRight);
             default -> { }
         }
         for (AbstractWidget w : widgets) {
@@ -4108,7 +4131,34 @@ public class AccordionScreen extends Screen {
         buildPanelWidgets(sr);
         updateWidgetsVisibility();
     }
+    private void buildGammaUtilPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
 
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.gamma_util.enable")), this.font)
+                .pos(x, curY).selected(ModConfig.gammaUtilEnabled)
+                .onValueChange((c, v) -> { ModConfig.gammaUtilEnabled = v; ConfigManager.save(); })
+                .build());
+        curY += rowH + rowGap;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.gamma_util.value",
+                        String.format("%.1f", ModConfig.gammaValue))),
+                (ModConfig.gammaValue - 1.0f) / 99.0f
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.gamma_util.value",
+                        String.format("%.1f", ModConfig.gammaValue))));
+            }
+            @Override protected void applyValue() {
+                ModConfig.gammaValue = 1.0f + (float)(this.value * 99.0f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+    }
     // ===================== MUSIC PLAYER =====================
     private int calcMusicPlayerHeight() {
         int base = 18 + 10 * 28;
@@ -4324,5 +4374,175 @@ public class AccordionScreen extends Screen {
         widgets.add(hintBtn);
 
         EasterEggManager.registerHintButton(hintBtn);
+    }
+    // ===================== TARGET ESP =====================
+    private void buildTargetEspPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        // === Тогл вкл/выкл ===
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.enable")), this.font)
+                .pos(x, curY).selected(ModConfig.targetEspEnabled)
+                .onValueChange((c, v) -> { ModConfig.targetEspEnabled = v; ConfigManager.save(); })
+                .build());
+        curY += rowH + rowGap;
+
+        // === Выбор режима ===
+        String[] modes = {
+                LocalizationManager.get("gui.resistancedlc.panel.target_esp.mode_crystals"),
+                LocalizationManager.get("gui.resistancedlc.panel.target_esp.mode_cubes"),
+                LocalizationManager.get("gui.resistancedlc.panel.target_esp.mode_ring"),
+                LocalizationManager.get("gui.resistancedlc.panel.target_esp.mode_ghosts2"),
+        };
+        String[] modeIds = {"crystals", "cubes", "ring", "ghosts_2"};
+        int foundIdx = 0;
+        for (int i = 0; i < modeIds.length; i++) {
+            if (modeIds[i].equals(ModConfig.targetEspVariant)) { foundIdx = i; break; }
+        }
+        final int currentIdx = foundIdx;   // ← final для лямбды
+        widgets.add(Button.builder(
+                        Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.target_esp.mode") + ": §f" + modes[currentIdx]),
+                        (b) -> {
+                            int next = (currentIdx + 1) % modeIds.length;
+                            ModConfig.targetEspVariant = modeIds[next];
+                            ConfigManager.save();
+                            rebuildTargetEspPanel();
+                        })
+                .bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        // === HEX-цвет + пресеты ===
+        EditBox hexField = new EditBox(this.font, x, curY, 80, 18,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.hex")));
+        hexField.setMaxLength(7);
+        hexField.setValue(String.format("#%06X", ModConfig.targetEspColor & 0xFFFFFF));
+        widgets.add(hexField);
+
+        widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.apply")), (b) -> {
+            String hex = hexField.getValue().replace("#", "").trim();
+            try {
+                ModConfig.targetEspColor = 0xFF000000 | Integer.parseInt(hex, 16);
+                ConfigManager.save();
+            } catch (NumberFormatException ignored) {}
+        }).bounds(x + 85, curY, 35, 18).build());
+
+        int presetX = x + 125;
+        int presetW = (right - presetX - 9) / 4;
+        String[] pn = {"R", "G", "B", "W"};
+        int[] pc = {0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 0xFFFFFFFF};
+        for (int i = 0; i < 4; i++) {
+            final int color = pc[i];
+            final String hex = String.format("#%06X", color & 0xFFFFFF);
+            widgets.add(Button.builder(Component.literal(pn[i]), (b) -> {
+                hexField.setValue(hex);
+                ModConfig.targetEspColor = color;
+                ConfigManager.save();
+            }).bounds(presetX + i * (presetW + 3), curY, presetW, 18).build());
+        }
+        curY += rowH + rowGap;
+
+        // === Слайдер размера ===
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.size",
+                        String.format("%.2f", ModConfig.targetEspSize))),
+                (ModConfig.targetEspSize - 0.5f) / 1.5f
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.size",
+                        String.format("%.2f", ModConfig.targetEspSize))));
+            }
+            @Override protected void applyValue() {
+                ModConfig.targetEspSize = 0.5f + (float)(this.value * 1.5f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // === Слайдер скорости ===
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.rotation",
+                        String.format("%.2f", ModConfig.targetEspRotationSpeed))),
+                ModConfig.targetEspRotationSpeed / 3.0f
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.rotation",
+                        String.format("%.2f", ModConfig.targetEspRotationSpeed))));
+            }
+            @Override protected void applyValue() {
+                ModConfig.targetEspRotationSpeed = (float)(this.value * 3.0f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // === Слайдер пульсации ===
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.pulse",
+                        String.format("%.2f", ModConfig.targetEspPulse))),
+                ModConfig.targetEspPulse / 0.5f
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.pulse",
+                        String.format("%.2f", ModConfig.targetEspPulse))));
+            }
+            @Override protected void applyValue() {
+                ModConfig.targetEspPulse = (float)(this.value * 0.5f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // === Слайдер alpha ===
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.alpha", ModConfig.targetEspAlpha)),
+                ModConfig.targetEspAlpha / 255.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.alpha",
+                        ModConfig.targetEspAlpha)));
+            }
+            @Override protected void applyValue() {
+                ModConfig.targetEspAlpha = (int)(this.value * 255);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // === Тогл «скрывать хитбоксы» ===
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.hide_hitboxes")), this.font)
+                .pos(x, curY).selected(ModConfig.targetEspHideHitboxes)
+                .onValueChange((c, v) -> { ModConfig.targetEspHideHitboxes = v; ConfigManager.save(); })
+                .build());
+        curY += rowH + rowGap;
+
+        // === Тогл «красный при уроне» ===
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.hurt")), this.font)
+                .pos(x, curY).selected(ModConfig.targetEspHurt)
+                .onValueChange((c, v) -> { ModConfig.targetEspHurt = v; ConfigManager.save(); })
+                .build());
+    }
+
+    // ===== TARGET ESP: пересборка панели при смене режима =====
+    private void rebuildTargetEspPanel() {
+        AccordionItem te = null;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.id.equals("target_esp")) { te = it; break; }
+            }
+            if (te != null) break;
+        }
+        if (te == null || !te.expanded) return;
+
+        clearPanelWidgets(te);
+        buildPanelWidgets(te);
+        updateWidgetsVisibility();
     }
 }

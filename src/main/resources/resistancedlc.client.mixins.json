@@ -22,7 +22,8 @@
     "AbstractContainerScreenAccessor",
     "PvPSafeHurtMixin",
     "AutoGGMixin",
-    "MusicPlayerHudMixin"
+    "MusicPlayerHudMixin",
+    "HideHitboxesMixin"
   ],
   "injectors": {
     "defaultRequire": 1

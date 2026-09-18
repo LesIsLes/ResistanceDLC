@@ -360,5 +360,29 @@
 
   "gui.resistancedlc.autoreconnect.cancelled": "[AutoReconnect] Отменено",
 
-  "gui.resistancedlc.pickup.prefix": "[PickUp]"
+  "gui.resistancedlc.pickup.prefix": "[PickUp]",
+
+  "gui.resistancedlc.item.target_esp.title": "TargetESP",
+  "gui.resistancedlc.item.target_esp.desc": "Подсветка цели анимированными частицами",
+  "gui.resistancedlc.panel.target_esp.enable": "Включить TargetESP",
+  "gui.resistancedlc.panel.target_esp.mode": "Режим",
+  "gui.resistancedlc.panel.target_esp.mode_crystals": "Кристаллы",
+  "gui.resistancedlc.panel.target_esp.mode_cubes": "Кубики",
+  "gui.resistancedlc.panel.target_esp.mode_ring": "Кольцо",
+  "gui.resistancedlc.panel.target_esp.mode_ghosts2": "Призраки 2",
+  "gui.resistancedlc.panel.target_esp.hex": "#RRGGBB",
+  "gui.resistancedlc.panel.target_esp.size": "Размер: %s",
+  "gui.resistancedlc.panel.target_esp.rotation": "Скорость вращения: %s",
+  "gui.resistancedlc.panel.target_esp.pulse": "Пульсация: %s",
+  "gui.resistancedlc.panel.target_esp.alpha": "Яркость: %d",
+  "gui.resistancedlc.panel.target_esp.hide_hitboxes": "Скрывать хитбоксы при работе",
+  "gui.resistancedlc.panel.target_esp.hurt": "Подсвечивать красным при уроне",
+
+  "gui.resistancedlc.targetesp.variant.bracket": "Рамка",
+  "gui.resistancedlc.panel.target_esp.mode_bracket": "Рамка",
+
+  "gui.resistancedlc.item.gamma_util.title": "Gamma Util",
+  "gui.resistancedlc.item.gamma_util.desc": "Повышает гамму (яркость) клиента",
+  "gui.resistancedlc.panel.gamma_util.enable": "Включить Gamma Util",
+  "gui.resistancedlc.panel.gamma_util.value": "Гамма: %s"
 }

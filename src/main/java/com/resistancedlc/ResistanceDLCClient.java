@@ -49,8 +49,12 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
     private static long lastAttackTime = 0;
     private static boolean tapeMouseWeHeldRMB = false;
-
     private static float lastHealth = -1.0f;
+
+    // ===== TargetEsp (порт от anomalith) =====
+    private static final com.resistancedlc.targetesp.TargetESP TARGET_ESP =
+            new com.resistancedlc.targetesp.TargetESP(
+                    com.resistancedlc.targetesp.TargetManagerHolder.MANAGER);
 
     @Override
     public void onInitializeClient() {
@@ -62,12 +66,12 @@ public class ResistanceDLCClient implements ClientModInitializer {
         ConfigManager.load();
         KeyBindings.register();
 
-        // Инициализация MusicPlayer (сканирование папки music/)
+        // Инициализация MusicPlayer
         MusicPlayerManager.init();
 
-        // ===== PVP SAFE + STRIKE RANGE: когда МЫ ударили сущность =====
+        // ===== ATTACK CALLBACK (StrikeRange + PvPSafe + TargetEsp) =====
         AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
-            // StrikeRange — записываем дистанцию до цели
+            // StrikeRange — записываем дистанцию
             if (ModConfig.strikeRangeEnabled && entity != null) {
                 double dist = player.distanceTo(entity);
                 StrikeRangeManager.onHit(dist);
@@ -77,6 +81,11 @@ public class ResistanceDLCClient implements ClientModInitializer {
             // PvPSafe — только для игроков
             if (ModConfig.pvpSafeEnabled && entity instanceof Player && entity != player) {
                 PvPSafeManager.recordHit();
+            }
+
+            // ===== TargetEsp — запоминаем цель удара =====
+            if (ModConfig.targetEspEnabled && entity instanceof LivingEntity) {
+                com.resistancedlc.targetesp.TargetManagerHolder.MANAGER.setCurrentTarget(entity);
             }
 
             return InteractionResult.PASS;
@@ -122,6 +131,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
             PvPSafeManager.reset();
             AutoGGManager.reset();
             StrikeRangeManager.reset();
+            com.resistancedlc.targetesp.TargetManagerHolder.MANAGER.reset();
+            GammaUtilManager.reset();
             MusicPlayerManager.stop();
             lastHealth = -1.0f;
             AutoReconnectManager.onDisconnect();
@@ -135,6 +146,9 @@ public class ResistanceDLCClient implements ClientModInitializer {
             if (ModConfig.musicPlayerEnabled && ModConfig.musicAutoPlay) {
                 MusicPlayerManager.play();
             }
+
+            // Force re-apply gamma (на случай, если настройки сбросились)
+            GammaUtilManager.reset();
         });
 
         // ===== КОМАНДЫ =====
@@ -401,6 +415,9 @@ public class ResistanceDLCClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> PickUpLogger.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> AutoReconnectManager.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> AutoGGManager.tick());
+
+        // ===== GAMMA UTIL =====
+        ClientTickEvents.END_CLIENT_TICK.register(client -> GammaUtilManager.tick());
 
         // ===== ZOOM =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -720,13 +737,30 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 (graphics, tickCounter) -> renderHud(graphics)
         );
 
-        // ===== MUSIC HUD (отдельный слой, чтобы рисовался поверх) =====
+        // ===== MUSIC HUD =====
         HudElementRegistry.attachElementBefore(
                 VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "music_hud"),
                 (graphics, tickCounter) -> MusicPlayerHud.render(graphics)
         );
+
+        // ===== TARGET ESP — регистрация рендера =====
+
+        net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_EXTRACTION.register(
+                TARGET_ESP::extract
+        );
+        net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_MAIN.register(
+                TARGET_ESP::draw
+        );
+
+// ===== TICK — обновление цели =====
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            if (mc.level != null) {
+                com.resistancedlc.targetesp.TargetManagerHolder.MANAGER.tick(mc.level);
+            }
+        });
     }
+
     // ===== HUD =====
     private static void renderHud(GuiGraphics graphics) {
         if (!ModConfig.showHud) return;

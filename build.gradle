@@ -102,3 +102,8 @@ publishing {
     repositories {
     }
 }
+loom {
+    mixin {
+        useLegacyMixinAp = true
+    }
+}

@@ -330,6 +330,22 @@ public class ConfigManager {
             json.addProperty("cooldownsFontSize", ModConfig.cooldownsFontSize);
             json.addProperty("cooldownsIconDarkening", ModConfig.cooldownsIconDarkening);
 
+            // === GAMMA UTIL ===
+            json.addProperty("gammaUtilEnabled", ModConfig.gammaUtilEnabled);
+            json.addProperty("gammaValue", ModConfig.gammaValue);
+
+            // === TARGET ESP ===
+            json.addProperty("targetEspEnabled", ModConfig.targetEspEnabled);
+            json.addProperty("targetEspVariant", ModConfig.targetEspVariant);
+            json.addProperty("targetEspColor", ModConfig.targetEspColor);
+            json.addProperty("targetEspAlpha", ModConfig.targetEspAlpha);
+            json.addProperty("targetEspSize", ModConfig.targetEspSize);
+            json.addProperty("targetEspRotationSpeed", ModConfig.targetEspRotationSpeed);
+            json.addProperty("targetEspPulse", ModConfig.targetEspPulse);
+            json.addProperty("targetEspHurt", ModConfig.targetEspHurt);
+            json.addProperty("targetEspHideHitboxes", ModConfig.targetEspHideHitboxes);
+            json.addProperty("targetEspRussian", ModConfig.targetEspRussian);
+
             Path file = CONFIG_DIR.resolve(name + ".json");
             synchronized (GSON) {
                 Files.writeString(file, GSON.toJson(json));
@@ -640,6 +656,22 @@ public class ConfigManager {
             ModConfig.cooldownsMaxItems = getInt(json, "cooldownsMaxItems", ModConfig.cooldownsMaxItems);
             ModConfig.cooldownsFontSize = getInt(json, "cooldownsFontSize", ModConfig.cooldownsFontSize);
             ModConfig.cooldownsIconDarkening = getInt(json, "cooldownsIconDarkening", ModConfig.cooldownsIconDarkening);
+
+            // === GAMMA UTIL ===
+            ModConfig.gammaUtilEnabled = getBool(json, "gammaUtilEnabled", ModConfig.gammaUtilEnabled);
+            ModConfig.gammaValue = getFloat(json, "gammaValue", ModConfig.gammaValue);
+
+            // === TARGET ESP ===
+            ModConfig.targetEspEnabled = getBool(json, "targetEspEnabled", ModConfig.targetEspEnabled);
+            ModConfig.targetEspVariant = getString(json, "targetEspVariant", ModConfig.targetEspVariant);
+            ModConfig.targetEspColor = getInt(json, "targetEspColor", ModConfig.targetEspColor);
+            ModConfig.targetEspAlpha = getInt(json, "targetEspAlpha", ModConfig.targetEspAlpha);
+            ModConfig.targetEspSize = getFloat(json, "targetEspSize", ModConfig.targetEspSize);
+            ModConfig.targetEspRotationSpeed = getFloat(json, "targetEspRotationSpeed", ModConfig.targetEspRotationSpeed);
+            ModConfig.targetEspPulse = getFloat(json, "targetEspPulse", ModConfig.targetEspPulse);
+            ModConfig.targetEspHurt = getBool(json, "targetEspHurt", ModConfig.targetEspHurt);
+            ModConfig.targetEspHideHitboxes = getBool(json, "targetEspHideHitboxes", ModConfig.targetEspHideHitboxes);
+            ModConfig.targetEspRussian = getBool(json, "targetEspRussian", ModConfig.targetEspRussian);
 
             return true;
 
