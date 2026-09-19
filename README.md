@@ -1,12 +1,6 @@
-# 🎮 ResistanceDLC
+# Resistance DLC
 
-**A lightweight visual client mod for Minecraft 1.21.11 (Fabric)** with 33 features across 6 sections: HUD, PvP, PvE, Visual, Misc, and Music.
-
-![Version](https://img.shields.io/badge/version-2.3.0-green)
-![Minecraft](https://img.shields.io/badge/Minecraft-1.21.11-blue)
-![Loader](https://img.shields.io/badge/Loader-Fabric-orange)
-![License](https://img.shields.io/badge/license-MIT-blue)
-![Languages](https://img.shields.io/badge/languages-EN%20%7C%20RU-red)
+A lightweight visual client mod for Minecraft **1.21.11** (Fabric) with **42+ features** across 6 sections: HUD, PvP, PvE, Visual, Misc, and Music.
 
 ---
 
@@ -18,7 +12,6 @@
 - Drag-to-adjust volume slider
 - Repeat (off / one / all), shuffle, auto-skip broken files
 - Full control from chat or GUI
-- Format: **OGG Vorbis**
 
 ### 🎯 PvP Tools
 - **PvPSafe** — blocks `/hub`, `/logout`, `/suicide` during combat
@@ -29,7 +22,9 @@
 - **Custom Hit Sounds** — 7 built-in presets
 - **Totem Log** — logs broken totems
 - **PickUpLogger** — tracks valuable pickups
-- **KillAura Easter Egg** — a harmless joke 🎭
+- **AutoTPAccept** — auto-accepts `/tpa` from friends or all players
+- **StatsTracker** — K/D counter parsed from chat (displayed in GUI)
+- **KillStreak** — consecutive kill counter + custom sounds at 2, 3, 4, 5, 6, 7, 10 kills
 
 ### 🎨 Visual
 - **Zoom** — smooth zoom with keybind
@@ -41,6 +36,10 @@
 - **Particle Blocker** — hide particles by category
 - **Waypoints** — on-screen markers with distance
 - **Item Physics** — items lie flat
+- **Predictions** — projectile trajectory (bow, crossbow, multishot, snowball, potion, trident)
+- **TargetESP** — 4 variants (Crystals, Cubes, Ring, Ghosts)
+- **EnchantHighlight** — highlight selected enchants in item tooltips with custom color + bold
+- **GammaUtil** — brightness above vanilla limit
 
 ### 🖥️ HUD
 - Coordinates, biome, time, FPS, ping, TPS, BPS
@@ -49,102 +48,67 @@
 - Combo Counter
 - Cooldowns
 - Effect Warnings
-- Fully customizable position and colors
+- **Low HP Alert** — warning + sound when HP is below threshold
+- **Armor Alert** — warning when armor durability is low
+- **Mod Logo & Name** — custom logo with position editor
+- **KillStreak HUD** — on-screen kill streak counter with timer
 
 ### ⚙️ Misc
 - **ChatFilter** — regex-based chat filtering
 - **AutoReconnect** — reconnects after kicks
-- **DeathCoords** — saves death location with `/dc`
+- **DeathCoords** — saves death location
 - **GUI Themes** — 5 themes (Vanilla, Dark, Neon, Candy, Blood)
-- **Config Manager** — save/load configs with `/cfg`
+- **Config Manager** — save/load configs
+- **Macros** — 5 command/message slots (F1–F5 by default)
+- **AutoRespawn** — automatically respawns after death
+- **Friend List** — add friends by nickname, highlights them in chat
 
 ---
 
 ## 🌍 Languages
-
-- 🇬🇧 English
 - 🇷🇺 Russian
-
-Switch language in GUI: **G → top-right `RU`/`EN` button**
+- 🇬🇧 English
 
 ---
 
 ## 🎮 How to use
-
-### Installation
-1. Install **Fabric Loader 0.19.5+** for Minecraft **1.21.11**
-2. Install **Fabric API**
-3. Download `resistancedlc-2.3.0.jar` from [Releases](../../releases)
-4. Put it in `.minecraft/mods/`
-5. Launch the game
-
-### Opening the GUI
-Press **`G`** in game to open the main mod GUI.
-
-### Music Player setup
-1. Open GUI → **Music** section → **Music Player** → **Enable**
-2. Click **"Open folder"** — music folder will open
-3. Drop your `.ogg` files there (e.g. `Artist - Title.ogg`)
-4. Click **"Rescan"** to reload the playlist
-5. Press `▶` to play
+- Press **G** to open the GUI
+- All features work **client-side only**
+- No server modifications required
+- **Left-click** an accordion item to expand it
+- **Right-click** an accordion item to toggle the feature
+- Click the **⚙ gear icon** inside panels to access settings
 
 ---
 
 ## 🛠️ Requirements
-
-- **Minecraft:** 1.21.11
-- **Fabric Loader:** 0.19.5 or newer
-- **Fabric API:** latest for 1.21.11
-- **Java:** 21+
+- Minecraft **1.21.11**
+- Fabric Loader **0.19.5+**
+- Fabric API
 
 ---
 
-## 📦 Installation from source
+## 📁 Extra files (optional)
 
-```bash
-git clone https://github.com/LesIsLes/ResistanceDLC.git
-cd ResistanceDLC
-./gradlew clean build
-Output .jar: build/libs/resistancedlc-2.3.0.jar
+**KillStreak sounds:**
+Place `.ogg` files in `config/resistancedlc/sounds/`:
+killstreak_2.ogg
+killstreak_3.ogg
+killstreak_4.ogg
+killstreak_5.ogg
+killstreak_6.ogg
+killstreak_7.ogg
+killstreak_10.ogg
 
-🎨 GUI Themes
-Theme	Color	Description
-Vanilla	#00FF00	Classic green
-Dark	#808080	Dark grey
-Neon	#00FFFF	Cyberpunk
-Candy	#FF69B4	Pink
-Blood	#FF0000	Red
-📝 Commands
-Command	Description
-/cfg	Config manager help
-/cfg dir	Open config folder
-/cfg list	List saved configs
-/cfg save <name>	Save current config
-/cfg load <name>	Load config
-/dc	Show last death coords
-/dc clear	Clear saved death coords
-/chatfilter add <word>	Add stop-word
-/music	Toggle MusicPlayer
-/music list	List playlist
-/music folder	Open music folder
-🤝 Contributing
-Found a bug or want a new feature? Open an Issue.
+**Music Player:**
+Place your `.ogg` files in `config/resistancedlc/music/`
 
-Pull requests welcome!
+---
 
-📜 License
-MIT License — Copyright (c) 2026 lesis
+## 📜 License
+MIT License — free to use, modify, and distribute.
 
-See LICENSE for details.
+---
 
-💖 Credits
-Author: lesis
-
-AI assistance: Claude (Anthropic) — for code review, refactoring, and debugging
-
-Libraries: java-vorbis-support by Trilarion
-
-⚠️ AI Disclosure
-This mod contains AI-generated code (assisted development). All features, textures, and descriptions were reviewed and tested by the human author. Declared in compliance with Modrinth's content rules.
-
-Made with 💚 by lesis
+## 💬 Feedback
+Found a bug or want a new feature? Open an issue on GitHub!
