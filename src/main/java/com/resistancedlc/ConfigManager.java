@@ -346,6 +346,41 @@ public class ConfigManager {
             json.addProperty("targetEspHideHitboxes", ModConfig.targetEspHideHitboxes);
             json.addProperty("targetEspRussian", ModConfig.targetEspRussian);
 
+            // === LOW HP ALERT ===
+            json.addProperty("lowHpAlertEnabled", ModConfig.lowHpAlertEnabled);
+            json.addProperty("lowHpAlertThreshold", ModConfig.lowHpAlertThreshold);
+            json.addProperty("lowHpAlertSound", ModConfig.lowHpAlertSound);
+            json.addProperty("lowHpAlertSoundVolume", ModConfig.lowHpAlertSoundVolume);
+            json.addProperty("lowHpAlertSoundPitch", ModConfig.lowHpAlertSoundPitch);
+            json.addProperty("lowHpAlertColor", ModConfig.lowHpAlertColor);
+            json.addProperty("lowHpAlertAlpha", ModConfig.lowHpAlertAlpha);
+            json.addProperty("lowHpAlertBlink", ModConfig.lowHpAlertBlink);
+            json.addProperty("lowHpAlertX", ModConfig.lowHpAlertX);
+            json.addProperty("lowHpAlertY", ModConfig.lowHpAlertY);
+
+            // === AUTO RESPAWN ===
+            json.addProperty("autoRespawnEnabled", ModConfig.autoRespawnEnabled);
+            json.addProperty("autoRespawnDelay", ModConfig.autoRespawnDelay);
+
+            // === ARMOR ALERT ===
+            json.addProperty("armorAlertEnabled", ModConfig.armorAlertEnabled);
+            json.addProperty("armorAlertThreshold", ModConfig.armorAlertThreshold);
+            json.addProperty("armorAlertSound", ModConfig.armorAlertSound);
+            json.addProperty("armorAlertSoundVolume", ModConfig.armorAlertSoundVolume);
+            json.addProperty("armorAlertSoundPitch", ModConfig.armorAlertSoundPitch);
+            json.addProperty("armorAlertColor", ModConfig.armorAlertColor);
+            json.addProperty("armorAlertAlpha", ModConfig.armorAlertAlpha);
+            json.addProperty("armorAlertX", ModConfig.armorAlertX);
+            json.addProperty("armorAlertY", ModConfig.armorAlertY);
+
+            // === FRIEND LIST ===
+            json.addProperty("friendListEnabled", ModConfig.friendListEnabled);
+            json.addProperty("friendsRaw", ModConfig.friendsRaw);
+            json.addProperty("friendListHighlightChat", ModConfig.friendListHighlightChat);
+            json.addProperty("friendListChatColor", ModConfig.friendListChatColor);
+            json.addProperty("friendListHighlightTab", ModConfig.friendListHighlightTab);
+            json.addProperty("friendListTabColor", ModConfig.friendListTabColor);
+
             Path file = CONFIG_DIR.resolve(name + ".json");
             synchronized (GSON) {
                 Files.writeString(file, GSON.toJson(json));
@@ -673,6 +708,40 @@ public class ConfigManager {
             ModConfig.targetEspHideHitboxes = getBool(json, "targetEspHideHitboxes", ModConfig.targetEspHideHitboxes);
             ModConfig.targetEspRussian = getBool(json, "targetEspRussian", ModConfig.targetEspRussian);
 
+            // === LOW HP ALERT ===
+            ModConfig.lowHpAlertEnabled = getBool(json, "lowHpAlertEnabled", ModConfig.lowHpAlertEnabled);
+            ModConfig.lowHpAlertThreshold = getFloat(json, "lowHpAlertThreshold", ModConfig.lowHpAlertThreshold);
+            ModConfig.lowHpAlertSound = getBool(json, "lowHpAlertSound", ModConfig.lowHpAlertSound);
+            ModConfig.lowHpAlertSoundVolume = getFloat(json, "lowHpAlertSoundVolume", ModConfig.lowHpAlertSoundVolume);
+            ModConfig.lowHpAlertSoundPitch = getFloat(json, "lowHpAlertSoundPitch", ModConfig.lowHpAlertSoundPitch);
+            ModConfig.lowHpAlertColor = getInt(json, "lowHpAlertColor", ModConfig.lowHpAlertColor);
+            ModConfig.lowHpAlertAlpha = getInt(json, "lowHpAlertAlpha", ModConfig.lowHpAlertAlpha);
+            ModConfig.lowHpAlertBlink = getBool(json, "lowHpAlertBlink", ModConfig.lowHpAlertBlink);
+            ModConfig.lowHpAlertX = getInt(json, "lowHpAlertX", ModConfig.lowHpAlertX);
+            ModConfig.lowHpAlertY = getInt(json, "lowHpAlertY", ModConfig.lowHpAlertY);
+
+            // === AUTO RESPAWN ===
+            ModConfig.autoRespawnEnabled = getBool(json, "autoRespawnEnabled", ModConfig.autoRespawnEnabled);
+            ModConfig.autoRespawnDelay = getFloat(json, "autoRespawnDelay", ModConfig.autoRespawnDelay);
+
+            // === ARMOR ALERT ===
+            ModConfig.armorAlertEnabled = getBool(json, "armorAlertEnabled", ModConfig.armorAlertEnabled);
+            ModConfig.armorAlertThreshold = getInt(json, "armorAlertThreshold", ModConfig.armorAlertThreshold);
+            ModConfig.armorAlertSound = getBool(json, "armorAlertSound", ModConfig.armorAlertSound);
+            ModConfig.armorAlertSoundVolume = getFloat(json, "armorAlertSoundVolume", ModConfig.armorAlertSoundVolume);
+            ModConfig.armorAlertSoundPitch = getFloat(json, "armorAlertSoundPitch", ModConfig.armorAlertSoundPitch);
+            ModConfig.armorAlertColor = getInt(json, "armorAlertColor", ModConfig.armorAlertColor);
+            ModConfig.armorAlertAlpha = getInt(json, "armorAlertAlpha", ModConfig.armorAlertAlpha);
+            ModConfig.armorAlertX = getInt(json, "armorAlertX", ModConfig.armorAlertX);
+            ModConfig.armorAlertY = getInt(json, "armorAlertY", ModConfig.armorAlertY);
+
+            // === FRIEND LIST ===
+            ModConfig.friendListEnabled = getBool(json, "friendListEnabled", ModConfig.friendListEnabled);
+            ModConfig.friendsRaw = getString(json, "friendsRaw", ModConfig.friendsRaw);
+            ModConfig.friendListHighlightChat = getBool(json, "friendListHighlightChat", ModConfig.friendListHighlightChat);
+            ModConfig.friendListChatColor = getInt(json, "friendListChatColor", ModConfig.friendListChatColor);
+            ModConfig.friendListHighlightTab = getBool(json, "friendListHighlightTab", ModConfig.friendListHighlightTab);
+            ModConfig.friendListTabColor = getInt(json, "friendListTabColor", ModConfig.friendListTabColor);
             return true;
 
         } catch (Exception e) {

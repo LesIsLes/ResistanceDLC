@@ -135,6 +135,9 @@ public class ResistanceDLCClient implements ClientModInitializer {
             GammaUtilManager.reset();
             MusicPlayerManager.stop();
             lastHealth = -1.0f;
+            LowHPAlertManager.reset();
+            AutoRespawnManager.reset();
+            ArmorAlertManager.reset();
             AutoReconnectManager.onDisconnect();
         });
 
@@ -415,7 +418,14 @@ public class ResistanceDLCClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> PickUpLogger.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> AutoReconnectManager.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> AutoGGManager.tick());
+        // ===== LOW HP ALERT =====
+        ClientTickEvents.END_CLIENT_TICK.register(client -> LowHPAlertManager.tick());
 
+        // ===== AUTO RESPAWN =====
+        ClientTickEvents.END_CLIENT_TICK.register(client -> AutoRespawnManager.tick());
+
+        // ===== ARMOR ALERT =====
+        ClientTickEvents.END_CLIENT_TICK.register(client -> ArmorAlertManager.tick());
         // ===== GAMMA UTIL =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> GammaUtilManager.tick());
 
@@ -746,18 +756,31 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
         // ===== TARGET ESP — регистрация рендера =====
 
-        net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_EXTRACTION.register(
-                TARGET_ESP::extract
-        );
-        net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_MAIN.register(
-                TARGET_ESP::draw
-        );
+        // ✅ НОВАЯ СИСТЕМА 1.21.11: LevelRenderEvents
+        net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_EXTRACTION.register(TARGET_ESP::extract);
+        net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_MAIN.register(TARGET_ESP::draw);
 
+        net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_MAIN.register(TARGET_ESP::draw);
+
+        // ===== PREDICTIONS RENDER =====
+        net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_MAIN.register(
+                PredictionsRenderer::render
+        );
 // ===== TICK — обновление цели =====
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (mc.level != null) {
                 com.resistancedlc.targetesp.TargetManagerHolder.MANAGER.tick(mc.level);
             }
+        });
+        // ===== MACROS =====
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.player == null || client.screen != null) return;
+
+            while (KeyBindings.macro1Key.consumeClick()) MacroManager.executeMacro(0);
+            while (KeyBindings.macro2Key.consumeClick()) MacroManager.executeMacro(1);
+            while (KeyBindings.macro3Key.consumeClick()) MacroManager.executeMacro(2);
+            while (KeyBindings.macro4Key.consumeClick()) MacroManager.executeMacro(3);
+            while (KeyBindings.macro5Key.consumeClick()) MacroManager.executeMacro(4);
         });
     }
 
@@ -1101,7 +1124,59 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 drawHudString(graphics, client.font, "➤ " + arrowCount, slotX, renderY + 4, color);
             }
         }
+        // ===== LOW HP ALERT =====
+        if (ModConfig.lowHpAlertEnabled && LowHPAlertManager.isAlertActive()) {
+            int guiW = client.getWindow().getGuiScaledWidth();
+            int guiH = client.getWindow().getGuiScaledHeight();
 
+            float health = client.player.getHealth();
+            String text = String.format(LocalizationManager.get("gui.resistancedlc.hud.low_hp_alert"),
+                    (int) Math.ceil(health));
+
+            int textW = client.font.width(text);
+            int lhaX = (ModConfig.lowHpAlertX < 0)
+                    ? (guiW - textW) / 2
+                    : ModConfig.lowHpAlertX;
+            int lhaY = (ModConfig.lowHpAlertY < 0)
+                    ? (guiH / 2 - 40)
+                    : ModConfig.lowHpAlertY;
+
+            int lhaAlpha = ModConfig.lowHpAlertAlpha;
+            if (ModConfig.lowHpAlertBlink) {
+                long t = System.currentTimeMillis() % 800L;
+                float pulse = (float) (0.5 + 0.5 * Math.sin(t / 800.0 * Math.PI * 2));
+                lhaAlpha = (int) (ModConfig.lowHpAlertAlpha * (0.4f + 0.6f * pulse));
+            }
+
+            int lhaColor = (lhaAlpha << 24) | (ModConfig.lowHpAlertColor & 0x00FFFFFF);
+
+            float lhaScale = 2.0f;
+            graphics.pose().pushMatrix();
+            graphics.pose().translate(lhaX, lhaY);
+            graphics.pose().scale(lhaScale, lhaScale);
+            graphics.drawString(client.font, text, 0, 0, lhaColor, true);
+            graphics.pose().popMatrix();
+        }
+
+        // ===== ARMOR ALERT =====
+        if (ModConfig.armorAlertEnabled && ArmorAlertManager.isAlertActive()) {
+            int guiW = client.getWindow().getGuiScaledWidth();
+            int guiH = client.getWindow().getGuiScaledHeight();
+
+            int pct = ArmorAlertManager.getLowestPercent();
+            String text = String.format(LocalizationManager.get("gui.resistancedlc.hud.armor_alert"), pct);
+
+            int textW = client.font.width(text);
+            int aaX = (ModConfig.armorAlertX < 0)
+                    ? (guiW - textW) / 2
+                    : ModConfig.armorAlertX;
+            int aaY = (ModConfig.armorAlertY < 0)
+                    ? (guiH / 2 + 20)
+                    : ModConfig.armorAlertY;
+
+            int aaColor = (ModConfig.armorAlertAlpha << 24) | (ModConfig.armorAlertColor & 0x00FFFFFF);
+            graphics.drawString(client.font, text, aaX, aaY, aaColor, true);
+        }
         // ===== STRIKE RANGE =====
         if (ModConfig.strikeRangeEnabled && StrikeRangeManager.isActive()) {
             double dist = StrikeRangeManager.getDistance();

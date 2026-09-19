@@ -306,4 +306,58 @@ public class ModConfig {
     public static boolean targetEspHurt = true;
     public static boolean targetEspHideHitboxes = true;
     public static boolean targetEspRussian = false;
+
+    // ===================== AUTO TOOL =====================
+    public static boolean autoToolEnabled = false;
+    public static boolean autoToolSwitchBack = true;
+
+    // ===================== MACROS =====================
+    public static boolean macrosEnabled = false;
+    public static String macro1 = "";
+    public static String macro2 = "";
+    public static String macro3 = "";
+    public static String macro4 = "";
+    public static String macro5 = "";
+
+    // ===================== PREDICTIONS =====================
+    public static boolean predictionsEnabled = false;
+    public static int predictionsColor = 0xFFFFFF00;
+    public static int predictionsAlpha = 200;
+    public static float predictionsThickness = 2.0f;
+    public static int predictionsSteps = 100;
+
+    // ===================== LOW HP ALERT =====================
+    public static boolean lowHpAlertEnabled = false;
+    public static float lowHpAlertThreshold = 6.0f;      // 1.0..20.0 (в хп)
+    public static boolean lowHpAlertSound = true;
+    public static float lowHpAlertSoundVolume = 1.0f;
+    public static float lowHpAlertSoundPitch = 1.5f;
+    public static int lowHpAlertColor = 0xFFFF0000;
+    public static int lowHpAlertAlpha = 255;
+    public static boolean lowHpAlertBlink = true;
+    public static int lowHpAlertX = -1;                  // -1 = центр по X
+    public static int lowHpAlertY = -1;                  // -1 = центр по Y
+
+    // ===================== AUTO RESPAWN =====================
+    public static boolean autoRespawnEnabled = false;
+    public static float autoRespawnDelay = 1.0f;         // 0.5..5.0 сек
+
+    // ===================== ARMOR ALERT =====================
+    public static boolean armorAlertEnabled = false;
+    public static int armorAlertThreshold = 15;          // 5..50 (%)
+    public static boolean armorAlertSound = true;
+    public static float armorAlertSoundVolume = 1.0f;
+    public static float armorAlertSoundPitch = 0.8f;
+    public static int armorAlertColor = 0xFFFFAA00;
+    public static int armorAlertAlpha = 255;
+    public static int armorAlertX = -1;
+    public static int armorAlertY = -1;
+
+    // ===================== FRIEND LIST =====================
+    public static boolean friendListEnabled = false;
+    public static String friendsRaw = "";
+    public static boolean friendListHighlightChat = true;
+    public static int friendListChatColor = 0xFF55FFFF;  // голубой
+    public static boolean friendListHighlightTab = true;
+    public static int friendListTabColor = 0xFF55FFFF;
 }

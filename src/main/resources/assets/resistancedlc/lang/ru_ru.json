@@ -369,7 +369,7 @@
   "gui.resistancedlc.panel.target_esp.mode_crystals": "Кристаллы",
   "gui.resistancedlc.panel.target_esp.mode_cubes": "Кубики",
   "gui.resistancedlc.panel.target_esp.mode_ring": "Кольцо",
-  "gui.resistancedlc.panel.target_esp.mode_ghosts2": "Призраки 2",
+  "gui.resistancedlc.panel.target_esp.mode_ghosts": "Призраки",
   "gui.resistancedlc.panel.target_esp.hex": "#RRGGBB",
   "gui.resistancedlc.panel.target_esp.size": "Размер: %s",
   "gui.resistancedlc.panel.target_esp.rotation": "Скорость вращения: %s",
@@ -384,5 +384,60 @@
   "gui.resistancedlc.item.gamma_util.title": "Gamma Util",
   "gui.resistancedlc.item.gamma_util.desc": "Повышает гамму (яркость) клиента",
   "gui.resistancedlc.panel.gamma_util.enable": "Включить Gamma Util",
-  "gui.resistancedlc.panel.gamma_util.value": "Гамма: %s"
+  "gui.resistancedlc.panel.gamma_util.value": "Гамма: %s",
+
+  "gui.resistancedlc.item.auto_tool.title": "AutoTool",
+  "gui.resistancedlc.item.auto_tool.desc": "Авто-смена на лучший инструмент",
+  "gui.resistancedlc.panel.auto_tool.enable": "Включить AutoTool",
+  "gui.resistancedlc.panel.auto_tool.switch_back": "Возвращать слот после копания",
+
+  "key.resistancedlc.macro1": "Макрос 1",
+  "key.resistancedlc.macro2": "Макрос 2",
+  "key.resistancedlc.macro3": "Макрос 3",
+  "key.resistancedlc.macro4": "Макрос 4",
+  "key.resistancedlc.macro5": "Макрос 5",
+  "gui.resistancedlc.item.macros.title": "Макросы",
+  "gui.resistancedlc.item.macros.desc": "Команды или сообщения по клавише",
+  "gui.resistancedlc.panel.macros.enable": "Включить макросы",
+  "gui.resistancedlc.panel.macros.hint": "/команда или сообщение",
+
+  "gui.resistancedlc.item.predictions.title": "Predictions",
+  "gui.resistancedlc.item.predictions.desc": "Траектория снарядов",
+  "gui.resistancedlc.panel.predictions.enable": "Включить Predictions",
+  "gui.resistancedlc.panel.predictions.thickness": "Толщина: %s",
+  "gui.resistancedlc.panel.predictions.alpha": "Прозрачность: %d",
+  "gui.resistancedlc.panel.predictions.steps": "Шагов: %d",
+
+  "gui.resistancedlc.item.low_hp_alert.title": "Low HP Alert",
+  "gui.resistancedlc.item.low_hp_alert.desc": "Предупреждение при низком HP",
+  "gui.resistancedlc.item.armor_alert.title": "Armor Alert",
+  "gui.resistancedlc.item.armor_alert.desc": "Предупреждение при низкой прочности брони",
+  "gui.resistancedlc.item.auto_respawn.title": "AutoRespawn",
+  "gui.resistancedlc.item.auto_respawn.desc": "Авто-нажатие «Возродиться» после смерти",
+  "gui.resistancedlc.item.friend_list.title": "Список друзей",
+  "gui.resistancedlc.item.friend_list.desc": "Подсветка друзей в чате и табе",
+
+  "gui.resistancedlc.panel.low_hp_alert.enable": "Включить Low HP Alert",
+  "gui.resistancedlc.panel.low_hp_alert.threshold": "Порог HP: %.1f",
+  "gui.resistancedlc.panel.low_hp_alert.alpha": "Прозрачность: %d",
+  "gui.resistancedlc.panel.low_hp_alert.sound": "Проигрывать звук",
+  "gui.resistancedlc.panel.low_hp_alert.blink": "Мигание",
+
+  "gui.resistancedlc.panel.auto_respawn.enable": "Включить AutoRespawn",
+  "gui.resistancedlc.panel.auto_respawn.delay": "Задержка: %.1f сек",
+
+  "gui.resistancedlc.panel.armor_alert.enable": "Включить Armor Alert",
+  "gui.resistancedlc.panel.armor_alert.threshold": "Порог: %d%%",
+  "gui.resistancedlc.panel.armor_alert.alpha": "Прозрачность: %d",
+  "gui.resistancedlc.panel.armor_alert.sound": "Проигрывать звук",
+
+  "gui.resistancedlc.panel.friend_list.enable": "Включить список друзей",
+  "gui.resistancedlc.panel.friend_list.hint": "Ник...",
+  "gui.resistancedlc.panel.friend_list.chat": "Подсвечивать в чате",
+  "gui.resistancedlc.panel.friend_list.tab": "Подсвечивать в табе",
+  "gui.resistancedlc.panel.friend_list.clear": "Очистить список",
+  "gui.resistancedlc.panel.friend_list.existing": "Друзья",
+
+  "gui.resistancedlc.hud.low_hp_alert": "⚠ НИЗКОЕ HP: %d ⚠",
+  "gui.resistancedlc.hud.armor_alert": "⚠ БРОНЯ: %d%% ⚠"
 }

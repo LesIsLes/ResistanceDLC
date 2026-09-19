@@ -369,7 +369,7 @@
   "gui.resistancedlc.panel.target_esp.mode_crystals": "Crystals",
   "gui.resistancedlc.panel.target_esp.mode_cubes": "Cubes",
   "gui.resistancedlc.panel.target_esp.mode_ring": "Ring",
-  "gui.resistancedlc.panel.target_esp.mode_ghosts2": "Ghosts 2",
+  "gui.resistancedlc.panel.target_esp.mode_ghosts": "Ghosts",
   "gui.resistancedlc.panel.target_esp.hex": "#RRGGBB",
   "gui.resistancedlc.panel.target_esp.size": "Size: %s",
   "gui.resistancedlc.panel.target_esp.rotation": "Rotation speed: %s",
@@ -384,5 +384,60 @@
   "gui.resistancedlc.item.gamma_util.title": "Gamma Util",
   "gui.resistancedlc.item.gamma_util.desc": "Increase client gamma (brightness)",
   "gui.resistancedlc.panel.gamma_util.enable": "Enable Gamma Util",
-  "gui.resistancedlc.panel.gamma_util.value": "Gamma: %s"
+  "gui.resistancedlc.panel.gamma_util.value": "Gamma: %s",
+
+  "gui.resistancedlc.item.auto_tool.title": "AutoTool",
+  "gui.resistancedlc.item.auto_tool.desc": "Auto-switch to best tool",
+  "gui.resistancedlc.panel.auto_tool.enable": "Enable AutoTool",
+  "gui.resistancedlc.panel.auto_tool.switch_back": "Switch back after mining",
+
+  "key.resistancedlc.macro1": "Macro 1",
+  "key.resistancedlc.macro2": "Macro 2",
+  "key.resistancedlc.macro3": "Macro 3",
+  "key.resistancedlc.macro4": "Macro 4",
+  "key.resistancedlc.macro5": "Macro 5",
+  "gui.resistancedlc.item.macros.title": "Macros",
+  "gui.resistancedlc.item.macros.desc": "Commands or messages on hotkey",
+  "gui.resistancedlc.panel.macros.enable": "Enable Macros",
+  "gui.resistancedlc.panel.macros.hint": "/command or message",
+
+  "gui.resistancedlc.item.predictions.title": "Predictions",
+  "gui.resistancedlc.item.predictions.desc": "Projectile trajectory",
+  "gui.resistancedlc.panel.predictions.enable": "Enable Predictions",
+  "gui.resistancedlc.panel.predictions.thickness": "Thickness: %s",
+  "gui.resistancedlc.panel.predictions.alpha": "Alpha: %d",
+  "gui.resistancedlc.panel.predictions.steps": "Steps: %d",
+
+  "gui.resistancedlc.item.low_hp_alert.title": "Low HP Alert",
+  "gui.resistancedlc.item.low_hp_alert.desc": "Warning when HP is low",
+  "gui.resistancedlc.item.armor_alert.title": "Armor Alert",
+  "gui.resistancedlc.item.armor_alert.desc": "Warning when armor durability is low",
+  "gui.resistancedlc.item.auto_respawn.title": "AutoRespawn",
+  "gui.resistancedlc.item.auto_respawn.desc": "Auto-click Respawn after death",
+  "gui.resistancedlc.item.friend_list.title": "Friend List",
+  "gui.resistancedlc.item.friend_list.desc": "Highlight friends in chat and tab",
+
+  "gui.resistancedlc.panel.low_hp_alert.enable": "Enable Low HP Alert",
+  "gui.resistancedlc.panel.low_hp_alert.threshold": "HP threshold: %.1f",
+  "gui.resistancedlc.panel.low_hp_alert.alpha": "Alpha: %d",
+  "gui.resistancedlc.panel.low_hp_alert.sound": "Play sound",
+  "gui.resistancedlc.panel.low_hp_alert.blink": "Blink animation",
+
+  "gui.resistancedlc.panel.auto_respawn.enable": "Enable AutoRespawn",
+  "gui.resistancedlc.panel.auto_respawn.delay": "Delay: %.1f sec",
+
+  "gui.resistancedlc.panel.armor_alert.enable": "Enable Armor Alert",
+  "gui.resistancedlc.panel.armor_alert.threshold": "Threshold: %d%%",
+  "gui.resistancedlc.panel.armor_alert.alpha": "Alpha: %d",
+  "gui.resistancedlc.panel.armor_alert.sound": "Play sound",
+
+  "gui.resistancedlc.panel.friend_list.enable": "Enable Friend List",
+  "gui.resistancedlc.panel.friend_list.hint": "Nickname...",
+  "gui.resistancedlc.panel.friend_list.chat": "Highlight in chat",
+  "gui.resistancedlc.panel.friend_list.tab": "Highlight in tab",
+  "gui.resistancedlc.panel.friend_list.clear": "Clear all friends",
+  "gui.resistancedlc.panel.friend_list.existing": "Friends",
+
+  "gui.resistancedlc.hud.low_hp_alert": "⚠ LOW HP: %d ⚠",
+  "gui.resistancedlc.hud.armor_alert": "⚠ ARMOR: %d%% ⚠"
 }

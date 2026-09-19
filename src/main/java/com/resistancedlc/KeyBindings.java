@@ -21,9 +21,16 @@ public class KeyBindings {
     public static KeyMapping effectWarningsKey;
     public static KeyMapping waypointsKey;
     public static KeyMapping totemLogKey;
-    public static KeyMapping pickupLogKey;   // ← НОВОЕ
-    private static KeyMapping.Category category;
+    public static KeyMapping pickupLogKey;
 
+    // ===== MACROS =====
+    public static KeyMapping macro1Key;
+    public static KeyMapping macro2Key;
+    public static KeyMapping macro3Key;
+    public static KeyMapping macro4Key;
+    public static KeyMapping macro5Key;
+
+    private static KeyMapping.Category category;
     private static boolean registered = false;
 
     public static void register() {
@@ -37,87 +44,69 @@ public class KeyBindings {
         }
 
         openGuiKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-                "key.resistancedlc.open_gui",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_G,
-                category
-        ));
+                "key.resistancedlc.open_gui", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_G, category));
 
         zoomKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-                "key.resistancedlc.zoom",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_C,
-                category
-        ));
+                "key.resistancedlc.zoom", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_C, category));
 
         tapeMouseKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-                "key.resistancedlc.tape_mouse",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_R,
-                category
-        ));
+                "key.resistancedlc.tape_mouse", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_R, category));
 
         autoSwapKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-                "key.resistancedlc.auto_swap",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_H,
-                category
-        ));
+                "key.resistancedlc.auto_swap", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_H, category));
+
         customHitSoundsKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-                "key.resistancedlc.custom_hit_sounds",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_J,
-                category
-        ));
+                "key.resistancedlc.custom_hit_sounds", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_J, category));
 
         fastExpKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-                "key.resistancedlc.fast_exp",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_K,
-                category
-        ));
+                "key.resistancedlc.fast_exp", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_K, category));
 
         shiftTapKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-                "key.resistancedlc.shift_tap",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_L,
-                category
-        ));
+                "key.resistancedlc.shift_tap", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_L, category));
 
         comboKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-                "key.resistancedlc.combo",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_M,
-                category
-        ));
+                "key.resistancedlc.combo", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_M, category));
 
         effectWarningsKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-                "key.resistancedlc.effect_warnings",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_N,
-                category
-        ));
+                "key.resistancedlc.effect_warnings", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_N, category));
 
         waypointsKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-                "key.resistancedlc.waypoints",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_B,
-                category
-        ));
+                "key.resistancedlc.waypoints", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_B, category));
 
         totemLogKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-                "key.resistancedlc.totem_log",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_O,
-                category
-        ));
+                "key.resistancedlc.totem_log", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_O, category));
 
         pickupLogKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-                "key.resistancedlc.pickup_log",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_P,
-                category
-        ));
+                "key.resistancedlc.pickup_log", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_P, category));
+
+        // ===== MACROS =====
+        macro1Key = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.resistancedlc.macro1", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_F1, category));
+        macro2Key = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.resistancedlc.macro2", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_F2, category));
+        macro3Key = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.resistancedlc.macro3", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_F3, category));
+        macro4Key = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.resistancedlc.macro4", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_F4, category));
+        macro5Key = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.resistancedlc.macro5", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_F5, category));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (openGuiKey.consumeClick()) {
@@ -126,99 +115,61 @@ public class KeyBindings {
         });
     }
 
+    // ===== СЕТТЕРЫ =====
     public static void setKey(int keyCode) {
-        if (openGuiKey != null) {
-            openGuiKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            Minecraft.getInstance().options.save();
-            Minecraft.getInstance().options.load();
-        }
+        if (openGuiKey != null) { openGuiKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
     }
-
     public static void setZoomKey(int keyCode) {
-        if (zoomKey != null) {
-            zoomKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            Minecraft.getInstance().options.save();
-            Minecraft.getInstance().options.load();
-        }
+        if (zoomKey != null) { zoomKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
     }
-
     public static void setTapeMouseKey(int keyCode) {
-        if (tapeMouseKey != null) {
-            tapeMouseKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            Minecraft.getInstance().options.save();
-            Minecraft.getInstance().options.load();
-        }
+        if (tapeMouseKey != null) { tapeMouseKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
     }
-
     public static void setAutoSwapKey(int keyCode) {
-        if (autoSwapKey != null) {
-            autoSwapKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            Minecraft.getInstance().options.save();
-            Minecraft.getInstance().options.load();
-        }
+        if (autoSwapKey != null) { autoSwapKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
     }
-
     public static void setCustomHitSoundsKey(int keyCode) {
-        if (customHitSoundsKey != null) {
-            customHitSoundsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            Minecraft.getInstance().options.save();
-            Minecraft.getInstance().options.load();
-        }
+        if (customHitSoundsKey != null) { customHitSoundsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
     }
-
     public static void setFastExpKey(int keyCode) {
-        if (fastExpKey != null) {
-            fastExpKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            Minecraft.getInstance().options.save();
-            Minecraft.getInstance().options.load();
-        }
+        if (fastExpKey != null) { fastExpKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
     }
-
     public static void setShiftTapKey(int keyCode) {
-        if (shiftTapKey != null) {
-            shiftTapKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            Minecraft.getInstance().options.save();
-            Minecraft.getInstance().options.load();
-        }
+        if (shiftTapKey != null) { shiftTapKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
     }
-
     public static void setComboKey(int keyCode) {
-        if (comboKey != null) {
-            comboKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            Minecraft.getInstance().options.save();
-            Minecraft.getInstance().options.load();
-        }
+        if (comboKey != null) { comboKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
     }
-
     public static void setEffectWarningsKey(int keyCode) {
-        if (effectWarningsKey != null) {
-            effectWarningsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            Minecraft.getInstance().options.save();
-            Minecraft.getInstance().options.load();
-        }
+        if (effectWarningsKey != null) { effectWarningsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
     }
-
     public static void setWaypointsKey(int keyCode) {
-        if (waypointsKey != null) {
-            waypointsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            Minecraft.getInstance().options.save();
-            Minecraft.getInstance().options.load();
-        }
+        if (waypointsKey != null) { waypointsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
     }
-
     public static void setTotemLogKey(int keyCode) {
-        if (totemLogKey != null) {
-            totemLogKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            Minecraft.getInstance().options.save();
-            Minecraft.getInstance().options.load();
-        }
+        if (totemLogKey != null) { totemLogKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
     }
     public static void setPickupLogKey(int keyCode) {
-        if (pickupLogKey != null) {
-            pickupLogKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            Minecraft.getInstance().options.save();
-            Minecraft.getInstance().options.load();
-        }
+        if (pickupLogKey != null) { pickupLogKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+    }
+    public static void setMacro1Key(int keyCode) {
+        if (macro1Key != null) { macro1Key.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+    }
+    public static void setMacro2Key(int keyCode) {
+        if (macro2Key != null) { macro2Key.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+    }
+    public static void setMacro3Key(int keyCode) {
+        if (macro3Key != null) { macro3Key.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+    }
+    public static void setMacro4Key(int keyCode) {
+        if (macro4Key != null) { macro4Key.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+    }
+    public static void setMacro5Key(int keyCode) {
+        if (macro5Key != null) { macro5Key.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+    }
+
+    private static void saveOptions() {
+        // ⚠ Не вызываем options.save() — он пишет gamma=100.0 в файл и Minecraft спамит ошибкой.
+        // Minecraft сам сохранит настройки при выходе из игры/мира.
     }
 }
-

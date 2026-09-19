@@ -16,7 +16,7 @@ public record EffectSettings(
         int trailLength
 ) {
     private static final Range STANDARD_SIZE = new Range(0.5, 2.0, 0.05);
-    private static final Range GHOSTS_2_SIZE = new Range(0.05, 0.4, 0.01);
+    private static final Range GHOSTS_SIZE = new Range(0.05, 0.4, 0.01);
     private static final Range STANDARD_SPEED = new Range(0.2, 3.0, 0.05);
 
     public EffectSettings {
@@ -31,7 +31,7 @@ public record EffectSettings(
 
     public static EffectSettings defaultsFor(Variant variant) {
         return switch (safeVariant(variant)) {
-            case GHOSTS_2 -> new EffectSettings(0.2f, 2.0f, 0.75f, 0.55f, 3, 14);
+            case GHOSTS -> new EffectSettings(0.2f, 2.0f, 0.75f, 0.55f, 3, 14);
             case CUBES -> new EffectSettings(1.0f, 1.0f, 0.7f, 0.0f, 40, 0);
             case RING -> new EffectSettings(1.0f, 1.0f, 0.5f, 0.0f, 0, 0);
             case CRYSTALS -> new EffectSettings(1.0f, 1.0f, 1.5f, 0.0f, 18, 0);
@@ -81,7 +81,7 @@ public record EffectSettings(
 
     public static boolean usesSize(Variant v) {
         return switch (safeVariant(v)) {
-            case GHOSTS_2, CUBES, CRYSTALS -> true;
+            case GHOSTS, CUBES, CRYSTALS -> true;
             default -> false;
         };
     }
@@ -92,29 +92,29 @@ public record EffectSettings(
 
     public static boolean usesRadius(Variant v) {
         return switch (safeVariant(v)) {
-            case GHOSTS_2, CUBES, RING, CRYSTALS -> true;
+            case GHOSTS, CUBES, RING, CRYSTALS -> true;
             default -> false;
         };
     }
 
     public static boolean usesWaveHeight(Variant v) {
-        return safeVariant(v) == Variant.GHOSTS_2;
+        return safeVariant(v) == Variant.GHOSTS;
     }
 
     public static boolean usesAmount(Variant v) {
         return switch (safeVariant(v)) {
-            case GHOSTS_2, CUBES, CRYSTALS -> true;
+            case GHOSTS, CUBES, CRYSTALS -> true;
             default -> false;
         };
     }
 
     public static boolean usesTrailLength(Variant v) {
-        return safeVariant(v) == Variant.GHOSTS_2;
+        return safeVariant(v) == Variant.GHOSTS;
     }
 
     public static Range sizeRange(Variant v) {
         return switch (safeVariant(v)) {
-            case GHOSTS_2 -> GHOSTS_2_SIZE;
+            case GHOSTS -> GHOSTS_SIZE;
             case CUBES, CRYSTALS -> STANDARD_SIZE;
             default -> unsupported("size", v);
         };
@@ -122,7 +122,7 @@ public record EffectSettings(
 
     public static Range speedRange(Variant v) {
         return switch (safeVariant(v)) {
-            case GHOSTS_2 -> new Range(0.25, 4.0, 0.05);
+            case GHOSTS -> new Range(0.25, 4.0, 0.05);
             case CUBES -> new Range(0.5, 2.0, 0.05);
             case RING, CRYSTALS -> STANDARD_SPEED;
             default -> unsupported("speed", v);
@@ -131,7 +131,7 @@ public record EffectSettings(
 
     public static Range radiusRange(Variant v) {
         return switch (safeVariant(v)) {
-            case GHOSTS_2, CUBES -> new Range(0.25, 1.5, 0.05);
+            case GHOSTS, CUBES -> new Range(0.25, 1.5, 0.05);
             case RING -> new Range(0.25, 1.25, 0.05);
             case CRYSTALS -> new Range(0.5, 2.5, 0.05);
             default -> unsupported("radius", v);
@@ -139,7 +139,7 @@ public record EffectSettings(
     }
 
     public static Range waveHeightRange(Variant v) {
-        if (safeVariant(v) == Variant.GHOSTS_2) {
+        if (safeVariant(v) == Variant.GHOSTS) {
             return new Range(0.0, 1.0, 0.05);
         }
         return unsupported("wave height", v);
@@ -147,7 +147,7 @@ public record EffectSettings(
 
     public static Range amountRange(Variant v) {
         return switch (safeVariant(v)) {
-            case GHOSTS_2 -> new Range(1.0, 3.0, 1.0);
+            case GHOSTS -> new Range(1.0, 3.0, 1.0);
             case CUBES -> new Range(12.0, 40.0, 1.0);
             case CRYSTALS -> new Range(6.0, 32.0, 1.0);
             default -> unsupported("amount", v);
@@ -155,7 +155,7 @@ public record EffectSettings(
     }
 
     public static Range trailLengthRange(Variant v) {
-        if (safeVariant(v) == Variant.GHOSTS_2) {
+        if (safeVariant(v) == Variant.GHOSTS) {
             return new Range(4.0, 28.0, 1.0);
         }
         return unsupported("trail length", v);

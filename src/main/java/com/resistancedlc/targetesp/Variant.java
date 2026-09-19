@@ -9,7 +9,7 @@ import net.minecraft.network.chat.Component;
  */
 public enum Variant {
     OFF("off", "gui.resistancedlc.targetesp.variant.off"),
-    GHOSTS_2("ghosts_2", "gui.resistancedlc.targetesp.variant.ghosts_2"),
+    GHOSTS("ghosts", "gui.resistancedlc.targetesp.variant.ghosts"),
     CUBES("cubes", "gui.resistancedlc.targetesp.variant.cubes"),
     RING("ring", "gui.resistancedlc.targetesp.variant.ring"),
     CRYSTALS("crystals", "gui.resistancedlc.targetesp.variant.crystals");
@@ -37,6 +37,8 @@ public enum Variant {
 
     public static Variant fromId(String id) {
         if (id == null) return OFF;
+        // Fallback для старых конфигов
+        if ("ghosts_2".equalsIgnoreCase(id)) return GHOSTS;
         return Arrays.stream(VALUES)
                 .filter(v -> v.id.equalsIgnoreCase(id))
                 .findFirst()

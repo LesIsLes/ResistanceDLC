@@ -53,7 +53,9 @@ public final class TargetManager {
     public @Nullable LivingEntity getLivingTarget() {
         return this.currentTarget;
     }
-
+    public long getTargetSwitchTime() {
+        return attackedAtMs;
+    }
     /**
      * Проверяет, подходит ли сущность как цель.
      */
