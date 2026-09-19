@@ -7,9 +7,12 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 
 import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -18,9 +21,14 @@ import java.util.Set;
  * KillStreakManager — счётчик подряд идущих убийств.
  *
  * Логика:
- *   1. AttackEntityCallback → запоминаем entity ID (только ОДИН раз)
+ *   1. AttackEntityCallback → запоминаем entity ID (один раз)
  *   2. tick() → проверяем что entity мертва → +1 kill
  *   3. Уже засчитанные entity ID → в processedKills (не считаем дважды)
+ *   4. На уровнях LEVELS → проигрываем killstreak_N.ogg
+ *
+ * Приоритет звуков:
+ *   1) config/resistancedlc/sounds/killstreak_N.ogg (юзерские)
+ *   2) /assets/resistancedlc/sounds/killstreak_N.ogg (встроенные в jar)
  */
 public class KillStreakManager {
 
@@ -38,6 +46,8 @@ public class KillStreakManager {
     /** Entity, которые уже засчитаны как убитые — чтобы не считать дважды. */
     private static final Set<Integer> PROCESSED_KILLS = new HashSet<>();
 
+    // ===================== CALLBACK =====================
+
     public static void onAttack(Entity target) {
         if (!ModConfig.killStreakEnabled) return;
         if (!(target instanceof LivingEntity)) return;
@@ -52,6 +62,8 @@ public class KillStreakManager {
 
         PENDING_KILLS.put(id, System.currentTimeMillis());
     }
+
+    // ===================== TICK =====================
 
     public static void tick() {
         if (!ModConfig.killStreakEnabled) {
@@ -81,7 +93,6 @@ public class KillStreakManager {
             // Entity пропала с клиента (сервер удалил) — возможно, умерла
             if (entity == null) {
                 it.remove();
-                // Проверяем: не засчитывали уже?
                 if (!PROCESSED_KILLS.contains(entityId)) {
                     PROCESSED_KILLS.add(entityId);
                     registerKill();
@@ -105,18 +116,18 @@ public class KillStreakManager {
             }
         }
 
-        // Чистим processedKills от старых ID (чтобы Set не разрастался)
-        // Раз в 30 сек можно чистить те, что старше 30 сек
-        // Проще — просто чистим весь Set когда окно streak сброшено
+        // Чистим processedKills когда streak сброшен
         if (currentStreak == 0 && !PROCESSED_KILLS.isEmpty()) {
             PROCESSED_KILLS.clear();
         }
 
+        // Проверяем окно streak
         if (currentStreak > 0 && now - lastKillTime > WINDOW_MS) {
             currentStreak = 0;
-            ResistanceDLC.LOGGER.info("[KillStreak] Window expired, streak reset");
         }
     }
+
+    // ===================== KILL =====================
 
     private static void registerKill() {
         long now = System.currentTimeMillis();
@@ -142,24 +153,70 @@ public class KillStreakManager {
         return false;
     }
 
+    // ===================== SOUND =====================
+
+    /**
+     * Играет звук для уровня.
+     *   1) Сначала config/resistancedlc/sounds/killstreak_N.ogg (юзерский — приоритет)
+     *   2) Потом /assets/resistancedlc/sounds/killstreak_N.ogg (встроенный в jar)
+     */
     private static void playStreakSound(int streak) {
+        // ===== 1. Юзерский звук из config/ =====
         Path soundsDir = FabricLoader.getInstance().getConfigDir()
                 .resolve("resistancedlc").resolve("sounds");
-        File ogg = soundsDir.resolve("killstreak_" + streak + ".ogg").toFile();
-        if (!ogg.exists()) {
-            ResistanceDLC.LOGGER.warn("[KillStreak] Sound not found: " + ogg.getAbsolutePath());
+        File userOgg = soundsDir.resolve("killstreak_" + streak + ".ogg").toFile();
+
+        if (userOgg.exists()) {
+            try {
+                OggPlayback pb = new OggPlayback();
+                pb.setVolume(ModConfig.killStreakSoundVolume);
+                pb.play(userOgg, null);
+                ResistanceDLC.LOGGER.info("[KillStreak] Playing user sound: "
+                        + userOgg.getName());
+                return;
+            } catch (Exception e) {
+                ResistanceDLC.LOGGER.error("[KillStreak] User sound failed: "
+                        + e.getMessage());
+            }
+        }
+
+        // ===== 2. Встроенный звук из resources =====
+        String resourcePath = "/assets/resistancedlc/sounds/killstreak_" + streak + ".ogg";
+        InputStream resourceStream = KillStreakManager.class.getResourceAsStream(resourcePath);
+
+        if (resourceStream == null) {
+            ResistanceDLC.LOGGER.warn("[KillStreak] No sound found for streak=" + streak);
             return;
         }
 
         try {
+            // Копируем ресурс во временный файл — OggPlayback работает с File
+            Path tempFile = Files.createTempFile("killstreak_" + streak + "_", ".ogg");
+            Files.copy(resourceStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+            resourceStream.close();
+
             OggPlayback pb = new OggPlayback();
             pb.setVolume(ModConfig.killStreakSoundVolume);
-            pb.play(ogg, null);
-            ResistanceDLC.LOGGER.info("[KillStreak] Playing sound: " + ogg.getName());
+            pb.play(tempFile.toFile(), null);
+
+            ResistanceDLC.LOGGER.info("[KillStreak] Playing built-in sound: killstreak_"
+                    + streak + ".ogg");
+
+            // Удаляем temp-файл через 5 секунд (после проигрывания)
+            new Thread(() -> {
+                try {
+                    Thread.sleep(5000);
+                    Files.deleteIfExists(tempFile);
+                } catch (Exception ignored) {}
+            }, "KillStreak-TempCleanup").start();
+
         } catch (Exception e) {
-            ResistanceDLC.LOGGER.error("[KillStreak] Failed to play: " + e.getMessage());
+            ResistanceDLC.LOGGER.error("[KillStreak] Built-in sound failed: "
+                    + e.getMessage());
         }
     }
+
+    // ===================== GETTERS =====================
 
     public static int getCurrentStreak() {
         return currentStreak;
