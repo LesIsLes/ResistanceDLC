@@ -61,6 +61,7 @@ public class AccordionScreen extends Screen {
     private int maxContentScroll = 0;
 
     private int activeExtraHudSetting = -1;
+    private int activeEnchantSetting = -1;
 
     private final Map<String, Boolean> savedExpanded = new HashMap<>();
 
@@ -858,6 +859,39 @@ public class AccordionScreen extends Screen {
         eggItem.contentHeight = 74;
         pvp.items.add(eggItem);
 
+        // ===== AUTO TP ACCEPT =====
+        AccordionItem atpItem = new AccordionItem(
+                "auto_tp_accept",
+                LocalizationManager.get("gui.resistancedlc.item.auto_tp_accept.title"),
+                LocalizationManager.get("gui.resistancedlc.item.auto_tp_accept.desc"),
+                () -> ModConfig.autoTpAcceptEnabled,
+                () -> { ModConfig.autoTpAcceptEnabled = !ModConfig.autoTpAcceptEnabled; ConfigManager.save(); }
+        );
+        atpItem.contentHeight = 74;
+        pvp.items.add(atpItem);
+
+        // ===== STATS TRACKER =====
+        AccordionItem stItem2 = new AccordionItem(
+                "stats_tracker",
+                LocalizationManager.get("gui.resistancedlc.item.stats_tracker.title"),
+                LocalizationManager.get("gui.resistancedlc.item.stats_tracker.desc"),
+                () -> ModConfig.statsTrackerEnabled,
+                () -> { ModConfig.statsTrackerEnabled = !ModConfig.statsTrackerEnabled; ConfigManager.save(); }
+        );
+        stItem2.contentHeight = 160;
+        pvp.items.add(stItem2);
+
+        // ===== KILL STREAK =====
+        AccordionItem ksItem = new AccordionItem(
+                "kill_streak",
+                LocalizationManager.get("gui.resistancedlc.item.kill_streak.title"),
+                LocalizationManager.get("gui.resistancedlc.item.kill_streak.desc"),
+                () -> ModConfig.killStreakEnabled,
+                () -> { ModConfig.killStreakEnabled = !ModConfig.killStreakEnabled; ConfigManager.save(); }
+        );
+        ksItem.contentHeight = 186;
+        pvp.items.add(ksItem);
+
         // ===== TARGET ESP =====
         AccordionItem targetEspItem = new AccordionItem(
                 "target_esp",
@@ -1043,6 +1077,17 @@ public class AccordionScreen extends Screen {
         );
         predItem.contentHeight = 200;
         visual.items.add(predItem);
+
+        // ===== ENCHANTMENT HIGHLIGHT =====
+        AccordionItem ehItem2 = new AccordionItem(
+                "enchant_highlight",
+                LocalizationManager.get("gui.resistancedlc.item.enchant_highlight.title"),
+                LocalizationManager.get("gui.resistancedlc.item.enchant_highlight.desc"),
+                () -> ModConfig.enchantHighlightEnabled,
+                () -> { ModConfig.enchantHighlightEnabled = !ModConfig.enchantHighlightEnabled; ConfigManager.save(); }
+        );
+        ehItem2.contentHeight = calcEnchantHighlightHeight();
+        visual.items.add(ehItem2);
 
         sections.add(visual);
 
@@ -1302,6 +1347,10 @@ public class AccordionScreen extends Screen {
             case "auto_respawn" -> buildAutoRespawnPanel(widgets, innerX, innerY, innerRight);
             case "armor_alert" -> buildArmorAlertPanel(widgets, innerX, innerY, innerRight);
             case "friend_list" -> buildFriendListPanel(widgets, innerX, innerY, innerRight);
+            case "auto_tp_accept" -> buildAutoTpAcceptPanel(widgets, innerX, innerY, innerRight);
+            case "stats_tracker" -> buildStatsTrackerPanel(widgets, innerX, innerY, innerRight);
+            case "kill_streak" -> buildKillStreakPanel(widgets, innerX, innerY, innerRight);
+            case "enchant_highlight" -> buildEnchantHighlightPanel(widgets, innerX, innerY, innerRight);
             default -> { }
         }
         for (AbstractWidget w : widgets) {
@@ -2367,6 +2416,413 @@ public class AccordionScreen extends Screen {
         fl.contentHeight = calcFriendListHeight();
         contentScroll = 0;
         buildPanelWidgets(fl);
+        updateWidgetsVisibility();
+    }
+    private int calcEnchantHighlightHeight() {
+        // 2 строки управления (add + clear) + список
+        int base = 18 + 2 * 28;
+        int count = EnchantmentHighlightManager.getRules().size();
+        if (count > 0) {
+            base += 22;              // заголовок
+            base += Math.min(count, 10) * 20;
+            if (count > 10) base += 22;
+        }
+        // Место под раскрытую настройку (если activeEnchantSetting >= 0)
+        if (activeEnchantSetting >= 0) {
+            base += 4 * 28;
+        }
+        return base;
+    }
+
+    private int calcEnchantHighlightHeightImpl() {
+        return calcEnchantHighlightHeight();
+    }
+    // ===================== AUTO TP ACCEPT =====================
+    private void buildAutoTpAcceptPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        // Выбор: только от друзей / от всех
+        String modeText = ModConfig.autoTpAcceptOnlyFriends
+                ? LocalizationManager.get("gui.resistancedlc.panel.auto_tp_accept.only_friends")
+                : LocalizationManager.get("gui.resistancedlc.panel.auto_tp_accept.from_all");
+        widgets.add(Button.builder(
+                Component.literal(modeText),
+                (b) -> {
+                    ModConfig.autoTpAcceptOnlyFriends = !ModConfig.autoTpAcceptOnlyFriends;
+                    ConfigManager.save();
+                    rebuildAutoTpAcceptPanel();
+                }
+        ).bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_tp_accept.delay",
+                        ModConfig.autoTpAcceptDelay)),
+                (ModConfig.autoTpAcceptDelay - 0.1f) / 2.9f
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_tp_accept.delay",
+                        ModConfig.autoTpAcceptDelay)));
+            }
+            @Override protected void applyValue() {
+                ModConfig.autoTpAcceptDelay = 0.1f + (float)(this.value * 2.9f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+    }
+
+    private void rebuildAutoTpAcceptPanel() {
+        AccordionItem item = null;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.id.equals("auto_tp_accept")) { item = it; break; }
+            }
+            if (item != null) break;
+        }
+        if (item == null || !item.expanded) return;
+
+        clearPanelWidgets(item);
+        buildPanelWidgets(item);
+        updateWidgetsVisibility();
+    }
+
+    // ===================== STATS TRACKER =====================
+    private void buildStatsTrackerPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        // Отображение K/D
+        Button kdBtn = Button.builder(
+                Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.stats_tracker.kd")
+                        + " §f" + StatsTrackerManager.formatKd()),
+                (b) -> {}
+        ).bounds(x, curY, w, 20).build();
+        kdBtn.active = false;
+        widgets.add(kdBtn);
+        curY += rowH + rowGap;
+
+        Button killsBtn = Button.builder(
+                Component.literal("§a" + LocalizationManager.get("gui.resistancedlc.panel.stats_tracker.kills")
+                        + " §f" + ModConfig.statsKills),
+                (b) -> {}
+        ).bounds(x, curY, w, 20).build();
+        killsBtn.active = false;
+        widgets.add(killsBtn);
+        curY += rowH + rowGap;
+
+        Button deathsBtn = Button.builder(
+                Component.literal("§c" + LocalizationManager.get("gui.resistancedlc.panel.stats_tracker.deaths")
+                        + " §f" + ModConfig.statsDeaths),
+                (b) -> {}
+        ).bounds(x, curY, w, 20).build();
+        deathsBtn.active = false;
+        widgets.add(deathsBtn);
+        curY += rowH + rowGap;
+
+        widgets.add(Button.builder(
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.stats_tracker.reset")),
+                (b) -> {
+                    StatsTrackerManager.resetStats();
+                    rebuildStatsTrackerPanel();
+                }
+        ).bounds(x, curY, w, 20).build());
+    }
+
+    private void rebuildStatsTrackerPanel() {
+        AccordionItem item = null;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.id.equals("stats_tracker")) { item = it; break; }
+            }
+            if (item != null) break;
+        }
+        if (item == null || !item.expanded) return;
+
+        clearPanelWidgets(item);
+        buildPanelWidgets(item);
+        updateWidgetsVisibility();
+    }
+
+    // ===================== KILL STREAK =====================
+    private void buildKillStreakPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.kill_streak.volume",
+                        String.format("%.2f", ModConfig.killStreakSoundVolume))),
+                ModConfig.killStreakSoundVolume
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.kill_streak.volume",
+                        String.format("%.2f", ModConfig.killStreakSoundVolume))));
+            }
+            @Override protected void applyValue() {
+                ModConfig.killStreakSoundVolume = (float) this.value;
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.kill_streak.alpha",
+                        ModConfig.killStreakAlpha)),
+                ModConfig.killStreakAlpha / 255.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.kill_streak.alpha",
+                        ModConfig.killStreakAlpha)));
+            }
+            @Override protected void applyValue() {
+                ModConfig.killStreakAlpha = (int)(this.value * 255);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        String[] sizes = {
+                LocalizationManager.get("gui.resistancedlc.panel.font_size", "Small"),
+                LocalizationManager.get("gui.resistancedlc.panel.font_size", "Medium"),
+                LocalizationManager.get("gui.resistancedlc.panel.font_size", "Large")
+        };
+        int fs = Math.max(0, Math.min(2, ModConfig.killStreakFontSize));
+        widgets.add(Button.builder(
+                Component.literal(sizes[fs]),
+                (b) -> {
+                    ModConfig.killStreakFontSize = (ModConfig.killStreakFontSize + 1) % 3;
+                    ConfigManager.save();
+                    rebuildKillStreakPanel();
+                }
+        ).bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.kill_streak.show_timer")), this.font)
+                .pos(x, curY).selected(ModConfig.killStreakShowTimer)
+                .onValueChange((c, v) -> { ModConfig.killStreakShowTimer = v; ConfigManager.save(); })
+                .build());
+        curY += rowH;
+
+        addPosEditorRow(widgets, x, curY, right,
+                () -> ModConfig.killStreakHudX, () -> ModConfig.killStreakHudY,
+                (nx, ny) -> { ModConfig.killStreakHudX = nx; ModConfig.killStreakHudY = ny; },
+                -1, 10);
+        curY += 26 + rowGap;
+
+        // Color presets
+        EditBox hexField = new EditBox(this.font, x, curY, 80, 18,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hex")));
+        hexField.setMaxLength(7);
+        hexField.setValue(String.format("#%06X", ModConfig.killStreakColor & 0xFFFFFF));
+        widgets.add(hexField);
+
+        widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.apply")), (b) -> {
+            try {
+                ModConfig.killStreakColor = 0xFF000000 | Integer.parseInt(
+                        hexField.getValue().replace("#", "").trim(), 16);
+                ConfigManager.save();
+            } catch (Exception ignored) {}
+        }).bounds(x + 85, curY, 35, 18).build());
+
+        int presetX = x + 125;
+        int presetW = (right - presetX - 9) / 4;
+        String[] pn = {"R", "G", "B", "W"};
+        int[] pc = {0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 0xFFFFFFFF};
+        for (int i = 0; i < 4; i++) {
+            final int color = pc[i];
+            final String hex = String.format("#%06X", color & 0xFFFFFF);
+            widgets.add(Button.builder(Component.literal(pn[i]), (b) -> {
+                hexField.setValue(hex);
+                ModConfig.killStreakColor = color;
+                ConfigManager.save();
+            }).bounds(presetX + i * (presetW + 3), curY, presetW, 18).build());
+        }
+    }
+
+    private void rebuildKillStreakPanel() {
+        AccordionItem item = null;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.id.equals("kill_streak")) { item = it; break; }
+            }
+            if (item != null) break;
+        }
+        if (item == null || !item.expanded) return;
+
+        clearPanelWidgets(item);
+        buildPanelWidgets(item);
+        updateWidgetsVisibility();
+    }
+
+    // ===================== ENCHANTMENT HIGHLIGHT =====================
+    private void buildEnchantHighlightPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        // Поле ввода ключа + кнопка +
+        EditBox keyField = new EditBox(this.font, x, curY, w - 25, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.enchant_highlight.hint")));
+        keyField.setMaxLength(30);
+        widgets.add(keyField);
+
+        widgets.add(Button.builder(Component.literal("+"), (b) -> {
+            String key = keyField.getValue().trim();
+            if (!key.isEmpty()) {
+                if (EnchantmentHighlightManager.addRule(key, 0xFFFFAA00, true)) {
+                    keyField.setValue("");
+                    activeEnchantSetting = -1;
+                    contentScroll = 0;
+                    rebuildEnchantHighlightPanel();
+                }
+            }
+        }).bounds(x + w - 22, curY, 22, 20).build());
+        curY += rowH + rowGap;
+
+        // Кнопка "Очистить"
+        widgets.add(Button.builder(
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.enchant_highlight.clear")),
+                (b) -> {
+                    EnchantmentHighlightManager.clearRules();
+                    activeEnchantSetting = -1;
+                    contentScroll = 0;
+                    rebuildEnchantHighlightPanel();
+                }
+        ).bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        List<EnchantmentHighlightManager.Rule> rules = EnchantmentHighlightManager.getRules();
+        if (rules.isEmpty()) return;
+
+        Button headerBtn = Button.builder(
+                Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.enchant_highlight.list")
+                        + " (§f" + rules.size() + "§e):"),
+                (b) -> {}
+        ).bounds(x, curY, w, 18).build();
+        headerBtn.active = false;
+        widgets.add(headerBtn);
+        curY += 18 + 4;
+
+        int maxShow = Math.min(rules.size(), 10);
+        for (int i = 0; i < maxShow; i++) {
+            final int idx = i;
+            final EnchantmentHighlightManager.Rule rule = rules.get(i);
+
+            // Чекбокс вкл/выкл (это НЕ "Включить функцию", это вкл/выкл конкретного чара)
+            Checkbox cb = Checkbox.builder(Component.literal("§e" + rule.key), this.font)
+                    .pos(x, curY)
+                    .selected(true)
+                    .onValueChange((c, v) -> {
+                        if (!v) {
+                            EnchantmentHighlightManager.removeRule(rule.key);
+                            contentScroll = 0;
+                            rebuildEnchantHighlightPanel();
+                        }
+                    })
+                    .build();
+            widgets.add(cb);
+
+            // Кнопка ⚙ — раскрыть настройки
+            widgets.add(Button.builder(Component.literal("§6" + LocalizationManager.get("gui.resistancedlc.panel.gear")), (b) -> {
+                activeEnchantSetting = (activeEnchantSetting == idx) ? -1 : idx;
+                rebuildEnchantHighlightPanel();
+            }).bounds(x + w - 22, curY, 22, 18).build());
+
+            curY += 20;
+        }
+
+        if (rules.size() > 10) {
+            Button moreBtn = Button.builder(
+                    Component.literal("§7... ещё §e" + (rules.size() - 10)), (b) -> {}
+            ).bounds(x, curY, w, 18).build();
+            moreBtn.active = false;
+            widgets.add(moreBtn);
+            curY += 18 + 4;
+        }
+
+        // Раскрытая настройка конкретного чара
+        if (activeEnchantSetting >= 0 && activeEnchantSetting < rules.size()) {
+            EnchantmentHighlightManager.Rule active = rules.get(activeEnchantSetting);
+
+            Button titleBtn = Button.builder(
+                    Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.enchant_highlight.setting")
+                            + " §f" + active.key),
+                    (b) -> {}
+            ).bounds(x, curY, w, 18).build();
+            titleBtn.active = false;
+            widgets.add(titleBtn);
+            curY += 18 + 4;
+
+            // Ключ
+            EditBox keyEdit = new EditBox(this.font, x, curY, w, 18,
+                    Component.literal(LocalizationManager.get("gui.resistancedlc.panel.enchant_highlight.key")));
+            keyEdit.setMaxLength(30);
+            keyEdit.setValue(active.key);
+            widgets.add(keyEdit);
+            curY += 18 + 4;
+
+            // Bold + сохранить
+            Checkbox boldCb = Checkbox.builder(
+                            Component.literal(LocalizationManager.get("gui.resistancedlc.panel.enchant_highlight.bold")), this.font)
+                    .pos(x, curY).selected(active.bold)
+                    .onValueChange((c, v) -> {})
+                    .build();
+            widgets.add(boldCb);
+            curY += 18 + 4;
+
+            widgets.add(Button.builder(
+                    Component.literal(LocalizationManager.get("gui.resistancedlc.panel.apply")),
+                    (b) -> {
+                        String newKey = keyEdit.getValue().trim();
+                        if (!newKey.isEmpty()) {
+                            // Удаляем старый, добавляем новый
+                            EnchantmentHighlightManager.removeRule(active.key);
+                            EnchantmentHighlightManager.addRule(newKey, active.color, boldCb.selected());
+                            activeEnchantSetting = -1;
+                            contentScroll = 0;
+                            rebuildEnchantHighlightPanel();
+                        }
+                    }
+            ).bounds(x, curY, w, 18).build());
+            curY += 18 + 4;
+
+            // Цвет — presets R/G/B/W
+            int presetX = x;
+            int presetW = (w - 9) / 4;
+            String[] pn = {"R", "G", "B", "W"};
+            int[] pc = {0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 0xFFFFFFFF};
+            for (int i = 0; i < 4; i++) {
+                final int color = pc[i];
+                widgets.add(Button.builder(Component.literal(pn[i]), (b) -> {
+                    EnchantmentHighlightManager.removeRule(active.key);
+                    EnchantmentHighlightManager.addRule(active.key, color, boldCb.selected());
+                    rebuildEnchantHighlightPanel();
+                }).bounds(presetX + i * (presetW + 3), curY, presetW, 18).build());
+            }
+        }
+    }
+
+    private void rebuildEnchantHighlightPanel() {
+        AccordionItem item = null;
+        for (Section s : sections) {
+            for (AccordionItem it : s.items) {
+                if (it.id.equals("enchant_highlight")) { item = it; break; }
+            }
+            if (item != null) break;
+        }
+        if (item == null || !item.expanded) return;
+
+        clearPanelWidgets(item);
+        item.contentHeight = calcEnchantHighlightHeight();
+        contentScroll = 0;
+        buildPanelWidgets(item);
         updateWidgetsVisibility();
     }
     // ===================== VISUAL =====================

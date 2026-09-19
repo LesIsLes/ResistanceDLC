@@ -15,6 +15,10 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
+import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -69,7 +73,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
         // Инициализация MusicPlayer
         MusicPlayerManager.init();
 
-        // ===== ATTACK CALLBACK (StrikeRange + PvPSafe + TargetEsp) =====
+        // ===== ATTACK CALLBACK (StrikeRange + PvPSafe + TargetEsp + KillStreak) =====
         AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
             // StrikeRange — записываем дистанцию
             if (ModConfig.strikeRangeEnabled && entity != null) {
@@ -83,9 +87,14 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 PvPSafeManager.recordHit();
             }
 
-            // ===== TargetEsp — запоминаем цель удара =====
+            // TargetEsp — запоминаем цель удара
             if (ModConfig.targetEspEnabled && entity instanceof LivingEntity) {
                 com.resistancedlc.targetesp.TargetManagerHolder.MANAGER.setCurrentTarget(entity);
+            }
+
+            // KillStreak — запоминаем удар
+            if (ModConfig.killStreakEnabled && entity != null) {
+                KillStreakManager.onAttack(entity);
             }
 
             return InteractionResult.PASS;
@@ -138,6 +147,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
             LowHPAlertManager.reset();
             AutoRespawnManager.reset();
             ArmorAlertManager.reset();
+            AutoTPAcceptManager.reset();
+            KillStreakManager.reset();
             AutoReconnectManager.onDisconnect();
         });
 
@@ -384,6 +395,23 @@ public class ResistanceDLCClient implements ClientModInitializer {
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
             AutoGGManager.onChatMessage(message.getString());
         });
+        // ===== AUTO TP ACCEPT: парсинг чата =====
+        ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
+            AutoTPAcceptManager.onChatMessage(message.getString());
+        });
+
+        ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
+            AutoTPAcceptManager.onChatMessage(message.getString());
+        });
+
+        // ===== STATS TRACKER: парсинг чата =====
+        ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
+            StatsTrackerManager.onChatMessage(message.getString());
+        });
+
+        ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
+            StatsTrackerManager.onChatMessage(message.getString());
+        });
 
         // ===== BPS =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -426,6 +454,11 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
         // ===== ARMOR ALERT =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> ArmorAlertManager.tick());
+        // ===== AUTO TP ACCEPT =====
+        ClientTickEvents.END_CLIENT_TICK.register(client -> AutoTPAcceptManager.tick());
+
+        // ===== KILL STREAK =====
+        ClientTickEvents.END_CLIENT_TICK.register(client -> KillStreakManager.tick());
         // ===== GAMMA UTIL =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> GammaUtilManager.tick());
 
@@ -1176,6 +1209,38 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
             int aaColor = (ModConfig.armorAlertAlpha << 24) | (ModConfig.armorAlertColor & 0x00FFFFFF);
             graphics.drawString(client.font, text, aaX, aaY, aaColor, true);
+        }
+        // ===== KILL STREAK =====
+        if (ModConfig.killStreakEnabled && KillStreakManager.isActive()) {
+            int guiW = client.getWindow().getGuiScaledWidth();
+
+            int streak = KillStreakManager.getCurrentStreak();
+            String text;
+            if (ModConfig.killStreakShowTimer) {
+                int sec = KillStreakManager.getRemainingSeconds();
+                text = LocalizationManager.get("gui.resistancedlc.hud.kill_streak_timer", streak, sec);
+            } else {
+                text = LocalizationManager.get("gui.resistancedlc.hud.kill_streak", streak);
+            }
+
+            float scale;
+            if (ModConfig.killStreakFontSize == 0) scale = 1.0f;
+            else if (ModConfig.killStreakFontSize == 1) scale = 1.5f;
+            else scale = 2.0f;
+
+            int textW = (int)(client.font.width(text) * scale);
+            int ksX = (ModConfig.killStreakHudX < 0)
+                    ? (guiW - textW) / 2
+                    : ModConfig.killStreakHudX;
+            int ksY = ModConfig.killStreakHudY;
+
+            int ksColor = (ModConfig.killStreakAlpha << 24) | (ModConfig.killStreakColor & 0x00FFFFFF);
+
+            graphics.pose().pushMatrix();
+            graphics.pose().translate(ksX, ksY);
+            graphics.pose().scale(scale, scale);
+            graphics.drawString(client.font, text, 0, 0, ksColor, true);
+            graphics.pose().popMatrix();
         }
         // ===== STRIKE RANGE =====
         if (ModConfig.strikeRangeEnabled && StrikeRangeManager.isActive()) {

@@ -34,11 +34,6 @@ public class MusicPlayerHudMixin {
     @Inject(method = "onButton(JLnet/minecraft/client/input/MouseButtonInfo;I)V",
             at = @At("HEAD"), cancellable = true, require = 0)
     private void onButton(long window, MouseButtonInfo buttonInfo, int action, CallbackInfo ci) {
-        // === ВРЕМЕННЫЙ ЛОГ ДЛЯ ДИАГНОСТИКИ ===
-        if (ModConfig.musicPlayerEnabled && ModConfig.musicShowHud) {
-            ResistanceDLC.LOGGER.info("[MusicHUD] onButton: button=" + buttonInfo.button()
-                    + " action=" + action);
-        }
 
         if (!ModConfig.musicPlayerEnabled) return;
         if (!ModConfig.musicShowHud) return;
@@ -66,15 +61,10 @@ public class MusicPlayerHudMixin {
         double mouseX = getScaledMouseX(mc);
         double mouseY = getScaledMouseY(mc);
 
-        ResistanceDLC.LOGGER.info("[MusicHUD] LMB press at (" + mouseX + ", " + mouseY + ")");
-
         // === Проверка попадания в виджет ===
         if (!MusicPlayerHud.isPointOverWidget(mouseX, mouseY)) {
-            ResistanceDLC.LOGGER.info("[MusicHUD] NOT over widget");
             return;
         }
-
-        ResistanceDLC.LOGGER.info("[MusicHUD] OVER widget — checking buttons");
 
         // === ПАУЗА / ПЛЕЙ ===
         if (MusicPlayerHud.isPointOverPauseButton(mouseX, mouseY)) {

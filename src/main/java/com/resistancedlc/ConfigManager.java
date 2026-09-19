@@ -381,6 +381,30 @@ public class ConfigManager {
             json.addProperty("friendListHighlightTab", ModConfig.friendListHighlightTab);
             json.addProperty("friendListTabColor", ModConfig.friendListTabColor);
 
+            // === AUTO TP ACCEPT ===
+            json.addProperty("autoTpAcceptEnabled", ModConfig.autoTpAcceptEnabled);
+            json.addProperty("autoTpAcceptOnlyFriends", ModConfig.autoTpAcceptOnlyFriends);
+            json.addProperty("autoTpAcceptDelay", ModConfig.autoTpAcceptDelay);
+
+            // === ENCHANTMENT HIGHLIGHT ===
+            json.addProperty("enchantHighlightEnabled", ModConfig.enchantHighlightEnabled);
+            json.addProperty("enchantHighlightRaw", ModConfig.enchantHighlightRaw);
+
+            // === STATS TRACKER ===
+            json.addProperty("statsTrackerEnabled", ModConfig.statsTrackerEnabled);
+            json.addProperty("statsKills", ModConfig.statsKills);
+            json.addProperty("statsDeaths", ModConfig.statsDeaths);
+
+            // === KILL STREAK ===
+            json.addProperty("killStreakEnabled", ModConfig.killStreakEnabled);
+            json.addProperty("killStreakSoundVolume", ModConfig.killStreakSoundVolume);
+            json.addProperty("killStreakHudX", ModConfig.killStreakHudX);
+            json.addProperty("killStreakHudY", ModConfig.killStreakHudY);
+            json.addProperty("killStreakColor", ModConfig.killStreakColor);
+            json.addProperty("killStreakAlpha", ModConfig.killStreakAlpha);
+            json.addProperty("killStreakFontSize", ModConfig.killStreakFontSize);
+            json.addProperty("killStreakShowTimer", ModConfig.killStreakShowTimer);
+
             Path file = CONFIG_DIR.resolve(name + ".json");
             synchronized (GSON) {
                 Files.writeString(file, GSON.toJson(json));
@@ -742,6 +766,30 @@ public class ConfigManager {
             ModConfig.friendListChatColor = getInt(json, "friendListChatColor", ModConfig.friendListChatColor);
             ModConfig.friendListHighlightTab = getBool(json, "friendListHighlightTab", ModConfig.friendListHighlightTab);
             ModConfig.friendListTabColor = getInt(json, "friendListTabColor", ModConfig.friendListTabColor);
+
+            // === AUTO TP ACCEPT ===
+            ModConfig.autoTpAcceptEnabled = getBool(json, "autoTpAcceptEnabled", ModConfig.autoTpAcceptEnabled);
+            ModConfig.autoTpAcceptOnlyFriends = getBool(json, "autoTpAcceptOnlyFriends", ModConfig.autoTpAcceptOnlyFriends);
+            ModConfig.autoTpAcceptDelay = getFloat(json, "autoTpAcceptDelay", ModConfig.autoTpAcceptDelay);
+
+            // === ENCHANTMENT HIGHLIGHT ===
+            ModConfig.enchantHighlightEnabled = getBool(json, "enchantHighlightEnabled", ModConfig.enchantHighlightEnabled);
+            ModConfig.enchantHighlightRaw = getString(json, "enchantHighlightRaw", ModConfig.enchantHighlightRaw);
+
+            // === STATS TRACKER ===
+            ModConfig.statsTrackerEnabled = getBool(json, "statsTrackerEnabled", ModConfig.statsTrackerEnabled);
+            ModConfig.statsKills = getInt(json, "statsKills", ModConfig.statsKills);
+            ModConfig.statsDeaths = getInt(json, "statsDeaths", ModConfig.statsDeaths);
+
+            // === KILL STREAK ===
+            ModConfig.killStreakEnabled = getBool(json, "killStreakEnabled", ModConfig.killStreakEnabled);
+            ModConfig.killStreakSoundVolume = getFloat(json, "killStreakSoundVolume", ModConfig.killStreakSoundVolume);
+            ModConfig.killStreakHudX = getInt(json, "killStreakHudX", ModConfig.killStreakHudX);
+            ModConfig.killStreakHudY = getInt(json, "killStreakHudY", ModConfig.killStreakHudY);
+            ModConfig.killStreakColor = getInt(json, "killStreakColor", ModConfig.killStreakColor);
+            ModConfig.killStreakAlpha = getInt(json, "killStreakAlpha", ModConfig.killStreakAlpha);
+            ModConfig.killStreakFontSize = getInt(json, "killStreakFontSize", ModConfig.killStreakFontSize);
+            ModConfig.killStreakShowTimer = getBool(json, "killStreakShowTimer", ModConfig.killStreakShowTimer);
             return true;
 
         } catch (Exception e) {

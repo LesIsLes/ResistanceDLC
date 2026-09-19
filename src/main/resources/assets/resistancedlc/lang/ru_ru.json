@@ -439,5 +439,37 @@
   "gui.resistancedlc.panel.friend_list.existing": "Друзья",
 
   "gui.resistancedlc.hud.low_hp_alert": "⚠ НИЗКОЕ HP: %d ⚠",
-  "gui.resistancedlc.hud.armor_alert": "⚠ БРОНЯ: %d%% ⚠"
+  "gui.resistancedlc.hud.armor_alert": "⚠ БРОНЯ: %d%% ⚠",
+
+  "gui.resistancedlc.item.auto_tp_accept.title": "AutoTPAccept",
+  "gui.resistancedlc.item.auto_tp_accept.desc": "Авто-принятие /tpa от друзей",
+  "gui.resistancedlc.item.stats_tracker.title": "StatsTracker",
+  "gui.resistancedlc.item.stats_tracker.desc": "Счётчик K/D из чата",
+  "gui.resistancedlc.item.kill_streak.title": "KillStreak",
+  "gui.resistancedlc.item.kill_streak.desc": "Счётчик подряд идущих убийств + звуки",
+  "gui.resistancedlc.item.enchant_highlight.title": "Подсветка чар",
+  "gui.resistancedlc.item.enchant_highlight.desc": "Подсветка выбранных чар в тултипе",
+
+  "gui.resistancedlc.panel.auto_tp_accept.only_friends": "Режим: Только друзья",
+  "gui.resistancedlc.panel.auto_tp_accept.from_all": "Режим: От всех игроков",
+  "gui.resistancedlc.panel.auto_tp_accept.delay": "Задержка: %.1f сек",
+
+  "gui.resistancedlc.panel.stats_tracker.kd": "K/D:",
+  "gui.resistancedlc.panel.stats_tracker.kills": "Убийств:",
+  "gui.resistancedlc.panel.stats_tracker.deaths": "Смертей:",
+  "gui.resistancedlc.panel.stats_tracker.reset": "Сбросить статистику",
+
+  "gui.resistancedlc.panel.kill_streak.volume": "Громкость звука: %.2f",
+  "gui.resistancedlc.panel.kill_streak.alpha": "Прозрачность: %d",
+  "gui.resistancedlc.panel.kill_streak.show_timer": "Показывать таймер",
+
+  "gui.resistancedlc.panel.enchant_highlight.hint": "Ключ чара (напр. острот)",
+  "gui.resistancedlc.panel.enchant_highlight.clear": "Очистить список",
+  "gui.resistancedlc.panel.enchant_highlight.list": "Чары",
+  "gui.resistancedlc.panel.enchant_highlight.setting": "Настройка:",
+  "gui.resistancedlc.panel.enchant_highlight.key": "Ключ",
+  "gui.resistancedlc.panel.enchant_highlight.bold": "Жирный",
+
+  "gui.resistancedlc.hud.kill_streak": "⚔ СЕРИЯ x%d",
+  "gui.resistancedlc.hud.kill_streak_timer": "⚔ СЕРИЯ x%d §7(%ds)"
 }

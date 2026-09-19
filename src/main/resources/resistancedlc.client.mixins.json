@@ -24,7 +24,8 @@
     "PickUpLoggerMixin",
     "PvPSafeCommandMixin",
     "PvPSafeHurtMixin",
-    "TotemLogMixin"
+    "TotemLogMixin",
+    "FriendListMixin"
   ],
   "injectors": {
     "defaultRequire": 1

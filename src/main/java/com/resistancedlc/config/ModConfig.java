@@ -360,4 +360,29 @@ public class ModConfig {
     public static int friendListChatColor = 0xFF55FFFF;  // голубой
     public static boolean friendListHighlightTab = true;
     public static int friendListTabColor = 0xFF55FFFF;
+
+    // ===================== AUTO TP ACCEPT =====================
+    public static boolean autoTpAcceptEnabled = false;
+    public static boolean autoTpAcceptOnlyFriends = true;   // true = только от друзей
+    public static float autoTpAcceptDelay = 0.5f;           // 0.1..3.0 сек
+
+    // ===================== ENCHANTMENT HIGHLIGHT =====================
+    public static boolean enchantHighlightEnabled = false;
+    public static String enchantHighlightRaw = "";
+    // формат: "key~RRGGBB~bold|key~RRGGBB~bold|..."
+
+    // ===================== STATS TRACKER =====================
+    public static boolean statsTrackerEnabled = false;
+    public static int statsKills = 0;
+    public static int statsDeaths = 0;
+
+    // ===================== KILL STREAK =====================
+    public static boolean killStreakEnabled = false;
+    public static float killStreakSoundVolume = 0.7f;
+    public static int killStreakHudX = -1;                  // -1 = центр по X
+    public static int killStreakHudY = 10;
+    public static int killStreakColor = 0xFFFF5500;
+    public static int killStreakAlpha = 255;
+    public static int killStreakFontSize = 1;               // 0=Small, 1=Medium, 2=Large
+    public static boolean killStreakShowTimer = true;
 }

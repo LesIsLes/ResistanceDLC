@@ -255,16 +255,9 @@ public class MusicPlayerHud {
     public static boolean isPointOverVolumeSlider(double mx, double my) {
         return hit(mx, my, volSliderX[0], volSliderY[0] - 4, volSliderW[0], volSliderH[0] + 8);
     }
-
     public static boolean isPointOverWidget(double mx, double my) {
-        boolean result = hit(mx, my, widgetX, widgetY, WIDGET_W, WIDGET_H);
-        // Лог для диагностики
-        ResistanceDLC.LOGGER.info("[MusicHUD] isPointOverWidget: mouse=(" + mx + "," + my
-                + ") widget=(" + widgetX + "," + widgetY + " " + WIDGET_W + "x" + WIDGET_H
-                + ") result=" + result);
-        return result;
+        return hit(mx, my, widgetX, widgetY, WIDGET_W, WIDGET_H);
     }
-
     public static int getWidgetX() { return widgetX; }
     public static int getWidgetY() { return widgetY; }
     public static int getWidgetW() { return WIDGET_W; }

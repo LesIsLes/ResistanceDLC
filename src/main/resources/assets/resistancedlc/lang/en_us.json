@@ -439,5 +439,37 @@
   "gui.resistancedlc.panel.friend_list.existing": "Friends",
 
   "gui.resistancedlc.hud.low_hp_alert": "⚠ LOW HP: %d ⚠",
-  "gui.resistancedlc.hud.armor_alert": "⚠ ARMOR: %d%% ⚠"
+  "gui.resistancedlc.hud.armor_alert": "⚠ ARMOR: %d%% ⚠",
+
+  "gui.resistancedlc.item.auto_tp_accept.title": "AutoTPAccept",
+  "gui.resistancedlc.item.auto_tp_accept.desc": "Auto-accept /tpa from friends",
+  "gui.resistancedlc.item.stats_tracker.title": "StatsTracker",
+  "gui.resistancedlc.item.stats_tracker.desc": "K/D counter parsed from chat",
+  "gui.resistancedlc.item.kill_streak.title": "KillStreak",
+  "gui.resistancedlc.item.kill_streak.desc": "Consecutive kill counter + sounds",
+  "gui.resistancedlc.item.enchant_highlight.title": "Enchant Highlight",
+  "gui.resistancedlc.item.enchant_highlight.desc": "Highlight selected enchants in tooltip",
+
+  "gui.resistancedlc.panel.auto_tp_accept.only_friends": "Mode: Friends only",
+  "gui.resistancedlc.panel.auto_tp_accept.from_all": "Mode: From all players",
+  "gui.resistancedlc.panel.auto_tp_accept.delay": "Delay: %.1f sec",
+
+  "gui.resistancedlc.panel.stats_tracker.kd": "K/D:",
+  "gui.resistancedlc.panel.stats_tracker.kills": "Kills:",
+  "gui.resistancedlc.panel.stats_tracker.deaths": "Deaths:",
+  "gui.resistancedlc.panel.stats_tracker.reset": "Reset stats",
+
+  "gui.resistancedlc.panel.kill_streak.volume": "Sound volume: %.2f",
+  "gui.resistancedlc.panel.kill_streak.alpha": "Alpha: %d",
+  "gui.resistancedlc.panel.kill_streak.show_timer": "Show timer",
+
+  "gui.resistancedlc.panel.enchant_highlight.hint": "Enchant key (e.g. sharp)",
+  "gui.resistancedlc.panel.enchant_highlight.clear": "Clear all enchants",
+  "gui.resistancedlc.panel.enchant_highlight.list": "Enchants",
+  "gui.resistancedlc.panel.enchant_highlight.setting": "Setting:",
+  "gui.resistancedlc.panel.enchant_highlight.key": "Key",
+  "gui.resistancedlc.panel.enchant_highlight.bold": "Bold",
+
+  "gui.resistancedlc.hud.kill_streak": "⚔ KILLSTREAK x%d",
+  "gui.resistancedlc.hud.kill_streak_timer": "⚔ KILLSTREAK x%d §7(%ds)"
 }
