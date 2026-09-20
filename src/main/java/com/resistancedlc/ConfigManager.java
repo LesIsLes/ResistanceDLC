@@ -380,6 +380,10 @@ public class ConfigManager {
             json.addProperty("friendListChatColor", ModConfig.friendListChatColor);
             json.addProperty("friendListHighlightTab", ModConfig.friendListHighlightTab);
             json.addProperty("friendListTabColor", ModConfig.friendListTabColor);
+            json.addProperty("friendListShowHud", ModConfig.friendListShowHud);
+            json.addProperty("friendListHudX", ModConfig.friendListHudX);
+            json.addProperty("friendListHudY", ModConfig.friendListHudY);
+            json.addProperty("friendListHudAlpha", ModConfig.friendListHudAlpha);
 
             // === AUTO TP ACCEPT ===
             json.addProperty("autoTpAcceptEnabled", ModConfig.autoTpAcceptEnabled);
@@ -766,6 +770,10 @@ public class ConfigManager {
             ModConfig.friendListChatColor = getInt(json, "friendListChatColor", ModConfig.friendListChatColor);
             ModConfig.friendListHighlightTab = getBool(json, "friendListHighlightTab", ModConfig.friendListHighlightTab);
             ModConfig.friendListTabColor = getInt(json, "friendListTabColor", ModConfig.friendListTabColor);
+            ModConfig.friendListShowHud = getBool(json, "friendListShowHud", ModConfig.friendListShowHud);
+            ModConfig.friendListHudX = getInt(json, "friendListHudX", ModConfig.friendListHudX);
+            ModConfig.friendListHudY = getInt(json, "friendListHudY", ModConfig.friendListHudY);
+            ModConfig.friendListHudAlpha = getInt(json, "friendListHudAlpha", ModConfig.friendListHudAlpha);
 
             // === AUTO TP ACCEPT ===
             ModConfig.autoTpAcceptEnabled = getBool(json, "autoTpAcceptEnabled", ModConfig.autoTpAcceptEnabled);

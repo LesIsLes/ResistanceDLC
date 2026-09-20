@@ -161,7 +161,7 @@ public class AccordionScreen extends Screen {
                             ModConfig.modLogoRussian = !ModConfig.modLogoRussian;
                             ConfigManager.save();
                             LocalizationManager.reload();
-                            rebuildWidgetsPreservingState();
+                            Minecraft.getInstance().execute(this::rebuildWidgetsPreservingState);
                         })
                 .bounds(panelX + PANEL_WIDTH - 78, panelY + 6, 30, 18).build();
         this.addRenderableWidget(langBtn);
@@ -192,7 +192,7 @@ public class AccordionScreen extends Screen {
             if (restoringSearch) return;
             contentScroll = 0;
             updateFilteredItems();
-            rebuildAllPanelWidgets();
+            Minecraft.getInstance().execute(this::rebuildAllPanelWidgets);
         });
 
         if (!savedSearchText.isEmpty()) {
@@ -211,7 +211,8 @@ public class AccordionScreen extends Screen {
                 if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
                     ModConfig.isBindingKey = false;
                     ModConfig.bindingTarget = 0;
-                    rebuildWidgetsPreservingState();
+                    // ⚠ Правило №11 — откладываем rebuild на следующий тик
+                    Minecraft.getInstance().execute(this::rebuildWidgetsPreservingState);
                     return false;
                 }
 
@@ -236,7 +237,8 @@ public class AccordionScreen extends Screen {
                 }
                 ModConfig.isBindingKey = false;
                 ModConfig.bindingTarget = 0;
-                rebuildWidgetsPreservingState();
+                // ⚠ Правило №11 — откладываем rebuild на следующий тик
+                Minecraft.getInstance().execute(this::rebuildWidgetsPreservingState);
                 return false;
             });
         }
@@ -248,7 +250,8 @@ public class AccordionScreen extends Screen {
             }
         }
         updateFilteredItems();
-        rebuildAllPanelWidgets();
+        // ⚠ Откладываем на следующий тик — иначе ConcurrentModificationException при биндинге
+        Minecraft.getInstance().execute(this::rebuildAllPanelWidgets);
 
         if (globalSearchOpen) {
             buildGlobalSearchWidgets();
@@ -285,7 +288,7 @@ public class AccordionScreen extends Screen {
                     toExpand.expanded = true;
                     toExpand.expandProgress = 1.0f;
                     updateFilteredItems();
-                    rebuildAllPanelWidgets();
+                    Minecraft.getInstance().execute(this::rebuildAllPanelWidgets);
                     triggerHighlight(targetItem);
                 }
             }
@@ -613,7 +616,7 @@ public class AccordionScreen extends Screen {
         contentScroll = Math.min(targetOffset, maxScroll);
         if (contentScroll < 0) contentScroll = 0;
 
-        rebuildAllPanelWidgets();
+        Minecraft.getInstance().execute(this::rebuildAllPanelWidgets);
     }
 
     // ===================== РАЗДЕЛЫ =====================
@@ -938,7 +941,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.autoToolEnabled,
                 () -> { ModConfig.autoToolEnabled = !ModConfig.autoToolEnabled; ConfigManager.save(); }
         );
-        atItem.contentHeight = 74;
+        atItem.contentHeight = 46;
         pve.items.add(atItem);
         // ===== END AUTO TOOL =====
 
@@ -1155,6 +1158,7 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.friendListEnabled,
                 () -> { ModConfig.friendListEnabled = !ModConfig.friendListEnabled; ConfigManager.save(); }
         );
+
         flItem.contentHeight = calcFriendListHeight();
         misc.items.add(flItem);
 
@@ -2002,13 +2006,6 @@ public class AccordionScreen extends Screen {
         int curY = y;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_tool.enable")), this.font)
-                .pos(x, curY).selected(ModConfig.autoToolEnabled)
-                .onValueChange((c, v) -> { ModConfig.autoToolEnabled = v; ConfigManager.save(); })
-                .build());
-        curY += rowH + rowGap;
-
-        widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_tool.switch_back")), this.font)
                 .pos(x, curY).selected(ModConfig.autoToolSwitchBack)
                 .onValueChange((c, v) -> { ModConfig.autoToolSwitchBack = v; ConfigManager.save(); })
@@ -2225,12 +2222,12 @@ public class AccordionScreen extends Screen {
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_respawn.delay",
-                        String.format("%.1f", ModConfig.autoRespawnDelay))),
+                        ModConfig.autoRespawnDelay)),
                 (ModConfig.autoRespawnDelay - 0.5f) / 4.5f
         ) {
             @Override protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_respawn.delay",
-                        String.format("%.1f", ModConfig.autoRespawnDelay))));
+                        ModConfig.autoRespawnDelay)));
             }
             @Override protected void applyValue() {
                 ModConfig.autoRespawnDelay = 0.5f + (float)(this.value * 4.5f);
@@ -2322,6 +2319,36 @@ public class AccordionScreen extends Screen {
         int rowH = 22, rowGap = 6;
         int curY = y;
 
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.friend_list.show_hud")), this.font)
+                .pos(x, curY).selected(ModConfig.friendListShowHud)
+                .onValueChange((c, v) -> { ModConfig.friendListShowHud = v; ConfigManager.save(); })
+                .build());
+        curY += rowH;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.friend_list.hud_alpha",
+                        ModConfig.friendListHudAlpha)),
+                ModConfig.friendListHudAlpha / 255.0
+        ) {
+            @Override protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.friend_list.hud_alpha",
+                        ModConfig.friendListHudAlpha)));
+            }
+            @Override protected void applyValue() {
+                ModConfig.friendListHudAlpha = (int)(this.value * 255);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        curY = addPosEditorRow(widgets, x, curY, right,
+                () -> ModConfig.friendListHudX, () -> ModConfig.friendListHudY,
+                (nx, ny) -> { ModConfig.friendListHudX = nx; ModConfig.friendListHudY = ny; },
+                -1, 10);
+        curY += 26 + rowGap;
+
         EditBox nameField = new EditBox(this.font, x, curY, w - 25, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.friend_list.hint")));
         nameField.setMaxLength(20);
@@ -2412,11 +2439,44 @@ public class AccordionScreen extends Screen {
         }
         if (fl == null || !fl.expanded) return;
 
-        clearPanelWidgets(fl);
+        // 1) СНАЧАЛА пересчитываем contentHeight
         fl.contentHeight = calcFriendListHeight();
+
+        // 2) Сбрасываем скролл
         contentScroll = 0;
+
+        // 3) Очищаем СТАРЫЕ виджеты
+        clearPanelWidgets(fl);
+
+        // 4) Строим заново с новым contentHeight
         buildPanelWidgets(fl);
+
+        // 5) Обновляем видимость
         updateWidgetsVisibility();
+    }
+    private int calcFriendListHeight() {
+        // Панель FriendList содержит:
+        //   1) Показывать HUD-виджет (checkbox) — 22 + 6 = 28
+        //   2) Прозрачность HUD (slider) — 22 + 6 = 28
+        //   3) Pos editor (addPosEditorRow) — 20 + 6 = 26
+        //   4) Поле ввода + кнопка "+" (EditBox) — 22 + 6 = 28
+        //   5) Подсвечивать в чате (checkbox) — 22
+        //   6) Подсвечивать в табе (checkbox) — 22 + 6 = 28
+        //   7) Очистить список (button) — 20 + 6 = 26
+        //
+        // Итого управление: 28 + 28 + 26 + 28 + 22 + 28 + 26 = 186
+        // + заголовок раздела (18) = 204
+        int base = 18 + 186;
+
+        // Список друзей
+        int count = FriendListManager.getFriends().size();
+        if (count > 0) {
+            base += 22;              // заголовок "Friends (N):"
+            base += 18 + 4;          // gap под заголовком
+            base += count * 20;      // каждый друг (Button 18 + gap 2)
+        }
+
+        return base;
     }
     private int calcEnchantHighlightHeight() {
         // 2 строки управления (add + clear) + список
@@ -2614,7 +2674,6 @@ public class AccordionScreen extends Screen {
                 () -> ModConfig.killStreakHudX, () -> ModConfig.killStreakHudY,
                 (nx, ny) -> { ModConfig.killStreakHudX = nx; ModConfig.killStreakHudY = ny; },
                 -1, 10);
-        curY += 26 + rowGap;
 
         // Color presets
         EditBox hexField = new EditBox(this.font, x, curY, 80, 18,
@@ -2832,12 +2891,13 @@ public class AccordionScreen extends Screen {
         int curY = y;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.zoom", ModConfig.zoomFactor)),
-                (ModConfig.zoomFactor - 1.5f) / 8.5f
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.kill_streak.volume",
+                        ModConfig.killStreakSoundVolume)),   // ← OK — Float
+                ModConfig.killStreakSoundVolume
         ) {
             @Override protected void updateMessage() {
-                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.zoom",
-                        ModConfig.zoomFactor)));
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.kill_streak.volume",
+                        ModConfig.killStreakSoundVolume)));
             }
             @Override protected void applyValue() {
                 ModConfig.zoomFactor = 1.5f + (float) (this.value * 8.5f);
@@ -3708,17 +3768,6 @@ public class AccordionScreen extends Screen {
         contentScroll = 0;
         buildPanelWidgets(cfg);
         updateWidgetsVisibility();
-    }
-    private int calcFriendListHeight() {
-        // 4 строки управления + список
-        int base = 18 + 4 * 28;
-        int count = FriendListManager.getFriends().size();
-        if (count > 0) {
-            base += 22;              // заголовок
-            base += Math.min(count, 10) * 20;
-            if (count > 10) base += 22;
-        }
-        return base;
     }
     // ===================== COOLDOWNS =====================
     private void buildCoolDownsPanel(List<AbstractWidget> widgets, int x, int y, int right) {

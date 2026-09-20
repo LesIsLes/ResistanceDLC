@@ -9,7 +9,6 @@
     "AutoToolMixin",
     "CooldownsMixin",
     "CustomHitboxMixin",
-    "FriendListMixin",
     "GuiCrosshairMixin",
     "HideHitboxesMixin",
     "HitSoundMixin",

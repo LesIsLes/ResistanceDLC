@@ -117,59 +117,126 @@ public class KeyBindings {
 
     // ===== СЕТТЕРЫ =====
     public static void setKey(int keyCode) {
-        if (openGuiKey != null) { openGuiKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+        if (openGuiKey != null) {
+            openGuiKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            saveOptions();
+        }
     }
+
     public static void setZoomKey(int keyCode) {
-        if (zoomKey != null) { zoomKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+        if (zoomKey != null) {
+            zoomKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            saveOptions();
+        }
     }
+
     public static void setTapeMouseKey(int keyCode) {
-        if (tapeMouseKey != null) { tapeMouseKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+        if (tapeMouseKey != null) {
+            tapeMouseKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            saveOptions();
+        }
     }
+
     public static void setAutoSwapKey(int keyCode) {
-        if (autoSwapKey != null) { autoSwapKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+        if (autoSwapKey != null) {
+            autoSwapKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            saveOptions();
+        }
     }
+
     public static void setCustomHitSoundsKey(int keyCode) {
-        if (customHitSoundsKey != null) { customHitSoundsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+        if (customHitSoundsKey != null) {
+            customHitSoundsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            saveOptions();
+        }
     }
+
     public static void setFastExpKey(int keyCode) {
-        if (fastExpKey != null) { fastExpKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+        if (fastExpKey != null) {
+            fastExpKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            saveOptions();
+        }
     }
+
     public static void setShiftTapKey(int keyCode) {
-        if (shiftTapKey != null) { shiftTapKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+        if (shiftTapKey != null) {
+            shiftTapKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            saveOptions();
+        }
     }
+
     public static void setComboKey(int keyCode) {
-        if (comboKey != null) { comboKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+        if (comboKey != null) {
+            comboKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            saveOptions();
+        }
     }
+
     public static void setEffectWarningsKey(int keyCode) {
-        if (effectWarningsKey != null) { effectWarningsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+        if (effectWarningsKey != null) {
+            effectWarningsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            saveOptions();
+        }
     }
+
     public static void setWaypointsKey(int keyCode) {
-        if (waypointsKey != null) { waypointsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+        if (waypointsKey != null) {
+            waypointsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            saveOptions();
+        }
     }
+
     public static void setTotemLogKey(int keyCode) {
-        if (totemLogKey != null) { totemLogKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+        if (totemLogKey != null) {
+            totemLogKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            saveOptions();
+        }
     }
+
     public static void setPickupLogKey(int keyCode) {
-        if (pickupLogKey != null) { pickupLogKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+        if (pickupLogKey != null) {
+            pickupLogKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            saveOptions();
+        }
     }
+
     public static void setMacro1Key(int keyCode) {
-        if (macro1Key != null) { macro1Key.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+        if (macro1Key != null) {
+            macro1Key.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            saveOptions();
+        }
     }
+
     public static void setMacro2Key(int keyCode) {
-        if (macro2Key != null) { macro2Key.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+        if (macro2Key != null) {
+            macro2Key.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            saveOptions();
+        }
     }
+
     public static void setMacro3Key(int keyCode) {
-        if (macro3Key != null) { macro3Key.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+        if (macro3Key != null) {
+            macro3Key.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            saveOptions();
+        }
     }
+
     public static void setMacro4Key(int keyCode) {
-        if (macro4Key != null) { macro4Key.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+        if (macro4Key != null) {
+            macro4Key.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            saveOptions();
+        }
     }
+
     public static void setMacro5Key(int keyCode) {
-        if (macro5Key != null) { macro5Key.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode)); saveOptions(); }
+        if (macro5Key != null) {
+            macro5Key.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            saveOptions();
+        }
     }
 
     private static void saveOptions() {
-        // ⚠ Не вызываем options.save() — он пишет gamma=100.0 в файл и Minecraft спамит ошибкой.
-        // Minecraft сам сохранит настройки при выходе из игры/мира.
+        // Сохраняем бинды в options.txt, но НЕ вызываем load() — иначе сбросятся
+        Minecraft.getInstance().options.save();
     }
 }

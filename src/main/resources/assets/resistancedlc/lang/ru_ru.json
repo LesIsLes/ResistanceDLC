@@ -471,5 +471,9 @@
   "gui.resistancedlc.panel.enchant_highlight.bold": "Жирный",
 
   "gui.resistancedlc.hud.kill_streak": "⚔ СЕРИЯ x%d",
-  "gui.resistancedlc.hud.kill_streak_timer": "⚔ СЕРИЯ x%d §7(%ds)"
+  "gui.resistancedlc.hud.kill_streak_timer": "⚔ СЕРИЯ x%d §7(%ds)",
+
+  "gui.resistancedlc.panel.friend_list.show_hud": "Показывать HUD-виджет",
+  "gui.resistancedlc.panel.friend_list.hud_alpha": "Прозрачность HUD: %d",
+  "gui.resistancedlc.hud.friend_list": "Друзья"
 }

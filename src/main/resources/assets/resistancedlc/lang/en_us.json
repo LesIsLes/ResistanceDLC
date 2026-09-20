@@ -471,5 +471,9 @@
   "gui.resistancedlc.panel.enchant_highlight.bold": "Bold",
 
   "gui.resistancedlc.hud.kill_streak": "⚔ KILLSTREAK x%d",
-  "gui.resistancedlc.hud.kill_streak_timer": "⚔ KILLSTREAK x%d §7(%ds)"
+  "gui.resistancedlc.hud.kill_streak_timer": "⚔ KILLSTREAK x%d §7(%ds)",
+
+  "gui.resistancedlc.panel.friend_list.show_hud": "Show HUD widget",
+  "gui.resistancedlc.panel.friend_list.hud_alpha": "HUD alpha: %d",
+  "gui.resistancedlc.hud.friend_list": "Friends"
 }

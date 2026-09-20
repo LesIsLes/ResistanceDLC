@@ -395,6 +395,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
             AutoGGManager.onChatMessage(message.getString());
         });
+
         // ===== AUTO TP ACCEPT: парсинг чата =====
         ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
             AutoTPAcceptManager.onChatMessage(message.getString());
@@ -786,7 +787,12 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "music_hud"),
                 (graphics, tickCounter) -> MusicPlayerHud.render(graphics)
         );
-
+        // ===== FRIEND LIST HUD =====
+        HudElementRegistry.attachElementBefore(
+                VanillaHudElements.CHAT,
+                Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "friend_list_hud"),
+                (graphics, tickCounter) -> FriendListHud.render(graphics)
+        );
         // ===== TARGET ESP — регистрация рендера =====
 
         // ✅ НОВАЯ СИСТЕМА 1.21.11: LevelRenderEvents
@@ -807,7 +813,9 @@ public class ResistanceDLCClient implements ClientModInitializer {
         });
         // ===== MACROS =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (client.player == null || client.screen != null) return;
+            if (client.player == null) return;
+            // УБРАЛИ проверку client.screen != null — чтобы макросы работали всегда
+            // (но при открытом GUI стрелки всё равно не сработают — это Minecraft)
 
             while (KeyBindings.macro1Key.consumeClick()) MacroManager.executeMacro(0);
             while (KeyBindings.macro2Key.consumeClick()) MacroManager.executeMacro(1);

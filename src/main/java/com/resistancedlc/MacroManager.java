@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 
 /**
  * MacroManager — отправка команд/сообщений по бинду.
- * 5 слотов, каждая с собственной клавишей.
+ * 5 слотов, каждая с собственным ключом.
  *
  * Если текст начинается с "/" — отправляется как команда.
  * Иначе — как обычное сообщение в чат.
@@ -23,10 +23,9 @@ public class MacroManager {
 
         // Если начинается с "/" — команда, иначе — сообщение в чат
         if (text.startsWith("/")) {
-            // Убираем слэш, sendCommand сам его добавит
-            client.getConnection().sendCommand(text.substring(1));
+            String cmd = text.substring(1);
+            client.getConnection().sendCommand(cmd);
         } else {
-            // Обычное сообщение в чат
             client.getConnection().sendChat(text);
         }
     }

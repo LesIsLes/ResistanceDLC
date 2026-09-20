@@ -3,10 +3,10 @@ package com.resistancedlc.mixin;
 import com.resistancedlc.FriendListManager;
 import com.resistancedlc.config.ModConfig;
 
-import net.minecraft.client.GuiMessage;
 import net.minecraft.client.GuiMessageTag;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MessageSignature;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
@@ -17,11 +17,8 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 /**
  * FriendListMixin — подсветка сообщений от друзей в чате.
  *
- * Подход: перехватываем Component перед добавлением в ChatComponent
- * и, если текст содержит ник друга — добавляем цветной префикс.
- *
- * ВАЖНО: не меняем содержимое самого Component (там могут быть clickEvent,
- * hoverEvent), только оборачиваем через copy() + withStyle.
+ * 1.21.11: ChatComponent.addMessage(Component, MessageSignature, GuiMessageTag)
+ * Модифицируем ПЕРВЫЙ параметр (Component) через @ModifyVariable.
  */
 @Mixin(ChatComponent.class)
 public class FriendListMixin {
@@ -30,6 +27,7 @@ public class FriendListMixin {
             method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V",
             at = @At("HEAD"),
             argsOnly = true,
+            index = 1,
             require = 0
     )
     private Component onAddMessage(Component message) {
@@ -44,7 +42,6 @@ public class FriendListMixin {
             return message;
         }
 
-        // Красим ВСЁ сообщение в цвет друга (перезаписываем style)
         int color = ModConfig.friendListChatColor & 0x00FFFFFF;
         MutableComponent colored = Component.empty()
                 .append(Component.literal("★ ")

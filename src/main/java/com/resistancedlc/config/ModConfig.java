@@ -360,6 +360,10 @@ public class ModConfig {
     public static int friendListChatColor = 0xFF55FFFF;  // голубой
     public static boolean friendListHighlightTab = true;
     public static int friendListTabColor = 0xFF55FFFF;
+    public static boolean friendListShowHud = true;
+    public static int friendListHudX = -1;              // -1 = авто (правый верх)
+    public static int friendListHudY = 10;
+    public static int friendListHudAlpha = 200;
 
     // ===================== AUTO TP ACCEPT =====================
     public static boolean autoTpAcceptEnabled = false;
