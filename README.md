@@ -88,19 +88,27 @@ A lightweight visual client mod for Minecraft **1.21.11** (Fabric) with **42+ fe
 
 ---
 
-## 📁 Extra files (optional)
+## 📁 Optional files
 
-**KillStreak sounds:**
-Place `.ogg` files in `config/resistancedlc/sounds/`:
-killstreak_2.ogg
-killstreak_3.ogg
-killstreak_4.ogg
-killstreak_5.ogg
-killstreak_6.ogg
-killstreak_7.ogg
-killstreak_10.ogg
+### KillStreak sounds
 
-**Music Player:**
+To hear a sound when you reach a kill streak, place your own `.ogg` files in:
+
+`config/resistancedlc/sounds/`
+
+Supported filenames (by streak level):
+- `killstreak_1.ogg`
+- `killstreak_2.ogg`
+- `killstreak_3.ogg`
+- `killstreak_4.ogg`
+- `killstreak_5.ogg`
+- `killstreak_8.ogg`
+- `killstreak_10.ogg`
+
+**No built-in sounds included** - the mod does not ship with any audio files. If a file is missing, the sound is simply skipped. You can use any OGG Vorbis files you have the rights to.
+
+### Music Player
+
 Place your `.ogg` files in `config/resistancedlc/music/`
 
 ---
