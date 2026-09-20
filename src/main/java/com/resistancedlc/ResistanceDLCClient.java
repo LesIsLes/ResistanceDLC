@@ -15,6 +15,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
+import com.resistancedlc.JumpCirclesManager;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
@@ -141,6 +142,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
             AutoGGManager.reset();
             StrikeRangeManager.reset();
             com.resistancedlc.targetesp.TargetManagerHolder.MANAGER.reset();
+            JumpCirclesManager.reset();
             GammaUtilManager.reset();
             MusicPlayerManager.stop();
             lastHealth = -1.0f;
@@ -804,6 +806,13 @@ public class ResistanceDLCClient implements ClientModInitializer {
         // ===== PREDICTIONS RENDER =====
         net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_MAIN.register(
                 PredictionsRenderer::render
+        );
+        // ===== JUMP CIRCLES — tick =====
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> JumpCirclesManager.tick());
+
+        // ===== JUMP CIRCLES — render =====
+        net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_MAIN.register(
+                JumpCirclesManager::render
         );
 // ===== TICK — обновление цели =====
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {

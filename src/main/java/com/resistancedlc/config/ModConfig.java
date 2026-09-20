@@ -166,10 +166,6 @@ public class ModConfig {
     public static boolean crosshairRussian = false;
     public static int crosshairShape = 0;
 
-    public static boolean aspectRatioEnabled = false;
-    public static float aspectRatio = 1.0f;
-    public static boolean aspectRatioRussian = false;
-
     public static boolean lowFireEnabled = false;
     public static float lowFireOffset = 0.3f;
     public static boolean lowShieldEnabled = false;
@@ -389,4 +385,34 @@ public class ModConfig {
     public static int killStreakAlpha = 255;
     public static int killStreakFontSize = 1;               // 0=Small, 1=Medium, 2=Large
     public static boolean killStreakShowTimer = true;
+
+    // ===================== FOV =====================
+    public static boolean fovEnabled = false;
+    public static float fovMultiplier = 1.0f;  // 0.5 .. 2.0
+
+    // ===================== ASPECT RATIO =====================
+    public static boolean aspectRatioEnabled = false;
+    public static boolean aspectRatioUsePreset = true;
+    public static float aspectRatioFactor = 1.0f;  // 0.5 .. 2.0
+    public static AspectRatioPreset aspectRatioPreset = AspectRatioPreset.R16_9;
+
+    // ===================== BETTER BOSSBAR =====================
+    public static boolean betterBossBarEnabled = false;
+    public static BossBarStyle betterBossBarStyle = BossBarStyle.CLASSIC;
+    public static int betterBossBarBgColor = 0xFF101010;
+    public static int betterBossBarEmptyColor = 0xFF333333;
+    public static int betterBossBarFillColor1 = 0xFF00FF00;
+    public static int betterBossBarFillColor2 = 0xFF00AA00;
+    public static int betterBossBarTextColor = 0xFFFFFFFF;
+
+    // ===================== JUMP CIRCLES =====================
+    public static boolean jumpCirclesEnabled = false;
+    public static String jumpCirclesStyle = "circle";   // circle / hexagon / portal
+    public static int jumpCirclesAlpha = 180;            // 0..255
+    public static float jumpCirclesBrightness = 1.0f;    // 0.0..2.0
+    public static float jumpCirclesScale = 1.0f;         // 0.5..2.0
+    public static int jumpCirclesLiveTime = 3;           // 1..5 сек
+    public static float jumpCirclesSpinSpeed = 1.0f;     // -3.0..3.0
+    public static boolean jumpCirclesFadeOut = true;
+
 }

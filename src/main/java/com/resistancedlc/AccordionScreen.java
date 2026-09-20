@@ -16,6 +16,8 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import com.resistancedlc.config.BossBarStyle;
+import com.resistancedlc.config.AspectRatioPreset;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -175,7 +177,8 @@ public class AccordionScreen extends Screen {
 
         for (int i = 0; i < 5; i++) {
             int bx = themeBtnStartX + i * (themeBtnSize + themeBtnGap);
-            Button themeBtn = Button.builder(Component.literal(""), (b) -> {})
+            Button themeBtn = Button.builder(Component.literal(""), (b) -> {
+                    })
                     .bounds(bx, themeBtnY, themeBtnSize, themeBtnSize)
                     .build();
             themeBtn.active = false;
@@ -382,7 +385,7 @@ public class AccordionScreen extends Screen {
             return;
         }
 
-        int deltaX = (int)(columnWidth - lastColumnWidthForWidgets);
+        int deltaX = (int) (columnWidth - lastColumnWidthForWidgets);
         if (deltaX == 0) {
             lastColumnWidthForWidgets = columnWidth;
             return;
@@ -404,7 +407,7 @@ public class AccordionScreen extends Screen {
 
     private int getAnimatedHeight(AccordionItem item) {
         float eased = easeInOutQuad(item.expandProgress);
-        return (int)(item.contentHeight * eased);
+        return (int) (item.contentHeight * eased);
     }
 
     // ===================== ПОИСК =====================
@@ -634,7 +637,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.no_hurt_cam.title"),
                 LocalizationManager.get("gui.resistancedlc.item.no_hurt_cam.desc"),
                 () -> ModConfig.noHurtCamEnabled,
-                () -> { ModConfig.noHurtCamEnabled = !ModConfig.noHurtCamEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.noHurtCamEnabled = !ModConfig.noHurtCamEnabled;
+                    ConfigManager.save();
+                }
         );
         nhcItem.contentHeight = 46;
         hud.items.add(nhcItem);
@@ -644,7 +650,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.no_bobbing.title"),
                 LocalizationManager.get("gui.resistancedlc.item.no_bobbing.desc"),
                 () -> ModConfig.noBobbingEnabled,
-                () -> { ModConfig.noBobbingEnabled = !ModConfig.noBobbingEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.noBobbingEnabled = !ModConfig.noBobbingEnabled;
+                    ConfigManager.save();
+                }
         );
         nbItem.contentHeight = 46;
         hud.items.add(nbItem);
@@ -655,7 +664,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.mod_logo.title"),
                 LocalizationManager.get("gui.resistancedlc.item.mod_logo.desc"),
                 () -> ModConfig.showModLogo,
-                () -> { ModConfig.showModLogo = !ModConfig.showModLogo; ConfigManager.save(); }
+                () -> {
+                    ModConfig.showModLogo = !ModConfig.showModLogo;
+                    ConfigManager.save();
+                }
         );
         logoItem.contentHeight = 74;
         hud.items.add(logoItem);
@@ -666,7 +678,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.cooldowns.title"),
                 LocalizationManager.get("gui.resistancedlc.item.cooldowns.desc"),
                 () -> ModConfig.cooldownsEnabled,
-                () -> { ModConfig.cooldownsEnabled = !ModConfig.cooldownsEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.cooldownsEnabled = !ModConfig.cooldownsEnabled;
+                    ConfigManager.save();
+                }
         );
         cdItem.contentHeight = 270;
         hud.items.add(cdItem);
@@ -676,7 +691,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.combo.title"),
                 LocalizationManager.get("gui.resistancedlc.item.combo.desc"),
                 () -> ModConfig.comboEnabled,
-                () -> { ModConfig.comboEnabled = !ModConfig.comboEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.comboEnabled = !ModConfig.comboEnabled;
+                    ConfigManager.save();
+                }
         );
         comboItem.contentHeight = 130;
         hud.items.add(comboItem);
@@ -686,7 +704,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.potion_effects.title"),
                 LocalizationManager.get("gui.resistancedlc.item.potion_effects.desc"),
                 () -> ModConfig.showPotionEffects,
-                () -> { ModConfig.showPotionEffects = !ModConfig.showPotionEffects; ConfigManager.save(); }
+                () -> {
+                    ModConfig.showPotionEffects = !ModConfig.showPotionEffects;
+                    ConfigManager.save();
+                }
         );
         peItem.contentHeight = 102;
         hud.items.add(peItem);
@@ -696,7 +717,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.equipment_hud.title"),
                 LocalizationManager.get("gui.resistancedlc.item.equipment_hud.desc"),
                 () -> ModConfig.showEquipmentHud,
-                () -> { ModConfig.showEquipmentHud = !ModConfig.showEquipmentHud; ConfigManager.save(); }
+                () -> {
+                    ModConfig.showEquipmentHud = !ModConfig.showEquipmentHud;
+                    ConfigManager.save();
+                }
         );
         eqItem.contentHeight = 102;
         hud.items.add(eqItem);
@@ -706,7 +730,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.effect_warnings.title"),
                 LocalizationManager.get("gui.resistancedlc.item.effect_warnings.desc"),
                 () -> ModConfig.effectWarningsEnabled,
-                () -> { ModConfig.effectWarningsEnabled = !ModConfig.effectWarningsEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.effectWarningsEnabled = !ModConfig.effectWarningsEnabled;
+                    ConfigManager.save();
+                }
         );
         ewItem.contentHeight = 158;
         hud.items.add(ewItem);
@@ -738,7 +765,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.low_hp_alert.title"),
                 LocalizationManager.get("gui.resistancedlc.item.low_hp_alert.desc"),
                 () -> ModConfig.lowHpAlertEnabled,
-                () -> { ModConfig.lowHpAlertEnabled = !ModConfig.lowHpAlertEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.lowHpAlertEnabled = !ModConfig.lowHpAlertEnabled;
+                    ConfigManager.save();
+                }
         );
         lhaItem.contentHeight = 192;
         hud.items.add(lhaItem);
@@ -749,7 +779,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.armor_alert.title"),
                 LocalizationManager.get("gui.resistancedlc.item.armor_alert.desc"),
                 () -> ModConfig.armorAlertEnabled,
-                () -> { ModConfig.armorAlertEnabled = !ModConfig.armorAlertEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.armorAlertEnabled = !ModConfig.armorAlertEnabled;
+                    ConfigManager.save();
+                }
         );
         aaItem.contentHeight = 192;
         hud.items.add(aaItem);
@@ -767,7 +800,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.custom_hit_sounds.title"),
                 LocalizationManager.get("gui.resistancedlc.item.custom_hit_sounds.desc"),
                 () -> ModConfig.customHitSoundsEnabled,
-                () -> { ModConfig.customHitSoundsEnabled = !ModConfig.customHitSoundsEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.customHitSoundsEnabled = !ModConfig.customHitSoundsEnabled;
+                    ConfigManager.save();
+                }
         );
         chsItem.contentHeight = 158;
         pvp.items.add(chsItem);
@@ -777,7 +813,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.totem_log.title"),
                 LocalizationManager.get("gui.resistancedlc.item.totem_log.desc"),
                 () -> ModConfig.totemLogEnabled,
-                () -> { ModConfig.totemLogEnabled = !ModConfig.totemLogEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.totemLogEnabled = !ModConfig.totemLogEnabled;
+                    ConfigManager.save();
+                }
         );
         totemItem.contentHeight = 102;
         pvp.items.add(totemItem);
@@ -787,7 +826,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.auto_swap.title"),
                 LocalizationManager.get("gui.resistancedlc.item.auto_swap.desc"),
                 () -> ModConfig.autoSwapEnabled,
-                () -> { ModConfig.autoSwapEnabled = !ModConfig.autoSwapEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.autoSwapEnabled = !ModConfig.autoSwapEnabled;
+                    ConfigManager.save();
+                }
         );
         asItem.contentHeight = 158;
         pvp.items.add(asItem);
@@ -797,7 +839,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.fast_exp.title"),
                 LocalizationManager.get("gui.resistancedlc.item.fast_exp.desc"),
                 () -> ModConfig.fastExpEnabled,
-                () -> { ModConfig.fastExpEnabled = !ModConfig.fastExpEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.fastExpEnabled = !ModConfig.fastExpEnabled;
+                    ConfigManager.save();
+                }
         );
         feItem.contentHeight = 46;
         pvp.items.add(feItem);
@@ -807,7 +852,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.shift_tap.title"),
                 LocalizationManager.get("gui.resistancedlc.item.shift_tap.desc"),
                 () -> ModConfig.shiftTapEnabled,
-                () -> { ModConfig.shiftTapEnabled = !ModConfig.shiftTapEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.shiftTapEnabled = !ModConfig.shiftTapEnabled;
+                    ConfigManager.save();
+                }
         );
         stItem.contentHeight = 46;
         pvp.items.add(stItem);
@@ -817,7 +865,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.auto_sprint.title"),
                 LocalizationManager.get("gui.resistancedlc.item.auto_sprint.desc"),
                 () -> ModConfig.autoSprintEnabled,
-                () -> { ModConfig.autoSprintEnabled = !ModConfig.autoSprintEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.autoSprintEnabled = !ModConfig.autoSprintEnabled;
+                    ConfigManager.save();
+                }
         );
         aspItem.contentHeight = 46;
         pvp.items.add(aspItem);
@@ -827,7 +878,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.pvp_safe.title"),
                 LocalizationManager.get("gui.resistancedlc.item.pvp_safe.desc"),
                 () -> ModConfig.pvpSafeEnabled,
-                () -> { ModConfig.pvpSafeEnabled = !ModConfig.pvpSafeEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.pvpSafeEnabled = !ModConfig.pvpSafeEnabled;
+                    ConfigManager.save();
+                }
         );
         psItem.contentHeight = 186;
         pvp.items.add(psItem);
@@ -837,7 +891,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.pickup_logger.title"),
                 LocalizationManager.get("gui.resistancedlc.item.pickup_logger.desc"),
                 () -> ModConfig.pickupLogEnabled,
-                () -> { ModConfig.pickupLogEnabled = !ModConfig.pickupLogEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.pickupLogEnabled = !ModConfig.pickupLogEnabled;
+                    ConfigManager.save();
+                }
         );
         plItem.contentHeight = 158;
         pvp.items.add(plItem);
@@ -847,7 +904,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.auto_gg.title"),
                 LocalizationManager.get("gui.resistancedlc.item.auto_gg.desc"),
                 () -> ModConfig.autoGgEnabled,
-                () -> { ModConfig.autoGgEnabled = !ModConfig.autoGgEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.autoGgEnabled = !ModConfig.autoGgEnabled;
+                    ConfigManager.save();
+                }
         );
         aggItem.contentHeight = 158;
         pvp.items.add(aggItem);
@@ -857,7 +917,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.killaura_egg.title"),
                 LocalizationManager.get("gui.resistancedlc.item.killaura_egg.desc"),
                 () -> ModConfig.killAuraEggEnabled,
-                () -> { ModConfig.killAuraEggEnabled = !ModConfig.killAuraEggEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.killAuraEggEnabled = !ModConfig.killAuraEggEnabled;
+                    ConfigManager.save();
+                }
         );
         eggItem.contentHeight = 74;
         pvp.items.add(eggItem);
@@ -868,7 +931,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.auto_tp_accept.title"),
                 LocalizationManager.get("gui.resistancedlc.item.auto_tp_accept.desc"),
                 () -> ModConfig.autoTpAcceptEnabled,
-                () -> { ModConfig.autoTpAcceptEnabled = !ModConfig.autoTpAcceptEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.autoTpAcceptEnabled = !ModConfig.autoTpAcceptEnabled;
+                    ConfigManager.save();
+                }
         );
         atpItem.contentHeight = 74;
         pvp.items.add(atpItem);
@@ -879,7 +945,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.stats_tracker.title"),
                 LocalizationManager.get("gui.resistancedlc.item.stats_tracker.desc"),
                 () -> ModConfig.statsTrackerEnabled,
-                () -> { ModConfig.statsTrackerEnabled = !ModConfig.statsTrackerEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.statsTrackerEnabled = !ModConfig.statsTrackerEnabled;
+                    ConfigManager.save();
+                }
         );
         stItem2.contentHeight = 160;
         pvp.items.add(stItem2);
@@ -890,7 +959,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.kill_streak.title"),
                 LocalizationManager.get("gui.resistancedlc.item.kill_streak.desc"),
                 () -> ModConfig.killStreakEnabled,
-                () -> { ModConfig.killStreakEnabled = !ModConfig.killStreakEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.killStreakEnabled = !ModConfig.killStreakEnabled;
+                    ConfigManager.save();
+                }
         );
         ksItem.contentHeight = 186;
         pvp.items.add(ksItem);
@@ -901,7 +973,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.target_esp.title"),
                 LocalizationManager.get("gui.resistancedlc.item.target_esp.desc"),
                 () -> ModConfig.targetEspEnabled,
-                () -> { ModConfig.targetEspEnabled = !ModConfig.targetEspEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.targetEspEnabled = !ModConfig.targetEspEnabled;
+                    ConfigManager.save();
+                }
         );
         targetEspItem.contentHeight = 280;
         pvp.items.add(targetEspItem);
@@ -920,7 +995,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.tape_mouse.title"),
                 LocalizationManager.get("gui.resistancedlc.item.tape_mouse.desc"),
                 () -> ModConfig.tapeMouseEnabled,
-                () -> { ModConfig.tapeMouseEnabled = !ModConfig.tapeMouseEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.tapeMouseEnabled = !ModConfig.tapeMouseEnabled;
+                    ConfigManager.save();
+                }
         );
         tmItem.contentHeight = 186;
         pve.items.add(tmItem);
@@ -930,7 +1008,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.item_scroller.title"),
                 LocalizationManager.get("gui.resistancedlc.item.item_scroller.desc"),
                 () -> ModConfig.itemScrollerEnabled,
-                () -> { ModConfig.itemScrollerEnabled = !ModConfig.itemScrollerEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.itemScrollerEnabled = !ModConfig.itemScrollerEnabled;
+                    ConfigManager.save();
+                }
         );
         isItem.contentHeight = 102;
         // ===== AUTO TOOL =====
@@ -939,7 +1020,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.auto_tool.title"),
                 LocalizationManager.get("gui.resistancedlc.item.auto_tool.desc"),
                 () -> ModConfig.autoToolEnabled,
-                () -> { ModConfig.autoToolEnabled = !ModConfig.autoToolEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.autoToolEnabled = !ModConfig.autoToolEnabled;
+                    ConfigManager.save();
+                }
         );
         atItem.contentHeight = 46;
         pve.items.add(atItem);
@@ -951,7 +1035,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.auto_respawn.title"),
                 LocalizationManager.get("gui.resistancedlc.item.auto_respawn.desc"),
                 () -> ModConfig.autoRespawnEnabled,
-                () -> { ModConfig.autoRespawnEnabled = !ModConfig.autoRespawnEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.autoRespawnEnabled = !ModConfig.autoRespawnEnabled;
+                    ConfigManager.save();
+                }
         );
         arsItem.contentHeight = 46;
         pve.items.add(arsItem);
@@ -971,7 +1058,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.zoom.title"),
                 LocalizationManager.get("gui.resistancedlc.item.zoom.desc"),
                 () -> ModConfig.zoomEnabled,
-                () -> { ModConfig.zoomEnabled = !ModConfig.zoomEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.zoomEnabled = !ModConfig.zoomEnabled;
+                    ConfigManager.save();
+                }
         );
         zoomItem.contentHeight = 102;
         visual.items.add(zoomItem);
@@ -981,7 +1071,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.crosshair.title"),
                 LocalizationManager.get("gui.resistancedlc.item.crosshair.desc"),
                 () -> ModConfig.crosshairEnabled,
-                () -> { ModConfig.crosshairEnabled = !ModConfig.crosshairEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.crosshairEnabled = !ModConfig.crosshairEnabled;
+                    ConfigManager.save();
+                }
         );
         chItem.contentHeight = 214;
         visual.items.add(chItem);
@@ -991,7 +1084,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.custom_hitbox.title"),
                 LocalizationManager.get("gui.resistancedlc.item.custom_hitbox.desc"),
                 () -> ModConfig.customHitboxEnabled,
-                () -> { ModConfig.customHitboxEnabled = !ModConfig.customHitboxEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.customHitboxEnabled = !ModConfig.customHitboxEnabled;
+                    ConfigManager.save();
+                }
         );
         hbItem.contentHeight = 74;
         visual.items.add(hbItem);
@@ -1001,20 +1097,13 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.item_physics.title"),
                 LocalizationManager.get("gui.resistancedlc.item.item_physics.desc"),
                 () -> ModConfig.itemPhysicsEnabled,
-                () -> { ModConfig.itemPhysicsEnabled = !ModConfig.itemPhysicsEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.itemPhysicsEnabled = !ModConfig.itemPhysicsEnabled;
+                    ConfigManager.save();
+                }
         );
         ipItem.contentHeight = 46;
         visual.items.add(ipItem);
-
-        AccordionItem arItem = new AccordionItem(
-                "aspect_ratio",
-                LocalizationManager.get("gui.resistancedlc.item.aspect_ratio.title"),
-                LocalizationManager.get("gui.resistancedlc.item.aspect_ratio.desc"),
-                () -> ModConfig.aspectRatioEnabled,
-                () -> { ModConfig.aspectRatioEnabled = !ModConfig.aspectRatioEnabled; ConfigManager.save(); }
-        );
-        arItem.contentHeight = 102;
-        visual.items.add(arItem);
 
         AccordionItem lfsItem = new AccordionItem(
                 "low_fire_shield",
@@ -1036,7 +1125,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.particle_blocker.title"),
                 LocalizationManager.get("gui.resistancedlc.item.particle_blocker.desc"),
                 () -> ModConfig.particleBlockerEnabled,
-                () -> { ModConfig.particleBlockerEnabled = !ModConfig.particleBlockerEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.particleBlockerEnabled = !ModConfig.particleBlockerEnabled;
+                    ConfigManager.save();
+                }
         );
         pbItem.contentHeight = 130;
         visual.items.add(pbItem);
@@ -1046,7 +1138,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.waypoints.title"),
                 LocalizationManager.get("gui.resistancedlc.item.waypoints.desc"),
                 () -> ModConfig.waypointsEnabled,
-                () -> { ModConfig.waypointsEnabled = !ModConfig.waypointsEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.waypointsEnabled = !ModConfig.waypointsEnabled;
+                    ConfigManager.save();
+                }
         );
         wpItem.contentHeight = calcWaypointsHeight();
         visual.items.add(wpItem);
@@ -1056,14 +1151,20 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.strike_range.title"),
                 LocalizationManager.get("gui.resistancedlc.item.strike_range.desc"),
                 () -> ModConfig.strikeRangeEnabled,
-                () -> { ModConfig.strikeRangeEnabled = !ModConfig.strikeRangeEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.strikeRangeEnabled = !ModConfig.strikeRangeEnabled;
+                    ConfigManager.save();
+                }
         );
         AccordionItem gammaItem = new AccordionItem(
                 "gamma_util",
                 LocalizationManager.get("gui.resistancedlc.item.gamma_util.title"),
                 LocalizationManager.get("gui.resistancedlc.item.gamma_util.desc"),
                 () -> ModConfig.gammaUtilEnabled,
-                () -> { ModConfig.gammaUtilEnabled = !ModConfig.gammaUtilEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.gammaUtilEnabled = !ModConfig.gammaUtilEnabled;
+                    ConfigManager.save();
+                }
         );
         gammaItem.contentHeight = 74;
         visual.items.add(gammaItem);
@@ -1076,7 +1177,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.predictions.title"),
                 LocalizationManager.get("gui.resistancedlc.item.predictions.desc"),
                 () -> ModConfig.predictionsEnabled,
-                () -> { ModConfig.predictionsEnabled = !ModConfig.predictionsEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.predictionsEnabled = !ModConfig.predictionsEnabled;
+                    ConfigManager.save();
+                }
         );
         predItem.contentHeight = 200;
         visual.items.add(predItem);
@@ -1087,10 +1191,69 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.enchant_highlight.title"),
                 LocalizationManager.get("gui.resistancedlc.item.enchant_highlight.desc"),
                 () -> ModConfig.enchantHighlightEnabled,
-                () -> { ModConfig.enchantHighlightEnabled = !ModConfig.enchantHighlightEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.enchantHighlightEnabled = !ModConfig.enchantHighlightEnabled;
+                    ConfigManager.save();
+                }
         );
         ehItem2.contentHeight = calcEnchantHighlightHeight();
         visual.items.add(ehItem2);
+
+        // ===== FOV =====
+        AccordionItem fovItem = new AccordionItem(
+                "fov",
+                LocalizationManager.get("gui.resistancedlc.item.fov.title"),
+                LocalizationManager.get("gui.resistancedlc.item.fov.desc"),
+                () -> ModConfig.fovEnabled,
+                () -> {
+                    ModConfig.fovEnabled = !ModConfig.fovEnabled;
+                    ConfigManager.save();
+                }
+        );
+        fovItem.contentHeight = 74;
+        visual.items.add(fovItem);
+
+// ===== ASPECT RATIO =====
+        AccordionItem arItem = new AccordionItem(
+                "aspect_ratio",
+                LocalizationManager.get("gui.resistancedlc.item.aspect_ratio.title"),
+                LocalizationManager.get("gui.resistancedlc.item.aspect_ratio.desc"),
+                () -> ModConfig.aspectRatioEnabled,
+                () -> {
+                    ModConfig.aspectRatioEnabled = !ModConfig.aspectRatioEnabled;
+                    ConfigManager.save();
+                }
+        );
+        arItem.contentHeight = 130;
+        visual.items.add(arItem);
+
+// ===== BETTER BOSSBAR =====
+        AccordionItem bbbItem = new AccordionItem(
+                "better_bossbar",
+                LocalizationManager.get("gui.resistancedlc.item.better_bossbar.title"),
+                LocalizationManager.get("gui.resistancedlc.item.better_bossbar.desc"),
+                () -> ModConfig.betterBossBarEnabled,
+                () -> {
+                    ModConfig.betterBossBarEnabled = !ModConfig.betterBossBarEnabled;
+                    ConfigManager.save();
+                }
+        );
+        bbbItem.contentHeight = 180;
+        visual.items.add(bbbItem);
+
+        // ===== JUMP CIRCLES =====
+        AccordionItem jcItem = new AccordionItem(
+                "jump_circles",
+                LocalizationManager.get("gui.resistancedlc.item.jump_circles.title"),
+                LocalizationManager.get("gui.resistancedlc.item.jump_circles.desc"),
+                () -> ModConfig.jumpCirclesEnabled,
+                () -> {
+                    ModConfig.jumpCirclesEnabled = !ModConfig.jumpCirclesEnabled;
+                    ConfigManager.save();
+                }
+        );
+        jcItem.contentHeight = 220;
+        visual.items.add(jcItem);
 
         sections.add(visual);
 
@@ -1105,7 +1268,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.chat_filter.title"),
                 LocalizationManager.get("gui.resistancedlc.item.chat_filter.desc"),
                 () -> ModConfig.chatFilterEnabled,
-                () -> { ModConfig.chatFilterEnabled = !ModConfig.chatFilterEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.chatFilterEnabled = !ModConfig.chatFilterEnabled;
+                    ConfigManager.save();
+                }
         );
         cfItem.contentHeight = 186;
         misc.items.add(cfItem);
@@ -1115,7 +1281,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.auto_reconnect.title"),
                 LocalizationManager.get("gui.resistancedlc.item.auto_reconnect.desc"),
                 () -> ModConfig.autoReconnectEnabled,
-                () -> { ModConfig.autoReconnectEnabled = !ModConfig.autoReconnectEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.autoReconnectEnabled = !ModConfig.autoReconnectEnabled;
+                    ConfigManager.save();
+                }
         );
         arcItem.contentHeight = 74;
         misc.items.add(arcItem);
@@ -1125,7 +1294,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.death_coords.title"),
                 LocalizationManager.get("gui.resistancedlc.item.death_coords.desc"),
                 () -> ModConfig.deathCoordsEnabled,
-                () -> { ModConfig.deathCoordsEnabled = !ModConfig.deathCoordsEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.deathCoordsEnabled = !ModConfig.deathCoordsEnabled;
+                    ConfigManager.save();
+                }
         );
         dcItem.contentHeight = 102;
         misc.items.add(dcItem);
@@ -1135,7 +1307,8 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.gui_theme.title"),
                 LocalizationManager.get("gui.resistancedlc.item.gui_theme.desc"),
                 () -> true,
-                () -> {}
+                () -> {
+                }
         );
         themeItem.contentHeight = 158;
         misc.items.add(themeItem);
@@ -1145,7 +1318,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.macros.title"),
                 LocalizationManager.get("gui.resistancedlc.item.macros.desc"),
                 () -> ModConfig.macrosEnabled,
-                () -> { ModConfig.macrosEnabled = !ModConfig.macrosEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.macrosEnabled = !ModConfig.macrosEnabled;
+                    ConfigManager.save();
+                }
         );
         macroItem.contentHeight = 200;
         misc.items.add(macroItem);
@@ -1156,7 +1332,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.friend_list.title"),
                 LocalizationManager.get("gui.resistancedlc.item.friend_list.desc"),
                 () -> ModConfig.friendListEnabled,
-                () -> { ModConfig.friendListEnabled = !ModConfig.friendListEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.friendListEnabled = !ModConfig.friendListEnabled;
+                    ConfigManager.save();
+                }
         );
 
         flItem.contentHeight = calcFriendListHeight();
@@ -1167,7 +1346,8 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.config_manager.title"),
                 LocalizationManager.get("gui.resistancedlc.item.config_manager.desc"),
                 () -> true,
-                () -> {}
+                () -> {
+                }
         );
         cfgItem.contentHeight = calcConfigManagerHeight();
         misc.items.add(cfgItem);
@@ -1185,7 +1365,10 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.music_player.title"),
                 LocalizationManager.get("gui.resistancedlc.item.music_player.desc"),
                 () -> ModConfig.musicPlayerEnabled,
-                () -> { ModConfig.musicPlayerEnabled = !ModConfig.musicPlayerEnabled; ConfigManager.save(); }
+                () -> {
+                    ModConfig.musicPlayerEnabled = !ModConfig.musicPlayerEnabled;
+                    ConfigManager.save();
+                }
         );
         mpItem.contentHeight = calcMusicPlayerHeight();
         music.items.add(mpItem);
@@ -1194,12 +1377,29 @@ public class AccordionScreen extends Screen {
     }
 
     // ===================== ГРАНИЦЫ =====================
-    private int getContentLeft() { return panelX + (int) columnWidth + 10; }
-    private int getContentTop() { return panelY + HEADER_HEIGHT + 10; }
-    private int getContentRight() { return panelX + PANEL_WIDTH - 12; }
-    private int getContentBottom() { return panelY + PANEL_HEIGHT - 12; }
-    private int getListTop() { return getContentTop() + 42; }
-    private int getListBottom() { return getContentBottom() - 4; }
+    private int getContentLeft() {
+        return panelX + (int) columnWidth + 10;
+    }
+
+    private int getContentTop() {
+        return panelY + HEADER_HEIGHT + 10;
+    }
+
+    private int getContentRight() {
+        return panelX + PANEL_WIDTH - 12;
+    }
+
+    private int getContentBottom() {
+        return panelY + PANEL_HEIGHT - 12;
+    }
+
+    private int getListTop() {
+        return getContentTop() + 42;
+    }
+
+    private int getListBottom() {
+        return getContentBottom() - 4;
+    }
 
     private int[] getPanelBoundsFixed(AccordionItem target) {
         int contentLeft = getContentLeft();
@@ -1330,6 +1530,8 @@ public class AccordionScreen extends Screen {
             case "custom_hitbox" -> buildCustomHitboxPanel(widgets, innerX, innerY, innerRight);
             case "item_physics" -> buildItemPhysicsPanel(widgets, innerX, innerY);
             case "aspect_ratio" -> buildAspectRatioPanel(widgets, innerX, innerY, innerRight);
+            case "fov" -> buildFovPanel(widgets, innerX, innerY, innerRight);
+            case "better_bossbar" -> buildBetterBossBarPanel(widgets, innerX, innerY, innerRight);
             case "low_fire_shield" -> buildLowFireShieldPanel(widgets, innerX, innerY, innerRight);
             case "particle_blocker" -> buildParticleBlockerPanel(widgets, innerX, innerY, innerRight);
             case "waypoints" -> buildWaypointsPanel(widgets, innerX, innerY, innerRight);
@@ -1355,7 +1557,9 @@ public class AccordionScreen extends Screen {
             case "stats_tracker" -> buildStatsTrackerPanel(widgets, innerX, innerY, innerRight);
             case "kill_streak" -> buildKillStreakPanel(widgets, innerX, innerY, innerRight);
             case "enchant_highlight" -> buildEnchantHighlightPanel(widgets, innerX, innerY, innerRight);
-            default -> { }
+            case "jump_circles" -> buildJumpCirclesPanel(widgets, innerX, innerY, innerRight);
+            default -> {
+            }
         }
         for (AbstractWidget w : widgets) {
             this.addRenderableWidget(w);
@@ -1370,7 +1574,10 @@ public class AccordionScreen extends Screen {
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.checkbox", "No Hurt Cam")),
                         this.font)
                 .pos(x, y).selected(ModConfig.noHurtCamEnabled)
-                .onValueChange((c, v) -> { ModConfig.noHurtCamEnabled = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.noHurtCamEnabled = v;
+                    ConfigManager.save();
+                })
                 .build());
     }
 
@@ -1379,7 +1586,10 @@ public class AccordionScreen extends Screen {
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.checkbox", "No Bobbing")),
                         this.font)
                 .pos(x, y).selected(ModConfig.noBobbingEnabled)
-                .onValueChange((c, v) -> { ModConfig.noBobbingEnabled = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.noBobbingEnabled = v;
+                    ConfigManager.save();
+                })
                 .build());
     }
 
@@ -1391,13 +1601,19 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.mod_logo_show")), this.font)
                 .pos(x, curY).selected(ModConfig.showModLogo)
-                .onValueChange((c, v) -> { ModConfig.showModLogo = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.showModLogo = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH + rowGap;
 
         addPosEditorRow(widgets, x, curY, right,
                 () -> ModConfig.modLogoX, () -> ModConfig.modLogoY,
-                (nx, ny) -> { ModConfig.modLogoX = nx; ModConfig.modLogoY = ny; },
+                (nx, ny) -> {
+                    ModConfig.modLogoX = nx;
+                    ModConfig.modLogoY = ny;
+                },
                 10, 5);
     }
 
@@ -1406,7 +1622,10 @@ public class AccordionScreen extends Screen {
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.checkbox", "ItemPhysics")),
                         this.font)
                 .pos(x, y).selected(ModConfig.itemPhysicsEnabled)
-                .onValueChange((c, v) -> { ModConfig.itemPhysicsEnabled = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.itemPhysicsEnabled = v;
+                    ConfigManager.save();
+                })
                 .build());
     }
 
@@ -1415,7 +1634,10 @@ public class AccordionScreen extends Screen {
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.checkbox", "AutoSprint")),
                         this.font)
                 .pos(x, y).selected(ModConfig.autoSprintEnabled)
-                .onValueChange((c, v) -> { ModConfig.autoSprintEnabled = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.autoSprintEnabled = v;
+                    ConfigManager.save();
+                })
                 .build());
     }
 
@@ -1424,7 +1646,10 @@ public class AccordionScreen extends Screen {
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.checkbox", "FastExp")),
                         this.font)
                 .pos(x, y).selected(ModConfig.fastExpEnabled)
-                .onValueChange((c, v) -> { ModConfig.fastExpEnabled = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.fastExpEnabled = v;
+                    ConfigManager.save();
+                })
                 .build());
     }
 
@@ -1433,7 +1658,10 @@ public class AccordionScreen extends Screen {
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.checkbox", "ShiftTap")),
                         this.font)
                 .pos(x, y).selected(ModConfig.shiftTapEnabled)
-                .onValueChange((c, v) -> { ModConfig.shiftTapEnabled = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.shiftTapEnabled = v;
+                    ConfigManager.save();
+                })
                 .build());
     }
 
@@ -1461,7 +1689,8 @@ public class AccordionScreen extends Screen {
                     setXY.accept(nx, ny);
                     ConfigManager.save();
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }).bounds(x + w - 45, y, 20, 18).build();
         applyBtn.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
                 Component.literal(LocalizationManager.get("gui.resistancedlc.tooltip.apply"))));
@@ -1487,20 +1716,29 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.pos_show_effects")), this.font)
                 .pos(x, curY).selected(ModConfig.showPotionEffects)
-                .onValueChange((c, v) -> { ModConfig.showPotionEffects = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.showPotionEffects = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH;
 
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.pos_show_icons")), this.font)
                 .pos(x, curY).selected(ModConfig.potionEffectsIcons)
-                .onValueChange((c, v) -> { ModConfig.potionEffectsIcons = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.potionEffectsIcons = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH + rowGap;
 
         addPosEditorRow(widgets, x, curY, right,
                 () -> ModConfig.potionEffectsX, () -> ModConfig.potionEffectsY,
-                (nx, ny) -> { ModConfig.potionEffectsX = nx; ModConfig.potionEffectsY = ny; },
+                (nx, ny) -> {
+                    ModConfig.potionEffectsX = nx;
+                    ModConfig.potionEffectsY = ny;
+                },
                 10, 170);
     }
 
@@ -1511,20 +1749,29 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.equipment_show")), this.font)
                 .pos(x, curY).selected(ModConfig.showEquipmentHud)
-                .onValueChange((c, v) -> { ModConfig.showEquipmentHud = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.showEquipmentHud = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH;
 
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.equipment_durability")), this.font)
                 .pos(x, curY).selected(ModConfig.equipmentShowDurability)
-                .onValueChange((c, v) -> { ModConfig.equipmentShowDurability = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.equipmentShowDurability = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH + rowGap;
 
         addPosEditorRow(widgets, x, curY, right,
                 () -> ModConfig.equipmentHudX, () -> ModConfig.equipmentHudY,
-                (nx, ny) -> { ModConfig.equipmentHudX = nx; ModConfig.equipmentHudY = ny; },
+                (nx, ny) -> {
+                    ModConfig.equipmentHudX = nx;
+                    ModConfig.equipmentHudY = ny;
+                },
                 4, -44);
     }
 
@@ -1536,20 +1783,29 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.checkbox", "Effect Warnings")), this.font)
                 .pos(x, curY).selected(ModConfig.effectWarningsEnabled)
-                .onValueChange((c, v) -> { ModConfig.effectWarningsEnabled = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.effectWarningsEnabled = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH;
 
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.pos_show")), this.font)
                 .pos(x, curY).selected(ModConfig.effectWarningsShowName)
-                .onValueChange((c, v) -> { ModConfig.effectWarningsShowName = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.effectWarningsShowName = v;
+                    ConfigManager.save();
+                })
                 .build());
 
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.pos_show_icons")), this.font)
                 .pos(x + w / 2, curY).selected(ModConfig.effectWarningsShowIcon)
-                .onValueChange((c, v) -> { ModConfig.effectWarningsShowIcon = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.effectWarningsShowIcon = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH + rowGap;
 
@@ -1558,12 +1814,15 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.threshold", ModConfig.effectWarningsThreshold)),
                 (ModConfig.effectWarningsThreshold - 3) / 12.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.threshold",
                         ModConfig.effectWarningsThreshold)));
             }
-            @Override protected void applyValue() {
-                ModConfig.effectWarningsThreshold = 3 + (int)(this.value * 12);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.effectWarningsThreshold = 3 + (int) (this.value * 12);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -1572,7 +1831,10 @@ public class AccordionScreen extends Screen {
 
         addPosEditorRow(widgets, x, curY, right,
                 () -> ModConfig.effectWarningsX, () -> ModConfig.effectWarningsY,
-                (nx, ny) -> { ModConfig.effectWarningsX = nx; ModConfig.effectWarningsY = ny; },
+                (nx, ny) -> {
+                    ModConfig.effectWarningsX = nx;
+                    ModConfig.effectWarningsY = ny;
+                },
                 300, 200);
     }
 
@@ -1645,7 +1907,8 @@ public class AccordionScreen extends Screen {
 
             Button labelBtn = Button.builder(
                     Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.setting", settingName)),
-                    (b) -> {}
+                    (b) -> {
+                    }
             ).bounds(x, curY, w, 18).build();
             labelBtn.active = false;
             widgets.add(labelBtn);
@@ -1654,32 +1917,62 @@ public class AccordionScreen extends Screen {
             final int finalIdx = idx;
             Supplier<Integer> getX = () -> {
                 switch (finalIdx) {
-                    case 0: return ModConfig.fpsX;
-                    case 1: return ModConfig.pingX;
-                    case 2: return ModConfig.tpsX;
-                    case 3: return ModConfig.bpsX;
-                    case 4: return ModConfig.directionX;
-                    default: return ModConfig.hitCounterX;
+                    case 0:
+                        return ModConfig.fpsX;
+                    case 1:
+                        return ModConfig.pingX;
+                    case 2:
+                        return ModConfig.tpsX;
+                    case 3:
+                        return ModConfig.bpsX;
+                    case 4:
+                        return ModConfig.directionX;
+                    default:
+                        return ModConfig.hitCounterX;
                 }
             };
             Supplier<Integer> getY = () -> {
                 switch (finalIdx) {
-                    case 0: return ModConfig.fpsY;
-                    case 1: return ModConfig.pingY;
-                    case 2: return ModConfig.tpsY;
-                    case 3: return ModConfig.bpsY;
-                    case 4: return ModConfig.directionY;
-                    default: return ModConfig.hitCounterY;
+                    case 0:
+                        return ModConfig.fpsY;
+                    case 1:
+                        return ModConfig.pingY;
+                    case 2:
+                        return ModConfig.tpsY;
+                    case 3:
+                        return ModConfig.bpsY;
+                    case 4:
+                        return ModConfig.directionY;
+                    default:
+                        return ModConfig.hitCounterY;
                 }
             };
             java.util.function.BiConsumer<Integer, Integer> setXY = (nx, ny) -> {
                 switch (finalIdx) {
-                    case 0 -> { ModConfig.fpsX = nx; ModConfig.fpsY = ny; }
-                    case 1 -> { ModConfig.pingX = nx; ModConfig.pingY = ny; }
-                    case 2 -> { ModConfig.tpsX = nx; ModConfig.tpsY = ny; }
-                    case 3 -> { ModConfig.bpsX = nx; ModConfig.bpsY = ny; }
-                    case 4 -> { ModConfig.directionX = nx; ModConfig.directionY = ny; }
-                    default -> { ModConfig.hitCounterX = nx; ModConfig.hitCounterY = ny; }
+                    case 0 -> {
+                        ModConfig.fpsX = nx;
+                        ModConfig.fpsY = ny;
+                    }
+                    case 1 -> {
+                        ModConfig.pingX = nx;
+                        ModConfig.pingY = ny;
+                    }
+                    case 2 -> {
+                        ModConfig.tpsX = nx;
+                        ModConfig.tpsY = ny;
+                    }
+                    case 3 -> {
+                        ModConfig.bpsX = nx;
+                        ModConfig.bpsY = ny;
+                    }
+                    case 4 -> {
+                        ModConfig.directionX = nx;
+                        ModConfig.directionY = ny;
+                    }
+                    default -> {
+                        ModConfig.hitCounterX = nx;
+                        ModConfig.hitCounterY = ny;
+                    }
                 }
             };
             int[] defaults = {10, 80, 10, 95, 10, 110, 10, 125, 10, 140, 10, 155};
@@ -1694,7 +1987,10 @@ public class AccordionScreen extends Screen {
         AccordionItem extra = null;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("extra_hud")) { extra = it; break; }
+                if (it.id.equals("extra_hud")) {
+                    extra = it;
+                    break;
+                }
             }
             if (extra != null) break;
         }
@@ -1714,7 +2010,10 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.enable")), this.font)
                 .pos(x, curY).selected(ModConfig.customHitSoundsEnabled)
-                .onValueChange((c, v) -> { ModConfig.customHitSoundsEnabled = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.customHitSoundsEnabled = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH;
 
@@ -1749,15 +2048,19 @@ public class AccordionScreen extends Screen {
         curY += rowH + rowGap;
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.volume", ModConfig.customHitSoundVolume)),
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.volume",
+                        ModConfig.customHitSoundVolume)),
                 (ModConfig.customHitSoundVolume - 0.1f) / 1.9f
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.volume",
                         ModConfig.customHitSoundVolume)));
             }
-            @Override protected void applyValue() {
-                ModConfig.customHitSoundVolume = 0.1f + (float)(this.value * 1.9f);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.customHitSoundVolume = 0.1f + (float) (this.value * 1.9f);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -1768,12 +2071,15 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.pitch", ModConfig.customHitSoundPitch)),
                 (ModConfig.customHitSoundPitch - 0.5f) / 1.5f
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.pitch",
                         ModConfig.customHitSoundPitch)));
             }
-            @Override protected void applyValue() {
-                ModConfig.customHitSoundPitch = 0.5f + (float)(this.value * 1.5f);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.customHitSoundPitch = 0.5f + (float) (this.value * 1.5f);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -1784,7 +2090,10 @@ public class AccordionScreen extends Screen {
         AccordionItem chs = null;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("custom_hit_sounds")) { chs = it; break; }
+                if (it.id.equals("custom_hit_sounds")) {
+                    chs = it;
+                    break;
+                }
             }
             if (chs != null) break;
         }
@@ -1803,7 +2112,10 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.checkbox", "PvPSafe")), this.font)
                 .pos(x, curY).selected(ModConfig.pvpSafeEnabled)
-                .onValueChange((c, v) -> { ModConfig.pvpSafeEnabled = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.pvpSafeEnabled = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH + rowGap;
 
@@ -1811,12 +2123,15 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.combat_timer", ModConfig.pvpSafeTimer)),
                 (ModConfig.pvpSafeTimer - 10) / 50.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.combat_timer",
                         ModConfig.pvpSafeTimer)));
             }
-            @Override protected void applyValue() {
-                ModConfig.pvpSafeTimer = 10 + (int)(this.value * 50);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.pvpSafeTimer = 10 + (int) (this.value * 50);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -1826,28 +2141,38 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.pos_show")), this.font)
                 .pos(x, curY).selected(ModConfig.pvpSafeBlockQuit)
-                .onValueChange((c, v) -> { ModConfig.pvpSafeBlockQuit = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.pvpSafeBlockQuit = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH;
 
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.pos_show_slot")), this.font)
                 .pos(x, curY).selected(ModConfig.pvpSafeBlockCommands)
-                .onValueChange((c, v) -> { ModConfig.pvpSafeBlockCommands = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.pvpSafeBlockCommands = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH;
 
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_reconnect_hud")), this.font)
                 .pos(x, curY).selected(ModConfig.pvpSafeShowHud)
-                .onValueChange((c, v) -> { ModConfig.pvpSafeShowHud = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.pvpSafeShowHud = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH + rowGap;
 
         // === ПРЕДУПРЕЖДЕНИЕ О ПЕРКАХ/СПЕЦ-ПРЕДМЕТАХ ===
         Button warnBtn = Button.builder(
                 Component.literal("§c⚠ " + LocalizationManager.get("gui.resistancedlc.panel.pvp_safe_warning")),
-                (b) -> {}
+                (b) -> {
+                }
         ).bounds(x, curY, w, 18).build();
         warnBtn.active = false;
         widgets.add(warnBtn);
@@ -1855,7 +2180,8 @@ public class AccordionScreen extends Screen {
 
         Button warnBtn2 = Button.builder(
                 Component.literal("§7" + LocalizationManager.get("gui.resistancedlc.panel.pvp_safe_warning2")),
-                (b) -> {}
+                (b) -> {
+                }
         ).bounds(x, curY, w, 18).build();
         warnBtn2.active = false;
         widgets.add(warnBtn2);
@@ -1899,7 +2225,10 @@ public class AccordionScreen extends Screen {
             widgets.add(Checkbox.builder(
                             Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hold_rmb")), this.font)
                     .pos(x, curY).selected(ModConfig.tapeMouseHoldRight)
-                    .onValueChange((c, v) -> { ModConfig.tapeMouseHoldRight = v; ConfigManager.save(); })
+                    .onValueChange((c, v) -> {
+                        ModConfig.tapeMouseHoldRight = v;
+                        ConfigManager.save();
+                    })
                     .build());
             curY += rowH + rowGap;
         }
@@ -1922,11 +2251,14 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.delay", ModConfig.tapeMouseDelay)),
                 (ModConfig.tapeMouseDelay - 0.1f) / 4.9f
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.delay",
                         ModConfig.tapeMouseDelay)));
             }
-            @Override protected void applyValue() {
+
+            @Override
+            protected void applyValue() {
                 ModConfig.tapeMouseDelay = 0.1f + (float) (this.value * 4.9f);
                 this.updateMessage();
                 ConfigManager.save();
@@ -1938,14 +2270,20 @@ public class AccordionScreen extends Screen {
             widgets.add(Checkbox.builder(
                             Component.literal(LocalizationManager.get("gui.resistancedlc.panel.only_aiming")), this.font)
                     .pos(x, curY).selected(ModConfig.tapeMouseRequireTarget)
-                    .onValueChange((c, v) -> { ModConfig.tapeMouseRequireTarget = v; ConfigManager.save(); })
+                    .onValueChange((c, v) -> {
+                        ModConfig.tapeMouseRequireTarget = v;
+                        ConfigManager.save();
+                    })
                     .build());
             curY += rowH;
 
             widgets.add(Checkbox.builder(
                             Component.literal(LocalizationManager.get("gui.resistancedlc.panel.only_full_charge")), this.font)
                     .pos(x, curY).selected(ModConfig.tapeMouseRequireFullAttack)
-                    .onValueChange((c, v) -> { ModConfig.tapeMouseRequireFullAttack = v; ConfigManager.save(); })
+                    .onValueChange((c, v) -> {
+                        ModConfig.tapeMouseRequireFullAttack = v;
+                        ConfigManager.save();
+                    })
                     .build());
         }
     }
@@ -1954,7 +2292,10 @@ public class AccordionScreen extends Screen {
         AccordionItem tm = null;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("tape_mouse")) { tm = it; break; }
+                if (it.id.equals("tape_mouse")) {
+                    tm = it;
+                    break;
+                }
             }
             if (tm != null) break;
         }
@@ -1974,12 +2315,15 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.delay_ms", ModConfig.itemScrollerDelay)),
                 (ModConfig.itemScrollerDelay - 100) / 400.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.delay_ms",
                         ModConfig.itemScrollerDelay)));
             }
-            @Override protected void applyValue() {
-                ModConfig.itemScrollerDelay = 100 + (int)(this.value * 400);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.itemScrollerDelay = 100 + (int) (this.value * 400);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -1989,16 +2333,23 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.shift_stack")), this.font)
                 .pos(x, curY).selected(ModConfig.itemScrollerShiftStack)
-                .onValueChange((c, v) -> { ModConfig.itemScrollerShiftStack = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.itemScrollerShiftStack = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH;
 
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.ctrl_all")), this.font)
                 .pos(x, curY).selected(ModConfig.itemScrollerCtrlAll)
-                .onValueChange((c, v) -> { ModConfig.itemScrollerCtrlAll = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.itemScrollerCtrlAll = v;
+                    ConfigManager.save();
+                })
                 .build());
     }
+
     // ===================== AUTO TOOL =====================
     private void buildAutoToolPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
@@ -2008,9 +2359,13 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_tool.switch_back")), this.font)
                 .pos(x, curY).selected(ModConfig.autoToolSwitchBack)
-                .onValueChange((c, v) -> { ModConfig.autoToolSwitchBack = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.autoToolSwitchBack = v;
+                    ConfigManager.save();
+                })
                 .build());
     }
+
     private void buildMacrosPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
@@ -2028,11 +2383,16 @@ public class AccordionScreen extends Screen {
             widgets.add(field);
 
             String keyName = switch (idx) {
-                case 0 -> KeyBindings.macro1Key != null ? KeyBindings.macro1Key.getTranslatedKeyMessage().getString() : "F1";
-                case 1 -> KeyBindings.macro2Key != null ? KeyBindings.macro2Key.getTranslatedKeyMessage().getString() : "F2";
-                case 2 -> KeyBindings.macro3Key != null ? KeyBindings.macro3Key.getTranslatedKeyMessage().getString() : "F3";
-                case 3 -> KeyBindings.macro4Key != null ? KeyBindings.macro4Key.getTranslatedKeyMessage().getString() : "F4";
-                default -> KeyBindings.macro5Key != null ? KeyBindings.macro5Key.getTranslatedKeyMessage().getString() : "F5";
+                case 0 ->
+                        KeyBindings.macro1Key != null ? KeyBindings.macro1Key.getTranslatedKeyMessage().getString() : "F1";
+                case 1 ->
+                        KeyBindings.macro2Key != null ? KeyBindings.macro2Key.getTranslatedKeyMessage().getString() : "F2";
+                case 2 ->
+                        KeyBindings.macro3Key != null ? KeyBindings.macro3Key.getTranslatedKeyMessage().getString() : "F3";
+                case 3 ->
+                        KeyBindings.macro4Key != null ? KeyBindings.macro4Key.getTranslatedKeyMessage().getString() : "F4";
+                default ->
+                        KeyBindings.macro5Key != null ? KeyBindings.macro5Key.getTranslatedKeyMessage().getString() : "F5";
             };
             int bindTarget = 12 + idx;
             widgets.add(Button.builder(Component.literal(keyName), (b) -> {
@@ -2061,7 +2421,8 @@ public class AccordionScreen extends Screen {
             try {
                 ModConfig.predictionsColor = 0xFF000000 | Integer.parseInt(hexField.getValue().replace("#", ""), 16);
                 ConfigManager.save();
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }).bounds(x + 85, curY, 35, 18).build());
 
         int presetX = x + 125;
@@ -2084,12 +2445,15 @@ public class AccordionScreen extends Screen {
                         String.format("%.1f", ModConfig.predictionsThickness))),
                 (ModConfig.predictionsThickness - 1.0f) / 4.0f
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.predictions.thickness",
                         String.format("%.1f", ModConfig.predictionsThickness))));
             }
-            @Override protected void applyValue() {
-                ModConfig.predictionsThickness = 1.0f + (float)(this.value * 4.0f);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.predictionsThickness = 1.0f + (float) (this.value * 4.0f);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -2100,11 +2464,14 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.predictions.alpha", ModConfig.predictionsAlpha)),
                 ModConfig.predictionsAlpha / 255.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.predictions.alpha", ModConfig.predictionsAlpha)));
             }
-            @Override protected void applyValue() {
-                ModConfig.predictionsAlpha = (int)(this.value * 255);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.predictionsAlpha = (int) (this.value * 255);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -2115,11 +2482,14 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.predictions.steps", ModConfig.predictionsSteps)),
                 (ModConfig.predictionsSteps - 20) / 180.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.predictions.steps", ModConfig.predictionsSteps)));
             }
-            @Override protected void applyValue() {
-                ModConfig.predictionsSteps = 20 + (int)(this.value * 180);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.predictionsSteps = 20 + (int) (this.value * 180);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -2143,12 +2513,15 @@ public class AccordionScreen extends Screen {
                         ModConfig.lowHpAlertThreshold)),
                 (ModConfig.lowHpAlertThreshold - 1.0f) / 19.0f
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.low_hp_alert.threshold",
                         ModConfig.lowHpAlertThreshold)));
             }
-            @Override protected void applyValue() {
-                ModConfig.lowHpAlertThreshold = 1.0f + (float)(this.value * 19.0f);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.lowHpAlertThreshold = 1.0f + (float) (this.value * 19.0f);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -2160,12 +2533,15 @@ public class AccordionScreen extends Screen {
                         ModConfig.lowHpAlertAlpha)),
                 ModConfig.lowHpAlertAlpha / 255.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.low_hp_alert.alpha",
                         ModConfig.lowHpAlertAlpha)));
             }
-            @Override protected void applyValue() {
-                ModConfig.lowHpAlertAlpha = (int)(this.value * 255);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.lowHpAlertAlpha = (int) (this.value * 255);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -2175,14 +2551,20 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.low_hp_alert.sound")), this.font)
                 .pos(x, curY).selected(ModConfig.lowHpAlertSound)
-                .onValueChange((c, v) -> { ModConfig.lowHpAlertSound = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.lowHpAlertSound = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH;
 
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.low_hp_alert.blink")), this.font)
                 .pos(x, curY).selected(ModConfig.lowHpAlertBlink)
-                .onValueChange((c, v) -> { ModConfig.lowHpAlertBlink = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.lowHpAlertBlink = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH + rowGap;
 
@@ -2197,7 +2579,8 @@ public class AccordionScreen extends Screen {
                 ModConfig.lowHpAlertColor = 0xFF000000 | Integer.parseInt(
                         hexField.getValue().replace("#", "").trim(), 16);
                 ConfigManager.save();
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }).bounds(x + 85, curY, 35, 18).build());
 
         int presetX = x + 125;
@@ -2214,6 +2597,7 @@ public class AccordionScreen extends Screen {
             }).bounds(presetX + i * (presetW + 3), curY, presetW, 18).build());
         }
     }
+
     // ===================== AUTO RESPAWN =====================
     private void buildAutoRespawnPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
@@ -2225,12 +2609,15 @@ public class AccordionScreen extends Screen {
                         ModConfig.autoRespawnDelay)),
                 (ModConfig.autoRespawnDelay - 0.5f) / 4.5f
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_respawn.delay",
                         ModConfig.autoRespawnDelay)));
             }
-            @Override protected void applyValue() {
-                ModConfig.autoRespawnDelay = 0.5f + (float)(this.value * 4.5f);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.autoRespawnDelay = 0.5f + (float) (this.value * 4.5f);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -2248,12 +2635,15 @@ public class AccordionScreen extends Screen {
                         ModConfig.armorAlertThreshold)),
                 (ModConfig.armorAlertThreshold - 5) / 45.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.armor_alert.threshold",
                         ModConfig.armorAlertThreshold)));
             }
-            @Override protected void applyValue() {
-                ModConfig.armorAlertThreshold = 5 + (int)(this.value * 45);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.armorAlertThreshold = 5 + (int) (this.value * 45);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -2265,12 +2655,15 @@ public class AccordionScreen extends Screen {
                         ModConfig.armorAlertAlpha)),
                 ModConfig.armorAlertAlpha / 255.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.armor_alert.alpha",
                         ModConfig.armorAlertAlpha)));
             }
-            @Override protected void applyValue() {
-                ModConfig.armorAlertAlpha = (int)(this.value * 255);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.armorAlertAlpha = (int) (this.value * 255);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -2280,7 +2673,10 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.armor_alert.sound")), this.font)
                 .pos(x, curY).selected(ModConfig.armorAlertSound)
-                .onValueChange((c, v) -> { ModConfig.armorAlertSound = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.armorAlertSound = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH + rowGap;
 
@@ -2295,7 +2691,8 @@ public class AccordionScreen extends Screen {
                 ModConfig.armorAlertColor = 0xFF000000 | Integer.parseInt(
                         hexField.getValue().replace("#", "").trim(), 16);
                 ConfigManager.save();
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }).bounds(x + 85, curY, 35, 18).build());
 
         int presetX = x + 125;
@@ -2322,7 +2719,10 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.friend_list.show_hud")), this.font)
                 .pos(x, curY).selected(ModConfig.friendListShowHud)
-                .onValueChange((c, v) -> { ModConfig.friendListShowHud = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.friendListShowHud = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH;
 
@@ -2331,12 +2731,15 @@ public class AccordionScreen extends Screen {
                         ModConfig.friendListHudAlpha)),
                 ModConfig.friendListHudAlpha / 255.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.friend_list.hud_alpha",
                         ModConfig.friendListHudAlpha)));
             }
-            @Override protected void applyValue() {
-                ModConfig.friendListHudAlpha = (int)(this.value * 255);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.friendListHudAlpha = (int) (this.value * 255);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -2345,7 +2748,10 @@ public class AccordionScreen extends Screen {
 
         curY = addPosEditorRow(widgets, x, curY, right,
                 () -> ModConfig.friendListHudX, () -> ModConfig.friendListHudY,
-                (nx, ny) -> { ModConfig.friendListHudX = nx; ModConfig.friendListHudY = ny; },
+                (nx, ny) -> {
+                    ModConfig.friendListHudX = nx;
+                    ModConfig.friendListHudY = ny;
+                },
                 -1, 10);
         curY += 26 + rowGap;
 
@@ -2369,14 +2775,20 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.friend_list.chat")), this.font)
                 .pos(x, curY).selected(ModConfig.friendListHighlightChat)
-                .onValueChange((c, v) -> { ModConfig.friendListHighlightChat = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.friendListHighlightChat = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH;
 
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.friend_list.tab")), this.font)
                 .pos(x, curY).selected(ModConfig.friendListHighlightTab)
-                .onValueChange((c, v) -> { ModConfig.friendListHighlightTab = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.friendListHighlightTab = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH + rowGap;
 
@@ -2395,7 +2807,8 @@ public class AccordionScreen extends Screen {
             Button headerBtn = Button.builder(
                     Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.friend_list.existing")
                             + " (§f" + friends.size() + "§e):"),
-                    (b) -> {}
+                    (b) -> {
+                    }
             ).bounds(x, curY, w, 18).build();
             headerBtn.active = false;
             widgets.add(headerBtn);
@@ -2405,7 +2818,8 @@ public class AccordionScreen extends Screen {
             for (int i = 0; i < maxShow; i++) {
                 final String friend = friends.get(i);
                 Button label = Button.builder(
-                        Component.literal("§e" + friend), (b) -> {}
+                        Component.literal("§e" + friend), (b) -> {
+                        }
                 ).bounds(x, curY, w - 25, 18).build();
                 label.active = false;
                 widgets.add(label);
@@ -2421,7 +2835,8 @@ public class AccordionScreen extends Screen {
 
             if (friends.size() > 10) {
                 Button moreBtn = Button.builder(
-                        Component.literal("§7... ещё §e" + (friends.size() - 10)), (b) -> {}
+                        Component.literal("§7... ещё §e" + (friends.size() - 10)), (b) -> {
+                        }
                 ).bounds(x, curY, w, 18).build();
                 moreBtn.active = false;
                 widgets.add(moreBtn);
@@ -2433,7 +2848,10 @@ public class AccordionScreen extends Screen {
         AccordionItem fl = null;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("friend_list")) { fl = it; break; }
+                if (it.id.equals("friend_list")) {
+                    fl = it;
+                    break;
+                }
             }
             if (fl != null) break;
         }
@@ -2454,6 +2872,7 @@ public class AccordionScreen extends Screen {
         // 5) Обновляем видимость
         updateWidgetsVisibility();
     }
+
     private int calcFriendListHeight() {
         // Панель FriendList содержит:
         //   1) Показывать HUD-виджет (checkbox) — 22 + 6 = 28
@@ -2478,6 +2897,7 @@ public class AccordionScreen extends Screen {
 
         return base;
     }
+
     private int calcEnchantHighlightHeight() {
         // 2 строки управления (add + clear) + список
         int base = 18 + 2 * 28;
@@ -2497,6 +2917,7 @@ public class AccordionScreen extends Screen {
     private int calcEnchantHighlightHeightImpl() {
         return calcEnchantHighlightHeight();
     }
+
     // ===================== AUTO TP ACCEPT =====================
     private void buildAutoTpAcceptPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
@@ -2522,12 +2943,15 @@ public class AccordionScreen extends Screen {
                         ModConfig.autoTpAcceptDelay)),
                 (ModConfig.autoTpAcceptDelay - 0.1f) / 2.9f
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_tp_accept.delay",
                         ModConfig.autoTpAcceptDelay)));
             }
-            @Override protected void applyValue() {
-                ModConfig.autoTpAcceptDelay = 0.1f + (float)(this.value * 2.9f);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.autoTpAcceptDelay = 0.1f + (float) (this.value * 2.9f);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -2538,7 +2962,10 @@ public class AccordionScreen extends Screen {
         AccordionItem item = null;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("auto_tp_accept")) { item = it; break; }
+                if (it.id.equals("auto_tp_accept")) {
+                    item = it;
+                    break;
+                }
             }
             if (item != null) break;
         }
@@ -2559,7 +2986,8 @@ public class AccordionScreen extends Screen {
         Button kdBtn = Button.builder(
                 Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.stats_tracker.kd")
                         + " §f" + StatsTrackerManager.formatKd()),
-                (b) -> {}
+                (b) -> {
+                }
         ).bounds(x, curY, w, 20).build();
         kdBtn.active = false;
         widgets.add(kdBtn);
@@ -2568,7 +2996,8 @@ public class AccordionScreen extends Screen {
         Button killsBtn = Button.builder(
                 Component.literal("§a" + LocalizationManager.get("gui.resistancedlc.panel.stats_tracker.kills")
                         + " §f" + ModConfig.statsKills),
-                (b) -> {}
+                (b) -> {
+                }
         ).bounds(x, curY, w, 20).build();
         killsBtn.active = false;
         widgets.add(killsBtn);
@@ -2577,7 +3006,8 @@ public class AccordionScreen extends Screen {
         Button deathsBtn = Button.builder(
                 Component.literal("§c" + LocalizationManager.get("gui.resistancedlc.panel.stats_tracker.deaths")
                         + " §f" + ModConfig.statsDeaths),
-                (b) -> {}
+                (b) -> {
+                }
         ).bounds(x, curY, w, 20).build();
         deathsBtn.active = false;
         widgets.add(deathsBtn);
@@ -2596,7 +3026,10 @@ public class AccordionScreen extends Screen {
         AccordionItem item = null;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("stats_tracker")) { item = it; break; }
+                if (it.id.equals("stats_tracker")) {
+                    item = it;
+                    break;
+                }
             }
             if (item != null) break;
         }
@@ -2618,11 +3051,14 @@ public class AccordionScreen extends Screen {
                         String.format("%.2f", ModConfig.killStreakSoundVolume))),
                 ModConfig.killStreakSoundVolume
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.kill_streak.volume",
                         String.format("%.2f", ModConfig.killStreakSoundVolume))));
             }
-            @Override protected void applyValue() {
+
+            @Override
+            protected void applyValue() {
                 ModConfig.killStreakSoundVolume = (float) this.value;
                 this.updateMessage();
                 ConfigManager.save();
@@ -2635,12 +3071,15 @@ public class AccordionScreen extends Screen {
                         ModConfig.killStreakAlpha)),
                 ModConfig.killStreakAlpha / 255.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.kill_streak.alpha",
                         ModConfig.killStreakAlpha)));
             }
-            @Override protected void applyValue() {
-                ModConfig.killStreakAlpha = (int)(this.value * 255);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.killStreakAlpha = (int) (this.value * 255);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -2666,13 +3105,19 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.kill_streak.show_timer")), this.font)
                 .pos(x, curY).selected(ModConfig.killStreakShowTimer)
-                .onValueChange((c, v) -> { ModConfig.killStreakShowTimer = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.killStreakShowTimer = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH;
 
         addPosEditorRow(widgets, x, curY, right,
                 () -> ModConfig.killStreakHudX, () -> ModConfig.killStreakHudY,
-                (nx, ny) -> { ModConfig.killStreakHudX = nx; ModConfig.killStreakHudY = ny; },
+                (nx, ny) -> {
+                    ModConfig.killStreakHudX = nx;
+                    ModConfig.killStreakHudY = ny;
+                },
                 -1, 10);
 
         // Color presets
@@ -2687,7 +3132,8 @@ public class AccordionScreen extends Screen {
                 ModConfig.killStreakColor = 0xFF000000 | Integer.parseInt(
                         hexField.getValue().replace("#", "").trim(), 16);
                 ConfigManager.save();
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }).bounds(x + 85, curY, 35, 18).build());
 
         int presetX = x + 125;
@@ -2709,7 +3155,10 @@ public class AccordionScreen extends Screen {
         AccordionItem item = null;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("kill_streak")) { item = it; break; }
+                if (it.id.equals("kill_streak")) {
+                    item = it;
+                    break;
+                }
             }
             if (item != null) break;
         }
@@ -2763,7 +3212,8 @@ public class AccordionScreen extends Screen {
         Button headerBtn = Button.builder(
                 Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.enchant_highlight.list")
                         + " (§f" + rules.size() + "§e):"),
-                (b) -> {}
+                (b) -> {
+                }
         ).bounds(x, curY, w, 18).build();
         headerBtn.active = false;
         widgets.add(headerBtn);
@@ -2799,7 +3249,8 @@ public class AccordionScreen extends Screen {
 
         if (rules.size() > 10) {
             Button moreBtn = Button.builder(
-                    Component.literal("§7... ещё §e" + (rules.size() - 10)), (b) -> {}
+                    Component.literal("§7... ещё §e" + (rules.size() - 10)), (b) -> {
+                    }
             ).bounds(x, curY, w, 18).build();
             moreBtn.active = false;
             widgets.add(moreBtn);
@@ -2813,7 +3264,8 @@ public class AccordionScreen extends Screen {
             Button titleBtn = Button.builder(
                     Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.enchant_highlight.setting")
                             + " §f" + active.key),
-                    (b) -> {}
+                    (b) -> {
+                    }
             ).bounds(x, curY, w, 18).build();
             titleBtn.active = false;
             widgets.add(titleBtn);
@@ -2831,7 +3283,8 @@ public class AccordionScreen extends Screen {
             Checkbox boldCb = Checkbox.builder(
                             Component.literal(LocalizationManager.get("gui.resistancedlc.panel.enchant_highlight.bold")), this.font)
                     .pos(x, curY).selected(active.bold)
-                    .onValueChange((c, v) -> {})
+                    .onValueChange((c, v) -> {
+                    })
                     .build();
             widgets.add(boldCb);
             curY += 18 + 4;
@@ -2872,7 +3325,10 @@ public class AccordionScreen extends Screen {
         AccordionItem item = null;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("enchant_highlight")) { item = it; break; }
+                if (it.id.equals("enchant_highlight")) {
+                    item = it;
+                    break;
+                }
             }
             if (item != null) break;
         }
@@ -2884,6 +3340,7 @@ public class AccordionScreen extends Screen {
         buildPanelWidgets(item);
         updateWidgetsVisibility();
     }
+
     // ===================== VISUAL =====================
     private void buildZoomPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
@@ -2895,11 +3352,14 @@ public class AccordionScreen extends Screen {
                         ModConfig.killStreakSoundVolume)),   // ← OK — Float
                 ModConfig.killStreakSoundVolume
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.kill_streak.volume",
                         ModConfig.killStreakSoundVolume)));
             }
-            @Override protected void applyValue() {
+
+            @Override
+            protected void applyValue() {
                 ModConfig.zoomFactor = 1.5f + (float) (this.value * 8.5f);
                 this.updateMessage();
                 ConfigManager.save();
@@ -2911,11 +3371,14 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.smoothness", ModConfig.zoomSmoothness)),
                 (ModConfig.zoomSmoothness - 0.05f) / 0.95f
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.smoothness",
                         ModConfig.zoomSmoothness)));
             }
-            @Override protected void applyValue() {
+
+            @Override
+            protected void applyValue() {
                 ModConfig.zoomSmoothness = 0.05f + (float) (this.value * 0.95f);
                 this.updateMessage();
                 ConfigManager.save();
@@ -2965,12 +3428,15 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.size", ModConfig.crosshairSize)),
                 (ModConfig.crosshairSize - 4) / 16.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.size",
                         ModConfig.crosshairSize)));
             }
-            @Override protected void applyValue() {
-                ModConfig.crosshairSize = 4 + (int)(this.value * 16);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.crosshairSize = 4 + (int) (this.value * 16);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -2981,12 +3447,15 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.thickness", ModConfig.crosshairThickness)),
                 (ModConfig.crosshairThickness - 1) / 4.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.thickness",
                         ModConfig.crosshairThickness)));
             }
-            @Override protected void applyValue() {
-                ModConfig.crosshairThickness = 1 + (int)(this.value * 4);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.crosshairThickness = 1 + (int) (this.value * 4);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -2997,12 +3466,15 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.gap", ModConfig.crosshairGap)),
                 ModConfig.crosshairGap / 10.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.gap",
                         ModConfig.crosshairGap)));
             }
-            @Override protected void applyValue() {
-                ModConfig.crosshairGap = (int)(this.value * 10);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.crosshairGap = (int) (this.value * 10);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -3013,12 +3485,15 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha", ModConfig.crosshairAlpha)),
                 ModConfig.crosshairAlpha / 255.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha",
                         ModConfig.crosshairAlpha)));
             }
-            @Override protected void applyValue() {
-                ModConfig.crosshairAlpha = (int)(this.value * 255);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.crosshairAlpha = (int) (this.value * 255);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -3036,7 +3511,8 @@ public class AccordionScreen extends Screen {
             try {
                 ModConfig.crosshairColor = 0xFF000000 | Integer.parseInt(hex, 16);
                 ConfigManager.save();
-            } catch (NumberFormatException ignored) {}
+            } catch (NumberFormatException ignored) {
+            }
         }).bounds(x + 85, curY, 35, 18).build());
 
         int presetX = x + 125;
@@ -3068,7 +3544,10 @@ public class AccordionScreen extends Screen {
         AccordionItem ch = null;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("crosshair")) { ch = it; break; }
+                if (it.id.equals("crosshair")) {
+                    ch = it;
+                    break;
+                }
             }
             if (ch != null) break;
         }
@@ -3095,7 +3574,8 @@ public class AccordionScreen extends Screen {
             try {
                 ModConfig.customHitboxColor = 0xFF000000 | Integer.parseInt(hex, 16);
                 ConfigManager.save();
-            } catch (NumberFormatException ignored) {}
+            } catch (NumberFormatException ignored) {
+            }
         }).bounds(x + 85, curY, 35, 18).build());
 
         int presetX = x + 125;
@@ -3127,74 +3607,223 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha", ModConfig.customHitboxAlpha)),
                 ModConfig.customHitboxAlpha / 255.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha",
                         ModConfig.customHitboxAlpha)));
             }
-            @Override protected void applyValue() {
-                ModConfig.customHitboxAlpha = (int)(this.value * 255);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.customHitboxAlpha = (int) (this.value * 255);
                 this.updateMessage();
                 ConfigManager.save();
             }
         });
     }
 
+    // ===================== FOV =====================
+    // ===================== FOV =====================
+    private void buildFovPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(buildFovLabel()),
+                (ModConfig.fovMultiplier - 0.5f) / 1.5f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(buildFovLabel()));
+            }
+
+            @Override
+            protected void applyValue() {
+                ModConfig.fovMultiplier = 0.5f + (float) (this.value * 1.5f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        int btnW = (w - 12) / 4;
+        widgets.add(Button.builder(Component.literal("0.5x"), (b) -> {
+            ModConfig.fovMultiplier = 0.5f;
+            ConfigManager.save();
+            rebuildFovPanel();
+        }).bounds(x, curY, btnW, 20).build());
+        widgets.add(Button.builder(Component.literal("1.0x"), (b) -> {
+            ModConfig.fovMultiplier = 1.0f;
+            ConfigManager.save();
+            rebuildFovPanel();
+        }).bounds(x + btnW + 4, curY, btnW, 20).build());
+        widgets.add(Button.builder(Component.literal("1.5x"), (b) -> {
+            ModConfig.fovMultiplier = 1.5f;
+            ConfigManager.save();
+            rebuildFovPanel();
+        }).bounds(x + (btnW + 4) * 2, curY, btnW, 20).build());
+        widgets.add(Button.builder(Component.literal("2.0x"), (b) -> {
+            ModConfig.fovMultiplier = 2.0f;
+            ConfigManager.save();
+            rebuildFovPanel();
+        }).bounds(x + (btnW + 4) * 3, curY, btnW, 20).build());
+    }
+
+    /**
+     * Собирает "FOV: 1.2x" без String.format — конкатенация + Locale.ROOT.
+     */
+    private static String buildFovLabel() {
+        String value = String.format(java.util.Locale.ROOT, "%.1f", ModConfig.fovMultiplier);
+        return LocalizationManager.get("gui.resistancedlc.panel.fov_prefix") + " " + value + "x";
+    }
+
+    private void rebuildFovPanel() {
+        AccordionItem item = findItemById("fov");
+        if (item == null || !item.expanded) return;
+        clearPanelWidgets(item);
+        buildPanelWidgets(item);
+        updateWidgetsVisibility();
+    }
+
+    // ===================== ASPECT RATIO =====================
     private void buildAspectRatioPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
         int curY = y;
 
         widgets.add(Checkbox.builder(
-                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.enable_stretch")), this.font)
-                .pos(x, curY).selected(ModConfig.aspectRatioEnabled)
-                .onValueChange((c, v) -> { ModConfig.aspectRatioEnabled = v; ConfigManager.save(); })
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.aspect_use_preset")), this.font)
+                .pos(x, curY).selected(ModConfig.aspectRatioUsePreset)
+                .onValueChange((c, v) -> {
+                    ModConfig.aspectRatioUsePreset = v;
+                    ConfigManager.save();
+                    rebuildAspectRatioPanel();
+                })
                 .build());
         curY += rowH + rowGap;
 
-        widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.aspect_ratio", ModConfig.aspectRatio)),
-                (ModConfig.aspectRatio - 0.5f) / 1.5f
-        ) {
-            @Override protected void updateMessage() {
-                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.aspect_ratio",
-                        ModConfig.aspectRatio)));
+        if (ModConfig.aspectRatioUsePreset) {
+            int btnW = (w - 8) / 3;
+            String[] names = {"16:9", "5:4", "4:3"};
+            AspectRatioPreset[] presets = {
+                    AspectRatioPreset.R16_9,
+                    AspectRatioPreset.R5_4,
+                    AspectRatioPreset.R4_3
+            };
+            for (int i = 0; i < 3; i++) {
+                final AspectRatioPreset preset = presets[i];
+                boolean active = (ModConfig.aspectRatioPreset == preset);
+                String label = (active ? "§a✓ " : "") + names[i];
+                widgets.add(Button.builder(Component.literal(label), (b) -> {
+                    ModConfig.aspectRatioPreset = preset;
+                    ConfigManager.save();
+                    rebuildAspectRatioPanel();
+                }).bounds(x + i * (btnW + 4), curY, btnW, 20).build());
             }
-            @Override protected void applyValue() {
-                ModConfig.aspectRatio = 0.5f + (float) (this.value * 1.5f);
-                this.updateMessage();
-                ConfigManager.save();
-            }
-        });
-        curY += rowH + rowGap;
+        } else {
+            widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                    Component.literal(LocalizationManager.get("gui.resistancedlc.panel.aspect_factor",
+                            String.format("%.2f", ModConfig.aspectRatioFactor))),
+                    (ModConfig.aspectRatioFactor - 0.5f) / 1.5f
+            ) {
+                @Override
+                protected void updateMessage() {
+                    this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.aspect_factor",
+                            String.format("%.2f", ModConfig.aspectRatioFactor))));
+                }
 
-        int btnW = (w - 9) / 4;
-        widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.ratio_4_3")), (b) -> {
-            ModConfig.aspectRatio = 1.33f; ConfigManager.save(); rebuildAspectRatioPanel();
-        }).bounds(x, curY, btnW, 20).build());
-        widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.ratio_16_9")), (b) -> {
-            ModConfig.aspectRatio = 1.0f; ConfigManager.save(); rebuildAspectRatioPanel();
-        }).bounds(x + btnW + 3, curY, btnW, 20).build());
-        widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.ratio_21_9")), (b) -> {
-            ModConfig.aspectRatio = 0.75f; ConfigManager.save(); rebuildAspectRatioPanel();
-        }).bounds(x + (btnW + 3) * 2, curY, btnW, 20).build());
-        widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.ratio_1_1")), (b) -> {
-            ModConfig.aspectRatio = 1.78f; ConfigManager.save(); rebuildAspectRatioPanel();
-        }).bounds(x + (btnW + 3) * 3, curY, btnW, 20).build());
+                @Override
+                protected void applyValue() {
+                    ModConfig.aspectRatioFactor = 0.5f + (float) (this.value * 1.5f);
+                    this.updateMessage();
+                    ConfigManager.save();
+                }
+            });
+        }
     }
 
     private void rebuildAspectRatioPanel() {
-        AccordionItem ar = null;
+        AccordionItem item = findItemById("aspect_ratio");
+        if (item == null || !item.expanded) return;
+        clearPanelWidgets(item);
+        buildPanelWidgets(item);
+        updateWidgetsVisibility();
+    }
+
+    // ===================== BETTER BOSSBAR =====================
+    private void buildBetterBossBarPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        String styleText = ModConfig.betterBossBarStyle == BossBarStyle.CLASSIC
+                ? LocalizationManager.get("gui.resistancedlc.panel.bossbar_classic")
+                : LocalizationManager.get("gui.resistancedlc.panel.bossbar_minimal");
+        widgets.add(Button.builder(
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.bossbar_style") + ": " + styleText),
+                (b) -> {
+                    ModConfig.betterBossBarStyle = (ModConfig.betterBossBarStyle == BossBarStyle.CLASSIC)
+                            ? BossBarStyle.MINIMAL
+                            : BossBarStyle.CLASSIC;
+                    ConfigManager.save();
+                    rebuildBetterBossBarPanel();
+                }
+        ).bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        int[] colors = {
+                ModConfig.betterBossBarBgColor,
+                ModConfig.betterBossBarEmptyColor,
+                ModConfig.betterBossBarFillColor1,
+                ModConfig.betterBossBarFillColor2
+        };
+        int halfW = (w - 4) / 2;
+        for (int i = 0; i < 4; i++) {
+            final int idx = i;
+            int col = i % 2;
+            int row = i / 2;
+            int cx = x + col * (halfW + 4);
+            int cy = curY + row * (rowH - 2);
+
+            EditBox hex = new EditBox(this.font, cx, cy, halfW - 40, 18,
+                    Component.literal("#RRGGBB"));
+            hex.setMaxLength(7);
+            hex.setValue(String.format("#%06X", colors[i] & 0xFFFFFF));
+            widgets.add(hex);
+
+            widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.apply")), (b) -> {
+                try {
+                    int newColor = 0xFF000000 | Integer.parseInt(hex.getValue().replace("#", "").trim(), 16);
+                    switch (idx) {
+                        case 0 -> ModConfig.betterBossBarBgColor = newColor;
+                        case 1 -> ModConfig.betterBossBarEmptyColor = newColor;
+                        case 2 -> ModConfig.betterBossBarFillColor1 = newColor;
+                        case 3 -> ModConfig.betterBossBarFillColor2 = newColor;
+                    }
+                    ConfigManager.save();
+                } catch (NumberFormatException ignored) {
+                }
+            }).bounds(cx + halfW - 38, cy, 38, 18).build());
+        }
+    }
+
+    private void rebuildBetterBossBarPanel() {
+        AccordionItem item = findItemById("better_bossbar");
+        if (item == null || !item.expanded) return;
+        clearPanelWidgets(item);
+        buildPanelWidgets(item);
+        updateWidgetsVisibility();
+    }
+
+    // ===================== ХЕЛПЕР =====================
+    private AccordionItem findItemById(String id) {
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("aspect_ratio")) { ar = it; break; }
+                if (it.id.equals(id)) return it;
             }
-            if (ar != null) break;
         }
-        if (ar == null || !ar.expanded) return;
-
-        clearPanelWidgets(ar);
-        buildPanelWidgets(ar);
-        updateWidgetsVisibility();
+        return null;
     }
 
     private void buildLowFireShieldPanel(List<AbstractWidget> widgets, int x, int y, int right) {
@@ -3205,7 +3834,10 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.low_fire")), this.font)
                 .pos(x, curY).selected(ModConfig.lowFireEnabled)
-                .onValueChange((c, v) -> { ModConfig.lowFireEnabled = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.lowFireEnabled = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH;
 
@@ -3213,11 +3845,14 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.low_fire_offset", ModConfig.lowFireOffset)),
                 ModConfig.lowFireOffset
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.low_fire_offset",
                         ModConfig.lowFireOffset)));
             }
-            @Override protected void applyValue() {
+
+            @Override
+            protected void applyValue() {
                 ModConfig.lowFireOffset = (float) this.value;
                 this.updateMessage();
                 ConfigManager.save();
@@ -3228,7 +3863,10 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.low_shield")), this.font)
                 .pos(x, curY).selected(ModConfig.lowShieldEnabled)
-                .onValueChange((c, v) -> { ModConfig.lowShieldEnabled = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.lowShieldEnabled = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH;
 
@@ -3236,11 +3874,14 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.low_shield_offset", ModConfig.lowShieldOffset)),
                 ModConfig.lowShieldOffset
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.low_shield_offset",
                         ModConfig.lowShieldOffset)));
             }
-            @Override protected void applyValue() {
+
+            @Override
+            protected void applyValue() {
                 ModConfig.lowShieldOffset = (float) this.value;
                 this.updateMessage();
                 ConfigManager.save();
@@ -3257,7 +3898,10 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.particle_show")), this.font)
                 .pos(x, curY).selected(ModConfig.particleBlockerEnabled)
-                .onValueChange((c, v) -> { ModConfig.particleBlockerEnabled = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.particleBlockerEnabled = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH + rowGap;
 
@@ -3310,7 +3954,10 @@ public class AccordionScreen extends Screen {
         AccordionItem wp = null;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("waypoints")) { wp = it; break; }
+                if (it.id.equals("waypoints")) {
+                    wp = it;
+                    break;
+                }
             }
             if (wp != null) break;
         }
@@ -3331,7 +3978,10 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.checkbox", "Waypoints")), this.font)
                 .pos(x, curY).selected(ModConfig.waypointsEnabled)
-                .onValueChange((c, v) -> { ModConfig.waypointsEnabled = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.waypointsEnabled = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH + rowGap;
 
@@ -3339,12 +3989,15 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.waypoints_max", ModConfig.waypointsMax)),
                 (ModConfig.waypointsMax - 1) / 19.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.waypoints_max",
                         ModConfig.waypointsMax)));
             }
-            @Override protected void applyValue() {
-                ModConfig.waypointsMax = 1 + (int)(this.value * 19);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.waypointsMax = 1 + (int) (this.value * 19);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -3390,7 +4043,8 @@ public class AccordionScreen extends Screen {
             Button headerBtn = Button.builder(
                     Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.existing")
                             + " (§f" + list.size() + "§e):"),
-                    (b) -> {}
+                    (b) -> {
+                    }
             ).bounds(x, curY, w, 18).build();
             headerBtn.active = false;
             widgets.add(headerBtn);
@@ -3403,7 +4057,8 @@ public class AccordionScreen extends Screen {
 
                 Button label = Button.builder(
                         Component.literal("§e" + wp.name() + " §7(" + (int) wp.x() + ", " + (int) wp.y() + ", " + (int) wp.z() + ")"),
-                        (b) -> {}
+                        (b) -> {
+                        }
                 ).bounds(x, rowY, w - 50, 18).build();
                 label.active = false;
                 widgets.add(label);
@@ -3454,7 +4109,8 @@ public class AccordionScreen extends Screen {
 
         for (int i = 0; i < Math.min(words.size(), maxShow); i++) {
             final String word = words.get(i);
-            Button wordLabel = Button.builder(Component.literal("§e" + word), (b) -> {})
+            Button wordLabel = Button.builder(Component.literal("§e" + word), (b) -> {
+                    })
                     .bounds(x, curY, w - 25, rowListH).build();
             wordLabel.active = false;
             widgets.add(wordLabel);
@@ -3468,7 +4124,8 @@ public class AccordionScreen extends Screen {
 
         if (words.size() > maxShow) {
             Button moreBtn = Button.builder(
-                            Component.literal("§7... ещё §e" + (words.size() - maxShow)), (b) -> {})
+                            Component.literal("§7... ещё §e" + (words.size() - maxShow)), (b) -> {
+                            })
                     .bounds(x, curY, w, rowListH).build();
             moreBtn.active = false;
             widgets.add(moreBtn);
@@ -3477,7 +4134,10 @@ public class AccordionScreen extends Screen {
 
         widgets.add(Button.builder(
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.chat_filter_clear")),
-                (b) -> { ChatFilterManager.clearWords(); rebuildChatFilterPanel(); }
+                (b) -> {
+                    ChatFilterManager.clearWords();
+                    rebuildChatFilterPanel();
+                }
         ).bounds(x, curY, w, 20).build());
     }
 
@@ -3485,7 +4145,10 @@ public class AccordionScreen extends Screen {
         AccordionItem cf = null;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("chat_filter")) { cf = it; break; }
+                if (it.id.equals("chat_filter")) {
+                    cf = it;
+                    break;
+                }
             }
             if (cf != null) break;
         }
@@ -3506,12 +4169,15 @@ public class AccordionScreen extends Screen {
                         ModConfig.autoReconnectDelay)),
                 (ModConfig.autoReconnectDelay - 1) / 29.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_reconnect_delay",
                         ModConfig.autoReconnectDelay)));
             }
-            @Override protected void applyValue() {
-                ModConfig.autoReconnectDelay = 1 + (int)(this.value * 29);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.autoReconnectDelay = 1 + (int) (this.value * 29);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -3521,7 +4187,10 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_reconnect_hud")), this.font)
                 .pos(x, curY).selected(ModConfig.autoReconnectShowHud)
-                .onValueChange((c, v) -> { ModConfig.autoReconnectShowHud = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.autoReconnectShowHud = v;
+                    ConfigManager.save();
+                })
                 .build());
     }
 
@@ -3549,7 +4218,8 @@ public class AccordionScreen extends Screen {
         } else {
             info = "§8" + LocalizationManager.get("gui.resistancedlc.panel.no_death");
         }
-        Button infoBtn = Button.builder(Component.literal(info), (b) -> {})
+        Button infoBtn = Button.builder(Component.literal(info), (b) -> {
+                })
                 .bounds(x, curY, w, 20).build();
         infoBtn.active = false;
         widgets.add(infoBtn);
@@ -3593,7 +4263,10 @@ public class AccordionScreen extends Screen {
         AccordionItem theme = null;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("gui_theme")) { theme = it; break; }
+                if (it.id.equals("gui_theme")) {
+                    theme = it;
+                    break;
+                }
             }
             if (theme != null) break;
         }
@@ -3709,7 +4382,8 @@ public class AccordionScreen extends Screen {
             Button headerBtn = Button.builder(
                     Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.config_list")
                             + " (§f" + configs.size() + "§e):"),
-                    (b) -> {}
+                    (b) -> {
+                    }
             ).bounds(x, curY, w, 18).build();
             headerBtn.active = false;
             widgets.add(headerBtn);
@@ -3721,7 +4395,8 @@ public class AccordionScreen extends Screen {
                 int rowY = curY;
 
                 Button label = Button.builder(
-                        Component.literal("§e" + cfgName), (b) -> {}
+                        Component.literal("§e" + cfgName), (b) -> {
+                        }
                 ).bounds(x, rowY, w - 25, 18).build();
                 label.active = false;
                 widgets.add(label);
@@ -3744,7 +4419,8 @@ public class AccordionScreen extends Screen {
             if (configs.size() > 20) {
                 Button moreBtn = Button.builder(
                         Component.literal("§7... и ещё §e" + (configs.size() - 20)
-                                + " §7(см. §e/cfg list§7)"), (b) -> {}
+                                + " §7(см. §e/cfg list§7)"), (b) -> {
+                        }
                 ).bounds(x, curY, w, 18).build();
                 moreBtn.active = false;
                 widgets.add(moreBtn);
@@ -3757,7 +4433,10 @@ public class AccordionScreen extends Screen {
         AccordionItem cfg = null;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("config_manager")) { cfg = it; break; }
+                if (it.id.equals("config_manager")) {
+                    cfg = it;
+                    break;
+                }
             }
             if (cfg != null) break;
         }
@@ -3769,6 +4448,7 @@ public class AccordionScreen extends Screen {
         buildPanelWidgets(cfg);
         updateWidgetsVisibility();
     }
+
     // ===================== COOLDOWNS =====================
     private void buildCoolDownsPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
@@ -3777,19 +4457,25 @@ public class AccordionScreen extends Screen {
 
         curY = addPosEditorRow(widgets, x, curY, right,
                 () -> ModConfig.cooldownsX, () -> ModConfig.cooldownsY,
-                (nx, ny) -> { ModConfig.cooldownsX = nx; ModConfig.cooldownsY = ny; },
+                (nx, ny) -> {
+                    ModConfig.cooldownsX = nx;
+                    ModConfig.cooldownsY = ny;
+                },
                 10, 200);
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.max_items", ModConfig.cooldownsMaxItems)),
                 (ModConfig.cooldownsMaxItems - 1) / 9.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.max_items",
                         ModConfig.cooldownsMaxItems)));
             }
-            @Override protected void applyValue() {
-                ModConfig.cooldownsMaxItems = 1 + (int)(this.value * 9);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.cooldownsMaxItems = 1 + (int) (this.value * 9);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -3800,12 +4486,15 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha", ModConfig.cooldownsAlpha)),
                 ModConfig.cooldownsAlpha / 255.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha",
                         ModConfig.cooldownsAlpha)));
             }
-            @Override protected void applyValue() {
-                ModConfig.cooldownsAlpha = (int)(this.value * 255);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.cooldownsAlpha = (int) (this.value * 255);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -3816,12 +4505,15 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.icon_darkening", ModConfig.cooldownsIconDarkening)),
                 ModConfig.cooldownsIconDarkening / 255.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.icon_darkening",
                         ModConfig.cooldownsIconDarkening)));
             }
-            @Override protected void applyValue() {
-                ModConfig.cooldownsIconDarkening = (int)(this.value * 255);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.cooldownsIconDarkening = (int) (this.value * 255);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -3831,18 +4523,30 @@ public class AccordionScreen extends Screen {
         int cbW = (w - 6) / 3;
         widgets.add(Checkbox.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.icon")), this.font)
                 .pos(x, curY).selected(ModConfig.cooldownsShowIcon)
-                .onValueChange((c, v) -> { ModConfig.cooldownsShowIcon = v; ConfigManager.save(); }).build());
+                .onValueChange((c, v) -> {
+                    ModConfig.cooldownsShowIcon = v;
+                    ConfigManager.save();
+                }).build());
         widgets.add(Checkbox.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.name")), this.font)
                 .pos(x + cbW + 3, curY).selected(ModConfig.cooldownsShowName)
-                .onValueChange((c, v) -> { ModConfig.cooldownsShowName = v; ConfigManager.save(); }).build());
+                .onValueChange((c, v) -> {
+                    ModConfig.cooldownsShowName = v;
+                    ConfigManager.save();
+                }).build());
         widgets.add(Checkbox.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.timer")), this.font)
                 .pos(x + (cbW + 3) * 2, curY).selected(ModConfig.cooldownsShowTime)
-                .onValueChange((c, v) -> { ModConfig.cooldownsShowTime = v; ConfigManager.save(); }).build());
+                .onValueChange((c, v) -> {
+                    ModConfig.cooldownsShowTime = v;
+                    ConfigManager.save();
+                }).build());
         curY += rowH + rowGap;
 
         widgets.add(Checkbox.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hotbar_only")), this.font)
                 .pos(x, curY).selected(ModConfig.cooldownsShowOnlyHotbar)
-                .onValueChange((c, v) -> { ModConfig.cooldownsShowOnlyHotbar = v; ConfigManager.save(); }).build());
+                .onValueChange((c, v) -> {
+                    ModConfig.cooldownsShowOnlyHotbar = v;
+                    ConfigManager.save();
+                }).build());
         curY += rowH + rowGap;
 
         String[] sizes = {
@@ -3876,7 +4580,10 @@ public class AccordionScreen extends Screen {
         AccordionItem cd = null;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("cooldowns")) { cd = it; break; }
+                if (it.id.equals("cooldowns")) {
+                    cd = it;
+                    break;
+                }
             }
             if (cd != null) break;
         }
@@ -3894,19 +4601,25 @@ public class AccordionScreen extends Screen {
 
         curY = addPosEditorRow(widgets, x, curY, right,
                 () -> ModConfig.comboX, () -> ModConfig.comboY,
-                (nx, ny) -> { ModConfig.comboX = nx; ModConfig.comboY = ny; },
+                (nx, ny) -> {
+                    ModConfig.comboX = nx;
+                    ModConfig.comboY = ny;
+                },
                 10, 185);
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.timer", ModConfig.comboResetTime)),
                 (ModConfig.comboResetTime - 1) / 4.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.timer",
                         ModConfig.comboResetTime)));
             }
-            @Override protected void applyValue() {
-                ModConfig.comboResetTime = 1 + (int)(this.value * 4);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.comboResetTime = 1 + (int) (this.value * 4);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -3940,7 +4653,8 @@ public class AccordionScreen extends Screen {
             try {
                 ModConfig.comboColor = 0xFF000000 | Integer.parseInt(hex, 16);
                 ConfigManager.save();
-            } catch (NumberFormatException ignored) {}
+            } catch (NumberFormatException ignored) {
+            }
         }).bounds(x + 85, curY, 35, 18).build());
 
         int presetX = x + 125;
@@ -3962,7 +4676,10 @@ public class AccordionScreen extends Screen {
         AccordionItem combo = null;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("combo")) { combo = it; break; }
+                if (it.id.equals("combo")) {
+                    combo = it;
+                    break;
+                }
             }
             if (combo != null) break;
         }
@@ -3997,12 +4714,15 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.radius", ModConfig.totemLogRadius)),
                 (ModConfig.totemLogRadius - 5) / 15.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.radius",
                         ModConfig.totemLogRadius)));
             }
-            @Override protected void applyValue() {
-                ModConfig.totemLogRadius = 5 + (int)(this.value * 15.0);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.totemLogRadius = 5 + (int) (this.value * 15.0);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -4012,7 +4732,10 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.sound_notify")), this.font)
                 .pos(x, curY).selected(ModConfig.totemLogSound)
-                .onValueChange((c, v) -> { ModConfig.totemLogSound = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.totemLogSound = v;
+                    ConfigManager.save();
+                })
                 .build());
     }
 
@@ -4062,12 +4785,15 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.delay_ms", ModConfig.autoSwapOpenDelay)),
                 (ModConfig.autoSwapOpenDelay - 50) / 450.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.delay_ms",
                         ModConfig.autoSwapOpenDelay)));
             }
-            @Override protected void applyValue() {
-                ModConfig.autoSwapOpenDelay = 50 + (int)(this.value * 450);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.autoSwapOpenDelay = 50 + (int) (this.value * 450);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -4078,11 +4804,14 @@ public class AccordionScreen extends Screen {
                 Component.literal("Cooldown: " + ModConfig.autoSwapCooldown + " ms"),
                 (ModConfig.autoSwapCooldown - 100) / 1900.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal("Cooldown: " + ModConfig.autoSwapCooldown + " ms"));
             }
-            @Override protected void applyValue() {
-                ModConfig.autoSwapCooldown = 100 + (int)(this.value * 1900);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.autoSwapCooldown = 100 + (int) (this.value * 1900);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -4093,7 +4822,10 @@ public class AccordionScreen extends Screen {
         AccordionItem as = null;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("auto_swap")) { as = it; break; }
+                if (it.id.equals("auto_swap")) {
+                    as = it;
+                    break;
+                }
             }
             if (as != null) break;
         }
@@ -4178,7 +4910,10 @@ public class AccordionScreen extends Screen {
         AccordionItem pl = null;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("pickup_logger")) { pl = it; break; }
+                if (it.id.equals("pickup_logger")) {
+                    pl = it;
+                    break;
+                }
             }
             if (pl != null) break;
         }
@@ -4199,7 +4934,10 @@ public class AccordionScreen extends Screen {
         boolean anyExpanded = false;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.expanded) { anyExpanded = true; break; }
+                if (it.expanded) {
+                    anyExpanded = true;
+                    break;
+                }
             }
             if (anyExpanded) break;
         }
@@ -4496,7 +5234,7 @@ public class AccordionScreen extends Screen {
         if (contentScroll > maxContentScroll) contentScroll = maxContentScroll;
         if (contentScroll < 0) contentScroll = 0;
 
-        int itemY = listTop - contentScroll + (int)sectionSlideOffset;
+        int itemY = listTop - contentScroll + (int) sectionSlideOffset;
         int drawIndex = 0;
         for (AccordionItem item : filteredItems) {
             int itemTop = itemY;
@@ -4542,8 +5280,8 @@ public class AccordionScreen extends Screen {
             graphics.fill(barX, barTop, barX + 3, barBottom, 0x40000000);
 
             float ratio = (float) visibleHeight / totalHeight;
-            int thumbHeight = Math.max(15, (int)(barHeight * ratio));
-            int thumbY = barTop + (int)((float) contentScroll / maxContentScroll * (barHeight - thumbHeight));
+            int thumbHeight = Math.max(15, (int) (barHeight * ratio));
+            int thumbY = barTop + (int) ((float) contentScroll / maxContentScroll * (barHeight - thumbHeight));
 
             graphics.fill(barX, thumbY, barX + 3, thumbY + thumbHeight, ModConfig.guiColor);
         }
@@ -4563,7 +5301,7 @@ public class AccordionScreen extends Screen {
         int visibleTop = Math.max(top, clipTop);
         int visibleBottom = Math.min(bottom, clipBottom);
 
-        int alpha = (int)(0xFF * sectionFadeProgress);
+        int alpha = (int) (0xFF * sectionFadeProgress);
         int bgColor = (alpha << 24) | 0x000000;
         int borderColor = (alpha << 24) | 0x404040;
         int textColor = (alpha << 24) | 0xFFFFFF;
@@ -4626,7 +5364,7 @@ public class AccordionScreen extends Screen {
         int top = itemY;
         int bottom = itemY + itemHeight;
 
-        int alpha = (int)(0xFF * sectionFadeProgress);
+        int alpha = (int) (0xFF * sectionFadeProgress);
         int bgColor = (alpha << 24) | 0x000000;
         int borderColor = (alpha << 24) | 0x404040;
         int textColor = (alpha << 24) | 0xFFFFFF;
@@ -4667,9 +5405,9 @@ public class AccordionScreen extends Screen {
 
         if (isHighlightActive(item)) {
             float progress = getHighlightProgress(item);
-            float pulse = 0.7f + 0.3f * (float)Math.sin(progress * Math.PI * 6);
+            float pulse = 0.7f + 0.3f * (float) Math.sin(progress * Math.PI * 6);
             float fade = 1.0f - progress * 0.5f;
-            int hiAlpha = (int)(0xFF * pulse * fade);
+            int hiAlpha = (int) (0xFF * pulse * fade);
 
             int r = 0xFF;
             int g = 0xFF;
@@ -4693,9 +5431,9 @@ public class AccordionScreen extends Screen {
         int overlayX = panelX + (PANEL_WIDTH - OVERLAY_W) / 2;
         int overlayY = panelY + (PANEL_HEIGHT - OVERLAY_H) / 2;
 
-        int alpha = (int)(0xFF * globalSearchFadeProgress);
-        int bgAlpha = (int)(0xB0 * globalSearchFadeProgress);
-        int panelAlpha = (int)(0xF0 * globalSearchFadeProgress);
+        int alpha = (int) (0xFF * globalSearchFadeProgress);
+        int bgAlpha = (int) (0xB0 * globalSearchFadeProgress);
+        int panelAlpha = (int) (0xF0 * globalSearchFadeProgress);
 
         graphics.fill(0, 0, this.width, this.height, (bgAlpha << 24));
         graphics.fill(overlayX, overlayY, overlayX + OVERLAY_W, overlayY + OVERLAY_H,
@@ -4716,7 +5454,7 @@ public class AccordionScreen extends Screen {
         int overlayX = panelX + (PANEL_WIDTH - OVERLAY_W) / 2;
         int overlayY = panelY + (PANEL_HEIGHT - OVERLAY_H) / 2;
 
-        int alpha = (int)(0xFF * globalSearchFadeProgress);
+        int alpha = (int) (0xFF * globalSearchFadeProgress);
 
         graphics.drawString(this.font,
                 "§7" + LocalizationManager.get("gui.resistancedlc.search.found", globalSearchResults.size()),
@@ -4749,14 +5487,17 @@ public class AccordionScreen extends Screen {
                 if (hovered) {
                     globalSearchHovered = i;
                     graphics.fill(globalSearchListX, rowY, globalSearchListX + globalSearchListW,
-                            rowY + globalSearchRowH, (int)(0x40 * globalSearchFadeProgress) << 24);
+                            rowY + globalSearchRowH, (int) (0x40 * globalSearchFadeProgress) << 24);
                     graphics.fill(globalSearchListX, rowY, globalSearchListX + 3,
                             rowY + globalSearchRowH, (alpha << 24) | (ModConfig.guiColor & 0x00FFFFFF));
                 }
 
                 String sectionName = r[0];
                 for (Section s : sections) {
-                    if (s.id.equals(r[0])) { sectionName = s.name; break; }
+                    if (s.id.equals(r[0])) {
+                        sectionName = s.name;
+                        break;
+                    }
                 }
 
                 String text = "§f" + r[2] + " §7· §e" + sectionName;
@@ -4790,7 +5531,7 @@ public class AccordionScreen extends Screen {
 
         if (overContent && maxContentScroll > 0) {
             int oldScroll = contentScroll;
-            contentScroll -= (int)(verticalAmount * 20);
+            contentScroll -= (int) (verticalAmount * 20);
             if (contentScroll < 0) contentScroll = 0;
             if (contentScroll > maxContentScroll) contentScroll = maxContentScroll;
 
@@ -5015,6 +5756,7 @@ public class AccordionScreen extends Screen {
     public boolean isPauseScreen() {
         return false;
     }
+
     // ===================== AUTO GG =====================
     private void buildAutoGGPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
@@ -5024,14 +5766,20 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.enable")), this.font)
                 .pos(x, curY).selected(ModConfig.autoGgEnabled)
-                .onValueChange((c, v) -> { ModConfig.autoGgEnabled = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.autoGgEnabled = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH + rowGap;
 
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_gg_only_players")), this.font)
                 .pos(x, curY).selected(ModConfig.autoGgOnlyPlayers)
-                .onValueChange((c, v) -> { ModConfig.autoGgOnlyPlayers = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.autoGgOnlyPlayers = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH + rowGap;
 
@@ -5050,12 +5798,15 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_gg_delay", ModConfig.autoGgDelay)),
                 ModConfig.autoGgDelay / 5.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.auto_gg_delay",
                         ModConfig.autoGgDelay)));
             }
-            @Override protected void applyValue() {
-                ModConfig.autoGgDelay = (float)(this.value * 5.0);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.autoGgDelay = (float) (this.value * 5.0);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -5071,13 +5822,19 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.enable")), this.font)
                 .pos(x, curY).selected(ModConfig.strikeRangeEnabled)
-                .onValueChange((c, v) -> { ModConfig.strikeRangeEnabled = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.strikeRangeEnabled = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH + rowGap;
 
         addPosEditorRow(widgets, x, curY, right,
                 () -> ModConfig.strikeRangeX, () -> ModConfig.strikeRangeY,
-                (nx, ny) -> { ModConfig.strikeRangeX = nx; ModConfig.strikeRangeY = ny; },
+                (nx, ny) -> {
+                    ModConfig.strikeRangeX = nx;
+                    ModConfig.strikeRangeY = ny;
+                },
                 10, 300);
         curY += 26 + rowGap;
 
@@ -5085,12 +5842,15 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha", ModConfig.strikeRangeAlpha)),
                 ModConfig.strikeRangeAlpha / 255.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha",
                         ModConfig.strikeRangeAlpha)));
             }
-            @Override protected void applyValue() {
-                ModConfig.strikeRangeAlpha = (int)(this.value * 255);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.strikeRangeAlpha = (int) (this.value * 255);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -5101,12 +5861,15 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.strike_range_show_time", ModConfig.strikeRangeShowTime)),
                 ModConfig.strikeRangeShowTime / 5000.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.strike_range_show_time",
                         ModConfig.strikeRangeShowTime)));
             }
-            @Override protected void applyValue() {
-                ModConfig.strikeRangeShowTime = 200 + (int)(this.value * 4800);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.strikeRangeShowTime = 200 + (int) (this.value * 4800);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -5132,14 +5895,20 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.strike_range_show_blocks")), this.font)
                 .pos(x, curY).selected(ModConfig.strikeRangeShowBlocks)
-                .onValueChange((c, v) -> { ModConfig.strikeRangeShowBlocks = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.strikeRangeShowBlocks = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH;
 
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.strike_range_show_target")), this.font)
                 .pos(x, curY).selected(ModConfig.strikeRangeShowTarget)
-                .onValueChange((c, v) -> { ModConfig.strikeRangeShowTarget = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.strikeRangeShowTarget = v;
+                    ConfigManager.save();
+                })
                 .build());
     }
 
@@ -5147,7 +5916,10 @@ public class AccordionScreen extends Screen {
         AccordionItem sr = null;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("strike_range")) { sr = it; break; }
+                if (it.id.equals("strike_range")) {
+                    sr = it;
+                    break;
+                }
             }
             if (sr != null) break;
         }
@@ -5157,6 +5929,7 @@ public class AccordionScreen extends Screen {
         buildPanelWidgets(sr);
         updateWidgetsVisibility();
     }
+
     private void buildGammaUtilPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
@@ -5165,7 +5938,10 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.gamma_util.enable")), this.font)
                 .pos(x, curY).selected(ModConfig.gammaUtilEnabled)
-                .onValueChange((c, v) -> { ModConfig.gammaUtilEnabled = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.gammaUtilEnabled = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH + rowGap;
 
@@ -5174,17 +5950,21 @@ public class AccordionScreen extends Screen {
                         String.format("%.1f", ModConfig.gammaValue))),
                 (ModConfig.gammaValue - 1.0f) / 99.0f
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.gamma_util.value",
                         String.format("%.1f", ModConfig.gammaValue))));
             }
-            @Override protected void applyValue() {
-                ModConfig.gammaValue = 1.0f + (float)(this.value * 99.0f);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.gammaValue = 1.0f + (float) (this.value * 99.0f);
                 this.updateMessage();
                 ConfigManager.save();
             }
         });
     }
+
     // ===================== MUSIC PLAYER =====================
     private int calcMusicPlayerHeight() {
         int base = 18 + 10 * 28;
@@ -5207,7 +5987,10 @@ public class AccordionScreen extends Screen {
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.checkbox", "Music Player")),
                         this.font)
                 .pos(x, curY).selected(ModConfig.musicPlayerEnabled)
-                .onValueChange((c, v) -> { ModConfig.musicPlayerEnabled = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.musicPlayerEnabled = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH + rowGap;
 
@@ -5236,14 +6019,17 @@ public class AccordionScreen extends Screen {
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.music_volume",
-                        (int)(ModConfig.musicVolume * 100))),
+                        (int) (ModConfig.musicVolume * 100))),
                 ModConfig.musicVolume
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.music_volume",
-                        (int)(ModConfig.musicVolume * 100))));
+                        (int) (ModConfig.musicVolume * 100))));
             }
-            @Override protected void applyValue() {
+
+            @Override
+            protected void applyValue() {
                 MusicPlayerManager.setVolume((float) this.value);
                 this.updateMessage();
             }
@@ -5269,7 +6055,9 @@ public class AccordionScreen extends Screen {
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.music_shuffle")),
                         this.font)
                 .pos(x, curY).selected(ModConfig.musicShuffle)
-                .onValueChange((c, v) -> { MusicPlayerManager.toggleShuffle(); })
+                .onValueChange((c, v) -> {
+                    MusicPlayerManager.toggleShuffle();
+                })
                 .build());
         curY += rowH + rowGap;
 
@@ -5277,7 +6065,10 @@ public class AccordionScreen extends Screen {
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.music_show_hud")),
                         this.font)
                 .pos(x, curY).selected(ModConfig.musicShowHud)
-                .onValueChange((c, v) -> { ModConfig.musicShowHud = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.musicShowHud = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH + rowGap;
 
@@ -5285,7 +6076,10 @@ public class AccordionScreen extends Screen {
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.music_autoplay")),
                         this.font)
                 .pos(x, curY).selected(ModConfig.musicAutoPlay)
-                .onValueChange((c, v) -> { ModConfig.musicAutoPlay = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.musicAutoPlay = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH + rowGap;
 
@@ -5311,7 +6105,8 @@ public class AccordionScreen extends Screen {
         } else {
             infoText = "§7" + LocalizationManager.get("gui.resistancedlc.panel.music_nothing_playing");
         }
-        Button infoBtn = Button.builder(Component.literal(infoText), (b) -> {})
+        Button infoBtn = Button.builder(Component.literal(infoText), (b) -> {
+                })
                 .bounds(x, curY, w, 18).build();
         infoBtn.active = false;
         widgets.add(infoBtn);
@@ -5322,7 +6117,8 @@ public class AccordionScreen extends Screen {
             Button headerBtn = Button.builder(
                             Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.music_tracks")
                                     + " (§f" + tracks.size() + "§e):"),
-                            (b) -> {})
+                            (b) -> {
+                            })
                     .bounds(x, curY, w, 18).build();
             headerBtn.active = false;
             widgets.add(headerBtn);
@@ -5348,14 +6144,16 @@ public class AccordionScreen extends Screen {
             if (tracks.size() > 5) {
                 Button moreBtn = Button.builder(
                         Component.literal("§7... §e" + (tracks.size() - 5) + " §7ещё"),
-                        (b) -> {}).bounds(x, curY, w, 18).build();
+                        (b) -> {
+                        }).bounds(x, curY, w, 18).build();
                 moreBtn.active = false;
                 widgets.add(moreBtn);
             }
         } else {
             Button emptyBtn = Button.builder(
                     Component.literal("§7" + LocalizationManager.get("gui.resistancedlc.panel.music_empty")),
-                    (b) -> {}).bounds(x, curY, w, 18).build();
+                    (b) -> {
+                    }).bounds(x, curY, w, 18).build();
             emptyBtn.active = false;
             widgets.add(emptyBtn);
         }
@@ -5365,7 +6163,10 @@ public class AccordionScreen extends Screen {
         AccordionItem mp = null;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("music_player")) { mp = it; break; }
+                if (it.id.equals("music_player")) {
+                    mp = it;
+                    break;
+                }
             }
             if (mp != null) break;
         }
@@ -5377,6 +6178,7 @@ public class AccordionScreen extends Screen {
         buildPanelWidgets(mp);
         updateWidgetsVisibility();
     }
+
     // ===================== EASTER EGG (KILLAURA) =====================
     private void buildKillAuraPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
@@ -5394,13 +6196,15 @@ public class AccordionScreen extends Screen {
         String defaultHint = LocalizationManager.get("gui.resistancedlc.panel.killaura_hint");
         Button hintBtn = Button.builder(
                 Component.literal("§7" + defaultHint),
-                (b) -> {}
+                (b) -> {
+                }
         ).bounds(x, curY, w, 18).build();
         hintBtn.active = false;
         widgets.add(hintBtn);
 
         EasterEggManager.registerHintButton(hintBtn);
     }
+
     // ===================== TARGET ESP =====================
     private void buildTargetEspPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
@@ -5411,7 +6215,10 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.enable")), this.font)
                 .pos(x, curY).selected(ModConfig.targetEspEnabled)
-                .onValueChange((c, v) -> { ModConfig.targetEspEnabled = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.targetEspEnabled = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH + rowGap;
 
@@ -5425,7 +6232,10 @@ public class AccordionScreen extends Screen {
         String[] modeIds = {"crystals", "cubes", "ring", "ghosts"};
         int foundIdx = 0;
         for (int i = 0; i < modeIds.length; i++) {
-            if (modeIds[i].equals(ModConfig.targetEspVariant)) { foundIdx = i; break; }
+            if (modeIds[i].equals(ModConfig.targetEspVariant)) {
+                foundIdx = i;
+                break;
+            }
         }
         final int currentIdx = foundIdx;   // ← final для лямбды
         widgets.add(Button.builder(
@@ -5451,7 +6261,8 @@ public class AccordionScreen extends Screen {
             try {
                 ModConfig.targetEspColor = 0xFF000000 | Integer.parseInt(hex, 16);
                 ConfigManager.save();
-            } catch (NumberFormatException ignored) {}
+            } catch (NumberFormatException ignored) {
+            }
         }).bounds(x + 85, curY, 35, 18).build());
 
         int presetX = x + 125;
@@ -5475,12 +6286,15 @@ public class AccordionScreen extends Screen {
                         String.format("%.2f", ModConfig.targetEspSize))),
                 (ModConfig.targetEspSize - 0.5f) / 1.5f
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.size",
                         String.format("%.2f", ModConfig.targetEspSize))));
             }
-            @Override protected void applyValue() {
-                ModConfig.targetEspSize = 0.5f + (float)(this.value * 1.5f);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.targetEspSize = 0.5f + (float) (this.value * 1.5f);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -5493,12 +6307,15 @@ public class AccordionScreen extends Screen {
                         String.format("%.2f", ModConfig.targetEspRotationSpeed))),
                 ModConfig.targetEspRotationSpeed / 3.0f
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.rotation",
                         String.format("%.2f", ModConfig.targetEspRotationSpeed))));
             }
-            @Override protected void applyValue() {
-                ModConfig.targetEspRotationSpeed = (float)(this.value * 3.0f);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.targetEspRotationSpeed = (float) (this.value * 3.0f);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -5511,12 +6328,15 @@ public class AccordionScreen extends Screen {
                         String.format("%.2f", ModConfig.targetEspPulse))),
                 ModConfig.targetEspPulse / 0.5f
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.pulse",
                         String.format("%.2f", ModConfig.targetEspPulse))));
             }
-            @Override protected void applyValue() {
-                ModConfig.targetEspPulse = (float)(this.value * 0.5f);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.targetEspPulse = (float) (this.value * 0.5f);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -5528,12 +6348,15 @@ public class AccordionScreen extends Screen {
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.alpha", ModConfig.targetEspAlpha)),
                 ModConfig.targetEspAlpha / 255.0
         ) {
-            @Override protected void updateMessage() {
+            @Override
+            protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.alpha",
                         ModConfig.targetEspAlpha)));
             }
-            @Override protected void applyValue() {
-                ModConfig.targetEspAlpha = (int)(this.value * 255);
+
+            @Override
+            protected void applyValue() {
+                ModConfig.targetEspAlpha = (int) (this.value * 255);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -5544,7 +6367,10 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.hide_hitboxes")), this.font)
                 .pos(x, curY).selected(ModConfig.targetEspHideHitboxes)
-                .onValueChange((c, v) -> { ModConfig.targetEspHideHitboxes = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.targetEspHideHitboxes = v;
+                    ConfigManager.save();
+                })
                 .build());
         curY += rowH + rowGap;
 
@@ -5552,7 +6378,10 @@ public class AccordionScreen extends Screen {
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.hurt")), this.font)
                 .pos(x, curY).selected(ModConfig.targetEspHurt)
-                .onValueChange((c, v) -> { ModConfig.targetEspHurt = v; ConfigManager.save(); })
+                .onValueChange((c, v) -> {
+                    ModConfig.targetEspHurt = v;
+                    ConfigManager.save();
+                })
                 .build());
     }
 
@@ -5561,7 +6390,10 @@ public class AccordionScreen extends Screen {
         AccordionItem te = null;
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
-                if (it.id.equals("target_esp")) { te = it; break; }
+                if (it.id.equals("target_esp")) {
+                    te = it;
+                    break;
+                }
             }
             if (te != null) break;
         }
@@ -5569,6 +6401,162 @@ public class AccordionScreen extends Screen {
 
         clearPanelWidgets(te);
         buildPanelWidgets(te);
+        updateWidgetsVisibility();
+    }
+
+    // ===================== JUMP CIRCLES =====================
+    private void buildJumpCirclesPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        // ===== Style =====
+        String[] styles = {"circle", "hexagon", "portal"};
+        String[] styleNames = {
+                LocalizationManager.get("gui.resistancedlc.panel.jump_circles.style_circle"),
+                LocalizationManager.get("gui.resistancedlc.panel.jump_circles.style_hexagon"),
+                LocalizationManager.get("gui.resistancedlc.panel.jump_circles.style_portal")
+        };
+        int styleIdx = 0;
+        for (int i = 0; i < styles.length; i++) {
+            if (styles[i].equals(ModConfig.jumpCirclesStyle)) {
+                styleIdx = i;
+                break;
+            }
+        }
+        final int currentStyleIdx = styleIdx;
+        widgets.add(Button.builder(
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.jump_circles.style")
+                        + ": " + styleNames[currentStyleIdx]),
+                (b) -> {
+                    int next = (currentStyleIdx + 1) % styles.length;
+                    ModConfig.jumpCirclesStyle = styles[next];
+                    ConfigManager.save();
+                    rebuildJumpCirclesPanel();
+                }
+        ).bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        // ===== Alpha =====
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.jump_circles.alpha")
+                        + ModConfig.jumpCirclesAlpha),
+                ModConfig.jumpCirclesAlpha / 255.0
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.jump_circles.alpha")
+                        + ModConfig.jumpCirclesAlpha));
+            }
+
+            @Override
+            protected void applyValue() {
+                ModConfig.jumpCirclesAlpha = (int) (this.value * 255);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // ===== Brightness =====
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.jump_circles.brightness")
+                        + String.format(java.util.Locale.ROOT, "%.2f", ModConfig.jumpCirclesBrightness)),
+                ModConfig.jumpCirclesBrightness / 2.0f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.jump_circles.brightness")
+                        + String.format(java.util.Locale.ROOT, "%.2f", ModConfig.jumpCirclesBrightness)));
+            }
+
+            @Override
+            protected void applyValue() {
+                ModConfig.jumpCirclesBrightness = (float) (this.value * 2.0f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // ===== Scale =====
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.jump_circles.scale")
+                        + String.format(java.util.Locale.ROOT, "%.2f", ModConfig.jumpCirclesScale)),
+                (ModConfig.jumpCirclesScale - 0.5f) / 1.5f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.jump_circles.scale")
+                        + String.format(java.util.Locale.ROOT, "%.2f", ModConfig.jumpCirclesScale)));
+            }
+
+            @Override
+            protected void applyValue() {
+                ModConfig.jumpCirclesScale = 0.5f + (float) (this.value * 1.5f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // ===== LiveTime =====
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.jump_circles.live_time")
+                        + ModConfig.jumpCirclesLiveTime + "s"),
+                (ModConfig.jumpCirclesLiveTime - 1) / 4.0
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.jump_circles.live_time")
+                        + ModConfig.jumpCirclesLiveTime + "s"));
+            }
+
+            @Override
+            protected void applyValue() {
+                ModConfig.jumpCirclesLiveTime = 1 + (int) (this.value * 4);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // ===== SpinSpeed =====
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.jump_circles.spin_speed")
+                        + String.format(java.util.Locale.ROOT, "%.2f", ModConfig.jumpCirclesSpinSpeed)),
+                (ModConfig.jumpCirclesSpinSpeed + 3.0f) / 6.0f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.jump_circles.spin_speed")
+                        + String.format(java.util.Locale.ROOT, "%.2f", ModConfig.jumpCirclesSpinSpeed)));
+            }
+
+            @Override
+            protected void applyValue() {
+                ModConfig.jumpCirclesSpinSpeed = -3.0f + (float) (this.value * 6.0f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // ===== FadeOut =====
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.jump_circles.fade_out")), this.font)
+                .pos(x, curY).selected(ModConfig.jumpCirclesFadeOut)
+                .onValueChange((c, v) -> {
+                    ModConfig.jumpCirclesFadeOut = v;
+                    ConfigManager.save();
+                })
+                .build());
+    }
+    private void rebuildJumpCirclesPanel() {
+        AccordionItem item = findItemById("jump_circles");
+        if (item == null || !item.expanded) return;
+        clearPanelWidgets(item);
+        buildPanelWidgets(item);
         updateWidgetsVisibility();
     }
 }

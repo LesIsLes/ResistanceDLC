@@ -4,7 +4,7 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "AbstractContainerScreenAccessor",
-    "AspectRatioMixin",
+    "FOVMixin",
     "AutoGGMixin",
     "AutoToolMixin",
     "CooldownsMixin",
@@ -24,7 +24,9 @@
     "PvPSafeCommandMixin",
     "PvPSafeHurtMixin",
     "TotemLogMixin",
-    "FriendListMixin"
+    "FriendListMixin",
+    "AspectRatioMixin",
+    "BetterBossBarMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -13,6 +13,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+import com.resistancedlc.config.AspectRatioPreset;
+import com.resistancedlc.config.BossBarStyle;
 
 public class ConfigManager {
 
@@ -150,10 +152,24 @@ public class ConfigManager {
             json.addProperty("zoomFactor", ModConfig.zoomFactor);
             json.addProperty("zoomSmoothness", ModConfig.zoomSmoothness);
 
-            // === ASPECT RATIO ===
+            // === FOV ===
+            json.addProperty("fovEnabled", ModConfig.fovEnabled);
+            json.addProperty("fovMultiplier", ModConfig.fovMultiplier);
+
+// === ASPECT RATIO ===
             json.addProperty("aspectRatioEnabled", ModConfig.aspectRatioEnabled);
-            json.addProperty("aspectRatio", ModConfig.aspectRatio);
-            json.addProperty("aspectRatioRussian", ModConfig.aspectRatioRussian);
+            json.addProperty("aspectRatioUsePreset", ModConfig.aspectRatioUsePreset);
+            json.addProperty("aspectRatioFactor", ModConfig.aspectRatioFactor);
+            json.addProperty("aspectRatioPreset", ModConfig.aspectRatioPreset.name());
+
+// === BETTER BOSSBAR ===
+            json.addProperty("betterBossBarEnabled", ModConfig.betterBossBarEnabled);
+            json.addProperty("betterBossBarStyle", ModConfig.betterBossBarStyle.name());
+            json.addProperty("betterBossBarBgColor", ModConfig.betterBossBarBgColor);
+            json.addProperty("betterBossBarEmptyColor", ModConfig.betterBossBarEmptyColor);
+            json.addProperty("betterBossBarFillColor1", ModConfig.betterBossBarFillColor1);
+            json.addProperty("betterBossBarFillColor2", ModConfig.betterBossBarFillColor2);
+            json.addProperty("betterBossBarTextColor", ModConfig.betterBossBarTextColor);
 
             // === CUSTOM HIT SOUNDS ===
             json.addProperty("customHitSoundsEnabled", ModConfig.customHitSoundsEnabled);
@@ -409,6 +425,16 @@ public class ConfigManager {
             json.addProperty("killStreakFontSize", ModConfig.killStreakFontSize);
             json.addProperty("killStreakShowTimer", ModConfig.killStreakShowTimer);
 
+            // === JUMP CIRCLES ===
+            json.addProperty("jumpCirclesEnabled", ModConfig.jumpCirclesEnabled);
+            json.addProperty("jumpCirclesStyle", ModConfig.jumpCirclesStyle);
+            json.addProperty("jumpCirclesAlpha", ModConfig.jumpCirclesAlpha);
+            json.addProperty("jumpCirclesBrightness", ModConfig.jumpCirclesBrightness);
+            json.addProperty("jumpCirclesScale", ModConfig.jumpCirclesScale);
+            json.addProperty("jumpCirclesLiveTime", ModConfig.jumpCirclesLiveTime);
+            json.addProperty("jumpCirclesSpinSpeed", ModConfig.jumpCirclesSpinSpeed);
+            json.addProperty("jumpCirclesFadeOut", ModConfig.jumpCirclesFadeOut);
+
             Path file = CONFIG_DIR.resolve(name + ".json");
             synchronized (GSON) {
                 Files.writeString(file, GSON.toJson(json));
@@ -540,10 +566,30 @@ public class ConfigManager {
             ModConfig.zoomFactor = getFloat(json, "zoomFactor", ModConfig.zoomFactor);
             ModConfig.zoomSmoothness = getFloat(json, "zoomSmoothness", ModConfig.zoomSmoothness);
 
-            // === ASPECT RATIO ===
+            // === FOV ===
+            ModConfig.fovEnabled = getBool(json, "fovEnabled", ModConfig.fovEnabled);
+            ModConfig.fovMultiplier = getFloat(json, "fovMultiplier", ModConfig.fovMultiplier);
+
+// === ASPECT RATIO ===
             ModConfig.aspectRatioEnabled = getBool(json, "aspectRatioEnabled", ModConfig.aspectRatioEnabled);
-            ModConfig.aspectRatio = getFloat(json, "aspectRatio", ModConfig.aspectRatio);
-            ModConfig.aspectRatioRussian = getBool(json, "aspectRatioRussian", ModConfig.aspectRatioRussian);
+            ModConfig.aspectRatioUsePreset = getBool(json, "aspectRatioUsePreset", ModConfig.aspectRatioUsePreset);
+            ModConfig.aspectRatioFactor = getFloat(json, "aspectRatioFactor", ModConfig.aspectRatioFactor);
+            try {
+                ModConfig.aspectRatioPreset = AspectRatioPreset.valueOf(
+                        getString(json, "aspectRatioPreset", ModConfig.aspectRatioPreset.name()));
+            } catch (IllegalArgumentException ignored) {}
+
+// === BETTER BOSSBAR ===
+            ModConfig.betterBossBarEnabled = getBool(json, "betterBossBarEnabled", ModConfig.betterBossBarEnabled);
+            try {
+                ModConfig.betterBossBarStyle = BossBarStyle.valueOf(
+                        getString(json, "betterBossBarStyle", ModConfig.betterBossBarStyle.name()));
+            } catch (IllegalArgumentException ignored) {}
+            ModConfig.betterBossBarBgColor = getInt(json, "betterBossBarBgColor", ModConfig.betterBossBarBgColor);
+            ModConfig.betterBossBarEmptyColor = getInt(json, "betterBossBarEmptyColor", ModConfig.betterBossBarEmptyColor);
+            ModConfig.betterBossBarFillColor1 = getInt(json, "betterBossBarFillColor1", ModConfig.betterBossBarFillColor1);
+            ModConfig.betterBossBarFillColor2 = getInt(json, "betterBossBarFillColor2", ModConfig.betterBossBarFillColor2);
+            ModConfig.betterBossBarTextColor = getInt(json, "betterBossBarTextColor", ModConfig.betterBossBarTextColor);
 
             // === CUSTOM HIT SOUNDS ===
             ModConfig.customHitSoundsEnabled = getBool(json, "customHitSoundsEnabled", ModConfig.customHitSoundsEnabled);
@@ -798,6 +844,16 @@ public class ConfigManager {
             ModConfig.killStreakAlpha = getInt(json, "killStreakAlpha", ModConfig.killStreakAlpha);
             ModConfig.killStreakFontSize = getInt(json, "killStreakFontSize", ModConfig.killStreakFontSize);
             ModConfig.killStreakShowTimer = getBool(json, "killStreakShowTimer", ModConfig.killStreakShowTimer);
+
+            // === JUMP CIRCLES ===
+            ModConfig.jumpCirclesEnabled = getBool(json, "jumpCirclesEnabled", ModConfig.jumpCirclesEnabled);
+            ModConfig.jumpCirclesStyle = getString(json, "jumpCirclesStyle", ModConfig.jumpCirclesStyle);
+            ModConfig.jumpCirclesAlpha = getInt(json, "jumpCirclesAlpha", ModConfig.jumpCirclesAlpha);
+            ModConfig.jumpCirclesBrightness = getFloat(json, "jumpCirclesBrightness", ModConfig.jumpCirclesBrightness);
+            ModConfig.jumpCirclesScale = getFloat(json, "jumpCirclesScale", ModConfig.jumpCirclesScale);
+            ModConfig.jumpCirclesLiveTime = getInt(json, "jumpCirclesLiveTime", ModConfig.jumpCirclesLiveTime);
+            ModConfig.jumpCirclesSpinSpeed = getFloat(json, "jumpCirclesSpinSpeed", ModConfig.jumpCirclesSpinSpeed);
+            ModConfig.jumpCirclesFadeOut = getBool(json, "jumpCirclesFadeOut", ModConfig.jumpCirclesFadeOut);
             return true;
 
         } catch (Exception e) {
