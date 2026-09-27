@@ -1,6 +1,6 @@
 # Resistance DLC
 
-A lightweight visual client mod for Minecraft **1.21.11** (Fabric) with **42+ features** across 6 sections: HUD, PvP, PvE, Visual, Misc, and Music.
+A lightweight visual client mod for Minecraft **1.21.11** (Fabric) with **45+ features** across 6 sections: HUD, PvP, PvE, Visual, Misc, and Music.
 
 ---
 
@@ -15,7 +15,7 @@ A lightweight visual client mod for Minecraft **1.21.11** (Fabric) with **42+ fe
 
 ### 🎯 PvP Tools
 - **PvPSafe** — blocks `/hub`, `/logout`, `/suicide` during combat
-- **AutoGG** — auto-sends "GG" after kills
+- **AutoGG** — auto-sends "GG" after kills (via StatsTracker chat parsing)
 - **AutoSwap** — instant offhand ↔ inventory swap
 - **FastExp** — fast XP bottle usage
 - **ShiftTap** — crits via shift
@@ -24,7 +24,7 @@ A lightweight visual client mod for Minecraft **1.21.11** (Fabric) with **42+ fe
 - **PickUpLogger** — tracks valuable pickups
 - **AutoTPAccept** — auto-accepts `/tpa` from friends or all players
 - **StatsTracker** — K/D counter parsed from chat (displayed in GUI)
-- **KillStreak** — consecutive kill counter + custom sounds at 2, 3, 4, 5, 6, 7, 10 kills
+- **KillStreak** — consecutive kill counter + custom sounds at 1, 2, 3, 4, 5, 8, 10 kills
 
 ### 🎨 Visual
 - **Zoom** — smooth zoom with keybind
@@ -38,6 +38,7 @@ A lightweight visual client mod for Minecraft **1.21.11** (Fabric) with **42+ fe
 - **Item Physics** — items lie flat
 - **Predictions** — projectile trajectory (bow, crossbow, multishot, snowball, potion, trident)
 - **TargetESP** — 4 variants (Crystals, Cubes, Ring, Ghosts)
+- **Jump Circles** — rings/hexagons/stars under feet on jump (line-based, no textures)
 - **EnchantHighlight** — highlight selected enchants in item tooltips with custom color + bold
 - **GammaUtil** — brightness above vanilla limit
 
@@ -105,7 +106,7 @@ Supported filenames (by streak level):
 - `killstreak_8.ogg`
 - `killstreak_10.ogg`
 
-**No built-in sounds included** - the mod does not ship with any audio files. If a file is missing, the sound is simply skipped. You can use any OGG Vorbis files you have the rights to.
+**No built-in sounds included** — the mod does not ship with any audio files. If a file is missing, the sound is simply skipped. You can use any OGG Vorbis files you have the rights to.
 
 ### Music Player
 

@@ -410,6 +410,30 @@ public class AccordionScreen extends Screen {
         return (int) (item.contentHeight * eased);
     }
 
+    /**
+     * Пересчитывает totalHeight / maxContentScroll на основе ФИНАЛЬНЫХ
+     * contentHeight (не анимированных) — чтобы скролл не прыгал
+     * при анимации раскрытия/закрытия панелей.
+     *
+     * ВАЖНО: вызывать после КАЖДОГО rebuild/expand/collapse,
+     * чтобы следующий render() не зажал contentScroll неожиданно.
+     */
+    private void updateContentMetrics() {
+        int itemHeight = 26;
+        int gap = 4;
+        int totalHeight = 0;
+        for (AccordionItem item : filteredItems) {
+            totalHeight += itemHeight + gap;
+            if (item.expanded) {
+                totalHeight += item.contentHeight + gap;
+            }
+        }
+        int visibleHeight = getListBottom() - getListTop();
+        maxContentScroll = Math.max(0, totalHeight - visibleHeight);
+        if (contentScroll > maxContentScroll) contentScroll = maxContentScroll;
+        if (contentScroll < 0) contentScroll = 0;
+    }
+
     // ===================== ПОИСК =====================
     private boolean matchesSearch(AccordionItem item) {
         if (searchField == null) return true;
@@ -1452,6 +1476,7 @@ public class AccordionScreen extends Screen {
         clearAllPanelWidgets();
         if (globalSearchOpen) return;
         updateFilteredItems();
+        updateContentMetrics();
         for (AccordionItem item : filteredItems) {
             if (item.expanded) {
                 buildPanelWidgets(item);
@@ -1997,7 +2022,8 @@ public class AccordionScreen extends Screen {
         if (extra == null || !extra.expanded) return;
 
         clearPanelWidgets(extra);
-        buildPanelWidgets(extra);
+        updateContentMetrics();           // ← сначала метрики
+        buildPanelWidgets(extra);         // ← потом виджеты с правильным Y
         updateWidgetsVisibility();
     }
 
@@ -2101,6 +2127,7 @@ public class AccordionScreen extends Screen {
 
         clearPanelWidgets(chs);
         buildPanelWidgets(chs);
+        updateContentMetrics();
         updateWidgetsVisibility();
     }
 
@@ -2303,6 +2330,7 @@ public class AccordionScreen extends Screen {
 
         clearPanelWidgets(tm);
         buildPanelWidgets(tm);
+        updateContentMetrics();
         updateWidgetsVisibility();
     }
 
@@ -2857,57 +2885,32 @@ public class AccordionScreen extends Screen {
         }
         if (fl == null || !fl.expanded) return;
 
-        // 1) СНАЧАЛА пересчитываем contentHeight
         fl.contentHeight = calcFriendListHeight();
-
-        // 2) Сбрасываем скролл
         contentScroll = 0;
-
-        // 3) Очищаем СТАРЫЕ виджеты
         clearPanelWidgets(fl);
-
-        // 4) Строим заново с новым contentHeight
         buildPanelWidgets(fl);
-
-        // 5) Обновляем видимость
         updateWidgetsVisibility();
     }
 
     private int calcFriendListHeight() {
-        // Панель FriendList содержит:
-        //   1) Показывать HUD-виджет (checkbox) — 22 + 6 = 28
-        //   2) Прозрачность HUD (slider) — 22 + 6 = 28
-        //   3) Pos editor (addPosEditorRow) — 20 + 6 = 26
-        //   4) Поле ввода + кнопка "+" (EditBox) — 22 + 6 = 28
-        //   5) Подсвечивать в чате (checkbox) — 22
-        //   6) Подсвечивать в табе (checkbox) — 22 + 6 = 28
-        //   7) Очистить список (button) — 20 + 6 = 26
-        //
-        // Итого управление: 28 + 28 + 26 + 28 + 22 + 28 + 26 = 186
-        // + заголовок раздела (18) = 204
         int base = 18 + 186;
-
-        // Список друзей
         int count = FriendListManager.getFriends().size();
         if (count > 0) {
-            base += 22;              // заголовок "Friends (N):"
-            base += 18 + 4;          // gap под заголовком
-            base += count * 20;      // каждый друг (Button 18 + gap 2)
+            base += 22;
+            base += 18 + 4;
+            base += count * 20;
         }
-
         return base;
     }
 
     private int calcEnchantHighlightHeight() {
-        // 2 строки управления (add + clear) + список
         int base = 18 + 2 * 28;
         int count = EnchantmentHighlightManager.getRules().size();
         if (count > 0) {
-            base += 22;              // заголовок
+            base += 22;
             base += Math.min(count, 10) * 20;
             if (count > 10) base += 22;
         }
-        // Место под раскрытую настройку (если activeEnchantSetting >= 0)
         if (activeEnchantSetting >= 0) {
             base += 4 * 28;
         }
@@ -2924,7 +2927,6 @@ public class AccordionScreen extends Screen {
         int rowH = 22, rowGap = 6;
         int curY = y;
 
-        // Выбор: только от друзей / от всех
         String modeText = ModConfig.autoTpAcceptOnlyFriends
                 ? LocalizationManager.get("gui.resistancedlc.panel.auto_tp_accept.only_friends")
                 : LocalizationManager.get("gui.resistancedlc.panel.auto_tp_accept.from_all");
@@ -2973,6 +2975,7 @@ public class AccordionScreen extends Screen {
 
         clearPanelWidgets(item);
         buildPanelWidgets(item);
+        updateContentMetrics();
         updateWidgetsVisibility();
     }
 
@@ -2982,7 +2985,6 @@ public class AccordionScreen extends Screen {
         int rowH = 22, rowGap = 6;
         int curY = y;
 
-        // Отображение K/D
         Button kdBtn = Button.builder(
                 Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.stats_tracker.kd")
                         + " §f" + StatsTrackerManager.formatKd()),
@@ -3037,6 +3039,7 @@ public class AccordionScreen extends Screen {
 
         clearPanelWidgets(item);
         buildPanelWidgets(item);
+        updateContentMetrics();
         updateWidgetsVisibility();
     }
 
@@ -3120,7 +3123,6 @@ public class AccordionScreen extends Screen {
                 },
                 -1, 10);
 
-        // Color presets
         EditBox hexField = new EditBox(this.font, x, curY, 80, 18,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hex")));
         hexField.setMaxLength(7);
@@ -3166,6 +3168,7 @@ public class AccordionScreen extends Screen {
 
         clearPanelWidgets(item);
         buildPanelWidgets(item);
+        updateContentMetrics();
         updateWidgetsVisibility();
     }
 
@@ -3175,7 +3178,6 @@ public class AccordionScreen extends Screen {
         int rowH = 22, rowGap = 6;
         int curY = y;
 
-        // Поле ввода ключа + кнопка +
         EditBox keyField = new EditBox(this.font, x, curY, w - 25, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.enchant_highlight.hint")));
         keyField.setMaxLength(30);
@@ -3194,7 +3196,6 @@ public class AccordionScreen extends Screen {
         }).bounds(x + w - 22, curY, 22, 20).build());
         curY += rowH + rowGap;
 
-        // Кнопка "Очистить"
         widgets.add(Button.builder(
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.enchant_highlight.clear")),
                 (b) -> {
@@ -3224,7 +3225,6 @@ public class AccordionScreen extends Screen {
             final int idx = i;
             final EnchantmentHighlightManager.Rule rule = rules.get(i);
 
-            // Чекбокс вкл/выкл (это НЕ "Включить функцию", это вкл/выкл конкретного чара)
             Checkbox cb = Checkbox.builder(Component.literal("§e" + rule.key), this.font)
                     .pos(x, curY)
                     .selected(true)
@@ -3238,7 +3238,6 @@ public class AccordionScreen extends Screen {
                     .build();
             widgets.add(cb);
 
-            // Кнопка ⚙ — раскрыть настройки
             widgets.add(Button.builder(Component.literal("§6" + LocalizationManager.get("gui.resistancedlc.panel.gear")), (b) -> {
                 activeEnchantSetting = (activeEnchantSetting == idx) ? -1 : idx;
                 rebuildEnchantHighlightPanel();
@@ -3257,7 +3256,6 @@ public class AccordionScreen extends Screen {
             curY += 18 + 4;
         }
 
-        // Раскрытая настройка конкретного чара
         if (activeEnchantSetting >= 0 && activeEnchantSetting < rules.size()) {
             EnchantmentHighlightManager.Rule active = rules.get(activeEnchantSetting);
 
@@ -3271,7 +3269,6 @@ public class AccordionScreen extends Screen {
             widgets.add(titleBtn);
             curY += 18 + 4;
 
-            // Ключ
             EditBox keyEdit = new EditBox(this.font, x, curY, w, 18,
                     Component.literal(LocalizationManager.get("gui.resistancedlc.panel.enchant_highlight.key")));
             keyEdit.setMaxLength(30);
@@ -3279,7 +3276,6 @@ public class AccordionScreen extends Screen {
             widgets.add(keyEdit);
             curY += 18 + 4;
 
-            // Bold + сохранить
             Checkbox boldCb = Checkbox.builder(
                             Component.literal(LocalizationManager.get("gui.resistancedlc.panel.enchant_highlight.bold")), this.font)
                     .pos(x, curY).selected(active.bold)
@@ -3294,7 +3290,6 @@ public class AccordionScreen extends Screen {
                     (b) -> {
                         String newKey = keyEdit.getValue().trim();
                         if (!newKey.isEmpty()) {
-                            // Удаляем старый, добавляем новый
                             EnchantmentHighlightManager.removeRule(active.key);
                             EnchantmentHighlightManager.addRule(newKey, active.color, boldCb.selected());
                             activeEnchantSetting = -1;
@@ -3305,7 +3300,6 @@ public class AccordionScreen extends Screen {
             ).bounds(x, curY, w, 18).build());
             curY += 18 + 4;
 
-            // Цвет — presets R/G/B/W
             int presetX = x;
             int presetW = (w - 9) / 4;
             String[] pn = {"R", "G", "B", "W"};
@@ -3349,7 +3343,7 @@ public class AccordionScreen extends Screen {
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.kill_streak.volume",
-                        ModConfig.killStreakSoundVolume)),   // ← OK — Float
+                        ModConfig.killStreakSoundVolume)),
                 ModConfig.killStreakSoundVolume
         ) {
             @Override
@@ -3555,6 +3549,7 @@ public class AccordionScreen extends Screen {
 
         clearPanelWidgets(ch);
         buildPanelWidgets(ch);
+        updateContentMetrics();
         updateWidgetsVisibility();
     }
 
@@ -3623,7 +3618,6 @@ public class AccordionScreen extends Screen {
     }
 
     // ===================== FOV =====================
-    // ===================== FOV =====================
     private void buildFovPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
@@ -3670,9 +3664,6 @@ public class AccordionScreen extends Screen {
         }).bounds(x + (btnW + 4) * 3, curY, btnW, 20).build());
     }
 
-    /**
-     * Собирает "FOV: 1.2x" без String.format — конкатенация + Locale.ROOT.
-     */
     private static String buildFovLabel() {
         String value = String.format(java.util.Locale.ROOT, "%.1f", ModConfig.fovMultiplier);
         return LocalizationManager.get("gui.resistancedlc.panel.fov_prefix") + " " + value + "x";
@@ -3683,6 +3674,7 @@ public class AccordionScreen extends Screen {
         if (item == null || !item.expanded) return;
         clearPanelWidgets(item);
         buildPanelWidgets(item);
+        updateContentMetrics();
         updateWidgetsVisibility();
     }
 
@@ -3748,6 +3740,7 @@ public class AccordionScreen extends Screen {
         if (item == null || !item.expanded) return;
         clearPanelWidgets(item);
         buildPanelWidgets(item);
+        updateContentMetrics();
         updateWidgetsVisibility();
     }
 
@@ -3813,6 +3806,7 @@ public class AccordionScreen extends Screen {
         if (item == null || !item.expanded) return;
         clearPanelWidgets(item);
         buildPanelWidgets(item);
+        updateContentMetrics();
         updateWidgetsVisibility();
     }
 
@@ -3939,11 +3933,9 @@ public class AccordionScreen extends Screen {
 
     // ===================== WAYPOINTS =====================
     private int calcWaypointsHeight() {
-        // 4 строки: enable, max, add, clear
         int base = 18 + 4 * 28;
         int waypointsCount = WaypointManager.getWaypoints().size();
         if (waypointsCount > 0) {
-            // header + waypoints * row
             base += 22;
             base += waypointsCount * 20;
         }
@@ -4156,6 +4148,7 @@ public class AccordionScreen extends Screen {
 
         clearPanelWidgets(cf);
         buildPanelWidgets(cf);
+        updateContentMetrics();
         updateWidgetsVisibility();
     }
 
@@ -4274,16 +4267,15 @@ public class AccordionScreen extends Screen {
 
         clearPanelWidgets(theme);
         buildPanelWidgets(theme);
+        updateContentMetrics();
         updateWidgetsVisibility();
     }
 
     // ===================== CONFIG MANAGER =====================
     private int calcConfigManagerHeight() {
-        // 4 строки: open folder, save, load, name+save_as
         int base = 18 + 4 * 28;
         int configsCount = ConfigManager.listConfigs().size();
         if (configsCount > 0) {
-            // header + configs * row + (опционально "ещё N")
             base += 22;
             int shown = Math.min(configsCount, 20);
             base += shown * 20;
@@ -4591,6 +4583,7 @@ public class AccordionScreen extends Screen {
 
         clearPanelWidgets(cd);
         buildPanelWidgets(cd);
+        updateContentMetrics();
         updateWidgetsVisibility();
     }
 
@@ -4687,6 +4680,7 @@ public class AccordionScreen extends Screen {
 
         clearPanelWidgets(combo);
         buildPanelWidgets(combo);
+        updateContentMetrics();
         updateWidgetsVisibility();
     }
 
@@ -4833,6 +4827,7 @@ public class AccordionScreen extends Screen {
 
         clearPanelWidgets(as);
         buildPanelWidgets(as);
+        updateContentMetrics();
         updateWidgetsVisibility();
     }
 
@@ -4921,6 +4916,7 @@ public class AccordionScreen extends Screen {
 
         clearPanelWidgets(pl);
         buildPanelWidgets(pl);
+        updateContentMetrics();
         updateWidgetsVisibility();
     }
 
@@ -5220,19 +5216,15 @@ public class AccordionScreen extends Screen {
             return;
         }
 
-        int totalHeight = 0;
+        updateContentMetrics();
         int itemHeight = 26;
         int gap = 4;
+        int totalHeight = 0;
         for (AccordionItem item : filteredItems) {
             totalHeight += itemHeight + gap;
-            int animH = getAnimatedHeight(item);
-            if (animH > 0) totalHeight += animH + gap;
+            if (item.expanded) totalHeight += item.contentHeight + gap;
         }
         int visibleHeight = listBottom - listTop;
-        maxContentScroll = Math.max(0, totalHeight - visibleHeight);
-
-        if (contentScroll > maxContentScroll) contentScroll = maxContentScroll;
-        if (contentScroll < 0) contentScroll = 0;
 
         int itemY = listTop - contentScroll + (int) sectionSlideOffset;
         int drawIndex = 0;
@@ -5706,12 +5698,21 @@ public class AccordionScreen extends Screen {
                     item.toggler.run();
                 } else {
                     boolean wasExpanded = item.expanded;
+                    int savedScroll = contentScroll;
 
                     closeAllExcept(null);
 
                     if (!wasExpanded) {
-                        contentScroll = 0;
                         item.expanded = true;
+                    }
+
+                    // 1) Сначала пересчитываем метрики с НОВЫМ layout (все панели закрыты, эта открыта)
+                    updateContentMetrics();
+                    contentScroll = Math.min(savedScroll, maxContentScroll);
+                    if (contentScroll < 0) contentScroll = 0;
+
+                    // 2) ТОЛЬКО ТЕПЕРЬ строим виджеты — они получат правильные Y
+                    if (!wasExpanded) {
                         buildPanelWidgets(item);
                     }
                     updateWidgetsVisibility();
@@ -5927,6 +5928,7 @@ public class AccordionScreen extends Screen {
 
         clearPanelWidgets(sr);
         buildPanelWidgets(sr);
+        updateContentMetrics();
         updateWidgetsVisibility();
     }
 
@@ -6185,14 +6187,12 @@ public class AccordionScreen extends Screen {
         int rowH = 22, rowGap = 6;
         int curY = y;
 
-        // === Кнопка "Установить модуль KillAura" ===
         widgets.add(Button.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.killaura_button")),
                         (b) -> EasterEggManager.onKillAuraClick())
                 .bounds(x, curY, w, 20).build());
         curY += rowH + rowGap;
 
-        // === Hint-кнопка ===
         String defaultHint = LocalizationManager.get("gui.resistancedlc.panel.killaura_hint");
         Button hintBtn = Button.builder(
                 Component.literal("§7" + defaultHint),
@@ -6211,7 +6211,6 @@ public class AccordionScreen extends Screen {
         int rowH = 22, rowGap = 6;
         int curY = y;
 
-        // === Тогл вкл/выкл ===
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.enable")), this.font)
                 .pos(x, curY).selected(ModConfig.targetEspEnabled)
@@ -6222,7 +6221,6 @@ public class AccordionScreen extends Screen {
                 .build());
         curY += rowH + rowGap;
 
-        // === Выбор режима ===
         String[] modes = {
                 LocalizationManager.get("gui.resistancedlc.panel.target_esp.mode_crystals"),
                 LocalizationManager.get("gui.resistancedlc.panel.target_esp.mode_cubes"),
@@ -6237,7 +6235,7 @@ public class AccordionScreen extends Screen {
                 break;
             }
         }
-        final int currentIdx = foundIdx;   // ← final для лямбды
+        final int currentIdx = foundIdx;
         widgets.add(Button.builder(
                         Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.target_esp.mode") + ": §f" + modes[currentIdx]),
                         (b) -> {
@@ -6249,7 +6247,6 @@ public class AccordionScreen extends Screen {
                 .bounds(x, curY, w, 20).build());
         curY += rowH + rowGap;
 
-        // === HEX-цвет + пресеты ===
         EditBox hexField = new EditBox(this.font, x, curY, 80, 18,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.hex")));
         hexField.setMaxLength(7);
@@ -6280,7 +6277,6 @@ public class AccordionScreen extends Screen {
         }
         curY += rowH + rowGap;
 
-        // === Слайдер размера ===
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.size",
                         String.format("%.2f", ModConfig.targetEspSize))),
@@ -6301,7 +6297,6 @@ public class AccordionScreen extends Screen {
         });
         curY += rowH + rowGap;
 
-        // === Слайдер скорости ===
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.rotation",
                         String.format("%.2f", ModConfig.targetEspRotationSpeed))),
@@ -6322,7 +6317,6 @@ public class AccordionScreen extends Screen {
         });
         curY += rowH + rowGap;
 
-        // === Слайдер пульсации ===
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.pulse",
                         String.format("%.2f", ModConfig.targetEspPulse))),
@@ -6343,7 +6337,6 @@ public class AccordionScreen extends Screen {
         });
         curY += rowH + rowGap;
 
-        // === Слайдер alpha ===
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.alpha", ModConfig.targetEspAlpha)),
                 ModConfig.targetEspAlpha / 255.0
@@ -6363,7 +6356,6 @@ public class AccordionScreen extends Screen {
         });
         curY += rowH + rowGap;
 
-        // === Тогл «скрывать хитбоксы» ===
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.hide_hitboxes")), this.font)
                 .pos(x, curY).selected(ModConfig.targetEspHideHitboxes)
@@ -6374,7 +6366,6 @@ public class AccordionScreen extends Screen {
                 .build());
         curY += rowH + rowGap;
 
-        // === Тогл «красный при уроне» ===
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.hurt")), this.font)
                 .pos(x, curY).selected(ModConfig.targetEspHurt)
@@ -6385,7 +6376,6 @@ public class AccordionScreen extends Screen {
                 .build());
     }
 
-    // ===== TARGET ESP: пересборка панели при смене режима =====
     private void rebuildTargetEspPanel() {
         AccordionItem te = null;
         for (Section s : sections) {
@@ -6401,6 +6391,7 @@ public class AccordionScreen extends Screen {
 
         clearPanelWidgets(te);
         buildPanelWidgets(te);
+        updateContentMetrics();
         updateWidgetsVisibility();
     }
 
@@ -6411,11 +6402,11 @@ public class AccordionScreen extends Screen {
         int curY = y;
 
         // ===== Style =====
-        String[] styles = {"circle", "hexagon", "portal"};
+        String[] styles = {"circle", "hexagon", "star"};
         String[] styleNames = {
                 LocalizationManager.get("gui.resistancedlc.panel.jump_circles.style_circle"),
                 LocalizationManager.get("gui.resistancedlc.panel.jump_circles.style_hexagon"),
-                LocalizationManager.get("gui.resistancedlc.panel.jump_circles.style_portal")
+                LocalizationManager.get("gui.resistancedlc.panel.jump_circles.style_star")
         };
         int styleIdx = 0;
         for (int i = 0; i < styles.length; i++) {
@@ -6435,6 +6426,39 @@ public class AccordionScreen extends Screen {
                     rebuildJumpCirclesPanel();
                 }
         ).bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        // ===== Цвет (HEX + пресеты R/G/B/W) =====
+        EditBox hexField = new EditBox(this.font, x, curY, 80, 18,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hex")));
+        hexField.setMaxLength(7);
+        hexField.setValue(String.format("#%06X", ModConfig.jumpCirclesColor & 0xFFFFFF));
+        widgets.add(hexField);
+
+        widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.apply")), (b) -> {
+            String hex = hexField.getValue().replace("#", "").trim();
+            try {
+                int alpha = ModConfig.jumpCirclesColor & 0xFF000000;
+                ModConfig.jumpCirclesColor = alpha | Integer.parseInt(hex, 16);
+                ConfigManager.save();
+            } catch (NumberFormatException ignored) {
+            }
+        }).bounds(x + 85, curY, 35, 18).build());
+
+        int presetX = x + 125;
+        int presetW = (right - presetX - 9) / 4;
+        String[] pn = {"R", "G", "B", "W"};
+        int[] pc = {0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 0xFFFFFFFF};
+        for (int i = 0; i < 4; i++) {
+            final int color = pc[i];
+            final String hex = String.format("#%06X", color & 0xFFFFFF);
+            widgets.add(Button.builder(Component.literal(pn[i]), (b) -> {
+                hexField.setValue(hex);
+                int alpha = ModConfig.jumpCirclesColor & 0xFF000000;
+                ModConfig.jumpCirclesColor = alpha | (color & 0x00FFFFFF);
+                ConfigManager.save();
+            }).bounds(presetX + i * (presetW + 3), curY, presetW, 18).build());
+        }
         curY += rowH + rowGap;
 
         // ===== Alpha =====
@@ -6458,21 +6482,21 @@ public class AccordionScreen extends Screen {
         });
         curY += rowH + rowGap;
 
-        // ===== Brightness =====
+        // ===== Line Width (толщина) =====
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.jump_circles.brightness")
-                        + String.format(java.util.Locale.ROOT, "%.2f", ModConfig.jumpCirclesBrightness)),
-                ModConfig.jumpCirclesBrightness / 2.0f
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.jump_circles.line_width")
+                        + String.format(java.util.Locale.ROOT, "%.1f", ModConfig.jumpCirclesLineWidth)),
+                (ModConfig.jumpCirclesLineWidth - 1.0f) / 4.0f
         ) {
             @Override
             protected void updateMessage() {
-                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.jump_circles.brightness")
-                        + String.format(java.util.Locale.ROOT, "%.2f", ModConfig.jumpCirclesBrightness)));
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.jump_circles.line_width")
+                        + String.format(java.util.Locale.ROOT, "%.1f", ModConfig.jumpCirclesLineWidth)));
             }
 
             @Override
             protected void applyValue() {
-                ModConfig.jumpCirclesBrightness = (float) (this.value * 2.0f);
+                ModConfig.jumpCirclesLineWidth = 1.0f + (float) (this.value * 4.0f);
                 this.updateMessage();
                 ConfigManager.save();
             }
@@ -6552,11 +6576,13 @@ public class AccordionScreen extends Screen {
                 })
                 .build());
     }
+
     private void rebuildJumpCirclesPanel() {
         AccordionItem item = findItemById("jump_circles");
         if (item == null || !item.expanded) return;
         clearPanelWidgets(item);
         buildPanelWidgets(item);
+        updateContentMetrics();
         updateWidgetsVisibility();
     }
 }

@@ -68,7 +68,6 @@ public class MusicPlayerHudMixin {
 
         // === ПАУЗА / ПЛЕЙ ===
         if (MusicPlayerHud.isPointOverPauseButton(mouseX, mouseY)) {
-            ResistanceDLC.LOGGER.info("[MusicHUD] Pause/Play clicked");
             MusicPlayerManager.togglePause();
             ci.cancel();
             return;
@@ -76,7 +75,6 @@ public class MusicPlayerHudMixin {
 
         // === NEXT ===
         if (MusicPlayerHud.isPointOverNextButton(mouseX, mouseY)) {
-            ResistanceDLC.LOGGER.info("[MusicHUD] Next clicked");
             MusicPlayerManager.next();
             ci.cancel();
             return;
@@ -84,7 +82,6 @@ public class MusicPlayerHudMixin {
 
         // === НАСТРОЙКИ ===
         if (MusicPlayerHud.isPointOverSettingsButton(mouseX, mouseY)) {
-            ResistanceDLC.LOGGER.info("[MusicHUD] Settings clicked");
             openMusicSettings();
             ci.cancel();
             return;
@@ -92,7 +89,6 @@ public class MusicPlayerHudMixin {
 
         // === REPEAT ===
         if (MusicPlayerHud.isPointOverRepeatButton(mouseX, mouseY)) {
-            ResistanceDLC.LOGGER.info("[MusicHUD] Repeat clicked");
             MusicPlayerManager.cycleRepeat();
             ci.cancel();
             return;
@@ -100,14 +96,11 @@ public class MusicPlayerHudMixin {
 
         // === СЛАЙДЕР ГРОМКОСТИ ===
         if (MusicPlayerHud.isPointOverVolumeSlider(mouseX, mouseY)) {
-            ResistanceDLC.LOGGER.info("[MusicHUD] Volume slider clicked");
             draggingVolume = true;
             updateVolumeFromMouse(mouseX);
             ci.cancel();
             return;
         }
-
-        ResistanceDLC.LOGGER.info("[MusicHUD] No button matched");
     }
 
     // ===================== ON_MOVE (DRAG) =====================

@@ -389,15 +389,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
             PvPSafeManager.onChatMessage(message.getString());
         });
 
-        // ===== AUTO GG: парсинг чата =====
-        ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
-            AutoGGManager.onChatMessage(message.getString());
-        });
-
-        ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
-            AutoGGManager.onChatMessage(message.getString());
-        });
-
         // ===== AUTO TP ACCEPT: парсинг чата =====
         ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
             AutoTPAcceptManager.onChatMessage(message.getString());

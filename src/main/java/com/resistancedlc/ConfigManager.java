@@ -428,8 +428,9 @@ public class ConfigManager {
             // === JUMP CIRCLES ===
             json.addProperty("jumpCirclesEnabled", ModConfig.jumpCirclesEnabled);
             json.addProperty("jumpCirclesStyle", ModConfig.jumpCirclesStyle);
+            json.addProperty("jumpCirclesColor", ModConfig.jumpCirclesColor);
             json.addProperty("jumpCirclesAlpha", ModConfig.jumpCirclesAlpha);
-            json.addProperty("jumpCirclesBrightness", ModConfig.jumpCirclesBrightness);
+            json.addProperty("jumpCirclesLineWidth", ModConfig.jumpCirclesLineWidth);
             json.addProperty("jumpCirclesScale", ModConfig.jumpCirclesScale);
             json.addProperty("jumpCirclesLiveTime", ModConfig.jumpCirclesLiveTime);
             json.addProperty("jumpCirclesSpinSpeed", ModConfig.jumpCirclesSpinSpeed);
@@ -848,8 +849,9 @@ public class ConfigManager {
             // === JUMP CIRCLES ===
             ModConfig.jumpCirclesEnabled = getBool(json, "jumpCirclesEnabled", ModConfig.jumpCirclesEnabled);
             ModConfig.jumpCirclesStyle = getString(json, "jumpCirclesStyle", ModConfig.jumpCirclesStyle);
+            ModConfig.jumpCirclesColor = getInt(json, "jumpCirclesColor", ModConfig.jumpCirclesColor);
             ModConfig.jumpCirclesAlpha = getInt(json, "jumpCirclesAlpha", ModConfig.jumpCirclesAlpha);
-            ModConfig.jumpCirclesBrightness = getFloat(json, "jumpCirclesBrightness", ModConfig.jumpCirclesBrightness);
+            ModConfig.jumpCirclesLineWidth = getFloat(json, "jumpCirclesLineWidth", ModConfig.jumpCirclesLineWidth);
             ModConfig.jumpCirclesScale = getFloat(json, "jumpCirclesScale", ModConfig.jumpCirclesScale);
             ModConfig.jumpCirclesLiveTime = getInt(json, "jumpCirclesLiveTime", ModConfig.jumpCirclesLiveTime);
             ModConfig.jumpCirclesSpinSpeed = getFloat(json, "jumpCirclesSpinSpeed", ModConfig.jumpCirclesSpinSpeed);

@@ -58,12 +58,15 @@ public class StatsTrackerManager {
             if (KILL_PATTERNS[i].matcher(cleaned).matches()) {
                 ModConfig.statsKills++;
                 ConfigManager.save();
-                ResistanceDLC.LOGGER.info("[StatsTracker] +1 kill (total=" + ModConfig.statsKills + ")");
+
+                // ⚠ Триггерим AutoGG через StatsTracker
+                if (ModConfig.autoGgEnabled) {
+                    AutoGGManager.onPlayerKilled();
+                }
                 return;
             }
         }
     }
-
     private static String stripFormatting(String text) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < text.length(); i++) {

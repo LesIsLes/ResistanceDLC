@@ -5,27 +5,130 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.3.0] — 2026-09-17
+## [2.7.1] — 2026-09-27
+
+### ✨ Added
+- **Jump Circles** — now rendered as **lines** (no `.png` textures), same technique as TargetESP
+    - New style **Star** (replaces Portal)
+    - New settings: **Color** (HEX + R/G/B/W presets) and **Line Width** (1.0–5.0)
+    - Radius grows from center up to 0.5 blocks
+    - Removed Brightness setting (replaced by Color)
+    - Deleted textures `assets/resistancedlc/textures/jump_circles/*.png`
+- **AutoGG** — now works via **StatsTracker** (chat parsing)
+    - No longer depends on `ClientboundPlayerCombatKillPacket`
+    - Triggers whenever StatsTracker records `+1 kill`
+    - `AutoGGMixin` removed
+
+### 🐛 Fixed
+- **AccordionScreen scroll** — no longer resets to top when:
+    - Clicking on an accordion item (LMB)
+    - Opening a panel after another expanded panel (Extra HUD, FOV, etc.)
+    - Rebuilding a panel with new `contentHeight`
+- **`updateContentMetrics()`** — now called **before** `buildPanelWidgets()`, not after. Widgets get correct Y coordinates.
+
+### 🔧 Changed
+- `ModConfig.jumpCirclesStyle`: `portal` → `star`
+- `ModConfig.jumpCirclesBrightness` — removed
+- `ModConfig.jumpCirclesColor` — added (ARGB)
+- `ModConfig.jumpCirclesLineWidth` — added (1.0–5.0)
+- `StatsTrackerManager` — removed debug log `[StatsTracker] +1 kill ...`, added call to `AutoGGManager.onPlayerKilled()`
+- `AutoGGManager` — simplified (removed `onChatMessage()`, `extractVictim()`, `onEntityKilled()`)
+- `AutoGGManager.onPlayerKilled()` — removed `autoGgOnlyPlayers` check (StatsTracker already filters players)
+
+### 🗑 Removed
+- `AutoGGMixin.java` — deleted
+- `resistancedlc.client.mixins.json` — removed `AutoGGMixin`
+- `textures/jump_circles/circle.png`, `hexagon.png`, `portal.png` — deleted
+- Fallback `AutoGGManager.onChatMessage(...)` registrations in `ResistanceDLCClient`
+
+---
+
+## [2.6.1] — 2026-09-20
+
+### 🐛 Fixed
+- **ConcurrentModificationException** when binding keys in GUI — all `rebuildWidgets` calls are now wrapped in `Minecraft.getInstance().execute(...)`
+- Removed `[Macro]` debug logs
+- **FriendList HUD widget** now works correctly
+
+---
+
+## [2.6.0] — 2026-09-18
+
+### ✨ Added
+- **AutoTPAccept** — auto-accepts `/tpa` requests from friends or all players
+- **EnchantHighlight** — highlights selected enchants in item tooltips with custom color + bold
+- **StatsTracker** — K/D counter parsed from chat (displayed in GUI)
+- **KillStreak** — consecutive kill counter + custom sounds at 2, 3, 4, 5, 8, 10 kills
+
+### 🔧 Changed
+- Removed "Enable X" checkboxes — features toggle via right-click
+- AutoRespawn now uses `ServerboundClientCommandPacket(PERFORM_RESPAWN)`
+- `LocalizationManager.get(key, args)` — args must be Float/Integer/Double, not String
+
+### 🗑 Removed
+- Built-in KillStreak sounds — copyright-safe, now user-provided via `config/resistancedlc/sounds/`
+
+---
+
+## [2.5.0] — 2026-09-15
+
+### ✨ Added
+- **LowHPAlert** — warning + sound when HP drops below threshold
+- **AutoRespawn** — automatic respawn after death
+- **ArmorAlert** — warning when armor durability is low
+- **FriendList** — friends list + HUD widget + chat highlight
+
+---
+
+## [2.4.0] — 2026-09-12
+
+### ✨ Added
+- **AutoTool** — auto-switch to best tool
+- **Macros** — 5 command/message slots (F1–F5 by default)
+- **Predictions** — projectile trajectory (bow, crossbow, multishot, snowball, potion, trident)
+
+### 🗑 Removed
+- **Optimization** — broke `options.txt`
+
+---
+
+## [2.3.2] — 2026-09-11
+
+### ✨ Added
+- **TargetESP** — ported from anomalith (4 variants: Crystals, Cubes, Ring, Ghosts)
+- **GammaUtil** — brightness above vanilla limit
+
+---
+
+## [2.3.1] — 2026-09-10
+
+### ✨ Added
+- **Mod Logo & Name** — custom logo with position editor
+- **oggLibs fix** — `configurations.oggLibs` + `libs/java-vorbis-support-1.2.1.jar`
+
+---
+
+## [2.3.0] — 2026-09-09
 
 ### ✨ Added
 - **MusicPlayer** — full OGG player with HUD widget
-  - Rotating vinyl, track title, artist, timing
-  - Buttons: `[⏸/▶] [⏭] [⚙] [🔁]` + drag-to-adjust volume slider
-  - Repeat: off / one / all
-  - Shuffle mode
-  - Auto-skip broken files
-  - Command `/music` with subcommands
+    - Rotating vinyl, track title, artist, timing
+    - Buttons: `[⏸/▶] [⏭] [⚙] [🔁]` + drag-to-adjust volume slider
+    - Repeat: off / one / all
+    - Shuffle mode
+    - Auto-skip broken files
+    - Command `/music` with subcommands
 - **AutoGG** — auto-sends "GG" after kills
-  - Mixin on `ClientboundPlayerCombatKillPacket`
-  - Fallback — chat parsing
-  - Configurable template and delay
+    - Mixin on `ClientboundPlayerCombatKillPacket`
+    - Fallback — chat parsing
+    - Configurable template and delay
 - **StrikeRange** — shows attack distance in real time
-  - Works on any entity (players, mobs, armor stands)
-  - Configurable position, color, font size, duration
+    - Works on any entity (players, mobs, armor stands)
+    - Configurable position, color, font size, duration
 - **KillAura Easter Egg** — joke feature in PvP section
-  - Plays `denied.ogg` sound
-  - Random chat messages
-  - Red flash animation
+    - Plays `denied.ogg` sound
+    - Random chat messages
+    - Red flash animation
 
 ### 🔧 Changed
 - Mixin signature updated for 1.21.11: `MouseHandler.onButton` (was `onPress`)
@@ -46,7 +149,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.2.0] — 2026-09-13
+## [2.2.0] — 2026-09-07
 
 ### ✨ Added
 - **LocalizationManager** — EN/RU manual localization system
@@ -64,7 +167,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.1.0] — 2026-09-10
+## [2.1.0] — 2026-09-05
 
 ### ✨ Added
 - **AccordionScreen** — brand new GUI with accordion-style panels
@@ -85,7 +188,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.0.0] — 2026-09-05
+## [2.0.0] — 2026-09-03
 
 ### ✨ Added
 - **DeathCoords** — save/load death coordinates
@@ -113,6 +216,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[2.7.1]: https://github.com/LesIsLes/ResistanceDLC/compare/v2.6.1...v2.7.1
+[2.6.1]: https://github.com/LesIsLes/ResistanceDLC/compare/v2.6.0...v2.6.1
+[2.6.0]: https://github.com/LesIsLes/ResistanceDLC/compare/v2.5.0...v2.6.0
+[2.5.0]: https://github.com/LesIsLes/ResistanceDLC/compare/v2.4.0...v2.5.0
+[2.4.0]: https://github.com/LesIsLes/ResistanceDLC/compare/v2.3.2...v2.4.0
+[2.3.2]: https://github.com/LesIsLes/ResistanceDLC/compare/v2.3.1...v2.3.2
+[2.3.1]: https://github.com/LesIsLes/ResistanceDLC/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/LesIsLes/ResistanceDLC/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/LesIsLes/ResistanceDLC/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/LesIsLes/ResistanceDLC/compare/v2.0.0...v2.1.0

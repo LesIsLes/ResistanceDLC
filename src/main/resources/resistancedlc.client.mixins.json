@@ -5,7 +5,6 @@
   "client": [
     "AbstractContainerScreenAccessor",
     "FOVMixin",
-    "AutoGGMixin",
     "AutoToolMixin",
     "CooldownsMixin",
     "CustomHitboxMixin",

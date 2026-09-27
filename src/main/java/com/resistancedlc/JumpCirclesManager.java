@@ -4,40 +4,43 @@ import com.resistancedlc.config.ModConfig;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.Identifier;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.rendertype.RenderSetup;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * JumpCirclesManager — кольца под ногами при прыжке.
+ * JumpCirclesManager — кольца/фигуры под ногами при прыжке.
  *
  * Логика:
  *   1. Каждый тик проверяем, оторвался ли игрок от земли
- *   2. Если да (и нажата кнопка прыжка) — создаём круг в точке прыжка
- *   3. Рендерим горизонтально (лежит на земле)
- *   4. Круг живёт LiveTime секунд, fade-out через alpha
+ *   2. Если да (и нажата кнопка прыжка) — создаём фигуру в точке прыжка
+ *   3. Рисуем горизонтально (лежит на земле) через ЛИНИИ (без текстур)
+ *   4. Фигура живёт LiveTime секунд, fade-out через alpha
+ *   5. Радиус растёт от 0 до 0.5 блока
  *
- * Текстуры: assets/resistancedlc/textures/jump_circles/{circle,hexagon,portal}.png
+ * Стили: circle / hexagon / star
+ * Все стили рисуются линиями, без .png текстур.
  */
 public final class JumpCirclesManager {
 
     private static final List<JumpCircle> ACTIVE = new ArrayList<>();
     private static boolean wasJumping = false;
 
-    private static final Identifier[] TEXTURES = {
-            Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "textures/jump_circles/circle.png"),
-            Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "textures/jump_circles/hexagon.png"),
-            Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "textures/jump_circles/portal.png")
-    };
+    /** Максимальный радиус в блоках — 0.5 */
+    private static final double MAX_RADIUS = 0.5;
+
+    private static final RenderType LINES_TYPE = RenderType.create(
+            "resistancedlc_jump_circles_lines",
+            RenderSetup.builder(RenderPipelines.LINES).createRenderSetup()
+    );
 
     private JumpCirclesManager() {}
 
@@ -64,7 +67,6 @@ public final class JumpCirclesManager {
         }
         wasJumping = isJumping;
 
-        // Удаляем просроченные круги
         ACTIVE.removeIf(JumpCircle::isExpired);
     }
 
@@ -73,16 +75,8 @@ public final class JumpCirclesManager {
                 new Vec3(pos.x, pos.y, pos.z),
                 System.currentTimeMillis(),
                 ModConfig.jumpCirclesLiveTime * 1000L,
-                getSelectedTexture()
+                ModConfig.jumpCirclesStyle
         ));
-    }
-
-    private static Identifier getSelectedTexture() {
-        return switch (ModConfig.jumpCirclesStyle) {
-            case "hexagon" -> TEXTURES[1];
-            case "portal"  -> TEXTURES[2];
-            default        -> TEXTURES[0];
-        };
     }
 
     // ===================== РЕНДЕР =====================
@@ -98,102 +92,151 @@ public final class JumpCirclesManager {
                 (MultiBufferSource.BufferSource) context.consumers();
         if (bufferSource == null) return;
 
-        Vec3 cameraPos = Minecraft.getInstance().gameRenderer.getMainCamera().position();
+        Vec3 cameraPos = mc.gameRenderer.getMainCamera().position();
         PoseStack poseStack = context.matrices();
         long now = System.currentTimeMillis();
 
+        VertexConsumer consumer = bufferSource.getBuffer(LINES_TYPE);
+
         for (JumpCircle circle : ACTIVE) {
-            renderCircle(circle, poseStack, bufferSource, cameraPos, now);
+            renderCircle(circle, poseStack, consumer, cameraPos, now);
         }
 
-        bufferSource.endBatch();
+        bufferSource.endBatch(LINES_TYPE);
     }
 
     private static void renderCircle(JumpCircle circle, PoseStack poseStack,
-                                     MultiBufferSource.BufferSource bufferSource,
-                                     Vec3 cameraPos, long now) {
+                                     VertexConsumer consumer, Vec3 cameraPos, long now) {
         long age = now - circle.startTime;
         long lifeTime = circle.lifeTimeMs;
         float progress = Math.min(1.0f, (float) age / lifeTime);
 
+        // Alpha: базовый + fade-out
         float alpha = ModConfig.jumpCirclesAlpha / 255.0f;
-        float brightness = ModConfig.jumpCirclesBrightness;
-        float scale = ModConfig.jumpCirclesScale;
-
         if (ModConfig.jumpCirclesFadeOut) {
             alpha *= (1.0f - progress);
         }
 
-        // Анимация размера: от 0.5 до 1.0 от scale в первые 30% жизни
+        // Радиус: растёт от 0 до MAX_RADIUS * scale за первые 30% жизни
+        float scale = ModConfig.jumpCirclesScale;
         float sizeAnim;
         if (progress < 0.3f) {
-            sizeAnim = 0.5f + (progress / 0.3f) * 0.5f;
+            sizeAnim = progress / 0.3f;
         } else {
             sizeAnim = 1.0f;
         }
-        float finalScale = scale * sizeAnim * 2.0f; // базовый размер ~2 блока
+        double radius = MAX_RADIUS * scale * sizeAnim;
 
         // Вращение
         float rotation = (now / 1000.0f) * ModConfig.jumpCirclesSpinSpeed * 360.0f;
+        double rotRad = Math.toRadians(rotation);
 
-        // Цвет: 0xFFFFFF + brightness
-        int r = (int) Math.min(255, 255 * brightness);
-        int g = (int) Math.min(255, 255 * brightness);
-        int b = (int) Math.min(255, 255 * brightness);
+        // ARGB цвет
+        int baseColor = ModConfig.jumpCirclesColor;
+        int r = (baseColor >> 16) & 0xFF;
+        int g = (baseColor >> 8) & 0xFF;
+        int b = baseColor & 0xFF;
         int a = (int) (alpha * 255);
         int argb = (a << 24) | (r << 16) | (g << 8) | b;
 
         // Позиция относительно камеры
-        double x = circle.position.x - cameraPos.x;
-        double y = circle.position.y - cameraPos.y + 0.02; // чуть выше блока, чтобы не z-fight
-        double z = circle.position.z - cameraPos.z;
+        double cx = circle.position.x - cameraPos.x;
+        double cy = circle.position.y - cameraPos.y + 0.02;  // чуть выше блока, чтобы не z-fight
+        double cz = circle.position.z - cameraPos.z;
 
-        poseStack.pushPose();
-        poseStack.translate(x, y, z);
-        // Горизонтально: наклоняем на 90° по X
-        poseStack.mulPose(Axis.XP.rotationDegrees(90));
-        // Вращение вокруг вертикальной оси (в плоскости круга)
-        poseStack.mulPose(Axis.ZP.rotationDegrees(rotation));
+        float lineWidth = ModConfig.jumpCirclesLineWidth;
 
-        Matrix4f matrix = poseStack.last().pose();
+        switch (circle.style) {
+            case "hexagon" -> drawHexagon(consumer, poseStack, cx, cy, cz, radius, rotRad, argb, lineWidth);
+            case "star" -> drawStar(consumer, poseStack, cx, cy, cz, radius, rotRad, argb, lineWidth);
+            default -> drawCircle(consumer, poseStack, cx, cy, cz, radius, rotRad, argb, lineWidth);
+        }
+    }
+
+    // ===================== ФИГУРЫ =====================
+
+    /** Окружность — 48 сегментов. */
+    private static void drawCircle(VertexConsumer consumer, PoseStack poseStack,
+                                   double cx, double cy, double cz,
+                                   double radius, double rotation,
+                                   int color, float lineWidth) {
+        int segments = 48;
+        for (int i = 0; i < segments; i++) {
+            double a1 = rotation + i * Math.PI * 2 / segments;
+            double a2 = rotation + (i + 1) * Math.PI * 2 / segments;
+            double x1 = cx + Math.cos(a1) * radius;
+            double z1 = cz + Math.sin(a1) * radius;
+            double x2 = cx + Math.cos(a2) * radius;
+            double z2 = cz + Math.sin(a2) * radius;
+            line(consumer, poseStack, x1, cy, z1, x2, cy, z2, color, lineWidth);
+        }
+    }
+
+    /** Шестиугольник — 6 сегментов. */
+    private static void drawHexagon(VertexConsumer consumer, PoseStack poseStack,
+                                    double cx, double cy, double cz,
+                                    double radius, double rotation,
+                                    int color, float lineWidth) {
+        int segments = 6;
+        for (int i = 0; i < segments; i++) {
+            double a1 = rotation + i * Math.PI * 2 / segments;
+            double a2 = rotation + (i + 1) * Math.PI * 2 / segments;
+            double x1 = cx + Math.cos(a1) * radius;
+            double z1 = cz + Math.sin(a1) * radius;
+            double x2 = cx + Math.cos(a2) * radius;
+            double z2 = cz + Math.sin(a2) * radius;
+            line(consumer, poseStack, x1, cy, z1, x2, cy, z2, color, lineWidth);
+        }
+    }
+
+    /** Звезда — 5 вершин, 10 сегментов (чередование внешних и внутренних точек). */
+    private static void drawStar(VertexConsumer consumer, PoseStack poseStack,
+                                 double cx, double cy, double cz,
+                                 double radius, double rotation,
+                                 int color, float lineWidth) {
+        int points = 5;
+        double innerRadius = radius * 0.4;   // внутренний радиус звезды
+        int totalVertices = points * 2;      // 5 внешних + 5 внутренних
+
+        for (int i = 0; i < totalVertices; i++) {
+            double r1 = (i % 2 == 0) ? radius : innerRadius;
+            double r2 = ((i + 1) % 2 == 0) ? radius : innerRadius;
+            double a1 = rotation + i * Math.PI * 2 / totalVertices;
+            double a2 = rotation + (i + 1) * Math.PI * 2 / totalVertices;
+            double x1 = cx + Math.cos(a1) * r1;
+            double z1 = cz + Math.sin(a1) * r1;
+            double x2 = cx + Math.cos(a2) * r2;
+            double z2 = cz + Math.sin(a2) * r2;
+            line(consumer, poseStack, x1, cy, z1, x2, cy, z2, color, lineWidth);
+        }
+    }
+
+    // ===================== ЛИНИЯ =====================
+
+    private static void line(VertexConsumer consumer, PoseStack poseStack,
+                             double x1, double y1, double z1,
+                             double x2, double y2, double z2,
+                             int color, float lineWidth) {
+        Vector3f normal = new Vector3f(
+                (float)(x2 - x1),
+                (float)(y2 - y1),
+                (float)(z2 - z1)
+        );
+        if (normal.lengthSquared() > 0.000001f) {
+            normal.normalize();
+        }
+
         PoseStack.Pose pose = poseStack.last();
 
-        VertexConsumer consumer = bufferSource.getBuffer(
-                RenderTypes.entityTranslucent(circle.texture)
-        );
+        consumer.addVertex(pose, (float)x1, (float)y1, (float)z1)
+                .setColor(color)
+                .setNormal(pose, normal)
+                .setLineWidth(lineWidth);
 
-        float half = finalScale / 2.0f;
-
-        // Quad
-        consumer.addVertex(matrix, -half, -half, 0)
-                .setColor(argb)
-                .setUv(0f, 0f)
-                .setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(0xF000F0)
-                .setNormal(pose, 0f, 0f, 1f);
-
-        consumer.addVertex(matrix, -half, half, 0)
-                .setColor(argb)
-                .setUv(0f, 1f)
-                .setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(0xF000F0)
-                .setNormal(pose, 0f, 0f, 1f);
-
-        consumer.addVertex(matrix, half, half, 0)
-                .setColor(argb)
-                .setUv(1f, 1f)
-                .setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(0xF000F0)
-                .setNormal(pose, 0f, 0f, 1f);
-
-        consumer.addVertex(matrix, half, -half, 0)
-                .setColor(argb)
-                .setUv(1f, 0f)
-                .setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(0xF000F0)
-                .setNormal(pose, 0f, 0f, 1f);
-
-        poseStack.popPose();
+        consumer.addVertex(pose, (float)x2, (float)y2, (float)z2)
+                .setColor(color)
+                .setNormal(pose, normal)
+                .setLineWidth(lineWidth);
     }
 
     // ===================== RESET =====================
@@ -209,7 +252,7 @@ public final class JumpCirclesManager {
             Vec3 position,
             long startTime,
             long lifeTimeMs,
-            Identifier texture
+            String style
     ) {
         boolean isExpired() {
             return System.currentTimeMillis() - startTime > lifeTimeMs;

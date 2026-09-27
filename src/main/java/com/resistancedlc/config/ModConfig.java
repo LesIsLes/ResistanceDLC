@@ -407,12 +407,12 @@ public class ModConfig {
 
     // ===================== JUMP CIRCLES =====================
     public static boolean jumpCirclesEnabled = false;
-    public static String jumpCirclesStyle = "circle";   // circle / hexagon / portal
-    public static int jumpCirclesAlpha = 180;            // 0..255
-    public static float jumpCirclesBrightness = 1.0f;    // 0.0..2.0
-    public static float jumpCirclesScale = 1.0f;         // 0.5..2.0
-    public static int jumpCirclesLiveTime = 3;           // 1..5 сек
-    public static float jumpCirclesSpinSpeed = 1.0f;     // -3.0..3.0
+    public static String jumpCirclesStyle = "circle";   // circle / hexagon / star
+    public static int jumpCirclesColor = 0xFFFFFFFF;    // ARGB
+    public static int jumpCirclesAlpha = 180;           // 0..255
+    public static float jumpCirclesLineWidth = 2.0f;    // 1.0..5.0
+    public static float jumpCirclesScale = 1.0f;        // 0.5..2.0
+    public static int jumpCirclesLiveTime = 3;          // 1..5 сек
+    public static float jumpCirclesSpinSpeed = 1.0f;    // -3.0..3.0
     public static boolean jumpCirclesFadeOut = true;
-
 }
