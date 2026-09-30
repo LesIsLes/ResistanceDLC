@@ -11,6 +11,9 @@ import net.minecraft.network.chat.Component;
 
 /**
  * Логика AutoReconnect — переподключение к серверу после дисконнекта.
+ *
+ * ✅ v2.9.0: реконнект срабатывает ТОЛЬКО при кике/бане/краше/неудачном подключении.
+ * При ручном выходе (кнопка Disconnect в PauseScreen) — не срабатывает.
  */
 public class AutoReconnectManager {
 
@@ -20,6 +23,17 @@ public class AutoReconnectManager {
     /** Время старта таймера (мс), 0 = не активно. */
     private static long reconnectStartTime = 0;
 
+    /** Флаг: игрок вышел вручную (кнопка Disconnect). */
+    private static boolean manualDisconnect = false;
+
+    /**
+     * Установить флаг «ручной выход».
+     * Вызывается из ResistanceDLCClient при клике на кнопку Disconnect в PauseScreen.
+     */
+    public static void setManualDisconnect(boolean value) {
+        manualDisconnect = value;
+    }
+
     /**
      * Вызывается при JOIN — сохраняем ServerData.
      */
@@ -28,6 +42,8 @@ public class AutoReconnectManager {
         if (client.getCurrentServer() != null) {
             lastServerData = client.getCurrentServer();
         }
+        // Новый вход — сбрасываем флаг ручного выхода
+        manualDisconnect = false;
     }
 
     /**
@@ -36,8 +52,24 @@ public class AutoReconnectManager {
     public static void onDisconnect() {
         if (!ModConfig.autoReconnectEnabled) return;
         if (lastServerData == null) return;
+
         // Только на серверы (не в одиночку)
-        if (Minecraft.getInstance().hasSingleplayerServer()) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.hasSingleplayerServer()) return;
+
+        // 🚫 Ручной выход (Disconnect в PauseScreen) — не реконнектимся
+        if (manualDisconnect) {
+            manualDisconnect = false;
+            ResistanceDLC.LOGGER.info("[AutoReconnect] Manual disconnect, skipping reconnect");
+            return;
+        }
+
+        // 🚫 Бан — не реконнектимся.
+        // Класс BanScreen в 1.21.11 мог быть переименован, проверяем через имя класса.
+        if (mc.screen != null && isBanScreen(mc.screen)) {
+            ResistanceDLC.LOGGER.info("[AutoReconnect] Banned, skipping reconnect");
+            return;
+        }
 
         reconnectStartTime = System.currentTimeMillis();
     }
@@ -115,5 +147,14 @@ public class AutoReconnectManager {
     public static void reset() {
         lastServerData = null;
         reconnectStartTime = 0;
+        manualDisconnect = false;
+    }
+    /**
+     * Проверка на бан-экран через имя класса.
+     * Безопасно — не крашит, если класса нет.
+     */
+    private static boolean isBanScreen(net.minecraft.client.gui.screens.Screen screen) {
+        String name = screen.getClass().getSimpleName().toLowerCase();
+        return name.contains("ban");
     }
 }

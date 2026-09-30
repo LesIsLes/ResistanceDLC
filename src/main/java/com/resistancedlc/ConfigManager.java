@@ -436,6 +436,30 @@ public class ConfigManager {
             json.addProperty("jumpCirclesSpinSpeed", ModConfig.jumpCirclesSpinSpeed);
             json.addProperty("jumpCirclesFadeOut", ModConfig.jumpCirclesFadeOut);
 
+            // === CUSTOM MAIN MENU ===
+            json.addProperty("customMainMenuEnabled", ModConfig.customMainMenuEnabled);
+            json.addProperty("customLoadingScreenEnabled", ModConfig.customLoadingScreenEnabled);
+
+            // === CROSSHAIR HEATMAP ===
+            json.addProperty("crosshairHeatmapEnabled", ModConfig.crosshairHeatmapEnabled);
+            json.addProperty("crosshairHeatmapColor", ModConfig.crosshairHeatmapColor);
+            json.addProperty("crosshairHeatmapAlpha", ModConfig.crosshairHeatmapAlpha);
+            json.addProperty("crosshairHeatmapMarkLifetime", ModConfig.crosshairHeatmapMarkLifetime);
+            json.addProperty("crosshairHeatmapMaxMarks", ModConfig.crosshairHeatmapMaxMarks);
+            json.addProperty("crosshairHeatmapRadius", ModConfig.crosshairHeatmapRadius);
+            json.addProperty("crosshairHeatmapMarkSize", ModConfig.crosshairHeatmapMarkSize);
+            json.addProperty("crosshairHeatmapTrackMobs", ModConfig.crosshairHeatmapTrackMobs);
+            json.addProperty("crosshairHeatmapTrackPlayers", ModConfig.crosshairHeatmapTrackPlayers);
+            json.addProperty("crosshairHeatmapRussian", ModConfig.crosshairHeatmapRussian);
+            json.addProperty("crosshairHeatmapTotalHits", ModConfig.crosshairHeatmapTotalHits);
+            json.addProperty("crosshairHeatmapTotalMisses", ModConfig.crosshairHeatmapTotalMisses);
+
+            // === PING INDICATOR ===
+            json.addProperty("pingIndicatorEnabled", ModConfig.pingIndicatorEnabled);
+            json.addProperty("pingIndicatorShowMs", ModConfig.pingIndicatorShowMs);
+            json.addProperty("pingIndicatorRussian", ModConfig.pingIndicatorRussian);
+            // === DEATH RECAP ===
+            json.addProperty("deathRecapRaw", ModConfig.deathRecapRaw);
             Path file = CONFIG_DIR.resolve(name + ".json");
             synchronized (GSON) {
                 Files.writeString(file, GSON.toJson(json));
@@ -856,6 +880,30 @@ public class ConfigManager {
             ModConfig.jumpCirclesLiveTime = getInt(json, "jumpCirclesLiveTime", ModConfig.jumpCirclesLiveTime);
             ModConfig.jumpCirclesSpinSpeed = getFloat(json, "jumpCirclesSpinSpeed", ModConfig.jumpCirclesSpinSpeed);
             ModConfig.jumpCirclesFadeOut = getBool(json, "jumpCirclesFadeOut", ModConfig.jumpCirclesFadeOut);
+
+            // === CUSTOM MAIN MENU ===
+            ModConfig.customMainMenuEnabled = getBool(json, "customMainMenuEnabled", ModConfig.customMainMenuEnabled);
+            ModConfig.customLoadingScreenEnabled = getBool(json, "customLoadingScreenEnabled", ModConfig.customLoadingScreenEnabled);
+
+            // === CROSSHAIR HEATMAP ===
+            ModConfig.crosshairHeatmapEnabled = getBool(json, "crosshairHeatmapEnabled", ModConfig.crosshairHeatmapEnabled);
+            ModConfig.crosshairHeatmapColor = getInt(json, "crosshairHeatmapColor", ModConfig.crosshairHeatmapColor);
+            ModConfig.crosshairHeatmapAlpha = getInt(json, "crosshairHeatmapAlpha", ModConfig.crosshairHeatmapAlpha);
+            ModConfig.crosshairHeatmapMarkLifetime = getInt(json, "crosshairHeatmapMarkLifetime", ModConfig.crosshairHeatmapMarkLifetime);
+            ModConfig.crosshairHeatmapMaxMarks = getInt(json, "crosshairHeatmapMaxMarks", ModConfig.crosshairHeatmapMaxMarks);
+            ModConfig.crosshairHeatmapRadius = getInt(json, "crosshairHeatmapRadius", ModConfig.crosshairHeatmapRadius);
+            ModConfig.crosshairHeatmapMarkSize = getInt(json, "crosshairHeatmapMarkSize", ModConfig.crosshairHeatmapMarkSize);
+            ModConfig.crosshairHeatmapTrackMobs = getBool(json, "crosshairHeatmapTrackMobs", ModConfig.crosshairHeatmapTrackMobs);
+            ModConfig.crosshairHeatmapTrackPlayers = getBool(json, "crosshairHeatmapTrackPlayers", ModConfig.crosshairHeatmapTrackPlayers);
+            ModConfig.crosshairHeatmapRussian = getBool(json, "crosshairHeatmapRussian", ModConfig.crosshairHeatmapRussian);
+            ModConfig.crosshairHeatmapTotalHits = getInt(json, "crosshairHeatmapTotalHits", ModConfig.crosshairHeatmapTotalHits);
+            ModConfig.crosshairHeatmapTotalMisses = getInt(json, "crosshairHeatmapTotalMisses", ModConfig.crosshairHeatmapTotalMisses);
+            // === PING INDICATOR ===
+            ModConfig.pingIndicatorEnabled = getBool(json, "pingIndicatorEnabled", ModConfig.pingIndicatorEnabled);
+            ModConfig.pingIndicatorShowMs = getBool(json, "pingIndicatorShowMs", ModConfig.pingIndicatorShowMs);
+            ModConfig.pingIndicatorRussian = getBool(json, "pingIndicatorRussian", ModConfig.pingIndicatorRussian);
+            // === DEATH RECAP ===
+            ModConfig.deathRecapRaw = getString(json, "deathRecapRaw", ModConfig.deathRecapRaw);
             return true;
 
         } catch (Exception e) {

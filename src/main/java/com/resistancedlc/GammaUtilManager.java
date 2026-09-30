@@ -18,7 +18,10 @@ public class GammaUtilManager {
         Minecraft mc = Minecraft.getInstance();
         if (mc.options == null) return;
 
-        double target = ModConfig.gammaUtilEnabled ? ModConfig.gammaValue : 1.0;
+        double rawTarget = ModConfig.gammaUtilEnabled ? ModConfig.gammaValue : 1.0;
+        // ✅ Правило 43: gamma в MC ограничена [0.0, 1.0].
+        // Clamp синхронно с setGammaDirectly, чтобы lastApplied совпадал.
+        double target = Math.max(0.0, Math.min(1.0, rawTarget));
         if (Math.abs(target - lastApplied) < 0.001) return;
 
         try {
@@ -59,7 +62,12 @@ public class GammaUtilManager {
             }
         }
 
-        valueField.set(option, value);
+        // ✅ Правило 43: gamma в MC ограничена [0.0, 1.0].
+        // Значения > 1.0 пишем только визуально через рефлексию,
+        // но НЕ даём уйти в options.txt — иначе Error saving option Brightness.
+        double safeValue = Math.max(0.0, Math.min(1.0, value));
+
+        valueField.set(option, safeValue);
     }
 
     public static void reset() {

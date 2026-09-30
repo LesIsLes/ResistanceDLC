@@ -43,6 +43,7 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.waypoints.TrackedWaypoint;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -55,8 +56,12 @@ public class ResistanceDLCClient implements ClientModInitializer {
     private static long lastAttackTime = 0;
     private static boolean tapeMouseWeHeldRMB = false;
     private static float lastHealth = -1.0f;
+    private static boolean crosshairHeatmapAttackWasDown = false;
 
-    // ===== TargetEsp (порт от anomalith) =====
+    /** Флаг: смерть уже записана в DeathRecap. */
+    private static boolean deathRecapCaptured = false;
+
+    // ===== TargetEsp =====
     private static final com.resistancedlc.targetesp.TargetESP TARGET_ESP =
             new com.resistancedlc.targetesp.TargetESP(
                     com.resistancedlc.targetesp.TargetManagerHolder.MANAGER);
@@ -71,37 +76,44 @@ public class ResistanceDLCClient implements ClientModInitializer {
         ConfigManager.load();
         KeyBindings.register();
 
-        // Инициализация MusicPlayer
         MusicPlayerManager.init();
 
-        // ===== ATTACK CALLBACK (StrikeRange + PvPSafe + TargetEsp + KillStreak) =====
+        // ===== ATTACK CALLBACK =====
         AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
-            // StrikeRange — записываем дистанцию
             if (ModConfig.strikeRangeEnabled && entity != null) {
                 double dist = player.distanceTo(entity);
                 StrikeRangeManager.onHit(dist);
                 ModConfig.strikeRangeLastTarget = entity.getName().getString();
             }
 
-            // PvPSafe — только для игроков
             if (ModConfig.pvpSafeEnabled && entity instanceof Player && entity != player) {
                 PvPSafeManager.recordHit();
             }
 
-            // TargetEsp — запоминаем цель удара
             if (ModConfig.targetEspEnabled && entity instanceof LivingEntity) {
                 com.resistancedlc.targetesp.TargetManagerHolder.MANAGER.setCurrentTarget(entity);
             }
 
-            // KillStreak — запоминаем удар
             if (ModConfig.killStreakEnabled && entity != null) {
                 KillStreakManager.onAttack(entity);
+            }
+
+            if (ModConfig.crosshairHeatmapEnabled && entity instanceof LivingEntity) {
+                boolean isPlayer = entity instanceof Player;
+                boolean isMob = !isPlayer;
+
+                boolean track = (isPlayer && ModConfig.crosshairHeatmapTrackPlayers)
+                        || (isMob && ModConfig.crosshairHeatmapTrackMobs);
+
+                if (track) {
+                    recordHeatmapHit(entity);
+                }
             }
 
             return InteractionResult.PASS;
         });
 
-        // ===== PVP SAFE: блокировка ESC =====
+        // ===== PVP SAFE + AutoReconnect =====
         ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             if (!(screen instanceof PauseScreen)) return;
 
@@ -116,9 +128,26 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 }
                 return true;
             });
+
+            net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents
+                    .allowMouseClick(screen).register((s, mouseEvent) -> {
+                        String disconnectText = Component.translatable("menu.disconnect").getString();
+                        double mx = mouseEvent.x();
+                        double my = mouseEvent.y();
+                        for (Object child : s.children()) {
+                            if (!(child instanceof net.minecraft.client.gui.components.Button btn)) continue;
+                            if (!btn.active) continue;
+                            if (!btn.getMessage().getString().equals(disconnectText)) continue;
+                            if (mx >= btn.getX() && mx <= btn.getX() + btn.getWidth()
+                                    && my >= btn.getY() && my <= btn.getY() + btn.getHeight()) {
+                                AutoReconnectManager.setManualDisconnect(true);
+                                break;
+                            }
+                        }
+                        return true;
+                    });
         });
 
-        // ===== AUTO RECONNECT: отмена ESC =====
         ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             ScreenKeyboardEvents.allowKeyPress(screen).register((s, keyEvent) -> {
                 if (!AutoReconnectManager.isReconnecting()) return true;
@@ -151,20 +180,23 @@ public class ResistanceDLCClient implements ClientModInitializer {
             ArmorAlertManager.reset();
             AutoTPAcceptManager.reset();
             KillStreakManager.reset();
+            CrosshairHeatmapManager.reset();
+            PingIndicatorManager.reset();
+            DeathRecapManager.clearArmorSnapshot();
             AutoReconnectManager.onDisconnect();
+            deathRecapCaptured = false;
         });
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
             AutoReconnectManager.onJoin();
 
-            // Восстановление MusicPlayer
             MusicPlayerManager.rescan();
             if (ModConfig.musicPlayerEnabled && ModConfig.musicAutoPlay) {
                 MusicPlayerManager.play();
             }
 
-            // Force re-apply gamma (на случай, если настройки сбросились)
             GammaUtilManager.reset();
+            deathRecapCaptured = false;
         });
 
         // ===== КОМАНДЫ =====
@@ -319,7 +351,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
                             })
             );
 
-            // === MUSIC КОМАНДЫ ===
             dispatcher.register(
                     ClientCommandManager.literal("music")
                             .executes(context -> {
@@ -380,7 +411,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
             return !ChatFilterManager.shouldHide(message.getString());
         });
 
-        // ===== PVP SAFE: парсинг чата =====
         ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
             PvPSafeManager.onChatMessage(message.getString());
         });
@@ -389,7 +419,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
             PvPSafeManager.onChatMessage(message.getString());
         });
 
-        // ===== AUTO TP ACCEPT: парсинг чата =====
         ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
             AutoTPAcceptManager.onChatMessage(message.getString());
         });
@@ -398,7 +427,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
             AutoTPAcceptManager.onChatMessage(message.getString());
         });
 
-        // ===== STATS TRACKER: парсинг чата =====
         ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
             StatsTrackerManager.onChatMessage(message.getString());
         });
@@ -437,24 +465,90 @@ public class ResistanceDLCClient implements ClientModInitializer {
             lastHealth = currentHealth;
         });
 
+        // ===== DEATH RECAP — СНИМОК БРОНИ КАЖДЫЙ ТИК =====
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.player == null || client.level == null) return;
+            if (client.player.getHealth() <= 0.0f) return;   // не перезаписываем снимок после смерти
+
+            String head  = itemSnapshotOf(client.player.getItemBySlot(EquipmentSlot.HEAD));
+            String chest = itemSnapshotOf(client.player.getItemBySlot(EquipmentSlot.CHEST));
+            String legs  = itemSnapshotOf(client.player.getItemBySlot(EquipmentSlot.LEGS));
+            String feet  = itemSnapshotOf(client.player.getItemBySlot(EquipmentSlot.FEET));
+            String off   = itemSnapshotOf(client.player.getItemBySlot(EquipmentSlot.OFFHAND));
+
+            DeathRecapManager.updateArmorSnapshot(
+                    new DeathRecapManager.ArmorSnapshot(head, chest, legs, feet, off));
+        });
+
+        // ===== DEATH RECAP — ДЕТЕКТ СМЕРТИ ЧЕРЕЗ DeathScreen =====
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.player == null || client.level == null) {
+                deathRecapCaptured = false;
+                return;
+            }
+            boolean onDeathScreen = client.screen instanceof net.minecraft.client.gui.screens.DeathScreen;
+            if (!onDeathScreen) { deathRecapCaptured = false; return; }
+            if (deathRecapCaptured) return;
+            deathRecapCaptured = true;
+
+            try {
+                net.minecraft.client.gui.screens.DeathScreen ds =
+                        (net.minecraft.client.gui.screens.DeathScreen) client.screen;
+
+                Component deathMsg = ((com.resistancedlc.mixin.DeathScreenAccessor) ds).getCauseOfDeath();
+                String reason = deathMsg != null ? deathMsg.getString() : "";
+
+                String killer = "";
+                net.minecraft.world.damagesource.DamageSource lastSource =
+                        client.player.getLastDamageSource();
+                if (lastSource != null) {
+                    net.minecraft.world.entity.Entity attacker = lastSource.getEntity();
+                    if (attacker != null) killer = attacker.getName().getString();
+                    else {
+                        net.minecraft.world.entity.Entity direct = lastSource.getDirectEntity();
+                        if (direct != null) killer = direct.getName().getString();
+                    }
+                }
+
+                int x = (int) client.player.getX();
+                int y = (int) client.player.getY();
+                int z = (int) client.player.getZ();
+
+                String dim = client.player.level().dimension().identifier().getPath();
+                dim = switch (dim) {
+                    case "overworld" -> "Overworld";
+                    case "the_nether" -> "Nether";
+                    case "the_end" -> "End";
+                    default -> dim;
+                };
+
+                long ts = System.currentTimeMillis();
+
+                DeathRecapManager.ArmorSnapshot snap = DeathRecapManager.getLastArmorSnapshot();
+                String head  = snap != null && snap.head  != null ? snap.head  : "";
+                String chest = snap != null && snap.chest != null ? snap.chest : "";
+                String legs  = snap != null && snap.legs  != null ? snap.legs  : "";
+                String feet  = snap != null && snap.feet  != null ? snap.feet  : "";
+                String off   = snap != null && snap.offhand != null ? snap.offhand : "";
+
+                DeathRecapEntry entry = new DeathRecapEntry(
+                        reason, killer, x, y, z, dim, ts,
+                        head, chest, legs, feet, off);
+
+                DeathRecapManager.addDeath(entry);
+            } catch (Throwable t) {
+                ResistanceDLC.LOGGER.error("[DeathRecap] Failed: " + t.getMessage());
+            }
+        });
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> PickUpLogger.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> AutoReconnectManager.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> AutoGGManager.tick());
-        // ===== LOW HP ALERT =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> LowHPAlertManager.tick());
-
-        // ===== AUTO RESPAWN =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> AutoRespawnManager.tick());
-
-        // ===== ARMOR ALERT =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> ArmorAlertManager.tick());
-        // ===== AUTO TP ACCEPT =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> AutoTPAcceptManager.tick());
-
-        // ===== KILL STREAK =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> KillStreakManager.tick());
-        // ===== GAMMA UTIL =====
-        ClientTickEvents.END_CLIENT_TICK.register(client -> GammaUtilManager.tick());
 
         // ===== ZOOM =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -467,6 +561,33 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 ModConfig.currentZoom = targetZoom;
             } else {
                 ModConfig.currentZoom += (targetZoom - ModConfig.currentZoom) * smooth;
+            }
+        });
+
+        // ===== CROSSHAIR HEATMAP — детект промаха =====
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (!ModConfig.crosshairHeatmapEnabled) {
+                crosshairHeatmapAttackWasDown = false;
+                return;
+            }
+            if (client.player == null || client.level == null) {
+                crosshairHeatmapAttackWasDown = false;
+                return;
+            }
+            if (client.screen != null) {
+                crosshairHeatmapAttackWasDown = client.options.keyAttack.isDown();
+                return;
+            }
+
+            boolean isDown = client.options.keyAttack.isDown();
+            boolean justPressed = isDown && !crosshairHeatmapAttackWasDown;
+            crosshairHeatmapAttackWasDown = isDown;
+
+            if (justPressed && client.crosshairPickEntity == null) {
+                Vec3 eyePos = client.player.getEyePosition();
+                Vec3 look = client.player.getLookAngle();
+                Vec3 missPoint = eyePos.add(look.scale(3.1));
+                CrosshairHeatmapManager.recordMiss(missPoint);
             }
         });
 
@@ -774,48 +895,45 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 (graphics, tickCounter) -> renderHud(graphics)
         );
 
-        // ===== MUSIC HUD =====
         HudElementRegistry.attachElementBefore(
                 VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "music_hud"),
                 (graphics, tickCounter) -> MusicPlayerHud.render(graphics)
         );
-        // ===== FRIEND LIST HUD =====
         HudElementRegistry.attachElementBefore(
                 VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "friend_list_hud"),
                 (graphics, tickCounter) -> FriendListHud.render(graphics)
         );
-        // ===== TARGET ESP — регистрация рендера =====
+        HudElementRegistry.attachElementBefore(
+                VanillaHudElements.CHAT,
+                Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "crosshair_heatmap_hud"),
+                (graphics, tickCounter) -> CrosshairHeatmapHud.render(graphics)
+        );
 
-        // ✅ НОВАЯ СИСТЕМА 1.21.11: LevelRenderEvents
         net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_EXTRACTION.register(TARGET_ESP::extract);
         net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_MAIN.register(TARGET_ESP::draw);
 
-        net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_MAIN.register(TARGET_ESP::draw);
-
-        // ===== PREDICTIONS RENDER =====
         net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_MAIN.register(
                 PredictionsRenderer::render
         );
-        // ===== JUMP CIRCLES — tick =====
+
         ClientTickEvents.END_CLIENT_TICK.register(mc -> JumpCirclesManager.tick());
 
-        // ===== JUMP CIRCLES — render =====
         net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_MAIN.register(
                 JumpCirclesManager::render
         );
-// ===== TICK — обновление цели =====
+
+        ClientTickEvents.END_CLIENT_TICK.register(client -> PingIndicatorManager.tick());
+
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (mc.level != null) {
                 com.resistancedlc.targetesp.TargetManagerHolder.MANAGER.tick(mc.level);
             }
         });
-        // ===== MACROS =====
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) return;
-            // УБРАЛИ проверку client.screen != null — чтобы макросы работали всегда
-            // (но при открытом GUI стрелки всё равно не сработают — это Minecraft)
 
             while (KeyBindings.macro1Key.consumeClick()) MacroManager.executeMacro(0);
             while (KeyBindings.macro2Key.consumeClick()) MacroManager.executeMacro(1);
@@ -823,6 +941,31 @@ public class ResistanceDLCClient implements ClientModInitializer {
             while (KeyBindings.macro4Key.consumeClick()) MacroManager.executeMacro(3);
             while (KeyBindings.macro5Key.consumeClick()) MacroManager.executeMacro(4);
         });
+    }
+
+    // ===== Хелпер: ID предмета =====
+    /**
+     * Сериализация ItemStack для DeathRecap: "itemId|displayName".
+     * Формат: "minecraft:diamond_helmet|Diamond Helmet"
+     * Или:    "minecraft:diamond_helmet|Моё имя"
+     */
+    private static String itemSnapshotOf(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return "";
+        try {
+            net.minecraft.resources.Identifier id =
+                    net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem());
+            if (id == null) return "";
+
+            String customName = "";
+            if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME)) {
+                customName = stack.getHoverName().getString();
+                // ⚠ Заменяем разделители ТОЛЬКО в customName, не в id!
+                customName = customName.replace("|", "/").replace("~~", "_");
+            }
+            return id + "|" + customName;
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     // ===== HUD =====
@@ -1165,7 +1308,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 drawHudString(graphics, client.font, "➤ " + arrowCount, slotX, renderY + 4, color);
             }
         }
-        // ===== LOW HP ALERT =====
+
         if (ModConfig.lowHpAlertEnabled && LowHPAlertManager.isAlertActive()) {
             int guiW = client.getWindow().getGuiScaledWidth();
             int guiH = client.getWindow().getGuiScaledHeight();
@@ -1199,7 +1342,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
             graphics.pose().popMatrix();
         }
 
-        // ===== ARMOR ALERT =====
         if (ModConfig.armorAlertEnabled && ArmorAlertManager.isAlertActive()) {
             int guiW = client.getWindow().getGuiScaledWidth();
             int guiH = client.getWindow().getGuiScaledHeight();
@@ -1218,7 +1360,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
             int aaColor = (ModConfig.armorAlertAlpha << 24) | (ModConfig.armorAlertColor & 0x00FFFFFF);
             graphics.drawString(client.font, text, aaX, aaY, aaColor, true);
         }
-        // ===== KILL STREAK =====
+
         if (ModConfig.killStreakEnabled && KillStreakManager.isActive()) {
             int guiW = client.getWindow().getGuiScaledWidth();
 
@@ -1250,7 +1392,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
             graphics.drawString(client.font, text, 0, 0, ksColor, true);
             graphics.pose().popMatrix();
         }
-        // ===== STRIKE RANGE =====
+
         if (ModConfig.strikeRangeEnabled && StrikeRangeManager.isActive()) {
             double dist = StrikeRangeManager.getDistance();
             String targetName = ModConfig.strikeRangeLastTarget;
@@ -1488,5 +1630,28 @@ public class ResistanceDLCClient implements ClientModInitializer {
         if (client.player != null) {
             client.player.displayClientMessage(Component.literal(message), false);
         }
+    }
+
+    private static void recordHeatmapHit(Entity target) {
+        if (target == null) return;
+
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+
+        Vec3 eye = mc.player.getEyePosition();
+        Vec3 look = mc.player.getLookAngle();
+        double dist = mc.player.distanceTo(target) + 1.0;
+        Vec3 rayEnd = eye.add(look.scale(dist));
+
+        AABB box = target.getBoundingBox();
+        java.util.Optional<Vec3> hit = box.clip(eye, rayEnd);
+
+        Vec3 pos = hit.orElseGet(() -> new Vec3(
+                target.getX(),
+                target.getY() + target.getBbHeight() / 2.0,
+                target.getZ()
+        ));
+
+        CrosshairHeatmapManager.recordHit(pos);
     }
 }

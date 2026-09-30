@@ -25,7 +25,15 @@
     "TotemLogMixin",
     "FriendListMixin",
     "AspectRatioMixin",
-    "BetterBossBarMixin"
+    "LoadingOverlayMixin",
+    "BetterBossBarMixin",
+    "CustomTitleScreenMixin",
+    "LogoRendererMixin",
+    "SplashRendererMixin",
+    "LevelLoadingScreenMixin",
+    "GammaFullbrightMixin",
+    "PingIndicatorMixin",
+    "DeathScreenAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

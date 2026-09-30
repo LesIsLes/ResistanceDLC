@@ -22,6 +22,7 @@ public class KeyBindings {
     public static KeyMapping waypointsKey;
     public static KeyMapping totemLogKey;
     public static KeyMapping pickupLogKey;
+    public static KeyMapping hudEditorKey;
 
     // ===== MACROS =====
     public static KeyMapping macro1Key;
@@ -107,10 +108,23 @@ public class KeyBindings {
         macro5Key = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.resistancedlc.macro5", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_F5, category));
-
+        // ===== HUD EDITOR =====
+        hudEditorKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.resistancedlc.hud_editor", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_F6, category));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (openGuiKey.consumeClick()) {
                 Minecraft.getInstance().setScreen(new AccordionScreen());
+            }
+        });
+        // ===== HUD EDITOR (F6) =====
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.player == null) return;
+            if (KeyBindings.hudEditorKey == null) return;
+            while (KeyBindings.hudEditorKey.consumeClick()) {
+                if (client.screen == null) {
+                    client.setScreen(new com.resistancedlc.hud.HudEditScreen());
+                }
             }
         });
     }

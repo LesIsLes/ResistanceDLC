@@ -415,4 +415,31 @@ public class ModConfig {
     public static int jumpCirclesLiveTime = 3;          // 1..5 сек
     public static float jumpCirclesSpinSpeed = 1.0f;    // -3.0..3.0
     public static boolean jumpCirclesFadeOut = true;
+
+    // ===================== CUSTOM MAIN MENU =====================
+    public static boolean customMainMenuEnabled = true;
+    public static boolean customLoadingScreenEnabled = true;
+
+    // ===================== CROSSHAIR HEATMAP =====================
+    public static boolean crosshairHeatmapEnabled = false;
+    public static int crosshairHeatmapColor = 0xFFFF4444;   // ARGB, красноватый
+    public static int crosshairHeatmapAlpha = 220;          // 0..255
+    public static int crosshairHeatmapMarkLifetime = 3000;  // ms
+    public static int crosshairHeatmapMaxMarks = 100;       // сколько последних ударов помнить
+    public static int crosshairHeatmapRadius = 30;          // px от центра экрана
+    public static int crosshairHeatmapMarkSize = 3;         // px размер точки
+    public static boolean crosshairHeatmapTrackMobs = true;
+    public static boolean crosshairHeatmapTrackPlayers = true;
+    public static boolean crosshairHeatmapRussian = false;
+    // Статистика (вычисляется на лету, но сбрасывается кнопкой)
+    public static int crosshairHeatmapTotalHits = 0;
+    public static int crosshairHeatmapTotalMisses = 0;
+
+    // ===================== PING INDICATOR (tab-list) =====================
+    public static boolean pingIndicatorEnabled = false;
+    public static boolean pingIndicatorShowMs = true;
+    public static boolean pingIndicatorRussian = false;
+
+    // ===================== DEATH RECAP =====================
+    public static String deathRecapRaw = "";
 }

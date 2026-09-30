@@ -8,6 +8,8 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
+import com.resistancedlc.inventory.InventorySnapshot;
+import com.resistancedlc.inventory.InventorySnapshotManager;
 import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -43,6 +45,7 @@ public class AccordionScreen extends Screen {
 
     private static final int OVERLAY_W = 460;
     private static final int OVERLAY_H = 380;
+    private static boolean deathRecapCaptured = false;
 
     // ===== ПЕРЕХОД ИЗ HUD MUSIC =====
     public static String pendingJumpToSection = null;
@@ -64,8 +67,11 @@ public class AccordionScreen extends Screen {
 
     private int activeExtraHudSetting = -1;
     private int activeEnchantSetting = -1;
-
+    private int activeDeathRecapIndex = -1;
     private final Map<String, Boolean> savedExpanded = new HashMap<>();
+    // ===== INVENTORY MANAGER =====
+    private static final int MAX_INVENTORY_SLOTS = 5;
+    private int activeInventoryDetail = -1;
 
     private EditBox searchField;
     private final List<AccordionItem> filteredItems = new ArrayList<>();
@@ -656,6 +662,21 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.section.hud.desc"),
                 new ItemStack(Items.COMPASS));
 
+        // ===== HUD EDITOR (открывает отдельный экран, без on/off) =====
+        AccordionItem hudEditorItem = new AccordionItem(
+                "hud_editor",
+                LocalizationManager.get("gui.resistancedlc.item.hud_editor.title"),
+                LocalizationManager.get("gui.resistancedlc.item.hud_editor.desc"),
+                () -> true,
+                () -> {
+                    Minecraft.getInstance().setScreen(
+                            new com.resistancedlc.hud.HudEditScreen());
+                }
+        );
+        hudEditorItem.contentHeight = 0;
+        hud.items.add(hudEditorItem);
+        // ===== END HUD EDITOR =====
+
         AccordionItem nhcItem = new AccordionItem(
                 "no_hurt_cam",
                 LocalizationManager.get("gui.resistancedlc.item.no_hurt_cam.title"),
@@ -782,7 +803,20 @@ public class AccordionScreen extends Screen {
         );
         ehItem.contentHeight = 130;
         hud.items.add(ehItem);
-
+        // ===== PING INDICATOR =====
+        AccordionItem pingItem = new AccordionItem(
+                "ping_indicator",
+                LocalizationManager.get("gui.resistancedlc.item.ping_indicator.title"),
+                LocalizationManager.get("gui.resistancedlc.item.ping_indicator.desc"),
+                () -> ModConfig.pingIndicatorEnabled,
+                () -> {
+                    ModConfig.pingIndicatorEnabled = !ModConfig.pingIndicatorEnabled;
+                    ConfigManager.save();
+                }
+        );
+        pingItem.contentHeight = 74;
+        hud.items.add(pingItem);
+        // ===== END PING INDICATOR =====
         // ===== LOW HP ALERT =====
         AccordionItem lhaItem = new AccordionItem(
                 "low_hp_alert",
@@ -1180,6 +1214,22 @@ public class AccordionScreen extends Screen {
                     ConfigManager.save();
                 }
         );
+
+        // ===== CROSSHAIR HEATMAP =====
+        AccordionItem chmItem = new AccordionItem(
+                "crosshair_heatmap",
+                LocalizationManager.get("gui.resistancedlc.item.crosshair_heatmap.title"),
+                LocalizationManager.get("gui.resistancedlc.item.crosshair_heatmap.desc"),
+                () -> ModConfig.crosshairHeatmapEnabled,
+                () -> {
+                    ModConfig.crosshairHeatmapEnabled = !ModConfig.crosshairHeatmapEnabled;
+                    ConfigManager.save();
+                }
+        );
+        chmItem.contentHeight = 420;
+        visual.items.add(chmItem);
+        // ===== END CROSSHAIR HEATMAP =====
+
         AccordionItem gammaItem = new AccordionItem(
                 "gamma_util",
                 LocalizationManager.get("gui.resistancedlc.item.gamma_util.title"),
@@ -1297,7 +1347,7 @@ public class AccordionScreen extends Screen {
                     ConfigManager.save();
                 }
         );
-        cfItem.contentHeight = 186;
+        cfItem.contentHeight = calcChatFilterHeight();
         misc.items.add(cfItem);
 
         AccordionItem arcItem = new AccordionItem(
@@ -1337,6 +1387,20 @@ public class AccordionScreen extends Screen {
         themeItem.contentHeight = 158;
         misc.items.add(themeItem);
 
+        // ===== CUSTOM MAIN MENU =====
+        AccordionItem cmmItem = new AccordionItem(
+                "custom_main_menu",
+                LocalizationManager.get("gui.resistancedlc.item.custom_main_menu.title"),
+                LocalizationManager.get("gui.resistancedlc.item.custom_main_menu.desc"),
+                () -> ModConfig.customMainMenuEnabled,
+                () -> {
+                    ModConfig.customMainMenuEnabled = !ModConfig.customMainMenuEnabled;
+                    ConfigManager.save();
+                }
+        );
+        cmmItem.contentHeight = 74;
+        misc.items.add(cmmItem);
+        // ===== END CUSTOM MAIN MENU =====
         AccordionItem macroItem = new AccordionItem(
                 "macros",
                 LocalizationManager.get("gui.resistancedlc.item.macros.title"),
@@ -1364,7 +1428,21 @@ public class AccordionScreen extends Screen {
 
         flItem.contentHeight = calcFriendListHeight();
         misc.items.add(flItem);
-
+        // ===== DEATH RECAP =====
+        AccordionItem drItem = new AccordionItem(
+                "death_recap",
+                LocalizationManager.get("gui.resistancedlc.item.death_recap.title"),
+                LocalizationManager.get("gui.resistancedlc.item.death_recap.desc"),
+                () -> true,                       // статус не важен — как у hud_editor
+                () -> {
+                    // клик по item — панель НЕ раскрывается (обрабатывается отдельно)
+                    // как у hud_editor — вместо раскрытия item сразу делает действие,
+                    // но у нас действия нет, панель раскроется через отдельную логику
+                }
+        );
+        drItem.contentHeight = calcDeathRecapHeight();
+        misc.items.add(drItem);
+        // ===== END DEATH RECAP =====
         AccordionItem cfgItem = new AccordionItem(
                 "config_manager",
                 LocalizationManager.get("gui.resistancedlc.item.config_manager.title"),
@@ -1375,7 +1453,17 @@ public class AccordionScreen extends Screen {
         );
         cfgItem.contentHeight = calcConfigManagerHeight();
         misc.items.add(cfgItem);
-
+        // ===== INVENTORY MANAGER =====
+        AccordionItem invItem = new AccordionItem(
+                "inventory_manager",
+                LocalizationManager.get("gui.resistancedlc.item.inventory_manager.title"),
+                LocalizationManager.get("gui.resistancedlc.item.inventory_manager.desc"),
+                () -> true,
+                () -> {}
+        );
+        invItem.contentHeight = calcInventoryManagerHeight();
+        misc.items.add(invItem);
+        // ===== END INVENTORY MANAGER =====
         sections.add(misc);
 
         // ===================== MUSIC =====================
@@ -1477,7 +1565,11 @@ public class AccordionScreen extends Screen {
         if (globalSearchOpen) return;
         updateFilteredItems();
         updateContentMetrics();
-        for (AccordionItem item : filteredItems) {
+
+        // ✅ Снимок списка — getPanelBoundsFixed -> updateFilteredItems() вызывает
+        // filteredItems.clear(), что ломает итератор (ConcurrentModificationException).
+        List<AccordionItem> snapshot = new ArrayList<>(filteredItems);
+        for (AccordionItem item : snapshot) {
             if (item.expanded) {
                 buildPanelWidgets(item);
             }
@@ -1531,15 +1623,18 @@ public class AccordionScreen extends Screen {
         List<AbstractWidget> widgets = new ArrayList<>();
 
         switch (item.id) {
+            case "hud_editor" -> { /* панель не нужна — клик сразу открывает экран */ }
             case "no_hurt_cam" -> buildNoHurtCamPanel(widgets, innerX, innerY);
             case "no_bobbing" -> buildNoBobbingPanel(widgets, innerX, innerY);
             case "mod_logo" -> buildModLogoPanel(widgets, innerX, innerY, innerRight);
             case "cooldowns" -> buildCoolDownsPanel(widgets, innerX, innerY, innerRight);
             case "combo" -> buildComboPanel(widgets, innerX, innerY, innerRight);
+            case "death_recap" -> buildDeathRecapPanel(widgets, innerX, innerY, innerRight);
             case "potion_effects" -> buildPotionEffectsPanel(widgets, innerX, innerY, innerRight);
             case "equipment_hud" -> buildEquipmentHudPanel(widgets, innerX, innerY, innerRight);
             case "effect_warnings" -> buildEffectWarningsPanel(widgets, innerX, innerY, innerRight);
             case "extra_hud" -> buildExtraHudPanel(widgets, innerX, innerY, innerRight);
+            case "ping_indicator" -> buildPingIndicatorPanel(widgets, innerX, innerY, innerRight);
             case "custom_hit_sounds" -> buildCustomHitSoundsPanel(widgets, innerX, innerY, innerRight);
             case "totem_log" -> buildTotemLogPanel(widgets, innerX, innerY, innerRight);
             case "auto_swap" -> buildAutoSwapPanel(widgets, innerX, innerY, innerRight);
@@ -1565,8 +1660,10 @@ public class AccordionScreen extends Screen {
             case "death_coords" -> buildDeathCoordsPanel(widgets, innerX, innerY, innerRight);
             case "gui_theme" -> buildGuiThemePanel(widgets, innerX, innerY, innerRight);
             case "config_manager" -> buildConfigManagerPanel(widgets, innerX, innerY, innerRight);
+            case "inventory_manager" -> buildInventoryManagerPanel(widgets, innerX, innerY, innerRight);
             case "auto_gg" -> buildAutoGGPanel(widgets, innerX, innerY, innerRight);
             case "strike_range" -> buildStrikeRangePanel(widgets, innerX, innerY, innerRight);
+            case "crosshair_heatmap" -> buildCrosshairHeatmapPanel(widgets, innerX, innerY, innerRight);
             case "killaura_egg" -> buildKillAuraPanel(widgets, innerX, innerY, innerRight);
             case "target_esp" -> buildTargetEspPanel(widgets, innerX, innerY, innerRight);
             case "music_player" -> buildMusicPlayerPanel(widgets, innerX, innerY, innerRight);
@@ -1583,6 +1680,7 @@ public class AccordionScreen extends Screen {
             case "kill_streak" -> buildKillStreakPanel(widgets, innerX, innerY, innerRight);
             case "enchant_highlight" -> buildEnchantHighlightPanel(widgets, innerX, innerY, innerRight);
             case "jump_circles" -> buildJumpCirclesPanel(widgets, innerX, innerY, innerRight);
+            case "custom_main_menu" -> buildCustomMainMenuPanel(widgets, innerX, innerY, innerRight);
             default -> {
             }
         }
@@ -2920,6 +3018,23 @@ public class AccordionScreen extends Screen {
     private int calcEnchantHighlightHeightImpl() {
         return calcEnchantHighlightHeight();
     }
+    private int calcDeathRecapHeight() {
+        int base = 26 + 26;  // кнопка Clear + отступ
+        int count = DeathRecapManager.getEntries().size();
+
+        if (count == 0) {
+            return base + 30;  // место под «пока нет смертей»
+        }
+
+        // Каждая строка — заголовок (18) + отступ
+        base += count * 22;
+
+        // Если что-то раскрыто — место под детали
+        if (activeDeathRecapIndex >= 0 && activeDeathRecapIndex < count) {
+            base += 220;  // причина + убийца + коорд + измерение + время + 5 слотов брони
+        }
+        return base;
+    }
 
     // ===================== AUTO TP ACCEPT =====================
     private void buildAutoTpAcceptPanel(List<AbstractWidget> widgets, int x, int y, int right) {
@@ -4147,6 +4262,7 @@ public class AccordionScreen extends Screen {
         if (cf == null || !cf.expanded) return;
 
         clearPanelWidgets(cf);
+        cf.contentHeight = calcChatFilterHeight();   // ← ДОБАВЛЕНО
         buildPanelWidgets(cf);
         updateContentMetrics();
         updateWidgetsVisibility();
@@ -4285,7 +4401,186 @@ public class AccordionScreen extends Screen {
         }
         return base;
     }
+    // ===================== INVENTORY MANAGER =====================
 
+    private int calcInventoryManagerHeight() {
+        int base = 18 + 6;
+        base += MAX_INVENTORY_SLOTS * 26;      // 5 слотов × 26px
+        base += 22;
+        if (activeInventoryDetail >= 0) {
+            base += 340;
+        }
+        return base;
+    }
+
+    private void buildInventoryManagerPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 4;
+        int curY = y;
+
+        // Кнопка "Open folder"
+        widgets.add(Button.builder(
+                Component.literal(LocalizationManager.get("gui.resistancedlc.inventory.open_folder")),
+                (b) -> {
+                    InventorySnapshotManager.openFolder();
+                    Minecraft mc = Minecraft.getInstance();
+                    if (mc.player != null) {
+                        mc.player.displayClientMessage(Component.literal(
+                                        "§a" + LocalizationManager.get(
+                                                "gui.resistancedlc.inventory.folder_opened",
+                                                InventorySnapshotManager.getDir().toAbsolutePath().toString())),
+                                false);
+                    }
+                }
+        ).bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        List<InventorySnapshot> all = InventorySnapshotManager.listAll();
+
+        for (int i = 0; i < MAX_INVENTORY_SLOTS; i++) {
+            final int slotIndex = i + 1;
+            InventorySnapshot snap = (i < all.size()) ? all.get(i) : null;
+
+            int rowY = curY;
+
+            String labelText;
+            if (snap == null) {
+                labelText = "§7" + LocalizationManager.get(
+                        "gui.resistancedlc.inventory.slot_empty", slotIndex);
+            } else {
+                String timeStr = formatDeathTime(snap.getTimestamp());
+                labelText = "§e# " + slotIndex + " §f" + snap.getName()
+                        + " §7· " + timeStr;
+                if (labelText.length() > 55) labelText = labelText.substring(0, 53) + "…";
+            }
+
+            final int finalSlotIndex = slotIndex;
+            widgets.add(Button.builder(
+                    Component.literal(labelText),
+                    (b) -> Minecraft.getInstance().setScreen(
+                            new com.resistancedlc.inventory.InventorySaveScreen(
+                                    finalSlotIndex, this))
+            ).bounds(x, rowY, w - 25, 20).build());
+
+            boolean isOpen = (activeInventoryDetail == i);
+            String arrow = isOpen ? "▲" : "▼";
+            final int finalI = i;
+            widgets.add(Button.builder(Component.literal(arrow), (b) -> {
+                if (activeInventoryDetail == finalI) {
+                    activeInventoryDetail = -1;
+                } else {
+                    activeInventoryDetail = finalI;
+                }
+                Minecraft.getInstance().execute(this::rebuildInventoryManagerPanel);
+            }).bounds(x + w - 22, rowY, 22, 20).build());
+
+            curY += rowH + rowGap;
+
+            if (isOpen && snap != null) {
+                curY = buildInventoryDetailsView(widgets, x, curY, w, slotIndex, snap);
+                curY += 6;
+            } else if (isOpen) {
+                Button emptyBtn = Button.builder(
+                        Component.literal("§8" + LocalizationManager.get(
+                                "gui.resistancedlc.inventory.detail_empty")),
+                        (b) -> {}
+                ).bounds(x, curY, w, 18).build();
+                emptyBtn.active = false;
+                widgets.add(emptyBtn);
+                curY += 18 + 6;
+            }
+        }
+    }
+
+    private int buildInventoryDetailsView(List<AbstractWidget> widgets,
+                                          int x, int y, int w,
+                                          int slotIndex, InventorySnapshot snap) {
+        int curY = y;
+
+        int steveBoxH = 90;
+        widgets.add(new ArmorPreviewWidget(x, curY, steveBoxH, snap));
+
+        int iconX = x + steveBoxH + 10;
+        int iconY = curY + 4;
+        addEquipmentIconRow(widgets, iconX, iconY, snap.getSlot(InventorySnapshot.IDX_HEAD), "Helmet");
+        addEquipmentIconRow(widgets, iconX, iconY + 20, snap.getSlot(InventorySnapshot.IDX_CHEST), "Chestplate");
+        addEquipmentIconRow(widgets, iconX, iconY + 40, snap.getSlot(InventorySnapshot.IDX_LEGS), "Leggings");
+        addEquipmentIconRow(widgets, iconX, iconY + 60, snap.getSlot(InventorySnapshot.IDX_FEET), "Boots");
+        addEquipmentIconRow(widgets, iconX, iconY + 80, snap.getSlot(InventorySnapshot.IDX_OFFHAND), "Offhand");
+
+        curY += steveBoxH + 6;
+
+        widgets.add(new SlotLabelWidget(x, curY, Component.literal("§7Hotbar:"), 200));
+        curY += 12;
+        curY = addSlotRow(widgets, x, curY, 9, InventorySnapshot.IDX_HOTBAR_0, snap);
+
+        widgets.add(new SlotLabelWidget(x, curY, Component.literal("§7Inventory:"), 200));
+        curY += 12;
+        for (int row = 0; row < 3; row++) {
+            curY = addSlotRow(widgets, x, curY, 9,
+                    InventorySnapshot.IDX_MAIN_9 + row * 9, snap);
+        }
+
+        int btnW = (w - 8) / 3;
+        int btnY = curY + 4;
+
+        final int finalSlotIndex = slotIndex;
+
+        widgets.add(Button.builder(
+                Component.literal("§a" + LocalizationManager.get(
+                        "gui.resistancedlc.inventory.btn.save")),
+                (b) -> Minecraft.getInstance().setScreen(
+                        new com.resistancedlc.inventory.InventorySaveScreen(
+                                finalSlotIndex, this))
+        ).bounds(x, btnY, btnW, 20).build());
+
+        widgets.add(Button.builder(
+                Component.literal("§6" + LocalizationManager.get(
+                        "gui.resistancedlc.inventory.btn.rename")),
+                (b) -> Minecraft.getInstance().setScreen(
+                        new com.resistancedlc.inventory.InventoryRenameScreen(
+                                finalSlotIndex, this))
+        ).bounds(x + btnW + 4, btnY, btnW, 20).build());
+
+        widgets.add(Button.builder(
+                Component.literal("§c" + LocalizationManager.get(
+                        "gui.resistancedlc.inventory.btn.delete")),
+                (b) -> {
+                    InventorySnapshotManager.delete(finalSlotIndex);
+                    activeInventoryDetail = -1;
+                    Minecraft.getInstance().execute(this::rebuildInventoryManagerPanel);
+                }
+        ).bounds(x + (btnW + 4) * 2, btnY, btnW, 20).build());
+
+        return btnY + 20;
+    }
+
+    private int addSlotRow(List<AbstractWidget> widgets, int x, int y, int count,
+                           int startIdx, InventorySnapshot snap) {
+        for (int i = 0; i < count; i++) {
+            int sx = x + i * 22;
+            widgets.add(new InventorySlotWidget(sx, y, snap.getSlot(startIdx + i)));
+        }
+        return y + 22;
+    }
+
+    private void addEquipmentIconRow(List<AbstractWidget> widgets, int x, int y,
+                                     ItemStack stack, String label) {
+        widgets.add(new InventorySlotWidget(x, y, stack));
+        widgets.add(new SlotLabelWidget(x + 22, y + 5,
+                Component.literal("§7" + label), 150));
+    }
+
+    private void rebuildInventoryManagerPanel() {
+        AccordionItem item = findItemById("inventory_manager");
+        if (item == null || !item.expanded) return;
+
+        clearPanelWidgets(item);
+        item.contentHeight = calcInventoryManagerHeight();
+        contentScroll = 0;
+        buildPanelWidgets(item);
+        updateWidgetsVisibility();
+    }
     private void buildConfigManagerPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
@@ -4440,7 +4735,17 @@ public class AccordionScreen extends Screen {
         buildPanelWidgets(cfg);
         updateWidgetsVisibility();
     }
-
+    private int calcChatFilterHeight() {
+        int base = 18;                      // EditBox (20) + отступ
+        base += 28;                         // кнопка "Очистить всё"
+        int words = ChatFilterManager.getWords().size();
+        if (words > 0) {
+            int shown = Math.min(words, 3);
+            base += shown * 20;             // строки стоп-слов
+            if (words > 3) base += 20;      // "ещё N"
+        }
+        return base + 8;                    // финальный отступ
+    }
     // ===================== COOLDOWNS =====================
     private void buildCoolDownsPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
@@ -4944,10 +5249,8 @@ public class AccordionScreen extends Screen {
         }
 
         graphics.fill(0, 0, this.width, this.height, 0x80000000);
-
         graphics.fill(panelX + 4, panelY + 4,
                 panelX + PANEL_WIDTH + 4, panelY + PANEL_HEIGHT + 4, 0x40000000);
-
         graphics.fill(panelX, panelY, panelX + PANEL_WIDTH, panelY + PANEL_HEIGHT, 0xC0000000);
 
         drawPanelBorders(graphics);
@@ -4957,12 +5260,7 @@ public class AccordionScreen extends Screen {
         drawColumn(graphics, mouseX, mouseY);
         drawContent(graphics, mouseX, mouseY);
 
-        if (globalSearchOpen || globalSearchClosing) {
-            drawGlobalSearchBackground(graphics);
-        }
-
         super.render(graphics, mouseX, mouseY, delta);
-
         updateWidgetsVisibility();
 
         drawThemeButtons(graphics, mouseX, mouseY);
@@ -5385,10 +5683,15 @@ public class AccordionScreen extends Screen {
         graphics.drawString(this.font, "§l" + item.title, left + 22, top + 3, textColor, true);
         graphics.drawString(this.font, "§7" + item.description, left + 22, top + 14, descColor, false);
 
-        boolean status = item.statusGetter.get();
-        String statusText = status ? "§a[ON]" : "§7[OFF]";
-        int statusWidth = this.font.width(statusText);
-        graphics.drawString(this.font, statusText, right - statusWidth - 10, top + 6, textColor, true);
+        boolean showStatus = !"hud_editor".equals(item.id)
+                && !"death_recap".equals(item.id);
+        int statusWidth = 0;
+        if (showStatus) {
+            boolean status = item.statusGetter.get();
+            String statusText = status ? "§a[ON]" : "§7[OFF]";
+            statusWidth = this.font.width(statusText);
+            graphics.drawString(this.font, statusText, right - statusWidth - 10, top + 6, textColor, true);
+        }
 
         if (isHover && !item.expanded) {
             int arrowX = right - statusWidth - 26;
@@ -5562,16 +5865,23 @@ public class AccordionScreen extends Screen {
         }
 
         if (globalSearchOpen) {
+            // 1) Клик по результату поиска → перейти к настройке
             if (globalSearchHovered >= 0 && globalSearchHovered < globalSearchResults.size()) {
                 String[] r = globalSearchResults.get(globalSearchHovered);
                 jumpToFunction(r[0], r[1]);
                 return true;
             }
 
-            if (super.mouseClicked(event, isDoubleClick)) {
-                return true;
+            // 2) Клик по нашим overlay-виджетам (поле ввода, кнопка ×)
+            for (AbstractWidget w : globalSearchWidgets) {
+                if (!w.visible || !w.active) continue;
+                if (w.isMouseOver(mouseX, mouseY)) {
+                    w.mouseClicked(event, isDoubleClick);
+                    return true;
+                }
             }
 
+            // 3) Клик вне overlay → закрыть поиск
             int overlayX = panelX + (PANEL_WIDTH - OVERLAY_W) / 2;
             int overlayY = panelY + (PANEL_HEIGHT - OVERLAY_H) / 2;
             boolean inOverlay = mouseX >= overlayX && mouseX <= overlayX + OVERLAY_W
@@ -5579,6 +5889,7 @@ public class AccordionScreen extends Screen {
             if (!inOverlay) {
                 closeGlobalSearch();
             }
+            // 4) Клик внутри overlay (но не по виджету) — игнорируем
             return true;
         }
 
@@ -5693,6 +6004,16 @@ public class AccordionScreen extends Screen {
                     if (animH > 0) itemY += animH + gap;
                     continue;
                 }
+
+                // HUD Editor — ЛКМ или ПКМ открывает отдельный экран (без раскрытия)
+                if ("hud_editor".equals(item.id)) {
+                    item.toggler.run();
+                    return true;
+                }
+
+                // DeathRecap — ЛКМ/ПКМ раскрывает панель (как обычный item)
+                // Ничего специального не делаем — идём дальше по стандартному пути,
+                // который вызовет closeAllExcept(null) + item.expanded = true.
 
                 if (button == 1) {
                     item.toggler.run();
@@ -5949,13 +6270,13 @@ public class AccordionScreen extends Screen {
 
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.gamma_util.value",
-                        String.format("%.1f", ModConfig.gammaValue))),
+                        ModConfig.gammaValue)),                  // ← передаём Float, не String
                 (ModConfig.gammaValue - 1.0f) / 99.0f
         ) {
             @Override
             protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.gamma_util.value",
-                        String.format("%.1f", ModConfig.gammaValue))));
+                        ModConfig.gammaValue)));                 // ← тоже Float
             }
 
             @Override
@@ -6584,5 +6905,701 @@ public class AccordionScreen extends Screen {
         buildPanelWidgets(item);
         updateContentMetrics();
         updateWidgetsVisibility();
+    }
+
+    // ===================== CUSTOM MAIN MENU =====================
+    private void buildCustomMainMenuPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.custom_main_menu.enable_menu")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.customMainMenuEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.customMainMenuEnabled = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH + rowGap;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.custom_main_menu.enable_loading")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.customLoadingScreenEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.customLoadingScreenEnabled = v;
+                    ConfigManager.save();
+                })
+                .build());
+    }
+    // ===================== CROSSHAIR HEATMAP =====================
+    private void buildCrosshairHeatmapPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        // 1) Enable
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.crosshair_heatmap.enable")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.crosshairHeatmapEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.crosshairHeatmapEnabled = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH;
+
+        // 2) Track Mobs
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.crosshair_heatmap.track_mobs")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.crosshairHeatmapTrackMobs)
+                .onValueChange((c, v) -> {
+                    ModConfig.crosshairHeatmapTrackMobs = v;
+                    ConfigManager.save();
+                })
+                .build());
+
+        // 3) Track Players
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.crosshair_heatmap.track_players")),
+                        this.font)
+                .pos(x + w / 2, curY).selected(ModConfig.crosshairHeatmapTrackPlayers)
+                .onValueChange((c, v) -> {
+                    ModConfig.crosshairHeatmapTrackPlayers = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH + rowGap;
+
+        // 4) Цвет (HEX + пресеты)
+        EditBox hexField = new EditBox(this.font, x, curY, 80, 18,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hex")));
+        hexField.setMaxLength(7);
+        hexField.setValue(String.format("#%06X", ModConfig.crosshairHeatmapColor & 0xFFFFFF));
+        widgets.add(hexField);
+
+        widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.apply")), (b) -> {
+            String hex = hexField.getValue().replace("#", "").trim();
+            try {
+                ModConfig.crosshairHeatmapColor = 0xFF000000 | Integer.parseInt(hex, 16);
+                ConfigManager.save();
+            } catch (NumberFormatException ignored) {
+            }
+        }).bounds(x + 85, curY, 35, 18).build());
+
+        int presetX = x + 125;
+        int presetW = (right - presetX - 9) / 4;
+        String[] pn = {"R", "G", "B", "W"};
+        int[] pc = {0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 0xFFFFFFFF};
+        for (int i = 0; i < 4; i++) {
+            final int color = pc[i];
+            final String hex = String.format("#%06X", color & 0xFFFFFF);
+            widgets.add(Button.builder(Component.literal(pn[i]), (b) -> {
+                hexField.setValue(hex);
+                ModConfig.crosshairHeatmapColor = color;
+                ConfigManager.save();
+            }).bounds(presetX + i * (presetW + 3), curY, presetW, 18).build());
+        }
+        curY += rowH + rowGap;
+
+        // 5) Alpha
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha", ModConfig.crosshairHeatmapAlpha)),
+                ModConfig.crosshairHeatmapAlpha / 255.0
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha",
+                        ModConfig.crosshairHeatmapAlpha)));
+            }
+
+            @Override
+            protected void applyValue() {
+                ModConfig.crosshairHeatmapAlpha = (int) (this.value * 255);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // 6) Размер метки (1..8)
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.crosshair_heatmap.size",
+                        ModConfig.crosshairHeatmapMarkSize)),
+                (ModConfig.crosshairHeatmapMarkSize - 1) / 7.0
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.crosshair_heatmap.size",
+                        ModConfig.crosshairHeatmapMarkSize)));
+            }
+
+            @Override
+            protected void applyValue() {
+                ModConfig.crosshairHeatmapMarkSize = 1 + (int) (this.value * 7);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // 7) Время жизни (500..10000 ms)
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.crosshair_heatmap.lifetime",
+                        ModConfig.crosshairHeatmapMarkLifetime)),
+                (ModConfig.crosshairHeatmapMarkLifetime - 500) / 9500.0
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.crosshair_heatmap.lifetime",
+                        ModConfig.crosshairHeatmapMarkLifetime)));
+            }
+
+            @Override
+            protected void applyValue() {
+                ModConfig.crosshairHeatmapMarkLifetime = 500 + (int) (this.value * 9500);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // 8) Макс. меток (10..500)
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.crosshair_heatmap.max_marks",
+                        ModConfig.crosshairHeatmapMaxMarks)),
+                (ModConfig.crosshairHeatmapMaxMarks - 10) / 490.0
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.crosshair_heatmap.max_marks",
+                        ModConfig.crosshairHeatmapMaxMarks)));
+            }
+
+            @Override
+            protected void applyValue() {
+                ModConfig.crosshairHeatmapMaxMarks = 10 + (int) (this.value * 490);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // 9) Статистика
+        double hitChance = CrosshairHeatmapManager.getHitChance();
+        double missChance = CrosshairHeatmapManager.getMissChance();
+        int total = ModConfig.crosshairHeatmapTotalHits + ModConfig.crosshairHeatmapTotalMisses;
+
+        // Hit
+        Button hitBtn = Button.builder(
+                Component.literal("§a" + String.format(
+                        LocalizationManager.get("gui.resistancedlc.panel.crosshair_heatmap.stats_hit"),
+                        hitChance)),
+                (b) -> {
+                }
+        ).bounds(x, curY, w, 20).build();
+        hitBtn.active = false;
+        widgets.add(hitBtn);
+        curY += rowH;
+
+        // Miss
+        Button missBtn = Button.builder(
+                Component.literal("§c" + String.format(
+                        LocalizationManager.get("gui.resistancedlc.panel.crosshair_heatmap.stats_miss"),
+                        missChance)),
+                (b) -> {
+                }
+        ).bounds(x, curY, w, 20).build();
+        missBtn.active = false;
+        widgets.add(missBtn);
+        curY += rowH;
+
+        // WinRate (пока = Hit%, задел на будущее)
+        Button wrBtn = Button.builder(
+                Component.literal("§e" + String.format(
+                        LocalizationManager.get("gui.resistancedlc.panel.crosshair_heatmap.stats_winrate"),
+                        hitChance)),
+                (b) -> {
+                }
+        ).bounds(x, curY, w, 20).build();
+        wrBtn.active = false;
+        widgets.add(wrBtn);
+        curY += rowH;
+
+        // Total
+        Button totalBtn = Button.builder(
+                Component.literal("§7" + LocalizationManager.get(
+                        "gui.resistancedlc.panel.crosshair_heatmap.stats_total", total)),
+                (b) -> {
+                }
+        ).bounds(x, curY, w, 20).build();
+        totalBtn.active = false;
+        widgets.add(totalBtn);
+        curY += rowH + rowGap;
+
+        // 10) Reset
+        widgets.add(Button.builder(
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.crosshair_heatmap.reset_stats")),
+                (b) -> {
+                    CrosshairHeatmapManager.resetStats();
+                    rebuildCrosshairHeatmapPanel();
+                }
+        ).bounds(x, curY, w, 20).build());
+    }
+
+    private void rebuildCrosshairHeatmapPanel() {
+        AccordionItem item = findItemById("crosshair_heatmap");
+        if (item == null || !item.expanded) return;
+        clearPanelWidgets(item);
+        buildPanelWidgets(item);
+        updateContentMetrics();
+        updateWidgetsVisibility();
+    }
+    // ===================== PING INDICATOR =====================
+    private void buildPingIndicatorPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.ping_indicator.enable")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.pingIndicatorEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.pingIndicatorEnabled = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH + rowGap;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.ping_indicator.show_ms")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.pingIndicatorShowMs)
+                .onValueChange((c, v) -> {
+                    ModConfig.pingIndicatorShowMs = v;
+                    ConfigManager.save();
+                })
+                .build());
+    }
+    private void buildDeathRecapPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 18, rowGap = 4;
+        int curY = y;
+
+        List<DeathRecapEntry> entries = DeathRecapManager.getEntries();
+
+        // ===== Заголовок =====
+        Button headerBtn = Button.builder(
+                Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.death_recap.list")
+                        + " (§f" + entries.size() + "§e/§f" + DeathRecapManager.MAX_ENTRIES + "§e):"),
+                (b) -> {}
+        ).bounds(x, curY, w, 18).build();
+        headerBtn.active = false;
+        widgets.add(headerBtn);
+        curY += 18 + 4;
+
+        if (entries.isEmpty()) {
+            Button emptyBtn = Button.builder(
+                    Component.literal("§7" + LocalizationManager.get("gui.resistancedlc.panel.death_recap.empty")),
+                    (b) -> {}
+            ).bounds(x, curY, w, 18).build();
+            emptyBtn.active = false;
+            widgets.add(emptyBtn);
+            return;
+        }
+
+        // ===== Список =====
+        for (int i = 0; i < entries.size(); i++) {
+            final int idx = i;
+            DeathRecapEntry e = entries.get(i);
+
+            String timeStr = formatDeathTime(e.timestamp());
+            String label = "§c☠ §f" + LocalizationManager.get(
+                    "gui.resistancedlc.panel.death_recap.summary",
+                    e.x(), e.y(), e.z(), timeStr);
+            if (label.length() > 55) label = label.substring(0, 53) + "…";
+
+            Button row = Button.builder(Component.literal(label), (b) -> {})
+                    .bounds(x, curY, w - 25, 18).build();
+            row.active = false;
+            widgets.add(row);
+
+            // Стрелка ▼/▲
+            boolean isOpen = (activeDeathRecapIndex == idx);
+            String arrow = isOpen ? "▲" : "▼";
+            widgets.add(Button.builder(Component.literal(arrow), (b) -> {
+                if (activeDeathRecapIndex == idx) {
+                    activeDeathRecapIndex = -1;
+                } else {
+                    activeDeathRecapIndex = idx;
+                }
+                Minecraft.getInstance().execute(this::rebuildDeathRecapPanel);
+            }).bounds(x + w - 22, curY, 22, 18).build());
+
+            curY += rowH + 2;
+
+            // ===== Раскрытые детали =====
+            if (isOpen) {
+                curY = buildDeathRecapDetails(widgets, x, curY, w, e);
+                curY += rowGap;
+            }
+        }
+
+        // ===== Кнопка «Очистить всё» =====
+        widgets.add(Button.builder(
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.death_recap.clear")),
+                (b) -> {
+                    DeathRecapManager.clearAll();
+                    activeDeathRecapIndex = -1;
+                    Minecraft.getInstance().execute(this::rebuildDeathRecapPanel);
+                }
+        ).bounds(x, curY, w, 20).build());
+    }
+
+    /**
+     * Отрисовывает детали одной смерти. Возвращает новую Y.
+     */
+    private int buildDeathRecapDetails(List<AbstractWidget> widgets, int x, int y, int w,
+                                       DeathRecapEntry e) {
+        int curY = y;
+
+        // Причина
+        widgets.add(labelRow(LocalizationManager.get("gui.resistancedlc.panel.death_recap.reason"),
+                e.reason(), x, curY, w));
+        curY += 18;
+
+        // Убийца
+        String killer = (e.killer() == null || e.killer().isEmpty())
+                ? LocalizationManager.get("gui.resistancedlc.panel.death_recap.unknown")
+                : e.killer();
+        widgets.add(labelRow(LocalizationManager.get("gui.resistancedlc.panel.death_recap.killer"),
+                killer, x, curY, w));
+        curY += 18;
+
+        // Координаты
+        widgets.add(labelRow(LocalizationManager.get("gui.resistancedlc.panel.death_recap.coords"),
+                e.x() + ", " + e.y() + ", " + e.z(), x, curY, w));
+        curY += 18;
+
+        // Измерение
+        widgets.add(labelRow(LocalizationManager.get("gui.resistancedlc.panel.death_recap.dimension"),
+                e.dimension(), x, curY, w));
+        curY += 18;
+
+        // Время
+        widgets.add(labelRow(LocalizationManager.get("gui.resistancedlc.panel.death_recap.time"),
+                formatDeathTime(e.timestamp()), x, curY, w));
+        curY += 18 + 4;
+
+        // Заголовок «Броня»
+        Button armorHeader = Button.builder(
+                Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.death_recap.armor") + ":"),
+                (b) -> {}
+        ).bounds(x, curY, w, 16).build();
+        armorHeader.active = false;
+        widgets.add(armorHeader);
+        curY += 16 + 2;
+
+        // 5 слотов брони
+        curY = addArmorSlot(widgets, x, curY, w,
+                LocalizationManager.get("gui.resistancedlc.panel.death_recap.armor_head"),
+                e.armorHead());
+        curY = addArmorSlot(widgets, x, curY, w,
+                LocalizationManager.get("gui.resistancedlc.panel.death_recap.armor_chest"),
+                e.armorChest());
+        curY = addArmorSlot(widgets, x, curY, w,
+                LocalizationManager.get("gui.resistancedlc.panel.death_recap.armor_legs"),
+                e.armorLegs());
+        curY = addArmorSlot(widgets, x, curY, w,
+                LocalizationManager.get("gui.resistancedlc.panel.death_recap.armor_feet"),
+                e.armorFeet());
+        curY = addArmorSlot(widgets, x, curY, w,
+                LocalizationManager.get("gui.resistancedlc.panel.death_recap.armor_offhand"),
+                e.armorOffhand());
+
+        return curY;
+    }
+
+    /**
+     * Одна строка деталей: «§eКлюч: §fЗначение». Активная кнопка-заглушка.
+     */
+    private AbstractWidget labelRow(String key, String value, int x, int y, int w) {
+        String text = "§e" + key + ": §f" + (value == null ? "" : value);
+        Button btn = Button.builder(Component.literal(text), (b) -> {})
+                .bounds(x, y, w, 16).build();
+        btn.active = false;
+        return btn;
+    }
+
+    private int addArmorSlot(List<AbstractWidget> widgets, int x, int y, int w,
+                             String slotName, String slotData) {
+        int labelW = 80;
+        int rowH = 20;
+
+        // Кнопка-фон строки
+        Button rowBg = Button.builder(Component.empty(), (b) -> {})
+                .bounds(x, y, w, rowH - 2).build();
+        rowBg.active = false;
+        widgets.add(rowBg);
+
+        // Название слота (слева, текстом)
+        widgets.add(new ArmorTextWidget(x + 4, y + 5,
+                Component.literal("§7" + slotName + ":")));
+
+        // Пусто?
+        if (slotData == null || slotData.isEmpty()) {
+            widgets.add(new ArmorTextWidget(x + labelW + 20, y + 5,
+                    Component.literal("§8" + LocalizationManager.get(
+                            "gui.resistancedlc.panel.death_recap.armor_empty"))));
+            return y + rowH;
+        }
+
+        // Парсим "itemId|displayName"
+        String itemId;
+        String customName = "";
+        int sep = slotData.indexOf('|');
+        if (sep >= 0) {
+            itemId = slotData.substring(0, sep);
+            customName = slotData.substring(sep + 1);
+        } else {
+            itemId = slotData;
+        }
+
+        // Иконка — как виджет
+        ItemStack stack = itemIdToStack(itemId);
+        if (!stack.isEmpty()) {
+            widgets.add(new ArmorIconWidget(x + labelW, y + 2, stack));
+        }
+
+        // Имя
+        String name;
+        boolean isCustom = false;
+        if (customName != null && !customName.isEmpty()) {
+            name = customName;
+            isCustom = true;
+        } else if (!stack.isEmpty()) {
+            name = stack.getHoverName().getString();
+        } else {
+            name = itemId;
+        }
+
+        if (name.length() > 40) name = name.substring(0, 38) + "…";
+
+        String prefix = isCustom ? "§b" : "§f";
+        widgets.add(new ArmorTextWidget(x + labelW + 22, y + 5,
+                Component.literal(prefix + name)));
+
+        return y + rowH;
+    }
+
+    private ItemStack itemIdToStack(String itemId) {
+        ResistanceDLC.LOGGER.info("[DR-debug] itemIdToStack(" + itemId + ")");
+        if (itemId == null || itemId.isEmpty()) return ItemStack.EMPTY;
+        try {
+            net.minecraft.resources.Identifier id = net.minecraft.resources.Identifier.tryParse(itemId);
+            ResistanceDLC.LOGGER.info("[DR-debug] parsed = " + id);
+            if (id == null) return ItemStack.EMPTY;
+
+            net.minecraft.world.item.Item item =
+                    net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(id);
+            ResistanceDLC.LOGGER.info("[DR-debug] item = " + item);
+
+            if (item == null || item == net.minecraft.world.item.Items.AIR) {
+                return ItemStack.EMPTY;
+            }
+            return new ItemStack(item);
+        } catch (Exception e) {
+            ResistanceDLC.LOGGER.error("[DR-debug] EXC: " + e.getMessage());
+        }
+        return ItemStack.EMPTY;
+    }
+
+    private String formatDeathTime(long ts) {
+        java.text.SimpleDateFormat sdf =
+                new java.text.SimpleDateFormat("dd.MM.yyyy HH:mm", java.util.Locale.ROOT);
+        return sdf.format(new java.util.Date(ts));
+    }
+
+    /** Rebuild панели DeathRecap. */
+    private void rebuildDeathRecapPanel() {
+        AccordionItem item = findItemById("death_recap");
+        if (item == null || !item.expanded) return;
+
+        clearPanelWidgets(item);
+        item.contentHeight = calcDeathRecapHeight();
+        contentScroll = 0;
+        buildPanelWidgets(item);
+        updateWidgetsVisibility();
+    }
+    /**
+     * Виджет-иконка для отображения предмета брони.
+     * Рисует ItemStack в своих координатах (x, y).
+     * Используется в DeathRecap вместо ручной отрисовки.
+     */
+    private static class ArmorIconWidget extends net.minecraft.client.gui.components.AbstractWidget {
+        private final ItemStack stack;
+
+        public ArmorIconWidget(int x, int y, ItemStack stack) {
+            super(x, y, 16, 16, Component.empty());
+            this.stack = stack;
+            this.active = false;
+        }
+
+        @Override
+        protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+            if (!stack.isEmpty()) {
+                graphics.renderItem(stack, getX(), getY());
+            }
+        }
+
+        @Override
+        protected void updateWidgetNarration(
+                net.minecraft.client.gui.narration.NarrationElementOutput narration) {
+            // no-op
+        }
+    }
+
+    /**
+     * Виджет-текст для DeathRecap: рисует Component слева-вправо
+     * (не центрирует, в отличие от Button).
+     */
+    private static class ArmorTextWidget extends net.minecraft.client.gui.components.AbstractWidget {
+        private final Component text;
+
+        public ArmorTextWidget(int x, int y, Component text) {
+            super(x, y, 200, 9, Component.empty());
+            this.text = text;
+            this.active = false;
+        }
+
+        @Override
+        protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+            graphics.drawString(
+                    net.minecraft.client.Minecraft.getInstance().font,
+                    text, getX(), getY(), 0xFFFFFFFF, false);
+        }
+
+        @Override
+        protected void updateWidgetNarration(
+                net.minecraft.client.gui.narration.NarrationElementOutput narration) {
+            // no-op
+        }
+    }
+    /**
+     * InventorySlotWidget — слот инвентаря. Рисует рамку + предмет.
+     * Пустые слоты рисуются как пустые рамки (НЕ замещаем!).
+     */
+    private static class InventorySlotWidget extends net.minecraft.client.gui.components.AbstractWidget {
+        private final ItemStack stack;
+
+        public InventorySlotWidget(int x, int y, ItemStack stack) {
+            super(x, y, 20, 20, Component.empty());
+            this.stack = (stack == null) ? ItemStack.EMPTY : stack;
+            this.active = false;
+        }
+
+        @Override
+        protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+            int bx = getX(), by = getY();
+            graphics.fill(bx, by, bx + 20, by + 20, 0xFF1A1A1A);
+            graphics.fill(bx, by, bx + 20, by + 1, 0xFF555555);
+            graphics.fill(bx, by + 19, bx + 20, by + 20, 0xFF555555);
+            graphics.fill(bx, by, bx + 1, by + 20, 0xFF555555);
+            graphics.fill(bx + 19, by, bx + 20, by + 20, 0xFF555555);
+
+            if (!stack.isEmpty()) {
+                graphics.renderItem(stack, bx + 2, by + 2);
+                graphics.renderItemDecorations(
+                        net.minecraft.client.Minecraft.getInstance().font,
+                        stack, bx + 2, by + 2);
+            }
+        }
+
+        @Override
+        protected void updateWidgetNarration(
+                net.minecraft.client.gui.narration.NarrationElementOutput narration) {}
+    }
+
+    private static class SlotLabelWidget extends net.minecraft.client.gui.components.AbstractWidget {
+        private final Component text;
+
+        public SlotLabelWidget(int x, int y, Component text, int width) {
+            super(x, y, width, 9, Component.empty());
+            this.text = text;
+            this.active = false;
+        }
+
+        @Override
+        protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+            graphics.drawString(
+                    net.minecraft.client.Minecraft.getInstance().font,
+                    text, getX(), getY(), 0xFFFFFFFF, false);
+        }
+
+        @Override
+        protected void updateWidgetNarration(
+                net.minecraft.client.gui.narration.NarrationElementOutput narration) {}
+    }
+
+    private static class ArmorPreviewWidget extends net.minecraft.client.gui.components.AbstractWidget {
+        private final InventorySnapshot snap;
+
+        public ArmorPreviewWidget(int x, int y, int size, InventorySnapshot snap) {
+            super(x, y, size, size, Component.empty());
+            this.snap = snap;
+            this.active = false;
+        }
+
+        @Override
+        protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc.player == null) return;
+
+            ItemStack origHead    = mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).copy();
+            ItemStack origChest   = mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST).copy();
+            ItemStack origLegs    = mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.LEGS).copy();
+            ItemStack origFeet    = mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.FEET).copy();
+            ItemStack origOffhand = mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND).copy();
+
+            try {
+                mc.player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD,
+                        snap.getSlot(InventorySnapshot.IDX_HEAD).copy());
+                mc.player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST,
+                        snap.getSlot(InventorySnapshot.IDX_CHEST).copy());
+                mc.player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.LEGS,
+                        snap.getSlot(InventorySnapshot.IDX_LEGS).copy());
+                mc.player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET,
+                        snap.getSlot(InventorySnapshot.IDX_FEET).copy());
+                mc.player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND,
+                        snap.getSlot(InventorySnapshot.IDX_OFFHAND).copy());
+
+                int x1 = getX();
+                int y1 = getY();
+                int x2 = getX() + getWidth();
+                int y2 = getY() + getHeight();
+
+                net.minecraft.client.gui.screens.inventory.InventoryScreen
+                        .renderEntityInInventoryFollowsMouse(
+                                graphics, x1, y1, x2, y2,
+                                30,           // scale
+                                0.0625F,      // yOffset (как в ванили)
+                                (float) mouseX, (float) mouseY,
+                                mc.player
+                        );
+            } finally {
+                mc.player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, origHead);
+                mc.player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, origChest);
+                mc.player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.LEGS, origLegs);
+                mc.player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, origFeet);
+                mc.player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND, origOffhand);
+            }
+        }
+
+        @Override
+        protected void updateWidgetNarration(
+                net.minecraft.client.gui.narration.NarrationElementOutput narration) {}
     }
 }
