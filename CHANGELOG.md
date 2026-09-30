@@ -1,7 +1,53 @@
+# Changelog
+
 All notable changes to ResistanceDLC will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+---
+
+## [2.9.0] — 2026-09-30 (in development)
+
+### ✨ Added
+- **GammaUtil fix** — clamp [0,1] + `GammaFullbrightMixin` (fullbright works)
+- **AutoReconnect fix** — reconnect only on kick/ban/crash, not on manual disconnect
+- **HUD Editor** — new screen `HudEditScreen`, opens with **F6** or from GUI (HUD section)
+    - Checkbox panel on the right, drag-n-drop, RMB — reset, save via `ConfigManager`
+    - `HudWidget` / `HudWidgetRegistry`
+- **Crosshair Heatmap** — hit/miss visualization in the world
+    - Hit via `AABB.clip`, miss at 3.1 blocks forward
+    - GUI panel in Visual, statistics (hit%, miss%, winrate%, total)
+- **Ping-Based Lag Indicator** — `PingIndicatorMixin` on `PlayerTabOverlay.renderPingIcon`
+    - Progress bar + `42ms` text under nickname
+    - Filters invisibility and players not in world
+- **Death Recap** — last 5 deaths with details:
+    - Reason, killer, coordinates, dimension, time, armor (5 slots)
+    - Armor snapshot every tick (`DeathRecapManager.ArmorSnapshot`), skip when `health <= 0`
+    - LIFO buffer of 5 entries
+    - `DeathScreenAccessor` — `@Accessor("causeOfDeath")`
+    - Armor icons via `ArmorIconWidget`, text via `ArmorTextWidget`
+- **InventoryManager** — save and preview inventory snapshots
+    - 5 slots, stored as `config/resistancedlc/inventories/inventory_N.json`
+    - Snapshot: 4 armor + offhand + 9 hotbar + 27 main = **41 slots** (no craft)
+    - Preview: Steve with equipped armor, hotbar, main inventory
+    - Buttons: Save / Rename / Delete / Open folder
+    - Mini-screens for Save (`InventorySaveScreen`) and Rename (`InventoryRenameScreen`)
+    - Empty slots shown as empty frames (not hidden!)
+    - ItemStack serialization via `ItemStack.CODEC` + `NbtOps` → SNBT string
+    - `TagParser.parseCompoundFully(String)` for parsing (1.21.11)
+
+### 🐛 Fixed
+- **AutoReconnect** — manual disconnect via PauseScreen now sets `manualDisconnect = true`
+- **Global search** — no longer passes clicks to the background
+
+### 🔧 Changed
+- **ChatFilter** panel height is now dynamic (`calcChatFilterHeight()`)
+    - Empty → ~54px instead of 186px
+    - Grows when stop-words are added
+
+### 🗑 Removed
+- Nothing in this version yet
 
 ---
 
@@ -216,6 +262,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[2.9.0]: https://github.com/LesIsLes/ResistanceDLC/compare/v2.7.1...v2.9.0
 [2.7.1]: https://github.com/LesIsLes/ResistanceDLC/compare/v2.6.1...v2.7.1
 [2.6.1]: https://github.com/LesIsLes/ResistanceDLC/compare/v2.6.0...v2.6.1
 [2.6.0]: https://github.com/LesIsLes/ResistanceDLC/compare/v2.5.0...v2.6.0
