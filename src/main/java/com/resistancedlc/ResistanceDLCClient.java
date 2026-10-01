@@ -12,6 +12,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
@@ -201,6 +202,32 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
         // ===== КОМАНДЫ =====
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            // ===== WAYPOINTS COMMAND =====
+            dispatcher.register(
+                    ClientCommandManager.literal("wp")
+                            .then(ClientCommandManager.literal("add")
+                                    .then(ClientCommandManager.argument("x",
+                                                    com.mojang.brigadier.arguments.IntegerArgumentType.integer())
+                                            .then(ClientCommandManager.argument("y",
+                                                            com.mojang.brigadier.arguments.IntegerArgumentType.integer())
+                                                    .then(ClientCommandManager.argument("z",
+                                                                    com.mojang.brigadier.arguments.IntegerArgumentType.integer())
+                                                            .executes(context -> {
+                                                                int x = com.mojang.brigadier.arguments.IntegerArgumentType
+                                                                        .getInteger(context, "x");
+                                                                int y = com.mojang.brigadier.arguments.IntegerArgumentType
+                                                                        .getInteger(context, "y");
+                                                                int z = com.mojang.brigadier.arguments.IntegerArgumentType
+                                                                        .getInteger(context, "z");
+                                                                boolean added = WaypointManager.addWaypoint(x, y, z);
+                                                                if (added) {
+                                                                    sendMessage("§a[Waypoints] Добавлена метка §e" + x + ", " + y + ", " + z);
+                                                                } else {
+                                                                    sendMessage("§c[Waypoints] Достигнут лимит (" + ModConfig.waypointsMax + ")");
+                                                                }
+                                                                return 1;
+                                                            })))))
+            );
             dispatcher.register(
                     ClientCommandManager.literal("cfg")
                             .executes(context -> { showCfgHelp(); return 1; })
@@ -544,6 +571,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> PickUpLogger.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> AutoReconnectManager.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> AutoGGManager.tick());
+        ClientTickEvents.END_CLIENT_TICK.register(client -> MusicPlayerManager.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> LowHPAlertManager.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> AutoRespawnManager.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> ArmorAlertManager.tick());

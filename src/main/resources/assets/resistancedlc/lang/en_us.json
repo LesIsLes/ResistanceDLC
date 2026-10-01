@@ -487,5 +487,15 @@
   "gui.resistancedlc.inventory.rename.save": "Rename",
   "gui.resistancedlc.inventory.rename.cancel": "Cancel",
 
+  "gui.resistancedlc.item.smart_chat.title": "SmartChat",
+  "gui.resistancedlc.item.smart_chat.desc": "Group repeated messages + clickable coords",
+  "gui.resistancedlc.panel.smart_chat.enable": "Enable SmartChat",
+  "gui.resistancedlc.panel.smart_chat.grouping": "Group repeated messages",
+  "gui.resistancedlc.panel.smart_chat.coord_click": "Clickable coordinates",
+  "gui.resistancedlc.panel.smart_chat.window": "Group window: %ss",
+  "gui.resistancedlc.smartchat.tooltip": "Repeated %s times",
+  "gui.resistancedlc.smartchat.coord_hint": "LMB — copy coordinates",
+  "gui.resistancedlc.smartchat.wp_hint": "LMB — insert /wp add x y z",
+
   "key.category.resistancedlc.main": "ResistanceDLC"
 }

@@ -32,6 +32,8 @@
     "SplashRendererMixin",
     "LevelLoadingScreenMixin",
     "GammaFullbrightMixin",
+    "SmartChatMixin",
+    "GuiMessageLineMixin",
     "PingIndicatorMixin",
     "DeathScreenAccessor"
   ],

@@ -442,4 +442,10 @@ public class ModConfig {
 
     // ===================== DEATH RECAP =====================
     public static String deathRecapRaw = "";
+
+    // ===================== SMART CHAT =====================
+    public static boolean smartChatEnabled = false;
+    public static boolean smartChatGroupingEnabled = true;
+    public static boolean smartChatCoordClickEnabled = true;
+    public static int smartChatGroupWindowSec = 60;
 }

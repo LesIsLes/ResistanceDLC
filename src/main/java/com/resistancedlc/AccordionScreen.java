@@ -1349,7 +1349,20 @@ public class AccordionScreen extends Screen {
         );
         cfItem.contentHeight = calcChatFilterHeight();
         misc.items.add(cfItem);
-
+        // ===== SMART CHAT =====
+        AccordionItem scItem = new AccordionItem(
+                "smart_chat",
+                LocalizationManager.get("gui.resistancedlc.item.smart_chat.title"),
+                LocalizationManager.get("gui.resistancedlc.item.smart_chat.desc"),
+                () -> ModConfig.smartChatEnabled,
+                () -> {
+                    ModConfig.smartChatEnabled = !ModConfig.smartChatEnabled;
+                    ConfigManager.save();
+                }
+        );
+        scItem.contentHeight = 120;
+        misc.items.add(scItem);
+        // ===== END SMART CHAT =====
         AccordionItem arcItem = new AccordionItem(
                 "auto_reconnect",
                 LocalizationManager.get("gui.resistancedlc.item.auto_reconnect.title"),
@@ -1476,9 +1489,12 @@ public class AccordionScreen extends Screen {
                 "music_player",
                 LocalizationManager.get("gui.resistancedlc.item.music_player.title"),
                 LocalizationManager.get("gui.resistancedlc.item.music_player.desc"),
-                () -> ModConfig.musicPlayerEnabled,
-                () -> {
+                () -> ModConfig.musicPlayerEnabled,                        // ← 4-й параметр (statusGetter)
+                () -> {                                                     // ← 5-й параметр (toggler)
                     ModConfig.musicPlayerEnabled = !ModConfig.musicPlayerEnabled;
+                    if (!ModConfig.musicPlayerEnabled) {
+                        MusicPlayerManager.stop();
+                    }
                     ConfigManager.save();
                 }
         );
@@ -1632,6 +1648,7 @@ public class AccordionScreen extends Screen {
             case "death_recap" -> buildDeathRecapPanel(widgets, innerX, innerY, innerRight);
             case "potion_effects" -> buildPotionEffectsPanel(widgets, innerX, innerY, innerRight);
             case "equipment_hud" -> buildEquipmentHudPanel(widgets, innerX, innerY, innerRight);
+            case "smart_chat" -> buildSmartChatPanel(widgets, innerX, innerY, innerRight);
             case "effect_warnings" -> buildEffectWarningsPanel(widgets, innerX, innerY, innerRight);
             case "extra_hud" -> buildExtraHudPanel(widgets, innerX, innerY, innerRight);
             case "ping_indicator" -> buildPingIndicatorPanel(widgets, innerX, innerY, innerRight);
@@ -4333,7 +4350,41 @@ public class AccordionScreen extends Screen {
         infoBtn.active = false;
         widgets.add(infoBtn);
     }
+    private void buildSmartChatPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
 
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.smart_chat.enable")), this.font)
+                .pos(x, curY).selected(ModConfig.smartChatEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.smartChatEnabled = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.smart_chat.grouping")), this.font)
+                .pos(x, curY).selected(ModConfig.smartChatGroupingEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.smartChatGroupingEnabled = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.smart_chat.coord_click")), this.font)
+                .pos(x, curY).selected(ModConfig.smartChatCoordClickEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.smartChatCoordClickEnabled = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH;
+    }
     // ===================== GUI THEME =====================
     private void buildGuiThemePanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
@@ -5248,6 +5299,7 @@ public class AccordionScreen extends Screen {
             columnWidth += (targetWidth - columnWidth) * 0.25f;
         }
 
+        // Фон панели
         graphics.fill(0, 0, this.width, this.height, 0x80000000);
         graphics.fill(panelX + 4, panelY + 4,
                 panelX + PANEL_WIDTH + 4, panelY + PANEL_HEIGHT + 4, 0x40000000);
@@ -5257,8 +5309,19 @@ public class AccordionScreen extends Screen {
         graphics.drawString(this.font, "§l" + LocalizationManager.get("gui.resistancedlc.title"),
                 panelX + 15, panelY + 11, ModConfig.guiColor, true);
 
-        drawColumn(graphics, mouseX, mouseY);
-        drawContent(graphics, mouseX, mouseY);
+        if (globalSearchOpen || globalSearchClosing) {
+            // Только глобальный поиск — overlay
+            drawGlobalSearchBackground(graphics);
+            // Скрываем searchField на всякий случай
+            if (searchField != null) {
+                searchField.visible = false;
+                searchField.active = false;
+            }
+        } else {
+            // Обычный режим
+            drawColumn(graphics, mouseX, mouseY);
+            drawContent(graphics, mouseX, mouseY);
+        }
 
         super.render(graphics, mouseX, mouseY, delta);
         updateWidgetsVisibility();
@@ -5893,19 +5956,18 @@ public class AccordionScreen extends Screen {
             return true;
         }
 
-        float currentTargetWidth = hoverColumn ? COLUMN_EXPANDED : COLUMN_COLLAPSED;
         int colLeft = panelX + 2;
         int colTop = panelY + HEADER_HEIGHT;
-        int colRight = panelX + (int) currentTargetWidth;
+        int colRight = panelX + (int) columnWidth;   // ← используем текущую анимацию
         int colBottom = panelY + PANEL_HEIGHT - 2;
 
         boolean inColumn = mouseX >= colLeft && mouseX <= colRight
                 && mouseY >= colTop && mouseY <= colBottom;
 
         if (inColumn) {
-            int iconSize = (currentTargetWidth > 140) ? 32 : 24;
+            int iconSize = (columnWidth > 140) ? 32 : 24;
             int startY = colTop + 12;
-            int yStep = (currentTargetWidth > 140) ? 58 : 48;
+            int yStep = (columnWidth > 140) ? 58 : 48;
 
             for (int i = 0; i < sections.size(); i++) {
                 int iconY = startY + i * yStep;
@@ -6065,10 +6127,9 @@ public class AccordionScreen extends Screen {
     }
 
     private boolean isMouseOverColumn(double mouseX, double mouseY) {
-        float targetWidth = hoverColumn ? COLUMN_EXPANDED : COLUMN_COLLAPSED;
         int colLeft = panelX + 2;
         int colTop = panelY + HEADER_HEIGHT;
-        int colRight = panelX + (int) targetWidth;
+        int colRight = panelX + Math.max(COLUMN_COLLAPSED, (int) columnWidth) + 20;  // ← +20 запас для анимации
         int colBottom = panelY + PANEL_HEIGHT - 2;
         return mouseX >= colLeft && mouseX <= colRight
                 && mouseY >= colTop && mouseY <= colBottom;

@@ -11,9 +11,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -27,6 +29,7 @@ import java.util.stream.Stream;
  *   - Громкость
  *   - Авто-переход к следующему треку
  *   - Авто-пропуск битых файлов
+ *   - Длительность трека (полное чтение PCM-потока, кэш)
  *
  * ВАЖНО: этот класс не рисует HUD и не обрабатывает клики — этим занимаются
  * MusicPlayerHud и MusicPlayerHudMixin соответственно.
@@ -48,14 +51,14 @@ public class MusicPlayerManager {
 
     private static boolean initialized = false;
 
-    /** Кэш длительностей треков (в секундах). */
+    /** Кэш длительностей треков (в секундах). -1 = не удалось распарсить. */
     private static final Map<Path, Integer> durationCache = new HashMap<>();
+
+    /** Треки, для которых уже пытались парсить длительность (чтобы не повторять). */
+    private static final Set<Path> durationParsed = new HashSet<>();
 
     // ===================== ИНИЦИАЛИЗАЦИЯ =====================
 
-    /**
-     * Загрузить плейлист (при первом обращении или принудительно).
-     */
     public static void init() {
         ensureDirExists();
         rescan();
@@ -72,10 +75,6 @@ public class MusicPlayerManager {
         }
     }
 
-    /**
-     * Сканирует папку music/ и строит плейлист.
-     * Формат: только .ogg, без рекурсии, сортировка по имени файла.
-     */
     public static void rescan() {
         playlist.clear();
         ensureDirExists();
@@ -98,28 +97,37 @@ public class MusicPlayerManager {
             currentIndex = -1;
         }
 
-        // Чистим кэш длительностей
-        durationCache.clear();
+        // НЕ чистим durationCache и durationParsed при rescan — файлы те же.
+        // Если нужно — очисти вручную через clearDurationCache().
     }
 
-    /**
-     * Полная очистка при выходе из мира.
-     */
     public static void reset() {
         stop();
         currentIndex = -1;
         playlist.clear();
         durationCache.clear();
+        durationParsed.clear();
         initialized = false;
+    }
+
+    public static void clearDurationCache() {
+        durationCache.clear();
+        durationParsed.clear();
+    }
+
+    // ===================== ТИК =====================
+
+    public static void tick() {
+        if (!ModConfig.musicPlayerEnabled && playback.isRunning()) {
+            playback.stop();
+        }
     }
 
     // ===================== УПРАВЛЕНИЕ =====================
 
-    /**
-     * Воспроизведение. Если currentIndex == -1, начинаем с 0.
-     * Если на паузе — возобновляем.
-     */
     public static void play() {
+        if (!ModConfig.musicPlayerEnabled) return;
+
         if (!initialized) init();
         if (playlist.isEmpty()) {
             sendChatMessage("§c[Music] Плейлист пуст. Добавь .ogg в папку.");
@@ -140,16 +148,10 @@ public class MusicPlayerManager {
         playIndex(currentIndex);
     }
 
-    /**
-     * Пауза.
-     */
     public static void pause() {
         playback.pause();
     }
 
-    /**
-     * Переключить пауза/плей.
-     */
     public static void togglePause() {
         if (playback.isRunning()) {
             playback.pause();
@@ -158,16 +160,10 @@ public class MusicPlayerManager {
         }
     }
 
-    /**
-     * Стоп.
-     */
     public static void stop() {
         playback.stop();
     }
 
-    /**
-     * Следующий трек.
-     */
     public static void next() {
         if (playlist.isEmpty()) return;
         if (ModConfig.musicShuffle) {
@@ -178,9 +174,6 @@ public class MusicPlayerManager {
         playIndex(currentIndex);
     }
 
-    /**
-     * Предыдущий трек.
-     */
     public static void prev() {
         if (playlist.isEmpty()) return;
         if (ModConfig.musicShuffle) {
@@ -191,19 +184,12 @@ public class MusicPlayerManager {
         playIndex(currentIndex);
     }
 
-    /**
-     * Публичный метод для прямого перехода к треку по индексу.
-     * Используется в GUI при клике на трек в списке.
-     */
     public static void playTrackAt(int index) {
         if (playlist.isEmpty()) return;
         if (index < 0 || index >= playlist.size()) return;
         playIndex(index);
     }
 
-    /**
-     * Проигрывание конкретного индекса (с авто-пропуском битых).
-     */
     private static void playIndex(int index) {
         if (playlist.isEmpty()) return;
         if (index < 0 || index >= playlist.size()) return;
@@ -229,9 +215,6 @@ public class MusicPlayerManager {
         }
     }
 
-    /**
-     * Пропуск битого файла — перейти к следующему, но не зацикливаться.
-     */
     private static void skipBroken() {
         if (playlist.isEmpty()) return;
         int attempts = 0;
@@ -254,11 +237,9 @@ public class MusicPlayerManager {
         sendChatMessage("§c[Music] Не удалось воспроизвести ни один трек.");
     }
 
-    /**
-     * Callback — трек закончился естественным образом.
-     */
     private static void onTrackFinished() {
         if (playlist.isEmpty()) return;
+        if (!ModConfig.musicPlayerEnabled) return;
 
         int mode = ModConfig.musicRepeat;
 
@@ -278,9 +259,6 @@ public class MusicPlayerManager {
 
     // ===================== НАСТРОЙКИ =====================
 
-    /**
-     * Установка громкости (0.0 - 1.0).
-     */
     public static void setVolume(float v) {
         ModConfig.musicVolume = Math.max(0.0f, Math.min(1.0f, v));
         applyVolume();
@@ -291,18 +269,12 @@ public class MusicPlayerManager {
         playback.setVolume(ModConfig.musicVolume);
     }
 
-    /**
-     * Циклическая смена repeat: off → one → all → off.
-     */
     public static void cycleRepeat() {
         int mode = (ModConfig.musicRepeat + 1) % 3;
         ModConfig.musicRepeat = mode;
         ConfigManager.save();
     }
 
-    /**
-     * Переключить shuffle.
-     */
     public static void toggleShuffle() {
         ModConfig.musicShuffle = !ModConfig.musicShuffle;
         ConfigManager.save();
@@ -341,38 +313,102 @@ public class MusicPlayerManager {
     }
 
     /**
-     * Текущая позиция в секундах.
+     * Текущая позиция в секундах (из positionBytes в OggPlayback).
      */
     public static int getPositionSeconds() {
-        MusicTrack t = getCurrentTrack();
-        if (t == null) return 0;
-        int durationSec = getDurationSeconds();
-        return (int) (durationSec * playback.getProgress());
+        return playback.getPositionSeconds();
     }
 
     /**
      * Длительность текущего трека в секундах.
-     * Кэшируется по пути.
+     *
+     * OGG (Vorbis) не хранит длину в заголовке как количество фреймов —
+     * getFrameLength() возвращает -1. Поэтому читаем PCM-поток ДО КОНЦА
+     * и считаем: totalBytes / frameSize / frameRate.
+     *
+     * ВАЖНО:
+     *   - Результат кэшируется, в т.ч. НЕГАТИВНЫЙ (-1), чтобы не парсить повторно.
+     *   - Не вызывается в горячем цикле — только при смене трека / в HUD.
      */
     public static int getDurationSeconds() {
         MusicTrack t = getCurrentTrack();
         if (t == null) return 0;
 
-        Integer cached = durationCache.get(t.path());
-        if (cached != null) return cached;
+        Path path = t.path();
 
-        try (javax.sound.sampled.AudioInputStream ais =
-                     javax.sound.sampled.AudioSystem.getAudioInputStream(t.path().toFile())) {
-            javax.sound.sampled.AudioFormat fmt = ais.getFormat();
-            long frames = ais.getFrameLength();
-            if (frames > 0 && fmt.getFrameRate() > 0) {
-                int sec = (int) (frames / fmt.getFrameRate());
-                durationCache.put(t.path(), sec);
-                return sec;
+        // Уже парсили? Возвращаем кэш (в т.ч. -1).
+        if (durationParsed.contains(path)) {
+            Integer cached = durationCache.get(path);
+            return (cached == null || cached < 0) ? 0 : cached;
+        }
+
+        // Помечаем ДО парсинга — чтобы рекурсивные вызовы не зациклились.
+        durationParsed.add(path);
+
+        int result = parseDuration(path);
+        durationCache.put(path, result);
+
+        if (result > 0) {
+            ResistanceDLC.LOGGER.info("[MusicPlayer] Duration for "
+                    + path.getFileName() + " = " + result + " sec");
+        } else {
+            ResistanceDLC.LOGGER.warn("[MusicPlayer] Cannot determine duration for "
+                    + path.getFileName() + " (will not retry)");
+        }
+
+        return result < 0 ? 0 : result;
+    }
+
+    /**
+     * Читает PCM-поток OGG до конца и считает длительность.
+     * @return секунды (>0) или -1 при ошибке.
+     */
+    private static int parseDuration(Path path) {
+        javax.sound.sampled.AudioInputStream raw = null;
+        try {
+            Class<?> readerClass = Class.forName(
+                    "com.github.trilarion.sound.vorbis.sampled.spi.VorbisAudioFileReader"
+            );
+            Object reader = readerClass.getDeclaredConstructor().newInstance();
+            java.lang.reflect.Method getStreamMethod = readerClass.getMethod(
+                    "getAudioInputStream", java.io.File.class
+            );
+            raw = (javax.sound.sampled.AudioInputStream) getStreamMethod.invoke(
+                    reader, path.toFile());
+
+            javax.sound.sampled.AudioFormat fmt = raw.getFormat();
+            float frameRate = fmt.getFrameRate();
+            int frameSize = fmt.getFrameSize();
+            if (frameRate <= 0 || frameSize <= 0) {
+                ResistanceDLC.LOGGER.warn("[MusicPlayer] invalid format: frameRate="
+                        + frameRate + ", frameSize=" + frameSize);
+                return -1;
             }
-        } catch (Exception ignored) {}
 
-        return 0;
+            byte[] buf = new byte[8192];
+            long totalBytes = 0;
+            int read;
+            while ((read = raw.read(buf)) > 0) {
+                totalBytes += read;
+            }
+
+            if (totalBytes <= 0) {
+                ResistanceDLC.LOGGER.warn("[MusicPlayer] 0 bytes read");
+                return -1;
+            }
+
+            long frames = totalBytes / frameSize;
+            int sec = (int) (frames / frameRate);
+            ResistanceDLC.LOGGER.info("[MusicPlayer] Duration for " + path.getFileName()
+                    + " = " + sec + " sec");
+            return sec;
+        } catch (Throwable e) {
+            ResistanceDLC.LOGGER.error("[MusicPlayer] parseDuration failed: "
+                    + e.getClass().getSimpleName() + ": " + e.getMessage());
+            return -1;
+        } finally {
+            try { if (raw != null) raw.close(); } catch (Exception ignored) {}
+        }
     }
 
     // ===================== ВСПОМОГАТЕЛЬНОЕ =====================
@@ -395,9 +431,6 @@ public class MusicPlayerManager {
         }
     }
 
-    /**
-     * Форматирование секунд в MM:SS.
-     */
     public static String formatTime(int totalSeconds) {
         if (totalSeconds < 0) totalSeconds = 0;
         int m = totalSeconds / 60;

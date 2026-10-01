@@ -487,5 +487,15 @@
   "gui.resistancedlc.inventory.rename.save": "Переименовать",
   "gui.resistancedlc.inventory.rename.cancel": "Отмена",
 
+  "gui.resistancedlc.item.smart_chat.title": "SmartChat",
+  "gui.resistancedlc.item.smart_chat.desc": "Группировка повторов + клик по координатам",
+  "gui.resistancedlc.panel.smart_chat.enable": "Включить SmartChat",
+  "gui.resistancedlc.panel.smart_chat.grouping": "Группировать повторы",
+  "gui.resistancedlc.panel.smart_chat.coord_click": "Кликабельные координаты",
+  "gui.resistancedlc.panel.smart_chat.window": "Окно группировки: %s сек",
+  "gui.resistancedlc.smartchat.tooltip": "Повторено %s раз",
+  "gui.resistancedlc.smartchat.coord_hint": "ЛКМ — копировать координаты",
+  "gui.resistancedlc.smartchat.wp_hint": "ЛКМ — вставить /wp add x y z",
+
   "key.category.resistancedlc.main": "ResistanceDLC"
 }

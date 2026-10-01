@@ -18,6 +18,8 @@ import java.io.File;
  *   - Пауза через пересоздание потока + ручной skip байтов.
  *   - Громкость через MASTER_GAIN (в децибелах).
  *   - Потокобезопасность: чтение в отдельном потоке, стоп через volatile-флаг.
+ *   - Позиция считается из positionBytes через audioFormat (frameSize / frameRate).
+ *   - Длительность НЕ считается тут — см. MusicPlayerManager.getDurationSeconds().
  */
 public class OggPlayback {
 
@@ -34,15 +36,14 @@ public class OggPlayback {
     private long positionBytes = 0;
     private long totalBytes = 0;
 
+    private AudioFormat audioFormat;
+
     private float volume = 0.5f;
 
     private Runnable onTrackFinished;
 
     // ===================== УПРАВЛЕНИЕ =====================
 
-    /**
-     * Начать воспроизведение файла с нуля.
-     */
     public boolean play(File file, Runnable onFinished) {
         stop();
         if (file == null || !file.exists()) return false;
@@ -55,9 +56,6 @@ public class OggPlayback {
         return startThread(positionBytes);
     }
 
-    /**
-     * Пауза — останавливаем поток, запоминаем позицию.
-     */
     public void pause() {
         if (!running) return;
         paused = true;
@@ -69,9 +67,6 @@ public class OggPlayback {
         }
     }
 
-    /**
-     * Возобновление с запомненной позиции.
-     */
     public boolean resume() {
         if (currentFile == null) return false;
         if (!paused) return false;
@@ -79,9 +74,6 @@ public class OggPlayback {
         return startThread(positionBytes);
     }
 
-    /**
-     * Полный стоп и сброс.
-     */
     public void stop() {
         running = false;
         paused = false;
@@ -99,16 +91,13 @@ public class OggPlayback {
             playbackThread = null;
         }
         positionBytes = 0;
+        totalBytes = 0;
+        audioFormat = null;
     }
 
     // ===================== ВНУТРЕННЯЯ ЛОГИКА =====================
 
-    /**
-     * Открывает OGG-поток через VorbisAudioFileReader НАПРЯМУЮ.
-     * Fallback: если не сработал — пробует AudioSystem.
-     */
     private AudioInputStream openVorbisStream(File file) throws Exception {
-        // ✅ ПРЯМОЙ ВЫЗОВ VorbisAudioFileReader (без AudioSystem/SPI)
         try {
             Class<?> readerClass = Class.forName(
                     "com.github.trilarion.sound.vorbis.sampled.spi.VorbisAudioFileReader"
@@ -124,7 +113,6 @@ public class OggPlayback {
             ResistanceDLC.LOGGER.warn("[OggPlayback] Direct reader failed, trying AudioSystem: " + e.getMessage());
         }
 
-        // Fallback: AudioSystem
         try {
             AudioInputStream stream = AudioSystem.getAudioInputStream(file);
             ResistanceDLC.LOGGER.info("[OggPlayback] Opened via AudioSystem: " + file.getName());
@@ -139,11 +127,9 @@ public class OggPlayback {
         final long skip = skipBytes;
 
         try {
-            // ✅ Открываем OGG-поток через VorbisAudioFileReader
             AudioInputStream raw = openVorbisStream(currentFile);
             AudioFormat baseFormat = raw.getFormat();
 
-            // Конвертируем в PCM_SIGNED 16-bit — стандарт для SourceDataLine
             AudioFormat targetFormat = new AudioFormat(
                     AudioFormat.Encoding.PCM_SIGNED,
                     baseFormat.getSampleRate(),
@@ -156,8 +142,8 @@ public class OggPlayback {
 
             audioStream = AudioSystem.getAudioInputStream(targetFormat, raw);
             totalBytes = audioStream.available();
+            this.audioFormat = targetFormat;
 
-            // Ручной skip: читаем и выбрасываем байты в буфер
             if (skip > 0) {
                 long remaining = skip;
                 byte[] skipBuf = new byte[BUFFER_SIZE];
@@ -169,7 +155,6 @@ public class OggPlayback {
                 }
             }
 
-            // Открываем линию
             DataLine.Info info = new DataLine.Info(SourceDataLine.class, targetFormat);
             line = (SourceDataLine) AudioSystem.getLine(info);
             line.open(targetFormat, BUFFER_SIZE * 4);
@@ -231,6 +216,7 @@ public class OggPlayback {
             try { audioStream.close(); } catch (Exception ignored) {}
             audioStream = null;
         }
+        audioFormat = null;
     }
 
     // ===================== ГРОМКОСТЬ =====================
@@ -264,9 +250,27 @@ public class OggPlayback {
     public boolean isPaused() { return paused; }
     public long getPositionBytes() { return positionBytes; }
     public long getTotalBytes() { return totalBytes; }
+    public AudioFormat getAudioFormat() { return audioFormat; }
 
     public float getProgress() {
         if (totalBytes <= 0) return 0.0f;
         return Math.max(0.0f, Math.min(1.0f, (float) positionBytes / totalBytes));
+    }
+
+    public int getPositionSeconds() {
+        if (audioFormat == null) return 0;
+        float frameRate = audioFormat.getFrameRate();
+        int frameSize = audioFormat.getFrameSize();
+        if (frameRate <= 0 || frameSize <= 0) return 0;
+        long frames = positionBytes / frameSize;
+        return (int) (frames / frameRate);
+    }
+
+    /**
+     * НЕ надёжна: totalBytes = audioStream.available() — это размер буфера,
+     * а не всего потока. Используй MusicPlayerManager.getDurationSeconds().
+     */
+    public int getTotalSeconds() {
+        return 0;
     }
 }
