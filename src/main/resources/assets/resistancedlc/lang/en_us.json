@@ -517,5 +517,18 @@
   "gui.resistancedlc.panel.time_change.preset_night": "Night",
   "gui.resistancedlc.panel.time_change.preset_midnight": "Midnight",
 
+  "gui.resistancedlc.item.weather_change.title": "Weather Change",
+  "gui.resistancedlc.item.weather_change.desc": "Visual weather (client-side)",
+
+  "gui.resistancedlc.panel.weather_change.enable": "Enable Weather Change",
+  "gui.resistancedlc.panel.weather_change.mode_clear": "Clear",
+  "gui.resistancedlc.panel.weather_change.mode_rain": "Rain",
+  "gui.resistancedlc.panel.weather_change.mode_thunder": "Thunder",
+  "gui.resistancedlc.panel.weather_change.mode_snow": "Snow",
+  "gui.resistancedlc.panel.weather_change.mode_overcast": "Overcast",
+  "gui.resistancedlc.panel.weather_change.note": "Client-side only. Riptide uses server weather.",
+
+  "gui.resistancedlc.panel.freelook.warning": "§7Use only unassigned keys for the function to work correctly.",
+
   "key.category.resistancedlc.main": "ResistanceDLC"
 }

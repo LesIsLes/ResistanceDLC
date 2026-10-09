@@ -517,5 +517,18 @@
   "gui.resistancedlc.panel.time_change.preset_night": "Ночь",
   "gui.resistancedlc.panel.time_change.preset_midnight": "Полночь",
 
+  "gui.resistancedlc.item.weather_change.title": "Weather Change",
+  "gui.resistancedlc.item.weather_change.desc": "Визуальная погода (клиент)",
+
+  "gui.resistancedlc.panel.weather_change.enable": "Включить Weather Change",
+  "gui.resistancedlc.panel.weather_change.mode_clear": "Ясно",
+  "gui.resistancedlc.panel.weather_change.mode_rain": "Дождь",
+  "gui.resistancedlc.panel.weather_change.mode_thunder": "Гроза",
+  "gui.resistancedlc.panel.weather_change.mode_snow": "Снег",
+  "gui.resistancedlc.panel.weather_change.mode_overcast": "Пасмурно",
+  "gui.resistancedlc.panel.weather_change.note": "Только клиент. Тягун работает по серверной погоде.",
+
+  "gui.resistancedlc.panel.freelook.warning": "§7Используйте только незанятые клавиши для корректной работы функции",
+
   "key.category.resistancedlc.main": "ResistanceDLC"
 }

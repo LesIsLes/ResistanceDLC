@@ -457,4 +457,8 @@ public class ModConfig {
     // ===================== TIME CHANGE =====================
     public static boolean timeChangeEnabled = false;
     public static long timeChangeValue = 6000L;   // 0..24000 тиков
+
+    // ===================== WEATHER CHANGE =====================
+    public static boolean weatherChangeEnabled = false;
+    public static int weatherChangeMode = 0;   // 0=CLEAR 1=RAIN 2=THUNDER 3=SNOW 4=OVERCAST
 }

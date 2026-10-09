@@ -172,6 +172,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
             AutoGGManager.reset();
             FreelookManager.reset();
             StrikeRangeManager.reset();
+            WeatherChangeManager.reset();
             com.resistancedlc.targetesp.TargetManagerHolder.MANAGER.reset();
             JumpCirclesManager.reset();
             GammaUtilManager.reset();
@@ -579,6 +580,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> AutoTPAcceptManager.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> KillStreakManager.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> FreelookManager.tick());
+        ClientTickEvents.END_CLIENT_TICK.register(client -> WeatherChangeManager.tick());
 
         // ===== ZOOM =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {

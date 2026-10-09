@@ -610,6 +610,10 @@ public class ConfigManager {
             ModConfig.timeChangeEnabled = getBool(json, "timeChangeEnabled", ModConfig.timeChangeEnabled);
             ModConfig.timeChangeValue = getLong(json, "timeChangeValue", ModConfig.timeChangeValue);
 
+            // === WEATHER CHANGE ===
+            json.addProperty("weatherChangeEnabled", ModConfig.weatherChangeEnabled);
+            json.addProperty("weatherChangeMode", ModConfig.weatherChangeMode);
+
 // === ASPECT RATIO ===
             ModConfig.aspectRatioEnabled = getBool(json, "aspectRatioEnabled", ModConfig.aspectRatioEnabled);
             ModConfig.aspectRatioUsePreset = getBool(json, "aspectRatioUsePreset", ModConfig.aspectRatioUsePreset);
@@ -650,6 +654,10 @@ public class ConfigManager {
             ModConfig.comboResetTime = getInt(json, "comboResetTime", ModConfig.comboResetTime);
             ModConfig.comboFontSize = getInt(json, "comboFontSize", ModConfig.comboFontSize);
             ModConfig.comboRussian = getBool(json, "comboRussian", ModConfig.comboRussian);
+
+            // === WEATHER CHANGE ===
+            ModConfig.weatherChangeEnabled = getBool(json, "weatherChangeEnabled", ModConfig.weatherChangeEnabled);
+            ModConfig.weatherChangeMode = getInt(json, "weatherChangeMode", ModConfig.weatherChangeMode);
 
             // === EFFECT WARNINGS ===
             ModConfig.effectWarningsEnabled = getBool(json, "effectWarningsEnabled", ModConfig.effectWarningsEnabled);

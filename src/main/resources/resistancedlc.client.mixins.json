@@ -39,7 +39,8 @@
     "CameraInvoker",
     "CameraMixin",
     "FreelookMixin",
-    "TimeChangeMixin"
+    "TimeChangeMixin",
+    "WeatherChangeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

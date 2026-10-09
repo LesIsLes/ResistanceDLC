@@ -1313,7 +1313,7 @@ public class AccordionScreen extends Screen {
                     ConfigManager.save();
                 }
         );
-        freelookItem.contentHeight = 96;   // ← было 74, стало 96 (+22 на новый слайдер Distance)
+        freelookItem.contentHeight = 150;
         visual.items.add(freelookItem);
 
         // ===== TIME CHANGE =====
@@ -1327,8 +1327,22 @@ public class AccordionScreen extends Screen {
                     ConfigManager.save();
                 }
         );
+
         tcItem.contentHeight = 140;
         visual.items.add(tcItem);
+        // ===== WEATHER CHANGE =====
+        AccordionItem wcItem = new AccordionItem(
+                "weather_change",
+                LocalizationManager.get("gui.resistancedlc.item.weather_change.title"),
+                LocalizationManager.get("gui.resistancedlc.item.weather_change.desc"),
+                () -> ModConfig.weatherChangeEnabled,
+                () -> {
+                    ModConfig.weatherChangeEnabled = !ModConfig.weatherChangeEnabled;
+                    ConfigManager.save();
+                }
+        );
+        wcItem.contentHeight = 118;
+        visual.items.add(wcItem);
 // ===== BETTER BOSSBAR =====
         AccordionItem bbbItem = new AccordionItem(
                 "better_bossbar",
@@ -1672,6 +1686,7 @@ public class AccordionScreen extends Screen {
             case "hud_editor" -> { /* панель не нужна — клик сразу открывает экран */ }
             case "no_hurt_cam" -> buildNoHurtCamPanel(widgets, innerX, innerY);
             case "no_bobbing" -> buildNoBobbingPanel(widgets, innerX, innerY);
+            case "weather_change" -> buildWeatherChangePanel(widgets, innerX, innerY, innerRight);
             case "mod_logo" -> buildModLogoPanel(widgets, innerX, innerY, innerRight);
             case "freelook" -> buildFreelookPanel(widgets, innerX, innerY, innerRight);
             case "cooldowns" -> buildCoolDownsPanel(widgets, innerX, innerY, innerRight);
@@ -7790,6 +7805,16 @@ public class AccordionScreen extends Screen {
                 ConfigManager.save();
             }
         });
+        curY += rowH + rowGap;
+
+        // ===== Warning =====
+        Button warnBtn = Button.builder(
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.freelook.warning")),
+                (b) -> {
+                }
+        ).bounds(x, curY, w, 18).build();
+        warnBtn.active = false;
+        widgets.add(warnBtn);
     }
     // ===================== TIME CHANGE =====================
     private void buildTimeChangePanel(List<AbstractWidget> widgets, int x, int y, int right) {
@@ -7874,6 +7899,77 @@ public class AccordionScreen extends Screen {
      */
     private void rebuildTimeChangePanel() {
         AccordionItem item = findItemById("time_change");
+        if (item == null || !item.expanded) return;
+        clearPanelWidgets(item);
+        buildPanelWidgets(item);
+        updateContentMetrics();
+        updateWidgetsVisibility();
+    }
+    // ===================== WEATHER CHANGE =====================
+    private void buildWeatherChangePanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        // ===== Enable =====
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.weather_change.enable")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.weatherChangeEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.weatherChangeEnabled = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH + rowGap;
+
+        // ===== 5 режимов: 3 сверху, 2 снизу =====
+        String[] modeKeys = {
+                "gui.resistancedlc.panel.weather_change.mode_clear",
+                "gui.resistancedlc.panel.weather_change.mode_rain",
+                "gui.resistancedlc.panel.weather_change.mode_thunder",
+                "gui.resistancedlc.panel.weather_change.mode_snow",
+                "gui.resistancedlc.panel.weather_change.mode_overcast"
+        };
+
+        int btnW = (w - 2 * 3) / 3;
+        for (int i = 0; i < 3; i++) {
+            final int mode = i;
+            boolean active = (ModConfig.weatherChangeMode == mode);
+            String label = (active ? "§a✓ " : "") + LocalizationManager.get(modeKeys[i]);
+            widgets.add(Button.builder(Component.literal(label), (b) -> {
+                ModConfig.weatherChangeMode = mode;
+                ConfigManager.save();
+                rebuildWeatherChangePanel();
+            }).bounds(x + i * (btnW + 3), curY, btnW, 20).build());
+        }
+        curY += rowH + rowGap;
+
+        int btnW2 = (w - 3) / 2;
+        for (int i = 3; i < 5; i++) {
+            final int mode = i;
+            boolean active = (ModConfig.weatherChangeMode == mode);
+            String label = (active ? "§a✓ " : "") + LocalizationManager.get(modeKeys[i]);
+            widgets.add(Button.builder(Component.literal(label), (b) -> {
+                ModConfig.weatherChangeMode = mode;
+                ConfigManager.save();
+                rebuildWeatherChangePanel();
+            }).bounds(x + (i - 3) * (btnW2 + 3), curY, btnW2, 20).build());
+        }
+        curY += rowH + rowGap;
+
+        // ===== Заметка про Тягун =====
+        Button noteBtn = Button.builder(
+                Component.literal("§7" + LocalizationManager.get("gui.resistancedlc.panel.weather_change.note")),
+                (b) -> {
+                }
+        ).bounds(x, curY, w, 18).build();
+        noteBtn.active = false;
+        widgets.add(noteBtn);
+    }
+
+    private void rebuildWeatherChangePanel() {
+        AccordionItem item = findItemById("weather_change");
         if (item == null || !item.expanded) return;
         clearPanelWidgets(item);
         buildPanelWidgets(item);
