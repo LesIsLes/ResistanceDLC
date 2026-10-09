@@ -170,6 +170,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
             TotemTracker.clear();
             PvPSafeManager.reset();
             AutoGGManager.reset();
+            FreelookManager.reset();
             StrikeRangeManager.reset();
             com.resistancedlc.targetesp.TargetManagerHolder.MANAGER.reset();
             JumpCirclesManager.reset();
@@ -577,6 +578,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> ArmorAlertManager.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> AutoTPAcceptManager.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> KillStreakManager.tick());
+        ClientTickEvents.END_CLIENT_TICK.register(client -> FreelookManager.tick());
 
         // ===== ZOOM =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {

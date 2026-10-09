@@ -66,7 +66,7 @@ public class ConfigManager {
             json.addProperty("hudAlpha", ModConfig.hudAlpha);
             json.addProperty("showPet", ModConfig.showPet);
             json.addProperty("searchHistoryRaw", ModConfig.searchHistoryRaw);
-
+            json.addProperty("freelookDistance", ModConfig.freelookDistance);
             // === ВИДИМОСТЬ ЭЛЕМЕНТОВ ===
             json.addProperty("showCoords", ModConfig.showCoords);
             json.addProperty("showBiome", ModConfig.showBiome);
@@ -460,6 +460,10 @@ public class ConfigManager {
             json.addProperty("pingIndicatorRussian", ModConfig.pingIndicatorRussian);
             // === DEATH RECAP ===
             json.addProperty("deathRecapRaw", ModConfig.deathRecapRaw);
+
+            json.addProperty("freelookEnabled", ModConfig.freelookEnabled);
+            json.addProperty("freelookSensitivity", ModConfig.freelookSensitivity);
+
             Path file = CONFIG_DIR.resolve(name + ".json");
             synchronized (GSON) {
                 Files.writeString(file, GSON.toJson(json));
@@ -506,6 +510,9 @@ public class ConfigManager {
             ModConfig.showPet = getBool(json, "showPet", ModConfig.showPet);
             ModConfig.searchHistoryRaw = getString(json, "searchHistoryRaw", ModConfig.searchHistoryRaw);
 
+            ModConfig.freelookEnabled = getBool(json, "freelookEnabled", ModConfig.freelookEnabled);
+            ModConfig.freelookSensitivity = getFloat(json, "freelookSensitivity", ModConfig.freelookSensitivity);
+            ModConfig.freelookDistance = getFloat(json, "freelookDistance", ModConfig.freelookDistance);
             // === ВИДИМОСТЬ ЭЛЕМЕНТОВ ===
             ModConfig.showCoords = getBool(json, "showCoords", ModConfig.showCoords);
             ModConfig.showBiome = getBool(json, "showBiome", ModConfig.showBiome);

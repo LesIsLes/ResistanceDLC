@@ -497,5 +497,13 @@
   "gui.resistancedlc.smartchat.coord_hint": "LMB — copy coordinates",
   "gui.resistancedlc.smartchat.wp_hint": "LMB — insert /wp add x y z",
 
+  "gui.resistancedlc.item.freelook.title": "Freelook",
+  "gui.resistancedlc.item.freelook.desc": "Free camera (hold key)",
+
+  "gui.resistancedlc.panel.freelook.enable": "Enable Freelook",
+  "gui.resistancedlc.panel.freelook.sensitivity": "Sensitivity: %.2f",
+  "key.resistancedlc.freelook": "Freelook",
+  "gui.resistancedlc.panel.freelook.distance": "Distance: %.1f blocks",
+
   "key.category.resistancedlc.main": "ResistanceDLC"
 }

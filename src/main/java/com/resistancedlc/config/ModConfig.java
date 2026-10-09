@@ -448,4 +448,9 @@ public class ModConfig {
     public static boolean smartChatGroupingEnabled = true;
     public static boolean smartChatCoordClickEnabled = true;
     public static int smartChatGroupWindowSec = 60;
+
+    // ===================== FREELOOK =====================
+    public static boolean freelookEnabled = false;
+    public static float freelookSensitivity = 1.0f;   // 0.1 .. 3.0
+    public static float freelookDistance = 4.0f;      // 2.0 .. 8.0
 }

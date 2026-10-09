@@ -497,5 +497,13 @@
   "gui.resistancedlc.smartchat.coord_hint": "ЛКМ — копировать координаты",
   "gui.resistancedlc.smartchat.wp_hint": "ЛКМ — вставить /wp add x y z",
 
+  "gui.resistancedlc.item.freelook.title": "Freelook",
+  "gui.resistancedlc.item.freelook.desc": "Свободная камера (удерживай клавишу)",
+
+  "gui.resistancedlc.panel.freelook.enable": "Включить Freelook",
+  "gui.resistancedlc.panel.freelook.sensitivity": "Чувствительность: %.2f",
+  "key.resistancedlc.freelook": "Freelook",
+  "gui.resistancedlc.panel.freelook.distance": "Дистанция: %.1f блоков",
+
   "key.category.resistancedlc.main": "ResistanceDLC"
 }

@@ -243,6 +243,7 @@ public class AccordionScreen extends Screen {
                     case 14 -> KeyBindings.setMacro3Key(keyCode);
                     case 15 -> KeyBindings.setMacro4Key(keyCode);
                     case 16 -> KeyBindings.setMacro5Key(keyCode);
+                    case 17 -> KeyBindings.setFreelookKey(keyCode);
                 }
                 ModConfig.isBindingKey = false;
                 ModConfig.bindingTarget = 0;
@@ -420,7 +421,7 @@ public class AccordionScreen extends Screen {
      * Пересчитывает totalHeight / maxContentScroll на основе ФИНАЛЬНЫХ
      * contentHeight (не анимированных) — чтобы скролл не прыгал
      * при анимации раскрытия/закрытия панелей.
-     *
+     * <p>
      * ВАЖНО: вызывать после КАЖДОГО rebuild/expand/collapse,
      * чтобы следующий render() не зажал contentScroll неожиданно.
      */
@@ -1301,6 +1302,20 @@ public class AccordionScreen extends Screen {
         arItem.contentHeight = 130;
         visual.items.add(arItem);
 
+        // ===== FREELOOK =====
+        AccordionItem freelookItem = new AccordionItem(
+                "freelook",
+                LocalizationManager.get("gui.resistancedlc.item.freelook.title"),
+                LocalizationManager.get("gui.resistancedlc.item.freelook.desc"),
+                () -> ModConfig.freelookEnabled,
+                () -> {
+                    ModConfig.freelookEnabled = !ModConfig.freelookEnabled;
+                    ConfigManager.save();
+                }
+        );
+        freelookItem.contentHeight = 96;   // ← было 74, стало 96 (+22 на новый слайдер Distance)
+        visual.items.add(freelookItem);
+
 // ===== BETTER BOSSBAR =====
         AccordionItem bbbItem = new AccordionItem(
                 "better_bossbar",
@@ -1414,6 +1429,7 @@ public class AccordionScreen extends Screen {
         cmmItem.contentHeight = 74;
         misc.items.add(cmmItem);
         // ===== END CUSTOM MAIN MENU =====
+
         AccordionItem macroItem = new AccordionItem(
                 "macros",
                 LocalizationManager.get("gui.resistancedlc.item.macros.title"),
@@ -1472,7 +1488,8 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.inventory_manager.title"),
                 LocalizationManager.get("gui.resistancedlc.item.inventory_manager.desc"),
                 () -> true,
-                () -> {}
+                () -> {
+                }
         );
         invItem.contentHeight = calcInventoryManagerHeight();
         misc.items.add(invItem);
@@ -1643,6 +1660,7 @@ public class AccordionScreen extends Screen {
             case "no_hurt_cam" -> buildNoHurtCamPanel(widgets, innerX, innerY);
             case "no_bobbing" -> buildNoBobbingPanel(widgets, innerX, innerY);
             case "mod_logo" -> buildModLogoPanel(widgets, innerX, innerY, innerRight);
+            case "freelook" -> buildFreelookPanel(widgets, innerX, innerY, innerRight);
             case "cooldowns" -> buildCoolDownsPanel(widgets, innerX, innerY, innerRight);
             case "combo" -> buildComboPanel(widgets, innerX, innerY, innerRight);
             case "death_recap" -> buildDeathRecapPanel(widgets, innerX, innerY, innerRight);
@@ -3035,6 +3053,7 @@ public class AccordionScreen extends Screen {
     private int calcEnchantHighlightHeightImpl() {
         return calcEnchantHighlightHeight();
     }
+
     private int calcDeathRecapHeight() {
         int base = 26 + 26;  // кнопка Clear + отступ
         int count = DeathRecapManager.getEntries().size();
@@ -4350,6 +4369,7 @@ public class AccordionScreen extends Screen {
         infoBtn.active = false;
         widgets.add(infoBtn);
     }
+
     private void buildSmartChatPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
@@ -4385,6 +4405,7 @@ public class AccordionScreen extends Screen {
                 .build());
         curY += rowH;
     }
+
     // ===================== GUI THEME =====================
     private void buildGuiThemePanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
@@ -4534,7 +4555,8 @@ public class AccordionScreen extends Screen {
                 Button emptyBtn = Button.builder(
                         Component.literal("§8" + LocalizationManager.get(
                                 "gui.resistancedlc.inventory.detail_empty")),
-                        (b) -> {}
+                        (b) -> {
+                        }
                 ).bounds(x, curY, w, 18).build();
                 emptyBtn.active = false;
                 widgets.add(emptyBtn);
@@ -4632,6 +4654,7 @@ public class AccordionScreen extends Screen {
         buildPanelWidgets(item);
         updateWidgetsVisibility();
     }
+
     private void buildConfigManagerPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 22, rowGap = 6;
@@ -4786,6 +4809,7 @@ public class AccordionScreen extends Screen {
         buildPanelWidgets(cfg);
         updateWidgetsVisibility();
     }
+
     private int calcChatFilterHeight() {
         int base = 18;                      // EditBox (20) + отступ
         base += 28;                         // кнопка "Очистить всё"
@@ -4797,6 +4821,7 @@ public class AccordionScreen extends Screen {
         }
         return base + 8;                    // финальный отступ
     }
+
     // ===================== COOLDOWNS =====================
     private void buildCoolDownsPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
@@ -6994,6 +7019,7 @@ public class AccordionScreen extends Screen {
                 })
                 .build());
     }
+
     // ===================== CROSSHAIR HEATMAP =====================
     private void buildCrosshairHeatmapPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
@@ -7219,6 +7245,7 @@ public class AccordionScreen extends Screen {
         updateContentMetrics();
         updateWidgetsVisibility();
     }
+
     // ===================== PING INDICATOR =====================
     private void buildPingIndicatorPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int rowH = 22, rowGap = 6;
@@ -7245,6 +7272,7 @@ public class AccordionScreen extends Screen {
                 })
                 .build());
     }
+
     private void buildDeathRecapPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
         int rowH = 18, rowGap = 4;
@@ -7256,7 +7284,8 @@ public class AccordionScreen extends Screen {
         Button headerBtn = Button.builder(
                 Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.death_recap.list")
                         + " (§f" + entries.size() + "§e/§f" + DeathRecapManager.MAX_ENTRIES + "§e):"),
-                (b) -> {}
+                (b) -> {
+                }
         ).bounds(x, curY, w, 18).build();
         headerBtn.active = false;
         widgets.add(headerBtn);
@@ -7265,7 +7294,8 @@ public class AccordionScreen extends Screen {
         if (entries.isEmpty()) {
             Button emptyBtn = Button.builder(
                     Component.literal("§7" + LocalizationManager.get("gui.resistancedlc.panel.death_recap.empty")),
-                    (b) -> {}
+                    (b) -> {
+                    }
             ).bounds(x, curY, w, 18).build();
             emptyBtn.active = false;
             widgets.add(emptyBtn);
@@ -7283,7 +7313,8 @@ public class AccordionScreen extends Screen {
                     e.x(), e.y(), e.z(), timeStr);
             if (label.length() > 55) label = label.substring(0, 53) + "…";
 
-            Button row = Button.builder(Component.literal(label), (b) -> {})
+            Button row = Button.builder(Component.literal(label), (b) -> {
+                    })
                     .bounds(x, curY, w - 25, 18).build();
             row.active = false;
             widgets.add(row);
@@ -7358,7 +7389,8 @@ public class AccordionScreen extends Screen {
         // Заголовок «Броня»
         Button armorHeader = Button.builder(
                 Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.death_recap.armor") + ":"),
-                (b) -> {}
+                (b) -> {
+                }
         ).bounds(x, curY, w, 16).build();
         armorHeader.active = false;
         widgets.add(armorHeader);
@@ -7389,7 +7421,8 @@ public class AccordionScreen extends Screen {
      */
     private AbstractWidget labelRow(String key, String value, int x, int y, int w) {
         String text = "§e" + key + ": §f" + (value == null ? "" : value);
-        Button btn = Button.builder(Component.literal(text), (b) -> {})
+        Button btn = Button.builder(Component.literal(text), (b) -> {
+                })
                 .bounds(x, y, w, 16).build();
         btn.active = false;
         return btn;
@@ -7401,7 +7434,8 @@ public class AccordionScreen extends Screen {
         int rowH = 20;
 
         // Кнопка-фон строки
-        Button rowBg = Button.builder(Component.empty(), (b) -> {})
+        Button rowBg = Button.builder(Component.empty(), (b) -> {
+                })
                 .bounds(x, y, w, rowH - 2).build();
         rowBg.active = false;
         widgets.add(rowBg);
@@ -7484,7 +7518,9 @@ public class AccordionScreen extends Screen {
         return sdf.format(new java.util.Date(ts));
     }
 
-    /** Rebuild панели DeathRecap. */
+    /**
+     * Rebuild панели DeathRecap.
+     */
     private void rebuildDeathRecapPanel() {
         AccordionItem item = findItemById("death_recap");
         if (item == null || !item.expanded) return;
@@ -7495,6 +7531,7 @@ public class AccordionScreen extends Screen {
         buildPanelWidgets(item);
         updateWidgetsVisibility();
     }
+
     /**
      * Виджет-иконка для отображения предмета брони.
      * Рисует ItemStack в своих координатах (x, y).
@@ -7549,6 +7586,7 @@ public class AccordionScreen extends Screen {
             // no-op
         }
     }
+
     /**
      * InventorySlotWidget — слот инвентаря. Рисует рамку + предмет.
      * Пустые слоты рисуются как пустые рамки (НЕ замещаем!).
@@ -7581,7 +7619,8 @@ public class AccordionScreen extends Screen {
 
         @Override
         protected void updateWidgetNarration(
-                net.minecraft.client.gui.narration.NarrationElementOutput narration) {}
+                net.minecraft.client.gui.narration.NarrationElementOutput narration) {
+        }
     }
 
     private static class SlotLabelWidget extends net.minecraft.client.gui.components.AbstractWidget {
@@ -7602,7 +7641,8 @@ public class AccordionScreen extends Screen {
 
         @Override
         protected void updateWidgetNarration(
-                net.minecraft.client.gui.narration.NarrationElementOutput narration) {}
+                net.minecraft.client.gui.narration.NarrationElementOutput narration) {
+        }
     }
 
     private static class ArmorPreviewWidget extends net.minecraft.client.gui.components.AbstractWidget {
@@ -7619,10 +7659,10 @@ public class AccordionScreen extends Screen {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.player == null) return;
 
-            ItemStack origHead    = mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).copy();
-            ItemStack origChest   = mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST).copy();
-            ItemStack origLegs    = mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.LEGS).copy();
-            ItemStack origFeet    = mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.FEET).copy();
+            ItemStack origHead = mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).copy();
+            ItemStack origChest = mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST).copy();
+            ItemStack origLegs = mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.LEGS).copy();
+            ItemStack origFeet = mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.FEET).copy();
             ItemStack origOffhand = mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND).copy();
 
             try {
@@ -7661,6 +7701,80 @@ public class AccordionScreen extends Screen {
 
         @Override
         protected void updateWidgetNarration(
-                net.minecraft.client.gui.narration.NarrationElementOutput narration) {}
+                net.minecraft.client.gui.narration.NarrationElementOutput narration) {
+        }
+    }
+
+    private void buildFreelookPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        // ===== Enable =====
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.freelook.enable")), this.font)
+                .pos(x, curY).selected(ModConfig.freelookEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.freelookEnabled = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH;
+
+        // ===== Key bind =====
+        String keyName = KeyBindings.freelookKey != null
+                ? KeyBindings.freelookKey.getTranslatedKeyMessage().getString() : "LCTRL";
+        widgets.add(Button.builder(
+                Component.literal(ModConfig.isBindingKey && ModConfig.bindingTarget == 17
+                        ? LocalizationManager.get("gui.resistancedlc.panel.press_key")
+                        : LocalizationManager.get("gui.resistancedlc.panel.key", keyName)),
+                (b) -> {
+                    ModConfig.isBindingKey = true;
+                    ModConfig.bindingTarget = 17;
+                    b.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.press_key")));
+                }
+        ).bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        // ===== Sensitivity =====
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.freelook.sensitivity",
+                        ModConfig.freelookSensitivity)),
+                (ModConfig.freelookSensitivity - 0.1f) / 2.9f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.freelook.sensitivity",
+                        ModConfig.freelookSensitivity)));
+            }
+
+            @Override
+            protected void applyValue() {
+                ModConfig.freelookSensitivity = 0.1f + (float) (this.value * 2.9f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // ===== Distance =====
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.freelook.distance",
+                        ModConfig.freelookDistance)),
+                (ModConfig.freelookDistance - 2.0f) / 6.0f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.freelook.distance",
+                        ModConfig.freelookDistance)));
+            }
+
+            @Override
+            protected void applyValue() {
+                ModConfig.freelookDistance = 2.0f + (float) (this.value * 6.0f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
     }
 }

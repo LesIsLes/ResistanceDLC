@@ -23,6 +23,7 @@ public class KeyBindings {
     public static KeyMapping totemLogKey;
     public static KeyMapping pickupLogKey;
     public static KeyMapping hudEditorKey;
+    public static KeyMapping freelookKey;
 
     // ===== MACROS =====
     public static KeyMapping macro1Key;
@@ -43,6 +44,10 @@ public class KeyBindings {
                     Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "main")
             );
         }
+
+        // ============================================================
+        // ВСЕ РЕГИСТРАЦИИ — ТОЛЬКО ЗДЕСЬ, В register()
+        // ============================================================
 
         openGuiKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.resistancedlc.open_gui", InputConstants.Type.KEYSYM,
@@ -108,20 +113,32 @@ public class KeyBindings {
         macro5Key = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.resistancedlc.macro5", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_F5, category));
-        // ===== HUD EDITOR =====
+
+        // ===== HUD EDITOR (F6) =====
         hudEditorKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.resistancedlc.hud_editor", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_F6, category));
+
+        // ===== FREELOOK (LCTRL) =====
+        freelookKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.resistancedlc.freelook", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_LEFT_CONTROL, category));
+
+        // ============================================================
+        // ТЕПЕРЬ — tick-лямбды. ТОЛЬКО consumeClick, БЕЗ registerKeyBinding!
+        // ============================================================
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (openGuiKey.consumeClick()) {
                 Minecraft.getInstance().setScreen(new AccordionScreen());
             }
         });
+
         // ===== HUD EDITOR (F6) =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) return;
-            if (KeyBindings.hudEditorKey == null) return;
-            while (KeyBindings.hudEditorKey.consumeClick()) {
+            if (hudEditorKey == null) return;
+            while (hudEditorKey.consumeClick()) {
                 if (client.screen == null) {
                     client.setScreen(new com.resistancedlc.hud.HudEditScreen());
                 }
@@ -129,7 +146,10 @@ public class KeyBindings {
         });
     }
 
-    // ===== СЕТТЕРЫ =====
+    // ============================================================
+    // СЕТТЕРЫ (для binding в GUI)
+    // ============================================================
+
     public static void setKey(int keyCode) {
         if (openGuiKey != null) {
             openGuiKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
@@ -249,8 +269,15 @@ public class KeyBindings {
         }
     }
 
+    // ===== FREELOOK =====
+    public static void setFreelookKey(int keyCode) {
+        if (freelookKey != null) {
+            freelookKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+            saveOptions();
+        }
+    }
+
     private static void saveOptions() {
-        // Сохраняем бинды в options.txt, но НЕ вызываем load() — иначе сбросятся
         Minecraft.getInstance().options.save();
     }
 }
