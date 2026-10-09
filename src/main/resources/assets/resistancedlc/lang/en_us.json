@@ -505,5 +505,17 @@
   "key.resistancedlc.freelook": "Freelook",
   "gui.resistancedlc.panel.freelook.distance": "Distance: %.1f blocks",
 
+  "gui.resistancedlc.item.time_change.title": "Time Change",
+  "gui.resistancedlc.item.time_change.desc": "Visual time of day (client-side)",
+
+  "gui.resistancedlc.panel.time_change.enable": "Enable Time Change",
+  "gui.resistancedlc.panel.time_change.value": "Time: %s (%s)",
+  "gui.resistancedlc.panel.time_change.preset_sunrise": "Sunrise",
+  "gui.resistancedlc.panel.time_change.preset_day": "Day",
+  "gui.resistancedlc.panel.time_change.preset_noon": "Noon",
+  "gui.resistancedlc.panel.time_change.preset_sunset": "Sunset",
+  "gui.resistancedlc.panel.time_change.preset_night": "Night",
+  "gui.resistancedlc.panel.time_change.preset_midnight": "Midnight",
+
   "key.category.resistancedlc.main": "ResistanceDLC"
 }

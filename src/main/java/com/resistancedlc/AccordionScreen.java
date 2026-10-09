@@ -1316,6 +1316,19 @@ public class AccordionScreen extends Screen {
         freelookItem.contentHeight = 96;   // ← было 74, стало 96 (+22 на новый слайдер Distance)
         visual.items.add(freelookItem);
 
+        // ===== TIME CHANGE =====
+        AccordionItem tcItem = new AccordionItem(
+                "time_change",
+                LocalizationManager.get("gui.resistancedlc.item.time_change.title"),
+                LocalizationManager.get("gui.resistancedlc.item.time_change.desc"),
+                () -> ModConfig.timeChangeEnabled,
+                () -> {
+                    ModConfig.timeChangeEnabled = !ModConfig.timeChangeEnabled;
+                    ConfigManager.save();
+                }
+        );
+        tcItem.contentHeight = 140;
+        visual.items.add(tcItem);
 // ===== BETTER BOSSBAR =====
         AccordionItem bbbItem = new AccordionItem(
                 "better_bossbar",
@@ -1662,6 +1675,7 @@ public class AccordionScreen extends Screen {
             case "mod_logo" -> buildModLogoPanel(widgets, innerX, innerY, innerRight);
             case "freelook" -> buildFreelookPanel(widgets, innerX, innerY, innerRight);
             case "cooldowns" -> buildCoolDownsPanel(widgets, innerX, innerY, innerRight);
+            case "time_change" -> buildTimeChangePanel(widgets, innerX, innerY, innerRight);
             case "combo" -> buildComboPanel(widgets, innerX, innerY, innerRight);
             case "death_recap" -> buildDeathRecapPanel(widgets, innerX, innerY, innerRight);
             case "potion_effects" -> buildPotionEffectsPanel(widgets, innerX, innerY, innerRight);
@@ -7776,5 +7790,94 @@ public class AccordionScreen extends Screen {
                 ConfigManager.save();
             }
         });
+    }
+    // ===================== TIME CHANGE =====================
+    private void buildTimeChangePanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        // ===== Enable =====
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.time_change.enable")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.timeChangeEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.timeChangeEnabled = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH + rowGap;
+
+        // ===== Slider 0..24000 =====
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.time_change.value",
+                        (int) ModConfig.timeChangeValue,
+                        TimeChangeManager.formatTime(ModConfig.timeChangeValue))),
+                (ModConfig.timeChangeValue - 0L) / 24000.0
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.time_change.value",
+                        (int) ModConfig.timeChangeValue,
+                        TimeChangeManager.formatTime(ModConfig.timeChangeValue))));
+            }
+
+            @Override
+            protected void applyValue() {
+                ModConfig.timeChangeValue = (long) (this.value * 24000.0);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // ===== 6 presets =====
+        String[][] presets = {
+                {"Sunrise",  "23000"},
+                {"Day",      "1000"},
+                {"Noon",     "6000"},
+                {"Sunset",   "12000"},
+                {"Night",    "13000"},
+                {"Midnight", "18000"}
+        };
+
+        int btnW = (w - 5 * 3) / 6;   // 6 кнопок с gap 3px
+        if (btnW < 30) btnW = 30;     // минимум
+
+        for (int i = 0; i < presets.length; i++) {
+            final String presetKey = presets[i][0];
+            final long presetValue = Long.parseLong(presets[i][1]);
+
+            String label = LocalizationManager.get(
+                    "gui.resistancedlc.panel.time_change.preset_" + presetKey.toLowerCase());
+
+            Button presetBtn = Button.builder(
+                    Component.literal(label),
+                    (b) -> {
+                        ModConfig.timeChangeValue = presetValue;
+                        ConfigManager.save();
+                        // Перестроить панель, чтобы слайдер обновился
+                        Minecraft.getInstance().execute(this::rebuildTimeChangePanel);
+                    }
+            ).bounds(x + i * (btnW + 3), curY, btnW, 20).build();
+
+            presetBtn.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                    Component.literal(TimeChangeManager.formatTime(presetValue))));
+
+            widgets.add(presetBtn);
+        }
+    }
+
+    /**
+     * Rebuild панели TimeChange (для обновления слайдера после клика по пресету).
+     */
+    private void rebuildTimeChangePanel() {
+        AccordionItem item = findItemById("time_change");
+        if (item == null || !item.expanded) return;
+        clearPanelWidgets(item);
+        buildPanelWidgets(item);
+        updateContentMetrics();
+        updateWidgetsVisibility();
     }
 }

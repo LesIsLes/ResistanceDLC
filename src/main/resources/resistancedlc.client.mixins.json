@@ -38,7 +38,8 @@
     "DeathScreenAccessor",
     "CameraInvoker",
     "CameraMixin",
-    "FreelookMixin"
+    "FreelookMixin",
+    "TimeChangeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

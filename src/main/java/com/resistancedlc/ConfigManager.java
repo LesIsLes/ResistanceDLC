@@ -454,6 +454,10 @@ public class ConfigManager {
             json.addProperty("crosshairHeatmapTotalHits", ModConfig.crosshairHeatmapTotalHits);
             json.addProperty("crosshairHeatmapTotalMisses", ModConfig.crosshairHeatmapTotalMisses);
 
+            // === TIME CHANGE ===
+            json.addProperty("timeChangeEnabled", ModConfig.timeChangeEnabled);
+            json.addProperty("timeChangeValue", ModConfig.timeChangeValue);
+
             // === PING INDICATOR ===
             json.addProperty("pingIndicatorEnabled", ModConfig.pingIndicatorEnabled);
             json.addProperty("pingIndicatorShowMs", ModConfig.pingIndicatorShowMs);
@@ -601,6 +605,10 @@ public class ConfigManager {
             // === FOV ===
             ModConfig.fovEnabled = getBool(json, "fovEnabled", ModConfig.fovEnabled);
             ModConfig.fovMultiplier = getFloat(json, "fovMultiplier", ModConfig.fovMultiplier);
+
+            // === TIME CHANGE ===
+            ModConfig.timeChangeEnabled = getBool(json, "timeChangeEnabled", ModConfig.timeChangeEnabled);
+            ModConfig.timeChangeValue = getLong(json, "timeChangeValue", ModConfig.timeChangeValue);
 
 // === ASPECT RATIO ===
             ModConfig.aspectRatioEnabled = getBool(json, "aspectRatioEnabled", ModConfig.aspectRatioEnabled);

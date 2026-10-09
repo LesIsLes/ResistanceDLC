@@ -505,5 +505,17 @@
   "key.resistancedlc.freelook": "Freelook",
   "gui.resistancedlc.panel.freelook.distance": "Дистанция: %.1f блоков",
 
+  "gui.resistancedlc.item.time_change.title": "Time Change",
+  "gui.resistancedlc.item.time_change.desc": "Визуальное время суток (клиент)",
+
+  "gui.resistancedlc.panel.time_change.enable": "Включить Time Change",
+  "gui.resistancedlc.panel.time_change.value": "Время: %s (%s)",
+  "gui.resistancedlc.panel.time_change.preset_sunrise": "Рассвет",
+  "gui.resistancedlc.panel.time_change.preset_day": "День",
+  "gui.resistancedlc.panel.time_change.preset_noon": "Полдень",
+  "gui.resistancedlc.panel.time_change.preset_sunset": "Закат",
+  "gui.resistancedlc.panel.time_change.preset_night": "Ночь",
+  "gui.resistancedlc.panel.time_change.preset_midnight": "Полночь",
+
   "key.category.resistancedlc.main": "ResistanceDLC"
 }

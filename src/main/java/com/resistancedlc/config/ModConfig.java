@@ -453,4 +453,8 @@ public class ModConfig {
     public static boolean freelookEnabled = false;
     public static float freelookSensitivity = 1.0f;   // 0.1 .. 3.0
     public static float freelookDistance = 4.0f;      // 2.0 .. 8.0
+
+    // ===================== TIME CHANGE =====================
+    public static boolean timeChangeEnabled = false;
+    public static long timeChangeValue = 6000L;   // 0..24000 тиков
 }
