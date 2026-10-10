@@ -539,5 +539,16 @@
   "gui.resistancedlc.panel.theme_anim_enable": "Animate theme",
   "gui.resistancedlc.panel.theme_anim_speed": "Animation speed: %.2f",
 
+  "gui.resistancedlc.item.lyrics.title": "Lyrics",
+  "gui.resistancedlc.item.lyrics.desc": "3D lyrics from .lrc files",
+  "gui.resistancedlc.panel.lyrics.enable": "Enable Lyrics",
+  "gui.resistancedlc.panel.lyrics.distance": "Distance: %.1f blocks",
+  "gui.resistancedlc.panel.lyrics.font_size": "Font size: %.2f",
+  "gui.resistancedlc.panel.lyrics.angle": "Angle: %s°",
+  "gui.resistancedlc.panel.lyrics.alpha": "Alpha: %s",
+  "gui.resistancedlc.panel.lyrics.show_next": "Show next line",
+  "gui.resistancedlc.panel.lyrics.current_color": "Current line color",
+  "gui.resistancedlc.panel.lyrics.next_color": "Next line color",
+
   "key.category.resistancedlc.main": "ResistanceDLC"
 }

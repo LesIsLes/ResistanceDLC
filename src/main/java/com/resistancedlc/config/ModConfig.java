@@ -470,4 +470,14 @@ public class ModConfig {
     // ===================== THEME ANIMATION =====================
     public static boolean themeAnimationEnabled = false;
     public static float themeAnimationSpeed = 1.0f;   // 0.1..3.0
+
+    // ===================== LYRICS =====================
+    public static boolean lyricsEnabled = false;
+    public static float lyricsDistance = 3.0f;          // 0.5..7.0
+    public static float lyricsFontSize = 1.4f;           // 0.8..2.0
+    public static int lyricsCurrentColor = 0xFFFFFFFF;
+    public static int lyricsNextColor = 0xFFAAAAAA;
+    public static int lyricsAlpha = 255;                 // 0..255
+    public static int lyricsAngle = 15;          // было 30       // 10..60 (градусы)
+    public static boolean lyricsShowNext = true;
 }

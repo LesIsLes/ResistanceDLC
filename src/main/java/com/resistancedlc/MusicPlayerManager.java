@@ -191,6 +191,7 @@ public class MusicPlayerManager {
     }
 
     private static void playIndex(int index) {
+        com.resistancedlc.lyrics.LyricsRenderer.reset();
         if (playlist.isEmpty()) return;
         if (index < 0 || index >= playlist.size()) return;
 
@@ -459,5 +460,23 @@ public class MusicPlayerManager {
 
     public static String getMusicDirPath() {
         return MUSIC_DIR.toAbsolutePath().toString();
+    }
+    /**
+     * Имя текущего трека без расширения — для поиска .lrc.
+     */
+    public static String getCurrentTrackName() {
+        MusicTrack t = getCurrentTrack();
+        if (t == null) return null;
+        String fileName = t.path().getFileName().toString();
+        int dot = fileName.lastIndexOf('.');
+        return dot > 0 ? fileName.substring(0, dot) : fileName;
+    }
+
+    /**
+     * Текущая позиция трека в миллисекундах.
+     * OggPlayback отдаёт секунды — конвертим.
+     */
+    public static long getCurrentPositionMs() {
+        return (long) playback.getPositionSeconds() * 1000L;
     }
 }

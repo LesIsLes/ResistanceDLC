@@ -3,6 +3,8 @@ package com.resistancedlc;
 import com.resistancedlc.config.ModConfig;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.resistancedlc.lyrics.LyricsManager;
+import com.resistancedlc.lyrics.LyricsNotificationHud;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -12,15 +14,9 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
-import com.resistancedlc.JumpCirclesManager;
-import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.TextColor;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -78,7 +74,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
         KeyBindings.register();
 
         MusicPlayerManager.init();
-
+        LyricsManager.init();
         // ===== ATTACK CALLBACK =====
         AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
             if (ModConfig.strikeRangeEnabled && entity != null) {
@@ -853,7 +849,26 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 ModConfig.currentCombo = 0;
             }
         });
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (!ModConfig.musicPlayerEnabled) return;
+            if (!ModConfig.lyricsEnabled) return;
+            String trackName = MusicPlayerManager.getCurrentTrackName();
+            if (trackName == null) return;
 
+            // Проверяем, есть ли лирика
+            var lines = LyricsManager.loadFor(trackName);
+            if (lines == null) {
+                if (LyricsManager.shouldNotifyNoLyrics(trackName)) {
+                    LyricsNotificationHud.show("§7[Lyrics] §fНет текста для §e" + trackName);
+                    if (client.player != null) {
+                        client.player.displayClientMessage(
+                                net.minecraft.network.chat.Component.literal(
+                                        "§7[Lyrics] Текст песни не найден: §e" + trackName),
+                                false);
+                    }
+                }
+            }
+        });
         // ===== TAPEMOUSE logic =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!ModConfig.tapeMouseEnabled) return;
@@ -926,7 +941,11 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "hud"),
                 (graphics, tickCounter) -> renderHud(graphics)
         );
-
+        HudElementRegistry.attachElementBefore(
+                VanillaHudElements.CHAT,
+                Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "lyrics_hud"),
+                (graphics, tickCounter) -> com.resistancedlc.lyrics.LyricsHud.render(graphics)
+        );
         HudElementRegistry.attachElementBefore(
                 VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "music_hud"),
@@ -942,14 +961,17 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "crosshair_heatmap_hud"),
                 (graphics, tickCounter) -> CrosshairHeatmapHud.render(graphics)
         );
-
+        HudElementRegistry.attachElementBefore(
+                VanillaHudElements.CHAT,
+                Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "lyrics_notification_hud"),
+                (graphics, tickCounter) -> LyricsNotificationHud.render(graphics)
+        );
         net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_EXTRACTION.register(TARGET_ESP::extract);
         net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_MAIN.register(TARGET_ESP::draw);
 
         net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_MAIN.register(
                 PredictionsRenderer::render
         );
-
         ClientTickEvents.END_CLIENT_TICK.register(mc -> JumpCirclesManager.tick());
 
         net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_MAIN.register(

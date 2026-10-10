@@ -539,5 +539,16 @@
   "gui.resistancedlc.panel.theme_anim_enable": "Анимировать тему",
   "gui.resistancedlc.panel.theme_anim_speed": "Скорость анимации: %.2f",
 
+  "gui.resistancedlc.item.lyrics.title": "Текст песен",
+  "gui.resistancedlc.item.lyrics.desc": "3D-лирика из .lrc файлов",
+  "gui.resistancedlc.panel.lyrics.enable": "Включить текст песен",
+  "gui.resistancedlc.panel.lyrics.distance": "Дистанция: %.1f блоков",
+  "gui.resistancedlc.panel.lyrics.font_size": "Размер шрифта: %.2f",
+  "gui.resistancedlc.panel.lyrics.angle": "Угол: %s°",
+  "gui.resistancedlc.panel.lyrics.alpha": "Прозрачность: %s",
+  "gui.resistancedlc.panel.lyrics.show_next": "Показывать след. строку",
+  "gui.resistancedlc.panel.lyrics.current_color": "Цвет текущей строки",
+  "gui.resistancedlc.panel.lyrics.next_color": "Цвет следующей строки",
+
   "key.category.resistancedlc.main": "ResistanceDLC"
 }

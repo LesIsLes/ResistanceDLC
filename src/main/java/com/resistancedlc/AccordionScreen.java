@@ -1545,6 +1545,21 @@ public class AccordionScreen extends Screen {
         mpItem.contentHeight = calcMusicPlayerHeight();
         music.items.add(mpItem);
 
+        // ===== LYRICS =====
+        AccordionItem lyricsItem = new AccordionItem(
+                "lyrics",
+                LocalizationManager.get("gui.resistancedlc.item.lyrics.title"),
+                LocalizationManager.get("gui.resistancedlc.item.lyrics.desc"),
+                () -> ModConfig.lyricsEnabled,
+                () -> {
+                    ModConfig.lyricsEnabled = !ModConfig.lyricsEnabled;
+                    ConfigManager.save();
+                }
+        );
+        lyricsItem.contentHeight = 260;
+        music.items.add(lyricsItem);
+        // ===== END LYRICS =====
+
         sections.add(music);
     }
 
@@ -1686,6 +1701,7 @@ public class AccordionScreen extends Screen {
             case "hud_editor" -> { /* панель не нужна — клик сразу открывает экран */ }
             case "no_hurt_cam" -> buildNoHurtCamPanel(widgets, innerX, innerY);
             case "no_bobbing" -> buildNoBobbingPanel(widgets, innerX, innerY);
+            case "lyrics" -> buildLyricsPanel(widgets, innerX, innerY, innerRight);
             case "weather_change" -> buildWeatherChangePanel(widgets, innerX, innerY, innerRight);
             case "mod_logo" -> buildModLogoPanel(widgets, innerX, innerY, innerRight);
             case "freelook" -> buildFreelookPanel(widgets, innerX, innerY, innerRight);
@@ -6729,7 +6745,172 @@ public class AccordionScreen extends Screen {
             widgets.add(emptyBtn);
         }
     }
+    private void buildLyricsPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
 
+        // Enable
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.enable")), this.font)
+                .pos(x, curY).selected(ModConfig.lyricsEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.lyricsEnabled = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH + rowGap;
+
+        // Distance
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.distance",
+                        ModConfig.lyricsDistance)),
+                (ModConfig.lyricsDistance - 0.5f) / 6.5f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.distance",
+                        ModConfig.lyricsDistance)));
+            }
+
+            @Override
+            protected void applyValue() {
+                ModConfig.lyricsDistance = 0.5f + (float) (this.value * 6.5f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // Font size
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.font_size",
+                        ModConfig.lyricsFontSize)),
+                (ModConfig.lyricsFontSize - 0.8f) / 1.2f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.font_size",
+                        ModConfig.lyricsFontSize)));
+            }
+
+            @Override
+            protected void applyValue() {
+                ModConfig.lyricsFontSize = 0.8f + (float) (this.value * 1.2f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // Angle
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.angle",
+                        ModConfig.lyricsAngle)),
+                (ModConfig.lyricsAngle - 10) / 50.0
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.angle",
+                        ModConfig.lyricsAngle)));
+            }
+
+            @Override
+            protected void applyValue() {
+                ModConfig.lyricsAngle = 10 + (int) (this.value * 50);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // Alpha
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.alpha", ModConfig.lyricsAlpha)),
+                ModConfig.lyricsAlpha / 255.0
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.alpha",
+                        ModConfig.lyricsAlpha)));
+            }
+
+            @Override
+            protected void applyValue() {
+                ModConfig.lyricsAlpha = (int) (this.value * 255);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // Show next
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.show_next")), this.font)
+                .pos(x, curY).selected(ModConfig.lyricsShowNext)
+                .onValueChange((c, v) -> {
+                    ModConfig.lyricsShowNext = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH + rowGap;
+
+        // Current color
+        addColorRow(widgets, x, curY, right,
+                LocalizationManager.get("gui.resistancedlc.panel.lyrics.current_color"),
+                () -> ModConfig.lyricsCurrentColor,
+                v -> ModConfig.lyricsCurrentColor = v);
+        curY += rowH + rowGap;
+
+        // Next color
+        addColorRow(widgets, x, curY, right,
+                LocalizationManager.get("gui.resistancedlc.panel.lyrics.next_color"),
+                () -> ModConfig.lyricsNextColor,
+                v -> ModConfig.lyricsNextColor = v);
+    }
+
+    /**
+     * Хелпер: HEX + пресеты R/G/B/W для цвета.
+     */
+    private void addColorRow(List<AbstractWidget> widgets, int x, int y, int right,
+                             String label, Supplier<Integer> getter,
+                             java.util.function.IntConsumer setter) {
+        int w = right - x;
+        Button lbl = Button.builder(Component.literal("§7" + label), (b) -> {
+                })
+                .bounds(x, y, w, 14).build();
+        lbl.active = false;
+        widgets.add(lbl);
+
+        EditBox hex = new EditBox(this.font, x, y + 16, 80, 18,
+                Component.literal("#RRGGBB"));
+        hex.setMaxLength(7);
+        hex.setValue(String.format("#%06X", getter.get() & 0xFFFFFF));
+        widgets.add(hex);
+
+        widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.apply")), (b) -> {
+            try {
+                int c = 0xFF000000 | Integer.parseInt(hex.getValue().replace("#", "").trim(), 16);
+                setter.accept(c);
+                ConfigManager.save();
+            } catch (Exception ignored) {
+            }
+        }).bounds(x + 85, y + 16, 35, 18).build());
+
+        int presetX = x + 125;
+        int presetW = (right - presetX - 9) / 4;
+        String[] pn = {"R", "G", "B", "W"};
+        int[] pc = {0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 0xFFFFFFFF};
+        for (int i = 0; i < 4; i++) {
+            final int color = pc[i];
+            final String hx = String.format("#%06X", color & 0xFFFFFF);
+            widgets.add(Button.builder(Component.literal(pn[i]), (b) -> {
+                hex.setValue(hx);
+                setter.accept(color);
+                ConfigManager.save();
+            }).bounds(presetX + i * (presetW + 3), y + 16, presetW, 18).build());
+        }
+    }
     private void rebuildMusicPlayerPanel() {
         AccordionItem mp = null;
         for (Section s : sections) {

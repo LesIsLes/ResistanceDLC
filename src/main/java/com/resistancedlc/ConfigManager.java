@@ -483,6 +483,16 @@ public class ConfigManager {
             json.addProperty("themeAnimationEnabled", ModConfig.themeAnimationEnabled);
             json.addProperty("themeAnimationSpeed", ModConfig.themeAnimationSpeed);
 
+            // === LYRICS ===
+            json.addProperty("lyricsEnabled", ModConfig.lyricsEnabled);
+            json.addProperty("lyricsDistance", ModConfig.lyricsDistance);
+            json.addProperty("lyricsFontSize", ModConfig.lyricsFontSize);
+            json.addProperty("lyricsCurrentColor", ModConfig.lyricsCurrentColor);
+            json.addProperty("lyricsNextColor", ModConfig.lyricsNextColor);
+            json.addProperty("lyricsAlpha", ModConfig.lyricsAlpha);
+            json.addProperty("lyricsAngle", ModConfig.lyricsAngle);
+            json.addProperty("lyricsShowNext", ModConfig.lyricsShowNext);
+
             Path file = CONFIG_DIR.resolve(name + ".json");
             synchronized (GSON) {
                 Files.writeString(file, GSON.toJson(json));
@@ -785,6 +795,16 @@ public class ConfigManager {
             ModConfig.lastDeathZ = getInt(json, "lastDeathZ", ModConfig.lastDeathZ);
             ModConfig.lastDeathDimension = getString(json, "lastDeathDimension", ModConfig.lastDeathDimension);
             ModConfig.lastDeathTime = getLong(json, "lastDeathTime", ModConfig.lastDeathTime);
+
+            // === LYRICS ===
+            ModConfig.lyricsEnabled = getBool(json, "lyricsEnabled", ModConfig.lyricsEnabled);
+            ModConfig.lyricsDistance = getFloat(json, "lyricsDistance", ModConfig.lyricsDistance);
+            ModConfig.lyricsFontSize = getFloat(json, "lyricsFontSize", ModConfig.lyricsFontSize);
+            ModConfig.lyricsCurrentColor = getInt(json, "lyricsCurrentColor", ModConfig.lyricsCurrentColor);
+            ModConfig.lyricsNextColor = getInt(json, "lyricsNextColor", ModConfig.lyricsNextColor);
+            ModConfig.lyricsAlpha = getInt(json, "lyricsAlpha", ModConfig.lyricsAlpha);
+            ModConfig.lyricsAngle = getInt(json, "lyricsAngle", ModConfig.lyricsAngle);
+            ModConfig.lyricsShowNext = getBool(json, "lyricsShowNext", ModConfig.lyricsShowNext);
 
             // === STRIKE RANGE ===
             ModConfig.strikeRangeEnabled = getBool(json, "strikeRangeEnabled", ModConfig.strikeRangeEnabled);
