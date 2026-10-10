@@ -156,13 +156,13 @@ public class ConfigManager {
             json.addProperty("fovEnabled", ModConfig.fovEnabled);
             json.addProperty("fovMultiplier", ModConfig.fovMultiplier);
 
-// === ASPECT RATIO ===
+            // === ASPECT RATIO ===
             json.addProperty("aspectRatioEnabled", ModConfig.aspectRatioEnabled);
             json.addProperty("aspectRatioUsePreset", ModConfig.aspectRatioUsePreset);
             json.addProperty("aspectRatioFactor", ModConfig.aspectRatioFactor);
             json.addProperty("aspectRatioPreset", ModConfig.aspectRatioPreset.name());
 
-// === BETTER BOSSBAR ===
+            // === BETTER BOSSBAR ===
             json.addProperty("betterBossBarEnabled", ModConfig.betterBossBarEnabled);
             json.addProperty("betterBossBarStyle", ModConfig.betterBossBarStyle.name());
             json.addProperty("betterBossBarBgColor", ModConfig.betterBossBarBgColor);
@@ -468,6 +468,21 @@ public class ConfigManager {
             json.addProperty("freelookEnabled", ModConfig.freelookEnabled);
             json.addProperty("freelookSensitivity", ModConfig.freelookSensitivity);
 
+            // === PREDICTIONS ===
+            json.addProperty("predictionsEnabled", ModConfig.predictionsEnabled);
+            json.addProperty("predictionsColor", ModConfig.predictionsColor);
+            json.addProperty("predictionsAlpha", ModConfig.predictionsAlpha);
+            json.addProperty("predictionsThickness", ModConfig.predictionsThickness);
+            json.addProperty("predictionsSteps", ModConfig.predictionsSteps);
+            json.addProperty("predictionsShowImpact", ModConfig.predictionsShowImpact);
+            json.addProperty("predictionsImpactStyle", ModConfig.predictionsImpactStyle);
+            json.addProperty("predictionsImpactColor", ModConfig.predictionsImpactColor);
+            json.addProperty("predictionsImpactSize", ModConfig.predictionsImpactSize);
+
+            // === THEME ANIMATION ===
+            json.addProperty("themeAnimationEnabled", ModConfig.themeAnimationEnabled);
+            json.addProperty("themeAnimationSpeed", ModConfig.themeAnimationSpeed);
+
             Path file = CONFIG_DIR.resolve(name + ".json");
             synchronized (GSON) {
                 Files.writeString(file, GSON.toJson(json));
@@ -611,10 +626,10 @@ public class ConfigManager {
             ModConfig.timeChangeValue = getLong(json, "timeChangeValue", ModConfig.timeChangeValue);
 
             // === WEATHER CHANGE ===
-            json.addProperty("weatherChangeEnabled", ModConfig.weatherChangeEnabled);
-            json.addProperty("weatherChangeMode", ModConfig.weatherChangeMode);
+            ModConfig.weatherChangeEnabled = getBool(json, "weatherChangeEnabled", ModConfig.weatherChangeEnabled);
+            ModConfig.weatherChangeMode = getInt(json, "weatherChangeMode", ModConfig.weatherChangeMode);
 
-// === ASPECT RATIO ===
+            // === ASPECT RATIO ===
             ModConfig.aspectRatioEnabled = getBool(json, "aspectRatioEnabled", ModConfig.aspectRatioEnabled);
             ModConfig.aspectRatioUsePreset = getBool(json, "aspectRatioUsePreset", ModConfig.aspectRatioUsePreset);
             ModConfig.aspectRatioFactor = getFloat(json, "aspectRatioFactor", ModConfig.aspectRatioFactor);
@@ -623,7 +638,7 @@ public class ConfigManager {
                         getString(json, "aspectRatioPreset", ModConfig.aspectRatioPreset.name()));
             } catch (IllegalArgumentException ignored) {}
 
-// === BETTER BOSSBAR ===
+            // === BETTER BOSSBAR ===
             ModConfig.betterBossBarEnabled = getBool(json, "betterBossBarEnabled", ModConfig.betterBossBarEnabled);
             try {
                 ModConfig.betterBossBarStyle = BossBarStyle.valueOf(
@@ -654,10 +669,6 @@ public class ConfigManager {
             ModConfig.comboResetTime = getInt(json, "comboResetTime", ModConfig.comboResetTime);
             ModConfig.comboFontSize = getInt(json, "comboFontSize", ModConfig.comboFontSize);
             ModConfig.comboRussian = getBool(json, "comboRussian", ModConfig.comboRussian);
-
-            // === WEATHER CHANGE ===
-            ModConfig.weatherChangeEnabled = getBool(json, "weatherChangeEnabled", ModConfig.weatherChangeEnabled);
-            ModConfig.weatherChangeMode = getInt(json, "weatherChangeMode", ModConfig.weatherChangeMode);
 
             // === EFFECT WARNINGS ===
             ModConfig.effectWarningsEnabled = getBool(json, "effectWarningsEnabled", ModConfig.effectWarningsEnabled);
@@ -927,6 +938,22 @@ public class ConfigManager {
             ModConfig.pingIndicatorRussian = getBool(json, "pingIndicatorRussian", ModConfig.pingIndicatorRussian);
             // === DEATH RECAP ===
             ModConfig.deathRecapRaw = getString(json, "deathRecapRaw", ModConfig.deathRecapRaw);
+
+            // === PREDICTIONS ===
+            ModConfig.predictionsEnabled = getBool(json, "predictionsEnabled", ModConfig.predictionsEnabled);
+            ModConfig.predictionsColor = getInt(json, "predictionsColor", ModConfig.predictionsColor);
+            ModConfig.predictionsAlpha = getInt(json, "predictionsAlpha", ModConfig.predictionsAlpha);
+            ModConfig.predictionsThickness = getFloat(json, "predictionsThickness", ModConfig.predictionsThickness);
+            ModConfig.predictionsSteps = getInt(json, "predictionsSteps", ModConfig.predictionsSteps);
+            ModConfig.predictionsShowImpact = getBool(json, "predictionsShowImpact", ModConfig.predictionsShowImpact);
+            ModConfig.predictionsImpactStyle = getInt(json, "predictionsImpactStyle", ModConfig.predictionsImpactStyle);
+            ModConfig.predictionsImpactColor = getInt(json, "predictionsImpactColor", ModConfig.predictionsImpactColor);
+            ModConfig.predictionsImpactSize = getFloat(json, "predictionsImpactSize", ModConfig.predictionsImpactSize);
+
+            // === THEME ANIMATION ===
+            ModConfig.themeAnimationEnabled = getBool(json, "themeAnimationEnabled", ModConfig.themeAnimationEnabled);
+            ModConfig.themeAnimationSpeed = getFloat(json, "themeAnimationSpeed", ModConfig.themeAnimationSpeed);
+
             return true;
 
         } catch (Exception e) {

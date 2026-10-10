@@ -321,6 +321,11 @@ public class ModConfig {
     public static int predictionsAlpha = 200;
     public static float predictionsThickness = 2.0f;
     public static int predictionsSteps = 100;
+    // НОВОЕ:
+    public static boolean predictionsShowImpact = true;
+    public static int predictionsImpactStyle = 0;            // 0 = cross, 1 = dot
+    public static int predictionsImpactColor = 0xFFFF4444;
+    public static float predictionsImpactSize = 0.25f;       // 0.1..0.5
 
     // ===================== LOW HP ALERT =====================
     public static boolean lowHpAlertEnabled = false;
@@ -461,4 +466,8 @@ public class ModConfig {
     // ===================== WEATHER CHANGE =====================
     public static boolean weatherChangeEnabled = false;
     public static int weatherChangeMode = 0;   // 0=CLEAR 1=RAIN 2=THUNDER 3=SNOW 4=OVERCAST
+
+    // ===================== THEME ANIMATION =====================
+    public static boolean themeAnimationEnabled = false;
+    public static float themeAnimationSpeed = 1.0f;   // 0.1..3.0
 }

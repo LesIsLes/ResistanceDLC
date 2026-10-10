@@ -1,16 +1,39 @@
 package com.resistancedlc;
 
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class PredictionsManager {
+
+    /**
+     * Результат симуляции одной траектории.
+     * points      — точки траектории (в мировых координатах).
+     * impactPoint — точка попадания в блок, либо null (улетела в небо/за steps).
+     * hitBlock    — true, если попала в блок.
+     */
+    public static class Trajectory {
+        public final List<Vec3> points;
+        public final Vec3 impactPoint;
+        public final boolean hitBlock;
+
+        public Trajectory(List<Vec3> points, Vec3 impactPoint, boolean hitBlock) {
+            this.points = points;
+            this.impactPoint = impactPoint;
+            this.hitBlock = hitBlock;
+        }
+    }
 
     public static class ProjectileSettings {
         public final float gravity;
@@ -62,8 +85,8 @@ public class PredictionsManager {
         return false;
     }
 
-    public static List<List<Vec3>> simulateAllTrajectories(Player player, int steps) {
-        List<List<Vec3>> result = new ArrayList<>();
+    public static List<Trajectory> simulateAllTrajectories(Player player, int steps) {
+        List<Trajectory> result = new ArrayList<>();
 
         ItemStack stack = player.getMainHandItem();
         if (getSettingsFor(stack) == null) stack = player.getOffhandItem();
@@ -71,12 +94,17 @@ public class PredictionsManager {
 
         ProjectileSettings settings = getSettingsFor(stack);
 
-        // ✅ ФИКС: сдвигаем старт на 0.5 блока вперёд, чтобы
-        // первый сегмент не проходил через near-plane камеры.
-        Vec3 look = player.getLookAngle();
-        Vec3 pos = player.getEyePosition().add(look.scale(0.5));
+        // ✅ ФИКС (Вариант A): старт из КАМЕРЫ, а не из глаз тела.
+        // Камера учитывает bob-view (бег), hurt-shake (тряска), F5, freelook.
+        // Направление берём от ТЕЛА (player.getLookAngle()) — снаряд летит
+        // туда, куда смотрит тело, даже если камера отдельно.
+        Minecraft mc = Minecraft.getInstance();
+        Camera cam = mc.gameRenderer.getMainCamera();
 
-        // ✅ ФИКС: проверяем мультишот и в main, и в off
+        Vec3 pos = cam.position();
+        Vec3 look = player.getLookAngle();
+
+        // ✅ Мультишот — проверяем в main и в off
         boolean isMultishot = false;
         if (stack.getItem() instanceof CrossbowItem) {
             var enchHolder = player.level().registryAccess()
@@ -86,19 +114,23 @@ public class PredictionsManager {
         }
 
         if (isMultishot) {
-            // ✅ ФИКС: правильный разброс — центр, -10°, +10°
-            result.add(simulateOne(pos, look, settings, steps, 0));
-            result.add(simulateOne(pos, look, settings, steps, -10));
-            result.add(simulateOne(pos, look, settings, steps, +10));
+            result.add(simulateOne(player, pos, look, settings, steps, 0));
+            result.add(simulateOne(player, pos, look, settings, steps, -10));
+            result.add(simulateOne(player, pos, look, settings, steps, +10));
         } else {
-            result.add(simulateOne(pos, look, settings, steps, 0));
+            result.add(simulateOne(player, pos, look, settings, steps, 0));
         }
 
         return result;
     }
 
-    private static List<Vec3> simulateOne(Vec3 start, Vec3 look, ProjectileSettings s,
-                                          int steps, double angleDeg) {
+    /**
+     * Симуляция одной траектории.
+     * Рейкаст по блокам каждые 2 шага.
+     */
+    private static Trajectory simulateOne(Player player, Vec3 start, Vec3 look,
+                                          ProjectileSettings s, int steps,
+                                          double angleDeg) {
         List<Vec3> points = new ArrayList<>();
 
         Vec3 rotatedLook = look;
@@ -114,14 +146,51 @@ public class PredictionsManager {
         Vec3 pos = start;
         Vec3 velocity = rotatedLook.scale(s.baseSpeed);
 
+        Vec3 lastChecked = pos;   // точка последнего рейкаста (каждые 2 шага)
+        points.add(pos);
+
         for (int i = 0; i < steps; i++) {
-            points.add(pos);
+            Vec3 prev = pos;
             pos = pos.add(velocity);
             velocity = velocity.scale(s.drag);
             velocity = velocity.add(0, -s.gravity, 0);
+
+            points.add(pos);
+
+            // ✅ Рейкаст каждые 2 шага
+            if (i % 2 == 1) {
+                BlockHitResult hit = raycastBlock(player, lastChecked, pos);
+                if (hit != null) {
+                    // Попадание в блок
+                    Vec3 impact = hit.getLocation();
+                    points.set(points.size() - 1, impact);   // заменяем последнюю точку на impact
+                    return new Trajectory(points, impact, true);
+                }
+                lastChecked = pos;
+            }
         }
 
-        return points;
+        return new Trajectory(points, null, false);
+    }
+
+    /**
+     * Рейкаст по блокам между двумя точками.
+     * Возвращает null, если попадания нет.
+     */
+    private static BlockHitResult raycastBlock(Player player, Vec3 from, Vec3 to) {
+        if (player.level() == null) return null;
+        try {
+            ClipContext ctx = new ClipContext(
+                    from, to,
+                    ClipContext.Block.COLLIDER,
+                    ClipContext.Fluid.NONE,
+                    player
+            );
+            BlockHitResult hit = player.level().clip(ctx);
+            if (hit.getType() != HitResult.Type.MISS) return hit;
+        } catch (Throwable ignored) {
+        }
+        return null;
     }
 
     public static void reset() {}

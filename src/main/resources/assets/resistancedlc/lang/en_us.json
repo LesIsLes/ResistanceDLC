@@ -530,5 +530,14 @@
 
   "gui.resistancedlc.panel.freelook.warning": "§7Use only unassigned keys for the function to work correctly.",
 
+  "gui.resistancedlc.panel.predictions.show_impact": "Show impact point",
+  "gui.resistancedlc.panel.predictions.impact_style": "Impact style: %s",
+  "gui.resistancedlc.panel.predictions.impact_style_cross": "Cross",
+  "gui.resistancedlc.panel.predictions.impact_style_dot": "Dot",
+  "gui.resistancedlc.panel.predictions.impact_size": "Impact size: %.2f",
+
+  "gui.resistancedlc.panel.theme_anim_enable": "Animate theme",
+  "gui.resistancedlc.panel.theme_anim_speed": "Animation speed: %.2f",
+
   "key.category.resistancedlc.main": "ResistanceDLC"
 }

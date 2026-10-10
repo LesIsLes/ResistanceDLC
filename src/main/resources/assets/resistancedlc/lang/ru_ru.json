@@ -530,5 +530,14 @@
 
   "gui.resistancedlc.panel.freelook.warning": "§7Используйте только незанятые клавиши для корректной работы функции",
 
+  "gui.resistancedlc.panel.predictions.show_impact": "Показывать точку падения",
+  "gui.resistancedlc.panel.predictions.impact_style": "Стиль точки: %s",
+  "gui.resistancedlc.panel.predictions.impact_style_cross": "Крестик",
+  "gui.resistancedlc.panel.predictions.impact_style_dot": "Точка",
+  "gui.resistancedlc.panel.predictions.impact_size": "Размер точки: %.2f",
+
+  "gui.resistancedlc.panel.theme_anim_enable": "Анимировать тему",
+  "gui.resistancedlc.panel.theme_anim_speed": "Скорость анимации: %.2f",
+
   "key.category.resistancedlc.main": "ResistanceDLC"
 }

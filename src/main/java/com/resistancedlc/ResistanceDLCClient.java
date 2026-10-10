@@ -1008,7 +1008,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
         if (client.player == null || client.options.hideGui) return;
 
         int alpha = ModConfig.hudAlpha;
-        int baseColor = ModConfig.hudColor;
+        int baseColor = ThemeManager.getCurrentHudColor();
         int color = (baseColor & 0x00FFFFFF) | (alpha << 24);
 
         renderWaypoints(graphics);
@@ -1620,6 +1620,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
     }
 
     private static void drawHudString(GuiGraphics graphics, Font font, String text, int x, int y, int color) {
+        // Фон рисуется как раньше
         if (ModConfig.hudBackgroundEnabled) {
             int textWidth = font.width(text);
             int bgAlpha = ModConfig.hudBackgroundAlpha;
@@ -1628,7 +1629,22 @@ public class ResistanceDLCClient implements ClientModInitializer {
             int height = ModConfig.hudBackgroundHeight;
             graphics.fill(x - 1, y - 1, x + textWidth + 1, y - 1 + height, bgColor);
         }
-        graphics.drawString(font, text, x, y, color, true);
+
+        // Если анимация выключена или Vanilla → обычная отрисовка
+        if (!ModConfig.themeAnimationEnabled || ThemeManager.getThemeIndex() == 0) {
+            graphics.drawString(font, text, x, y, color, true);
+            return;
+        }
+
+        // Посимвольная волна
+        int total = text.length();
+        int curX = x;
+        for (int i = 0; i < total; i++) {
+            int chColor = ThemeManager.getHudColorAt(i, total);
+            String ch = String.valueOf(text.charAt(i));
+            graphics.drawString(font, ch, curX, y, chColor, true);
+            curX += font.width(ch);
+        }
     }
 
     private static void drawEquipmentSlot(GuiGraphics graphics, ItemStack stack, int x, int y) {

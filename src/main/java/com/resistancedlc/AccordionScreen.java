@@ -1257,7 +1257,7 @@ public class AccordionScreen extends Screen {
                     ConfigManager.save();
                 }
         );
-        predItem.contentHeight = 200;
+        predItem.contentHeight = 290;
         visual.items.add(predItem);
 
         // ===== ENCHANTMENT HIGHLIGHT =====
@@ -1439,7 +1439,7 @@ public class AccordionScreen extends Screen {
                 () -> {
                 }
         );
-        themeItem.contentHeight = 158;
+        themeItem.contentHeight = 220;
         misc.items.add(themeItem);
 
         // ===== CUSTOM MAIN MENU =====
@@ -2599,8 +2599,7 @@ public class AccordionScreen extends Screen {
         int rowH = 22, rowGap = 6;
         int curY = y;
 
-        // БЕЗ чекбокса — включение через ПКМ в GUI
-
+        // === ЦВЕТ ТРАЕКТОРИИ (существующее) ===
         EditBox hexField = new EditBox(this.font, x, curY, 80, 18,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hex")));
         hexField.setMaxLength(7);
@@ -2630,15 +2629,16 @@ public class AccordionScreen extends Screen {
         }
         curY += rowH + rowGap;
 
+        // === ТОЛЩИНА ТРАЕКТОРИИ (существующее) ===
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.predictions.thickness",
-                        String.format("%.1f", ModConfig.predictionsThickness))),
+                        ModConfig.predictionsThickness)),
                 (ModConfig.predictionsThickness - 1.0f) / 4.0f
         ) {
             @Override
             protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.predictions.thickness",
-                        String.format("%.1f", ModConfig.predictionsThickness))));
+                        ModConfig.predictionsThickness)));
             }
 
             @Override
@@ -2650,6 +2650,7 @@ public class AccordionScreen extends Screen {
         });
         curY += rowH + rowGap;
 
+        // === ALPHA (существующее) ===
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.predictions.alpha", ModConfig.predictionsAlpha)),
                 ModConfig.predictionsAlpha / 255.0
@@ -2668,6 +2669,7 @@ public class AccordionScreen extends Screen {
         });
         curY += rowH + rowGap;
 
+        // === STEPS (существующее) ===
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.predictions.steps", ModConfig.predictionsSteps)),
                 (ModConfig.predictionsSteps - 20) / 180.0
@@ -2684,6 +2686,94 @@ public class AccordionScreen extends Screen {
                 ConfigManager.save();
             }
         });
+        curY += rowH + rowGap;
+
+        // ============================================================
+        // НОВОЕ: точка приземления
+        // ============================================================
+
+        // === Чекбокс "Показывать точку падения" ===
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.predictions.show_impact")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.predictionsShowImpact)
+                .onValueChange((c, v) -> {
+                    ModConfig.predictionsShowImpact = v;
+                    ConfigManager.save();
+                    Minecraft.getInstance().execute(this::rebuildPredictionsPanel);
+                })
+                .build());
+        curY += rowH + rowGap;
+
+        // Всё ниже — только если включено
+        if (ModConfig.predictionsShowImpact) {
+
+            // === Стиль маркера ===
+            String styleName = ModConfig.predictionsImpactStyle == 0
+                    ? LocalizationManager.get("gui.resistancedlc.panel.predictions.impact_style_cross")
+                    : LocalizationManager.get("gui.resistancedlc.panel.predictions.impact_style_dot");
+            widgets.add(Button.builder(
+                    Component.literal(LocalizationManager.get("gui.resistancedlc.panel.predictions.impact_style", styleName)),
+                    (b) -> {
+                        ModConfig.predictionsImpactStyle = (ModConfig.predictionsImpactStyle + 1) % 2;
+                        ConfigManager.save();
+                        Minecraft.getInstance().execute(this::rebuildPredictionsPanel);
+                    }
+            ).bounds(x, curY, w, 20).build());
+            curY += rowH + rowGap;
+
+            // === Цвет маркера (HEX + пресеты) ===
+            EditBox impactHex = new EditBox(this.font, x, curY, 80, 18,
+                    Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hex")));
+            impactHex.setMaxLength(7);
+            impactHex.setValue(String.format("#%06X", ModConfig.predictionsImpactColor & 0xFFFFFF));
+            widgets.add(impactHex);
+
+            widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.apply")), (b) -> {
+                try {
+                    ModConfig.predictionsImpactColor = 0xFF000000 | Integer.parseInt(
+                            impactHex.getValue().replace("#", "").trim(), 16);
+                    ConfigManager.save();
+                } catch (Exception ignored) {
+                }
+            }).bounds(x + 85, curY, 35, 18).build());
+
+            int ipResetX = x + 125;
+            int ipResetW = (right - ipResetX - 9) / 4;
+            String[] ipn = {"R", "G", "B", "W"};
+            int[] ipc = {0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 0xFFFFFFFF};
+            for (int i = 0; i < 4; i++) {
+                final int color = ipc[i];
+                final String hex = String.format("#%06X", color & 0xFFFFFF);
+                widgets.add(Button.builder(Component.literal(ipn[i]), (b) -> {
+                    impactHex.setValue(hex);
+                    ModConfig.predictionsImpactColor = color;
+                    ConfigManager.save();
+                }).bounds(ipResetX + i * (ipResetW + 3), curY, ipResetW, 18).build());
+            }
+            curY += rowH + rowGap;
+
+            // === Размер маркера ===
+            widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                    Component.literal(LocalizationManager.get("gui.resistancedlc.panel.predictions.impact_size",
+                            ModConfig.predictionsImpactSize)),
+                    (ModConfig.predictionsImpactSize - 0.1f) / 0.4f
+            ) {
+                @Override
+                protected void updateMessage() {
+                    this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.predictions.impact_size",
+                            ModConfig.predictionsImpactSize)));
+                }
+
+                @Override
+                protected void applyValue() {
+                    ModConfig.predictionsImpactSize = 0.1f + (float) (this.value * 0.4f);
+                    this.updateMessage();
+                    ConfigManager.save();
+                }
+            });
+            curY += rowH + rowGap;
+        }
     }
 
     private void buildOptimizationPanel(List<AbstractWidget> widgets, int x, int y, int right) {
@@ -4459,6 +4549,7 @@ public class AccordionScreen extends Screen {
                                 ModConfig.guiColor = theme[0];
                                 ModConfig.guiTextColor = theme[1];
                                 ModConfig.hudColor = theme[2];
+                                ThemeManager.setThemeIndex(idx);
                                 ConfigManager.save();
                                 rebuildGuiThemePanel();
                             })
@@ -4467,6 +4558,39 @@ public class AccordionScreen extends Screen {
 
             curY += rowH + rowGap;
         }
+
+        // ===== АНИМАЦИЯ =====
+        curY += 4;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.theme_anim_enable")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.themeAnimationEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.themeAnimationEnabled = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH + rowGap;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.theme_anim_speed",
+                        ModConfig.themeAnimationSpeed)),
+                (ModConfig.themeAnimationSpeed - 0.1f) / 2.9f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.theme_anim_speed",
+                        ModConfig.themeAnimationSpeed)));
+            }
+
+            @Override
+            protected void applyValue() {
+                ModConfig.themeAnimationSpeed = 0.1f + (float) (this.value * 2.9f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
     }
 
     private void rebuildGuiThemePanel() {
@@ -5334,6 +5458,8 @@ public class AccordionScreen extends Screen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
         tickAnimations(delta);
+        // Обновляем индекс темы из конфига (если пользователь переключил тему или загрузил конфиг)
+        ThemeManager.updateThemeIndexFromConfig();
 
         hoverColumn = isMouseOverColumn(mouseX, mouseY);
 
@@ -5361,7 +5487,7 @@ public class AccordionScreen extends Screen {
 
         drawPanelBorders(graphics);
         graphics.drawString(this.font, "§l" + LocalizationManager.get("gui.resistancedlc.title"),
-                panelX + 15, panelY + 11, ModConfig.guiColor, true);
+                panelX + 15, panelY + 11, ThemeManager.getCurrentGuiColor(), true);
 
         if (globalSearchOpen || globalSearchClosing) {
             // Только глобальный поиск — overlay
@@ -5388,17 +5514,18 @@ public class AccordionScreen extends Screen {
     }
 
     private static final int[][] THEMES = {
-            {0xFF00FF00, 0xFFFFFFFF, 0xFF00FF00},
-            {0xFF808080, 0xFFDDDDDD, 0xFF808080},
-            {0xFF00FFFF, 0xFF00FF00, 0xFF00FFFF},
-            {0xFFFF69B4, 0xFFFFFFFF, 0xFFFF69B4},
-            {0xFFFF0000, 0xFFFFFFFF, 0xFFFF0000},
+            // gui,        text,       hud
+            {0xFF00FF00, 0xFFFFFFFF, 0xFF00FF00},   // Vanilla
+            {0xFF606060, 0xFFDDDDDD, 0xFF606060},   // Dark
+            {0xFFFFB6C1, 0xFFFFFFFF, 0xFFFFB6C1},   // Candy
+            {0xFF00E5FF, 0xFFFFFFFF, 0xFF00E5FF},   // Neon ← ИСПРАВЛЕНО
+            {0xFFFF2020, 0xFFFFFFFF, 0xFFFF2020},   // Blood
     };
 
     private final int[][] themeButtonRects = new int[5][3];
 
     private static final String[] THEME_NAMES = {
-            "Vanilla", "Dark", "Neon", "Candy", "Blood"
+            "Vanilla", "Dark", "Candy", "Neon", "Blood"
     };
 
     private void drawThemeButtons(GuiGraphics graphics, int mouseX, int mouseY) {
@@ -5468,21 +5595,23 @@ public class AccordionScreen extends Screen {
         if (x < 4) x = 4;
         if (y < 4) y = 4;
 
+        int guiCol = ThemeManager.getCurrentGuiColor();
         graphics.fill(x, y, x + w, y + h, 0xF0100010);
-        graphics.fill(x, y, x + w, y + 1, ModConfig.guiColor);
-        graphics.fill(x, y + h - 1, x + w, y + h, ModConfig.guiColor);
-        graphics.fill(x, y, x + 1, y + h, ModConfig.guiColor);
-        graphics.fill(x + w - 1, y, x + w, y + h, ModConfig.guiColor);
+        graphics.fill(x, y, x + w, y + 1, guiCol);
+        graphics.fill(x, y + h - 1, x + w, y + h, guiCol);
+        graphics.fill(x, y, x + 1, y + h, guiCol);
+        graphics.fill(x + w - 1, y, x + w, y + h, guiCol);
 
         graphics.drawString(this.font, text, x + 4, y + 3, 0xFFFFFFFF, false);
     }
 
     private void drawPanelBorders(GuiGraphics graphics) {
-        int color = ModConfig.guiColor;
-        graphics.fill(panelX, panelY, panelX + PANEL_WIDTH, panelY + 2, color);
-        graphics.fill(panelX, panelY + PANEL_HEIGHT - 2, panelX + PANEL_WIDTH, panelY + PANEL_HEIGHT, color);
-        graphics.fill(panelX, panelY, panelX + 2, panelY + PANEL_HEIGHT, color);
-        graphics.fill(panelX + PANEL_WIDTH - 2, panelY, panelX + PANEL_WIDTH, panelY + PANEL_HEIGHT, color);
+        ThemeManager.drawAnimatedBorder(
+                graphics,
+                panelX, panelY,
+                panelX + PANEL_WIDTH, panelY + PANEL_HEIGHT,
+                2
+        );
     }
 
     private void drawColumn(GuiGraphics graphics, int mouseX, int mouseY) {
@@ -5518,12 +5647,13 @@ public class AccordionScreen extends Screen {
             graphics.fill(rowLeft, rowTop, rowLeft + 1, rowBottom, 0xFF404040);
             graphics.fill(rowRight - 1, rowTop, rowRight, rowBottom, 0xFF404040);
 
+            int guiCol = ThemeManager.getCurrentGuiColor();
             if (isActive) {
-                int bg = (ModConfig.guiColor & 0x00FFFFFF) | 0x60000000;
+                int bg = (guiCol & 0x00FFFFFF) | 0x60000000;
                 graphics.fill(rowLeft, rowTop, rowRight, rowBottom, bg);
-                graphics.fill(rowLeft, rowTop, rowLeft + 4, rowBottom, ModConfig.guiColor);
-                graphics.fill(rowLeft, rowTop, rowRight, rowTop + 1, ModConfig.guiColor);
-                graphics.fill(rowLeft, rowBottom - 1, rowRight, rowBottom, ModConfig.guiColor);
+                graphics.fill(rowLeft, rowTop, rowLeft + 4, rowBottom, guiCol);
+                graphics.fill(rowLeft, rowTop, rowRight, rowTop + 1, guiCol);
+                graphics.fill(rowLeft, rowBottom - 1, rowRight, rowBottom, guiCol);
             } else if (isHover) {
                 graphics.fill(rowLeft, rowTop, rowRight, rowBottom, 0x40FFFFFF);
                 graphics.fill(rowLeft, rowTop, rowRight, rowTop + 1, 0x80FFFFFF);
@@ -5540,7 +5670,7 @@ public class AccordionScreen extends Screen {
             if (columnWidth > 100) {
                 int textX = iconX + iconSize + 10;
                 int nameY = iconY + (iconSize - 8) / 2 - 6;
-                int nameColor = isActive ? ModConfig.guiColor : 0xFFEEEEEE;
+                int nameColor = isActive ? ThemeManager.getCurrentGuiColor() : 0xFFEEEEEE;
                 graphics.drawString(this.font, "§l" + section.name, textX, nameY, nameColor, true);
                 if (columnWidth > 140) {
                     graphics.drawString(this.font, "§7" + section.description,
@@ -5600,14 +5730,16 @@ public class AccordionScreen extends Screen {
         int contentRight = getContentRight();
         int contentBottom = getContentBottom();
 
-        graphics.fill(contentLeft, contentTop, contentRight, contentTop + 1, 0xFF303030);
-        graphics.fill(contentLeft, contentBottom - 1, contentRight, contentBottom, 0xFF303030);
-        graphics.fill(contentLeft, contentTop, contentLeft + 1, contentBottom, 0xFF303030);
-        graphics.fill(contentRight - 1, contentTop, contentRight, contentBottom, 0xFF303030);
+        ThemeManager.drawAnimatedBorder(
+                graphics,
+                contentLeft, contentTop,
+                contentRight, contentBottom,
+                1
+        );
 
         Section active = sections.get(activeSectionIndex);
         graphics.drawString(this.font, "§l▸ " + active.name,
-                contentLeft + 15, contentTop + 8, ModConfig.guiColor, true);
+                contentLeft + 15, contentTop + 8, ThemeManager.getCurrentGuiColor(), true);
         graphics.drawString(this.font, "§7" + active.description,
                 contentLeft + 15, contentTop + 22, 0xFFAAAAAA, false);
 
@@ -5690,7 +5822,7 @@ public class AccordionScreen extends Screen {
             int thumbHeight = Math.max(15, (int) (barHeight * ratio));
             int thumbY = barTop + (int) ((float) contentScroll / maxContentScroll * (barHeight - thumbHeight));
 
-            graphics.fill(barX, thumbY, barX + 3, thumbY + thumbHeight, ModConfig.guiColor);
+            graphics.fill(barX, thumbY, barX + 3, thumbY + thumbHeight, ThemeManager.getCurrentGuiColor());
         }
     }
 
@@ -5721,11 +5853,11 @@ public class AccordionScreen extends Screen {
         graphics.fill(right - 1, visibleTop, right, visibleBottom, borderColor);
 
         if (isHover) graphics.fill(left, visibleTop, right, visibleBottom, 0x30FFFFFF);
-        if (item.expanded) graphics.fill(left, visibleTop, left + 3, visibleBottom, ModConfig.guiColor);
+        if (item.expanded) graphics.fill(left, visibleTop, left + 3, visibleBottom, ThemeManager.getCurrentGuiColor());
 
         if (top + 8 >= clipTop && top + 8 <= clipBottom) {
             String arrow = item.expanded ? "▼" : "▶";
-            graphics.drawString(this.font, arrow, left + 8, top + 8, ModConfig.guiColor, true);
+            graphics.drawString(this.font, arrow, left + 8, top + 8, ThemeManager.getCurrentGuiColor(), true);
         }
         if (top + 3 >= clipTop && top + 3 <= clipBottom) {
             graphics.drawString(this.font, "§l" + item.title, left + 22, top + 3, textColor, true);
@@ -5790,13 +5922,13 @@ public class AccordionScreen extends Screen {
         }
 
         if (item.expanded) {
-            graphics.fill(left, top, left + 3, bottom, ModConfig.guiColor);
+            graphics.fill(left, top, left + 3, bottom, ThemeManager.getCurrentGuiColor());
         } else if (isHover) {
-            graphics.fill(left, top, left + 2, bottom, ModConfig.guiColor);
+            graphics.fill(left, top, left + 2, bottom, ThemeManager.getCurrentGuiColor());
         }
 
         String arrow = item.expanded ? "▼" : "▶";
-        graphics.drawString(this.font, arrow, left + 8, top + 8, ModConfig.guiColor, true);
+        graphics.drawString(this.font, arrow, left + 8, top + 8, ThemeManager.getCurrentGuiColor(), true);
         graphics.drawString(this.font, "§l" + item.title, left + 22, top + 3, textColor, true);
         graphics.drawString(this.font, "§7" + item.description, left + 22, top + 14, descColor, false);
 
@@ -5851,7 +5983,7 @@ public class AccordionScreen extends Screen {
         graphics.fill(overlayX, overlayY, overlayX + OVERLAY_W, overlayY + OVERLAY_H,
                 (panelAlpha << 24) | 0x000000);
 
-        int borderColor = (alpha << 24) | (ModConfig.guiColor & 0x00FFFFFF);
+        int borderColor = (alpha << 24) | (ThemeManager.getCurrentGuiColor() & 0x00FFFFFF);
         graphics.fill(overlayX, overlayY, overlayX + OVERLAY_W, overlayY + 2, borderColor);
         graphics.fill(overlayX, overlayY + OVERLAY_H - 2, overlayX + OVERLAY_W, overlayY + OVERLAY_H, borderColor);
         graphics.fill(overlayX, overlayY, overlayX + 2, overlayY + OVERLAY_H, borderColor);
@@ -5901,7 +6033,7 @@ public class AccordionScreen extends Screen {
                     graphics.fill(globalSearchListX, rowY, globalSearchListX + globalSearchListW,
                             rowY + globalSearchRowH, (int) (0x40 * globalSearchFadeProgress) << 24);
                     graphics.fill(globalSearchListX, rowY, globalSearchListX + 3,
-                            rowY + globalSearchRowH, (alpha << 24) | (ModConfig.guiColor & 0x00FFFFFF));
+                            rowY + globalSearchRowH, (alpha << 24) | (ThemeManager.getCurrentGuiColor() & 0x00FFFFFF));
                 }
 
                 String sectionName = r[0];
@@ -5976,6 +6108,7 @@ public class AccordionScreen extends Screen {
                 ModConfig.guiColor = THEMES[i][0];
                 ModConfig.guiTextColor = THEMES[i][1];
                 ModConfig.hudColor = THEMES[i][2];
+                ThemeManager.setThemeIndex(i);
                 ConfigManager.save();
                 return true;
             }
@@ -6616,7 +6749,14 @@ public class AccordionScreen extends Screen {
         buildPanelWidgets(mp);
         updateWidgetsVisibility();
     }
-
+    private void rebuildPredictionsPanel() {
+        AccordionItem item = findItemById("predictions");
+        if (item == null || !item.expanded) return;
+        clearPanelWidgets(item);
+        buildPanelWidgets(item);
+        updateContentMetrics();
+        updateWidgetsVisibility();
+    }
     // ===================== EASTER EGG (KILLAURA) =====================
     private void buildKillAuraPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
@@ -7520,23 +7660,19 @@ public class AccordionScreen extends Screen {
     }
 
     private ItemStack itemIdToStack(String itemId) {
-        ResistanceDLC.LOGGER.info("[DR-debug] itemIdToStack(" + itemId + ")");
         if (itemId == null || itemId.isEmpty()) return ItemStack.EMPTY;
         try {
             net.minecraft.resources.Identifier id = net.minecraft.resources.Identifier.tryParse(itemId);
-            ResistanceDLC.LOGGER.info("[DR-debug] parsed = " + id);
             if (id == null) return ItemStack.EMPTY;
 
             net.minecraft.world.item.Item item =
                     net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(id);
-            ResistanceDLC.LOGGER.info("[DR-debug] item = " + item);
 
             if (item == null || item == net.minecraft.world.item.Items.AIR) {
                 return ItemStack.EMPTY;
             }
             return new ItemStack(item);
-        } catch (Exception e) {
-            ResistanceDLC.LOGGER.error("[DR-debug] EXC: " + e.getMessage());
+        } catch (Exception ignored) {
         }
         return ItemStack.EMPTY;
     }
