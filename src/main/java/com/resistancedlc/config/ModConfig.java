@@ -482,7 +482,7 @@ public class ModConfig {
     public static boolean lyricsShowNext = true;
 
     // ===================== VOICE COMMANDS =====================
-    public static boolean voiceCommandsEnabled = true;
+    public static boolean voiceCommandsEnabled = false;
     public static float voiceCommandThreshold = 0.35f;      // 0.20..0.95 (DTW порог)
     public static float voiceVadSensitivity = 1.0f;         // 0.3..3.0 (ручная чувствительность)
     public static float voiceVadCalibratedThreshold = 0f;   // 0 = не калибровано (СБРОШЕНО)
