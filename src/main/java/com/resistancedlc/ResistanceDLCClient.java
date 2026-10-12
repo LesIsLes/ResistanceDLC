@@ -13,6 +13,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import com.resistancedlc.KillTracker;  // если KillTracker в другом пакете — поправь
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
@@ -74,9 +75,14 @@ public class ResistanceDLCClient implements ClientModInitializer {
         KeyBindings.register();
 
         MusicPlayerManager.init();
+        com.resistancedlc.voice.VoiceCommandManager.init();
         LyricsManager.init();
+
         // ===== ATTACK CALLBACK =====
         AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
+            if (player == Minecraft.getInstance().player && entity != null) {
+                KillTracker.recordHit(entity.getUUID());
+            }
             if (ModConfig.strikeRangeEnabled && entity != null) {
                 double dist = player.distanceTo(entity);
                 StrikeRangeManager.onHit(dist);
@@ -144,7 +150,30 @@ public class ResistanceDLCClient implements ClientModInitializer {
                         return true;
                     });
         });
+// ===== ENCHANTMENT HIGHLIGHT =====
+        net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback.EVENT.register(
+                (stack, context, type, lines) -> {
+                    if (!ModConfig.enchantHighlightEnabled) return;
+                    if (lines.isEmpty()) return;
 
+                    for (int i = 0; i < lines.size(); i++) {
+                        net.minecraft.network.chat.Component line = lines.get(i);
+                        String plain = line.getString();
+
+                        EnchantmentHighlightManager.Rule rule =
+                                EnchantmentHighlightManager.findMatch(plain);
+                        if (rule != null) {
+                            int color = rule.color & 0xFFFFFF;
+                            net.minecraft.network.chat.MutableComponent colored =
+                                    net.minecraft.network.chat.Component.literal(plain)
+                                            .withStyle(net.minecraft.network.chat.Style.EMPTY
+                                                    .withColor(net.minecraft.network.chat.TextColor.fromRgb(color))
+                                                    .withBold(rule.bold));
+                            lines.set(i, colored);
+                        }
+                    }
+                }
+        );
         ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             ScreenKeyboardEvents.allowKeyPress(screen).register((s, keyEvent) -> {
                 if (!AutoReconnectManager.isReconnecting()) return true;
@@ -164,6 +193,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             ConfigManager.saveNow();
             TotemTracker.clear();
+            KillTracker.clear();
             PvPSafeManager.reset();
             AutoGGManager.reset();
             FreelookManager.reset();
@@ -172,6 +202,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
             com.resistancedlc.targetesp.TargetManagerHolder.MANAGER.reset();
             JumpCirclesManager.reset();
             GammaUtilManager.reset();
+            ZoomManager.reset();
             MusicPlayerManager.stop();
             lastHealth = -1.0f;
             LowHPAlertManager.reset();
@@ -289,7 +320,56 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                                 return 1;
                                             })))
             );
+            dispatcher.register(
+                    ClientCommandManager.literal("voicerecord")
+                            .executes(context -> {
+                                if (com.resistancedlc.voice.VoiceCommandRecorder.isRecording()) {
+                                    sendMessage("§c[Voice] Already recording");
+                                    return 1;
+                                }
 
+                                // Останавливаем listener, чтобы освободить микрофон
+                                com.resistancedlc.voice.VoiceCommandListener.stop();
+                                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+
+                                com.resistancedlc.voice.VoiceCommandRecorder.start();
+                                sendMessage("§a[Voice] Recording started. Say something for 3 sec...");
+
+                                new Thread(() -> {
+                                    try { Thread.sleep(3000); } catch (InterruptedException ignored) {}
+                                    short[] samples = com.resistancedlc.voice.VoiceCommandRecorder.stop();
+
+                                    // Даём микрофону освободиться
+                                    com.resistancedlc.voice.VoiceCommandListener.stop();
+                                    try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+
+                                    net.minecraft.client.Minecraft.getInstance().execute(() -> {
+                                        if (samples == null || samples.length == 0) {
+                                            sendMessage("§c[Voice] No samples captured");
+                                            return;
+                                        }
+                                        sendMessage("§a[Voice] Captured: " + samples.length + " samples ("
+                                                + String.format("%.2f", samples.length / 16000.0) + " sec)");
+
+                                        java.io.File out = com.resistancedlc.voice.VoiceCommandManager
+                                                .getVoiceDir().resolve("open_gui.wav").toFile();
+                                        boolean saved = com.resistancedlc.voice.VoiceCommandRecorder
+                                                .saveWav(samples, out);
+                                        if (saved) {
+                                            sendMessage("§a[Voice] Saved to " + out.getAbsolutePath());
+                                            com.resistancedlc.voice.VoiceCommandManager.reload(
+                                                    com.resistancedlc.voice.VoiceCommandAction.OPEN_GUI);
+                                            sendMessage("§a[Voice] Reloaded. Commands: "
+                                                    + com.resistancedlc.voice.VoiceCommandManager
+                                                    .getAllMfcc().size());
+                                        } else {
+                                            sendMessage("§c[Voice] Failed to save WAV");
+                                        }
+                                    });
+                                }).start();
+                                return 1;
+                            })
+            );
             dispatcher.register(
                     ClientCommandManager.literal("chatfilter")
                             .executes(context -> {
@@ -473,7 +553,23 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 ModConfig.lastPlayerZ = client.player.getZ();
             }
         });
-
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            // Если идёт запись — Listener НЕ трогаем, чтобы не занимать микрофон
+            if (com.resistancedlc.voice.VoiceCommandRecorder.isRecording()) {
+                return;
+            }
+            // ✅ Работает даже при открытом GUI (чтобы CLOSE_GUI работал).
+            //    Исключение — чат (пользователь печатает).
+            boolean chatOpen = client.screen
+                    instanceof net.minecraft.client.gui.screens.ChatScreen;
+            if (ModConfig.voiceCommandsEnabled
+                    && client.player != null
+                    && !chatOpen) {
+                com.resistancedlc.voice.VoiceCommandListener.start();
+            } else {
+                com.resistancedlc.voice.VoiceCommandListener.stop();
+            }
+        });
         // ===== DEATH COORDS =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) {
@@ -577,20 +673,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> KillStreakManager.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> FreelookManager.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> WeatherChangeManager.tick());
-
-        // ===== ZOOM =====
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (client.player == null) return;
-            boolean keyDown = KeyBindings.zoomKey != null && KeyBindings.zoomKey.isDown();
-            float targetZoom = 1.0f;
-            if (ModConfig.zoomEnabled && keyDown) targetZoom = 1.0f / ModConfig.zoomFactor;
-            float smooth = ModConfig.zoomSmoothness;
-            if (Math.abs(ModConfig.currentZoom - targetZoom) < 0.001f) {
-                ModConfig.currentZoom = targetZoom;
-            } else {
-                ModConfig.currentZoom += (targetZoom - ModConfig.currentZoom) * smooth;
-            }
-        });
 
         // ===== CROSSHAIR HEATMAP — детект промаха =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {

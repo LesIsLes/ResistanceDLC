@@ -480,4 +480,10 @@ public class ModConfig {
     public static int lyricsAlpha = 255;                 // 0..255
     public static int lyricsAngle = 15;          // было 30       // 10..60 (градусы)
     public static boolean lyricsShowNext = true;
+
+    // ===================== VOICE COMMANDS =====================
+    public static boolean voiceCommandsEnabled = true;
+    public static float voiceCommandThreshold = 0.35f;      // 0.20..0.95 (DTW порог)
+    public static float voiceVadSensitivity = 1.0f;         // 0.3..3.0 (ручная чувствительность)
+    public static float voiceVadCalibratedThreshold = 0f;   // 0 = не калибровано (СБРОШЕНО)
 }

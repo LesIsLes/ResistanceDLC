@@ -22,7 +22,7 @@
     "PickUpLoggerMixin",
     "PvPSafeCommandMixin",
     "PvPSafeHurtMixin",
-    "TotemLogMixin",
+    "ClientPacketListenerMixin",
     "FriendListMixin",
     "AspectRatioMixin",
     "LoadingOverlayMixin",

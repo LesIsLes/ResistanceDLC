@@ -232,7 +232,8 @@ public class ConfigManager {
             // === ITEM PHYSICS ===
             json.addProperty("itemPhysicsEnabled", ModConfig.itemPhysicsEnabled);
             json.addProperty("itemPhysicsRussian", ModConfig.itemPhysicsRussian);
-
+            json.addProperty("voiceVadSensitivity", ModConfig.voiceVadSensitivity);
+            json.addProperty("voiceVadCalibratedThreshold", ModConfig.voiceVadCalibratedThreshold);
             // === PARTICLE BLOCKER ===
             json.addProperty("particleBlockerEnabled", ModConfig.particleBlockerEnabled);
             json.addProperty("particleBlockerFire", ModConfig.particleBlockerFire);
@@ -816,7 +817,8 @@ public class ConfigManager {
             ModConfig.strikeRangeShowTime = getInt(json, "strikeRangeShowTime", ModConfig.strikeRangeShowTime);
             ModConfig.strikeRangeShowBlocks = getBool(json, "strikeRangeShowBlocks", ModConfig.strikeRangeShowBlocks);
             ModConfig.strikeRangeShowTarget = getBool(json, "strikeRangeShowTarget", ModConfig.strikeRangeShowTarget);
-
+            ModConfig.voiceVadSensitivity = getFloat(json, "voiceVadSensitivity", ModConfig.voiceVadSensitivity);
+            ModConfig.voiceVadCalibratedThreshold = getFloat(json, "voiceVadCalibratedThreshold", ModConfig.voiceVadCalibratedThreshold);
             // === CUSTOM HITBOX ===
             ModConfig.customHitboxEnabled = getBool(json, "customHitboxEnabled", ModConfig.customHitboxEnabled);
             ModConfig.customHitboxRussian = getBool(json, "customHitboxRussian", ModConfig.customHitboxRussian);

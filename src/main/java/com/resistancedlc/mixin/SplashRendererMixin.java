@@ -1,6 +1,8 @@
 package com.resistancedlc.mixin;
 
 import com.resistancedlc.config.ModConfig;
+import com.resistancedlc.util.MainMenuLayout;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.SplashRenderer;
@@ -14,13 +16,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * SplashRendererMixin — кастомный splash text.
  *
- * Ванильный splash:
- *   - Наклон -20°, пульсирующая анимация, жёлтый цвет, позиция centerX+123 y=69
- *
- * Наш splash (когда customMainMenuEnabled):
- *   - Прямой, статичный, по центру, под логотипом
- *   - Анимированный 3-цветный градиент (F4A854 → C22828 → D9458D → F4A854)
- *   - Чёрная полупрозрачная подложка
+ * v3.0.0-alpha.4 — адаптив под GUI Scale:
+ *   - 1x–3x — по центру, y = 110 (как раньше)
+ *   - 4x    — между лого и кнопками (позиция берётся из MainMenuLayout)
  */
 @Mixin(SplashRenderer.class)
 public class SplashRendererMixin {
@@ -28,33 +26,43 @@ public class SplashRendererMixin {
     @Shadow
     private Component splash;
 
-    // ===== Настройки позиции =====
-    private static final int SPLASH_Y = 110;   // было 118
-    private static final int PADDING_X = 4;    // было 6
+    private static final int SPLASH_Y_LEGACY = 110;
+    private static final int PADDING_X = 4;
     private static final int PADDING_Y = 3;
     private static final int BG_COLOR = 0x80000000;
 
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
     private void onRender(GuiGraphics graphics, int screenWidth, Font font, float alpha,
                           CallbackInfo ci) {
-        if (!ModConfig.customMainMenuEnabled) return;   // ванильный, если выключено
-
+        if (!ModConfig.customMainMenuEnabled) return;
         if (this.splash == null) return;
+
         String text = this.splash.getString();
         if (text == null || text.isEmpty()) return;
 
-        // Глушим ванильный render
         ci.cancel();
 
         int textW = font.width(text);
-        int textH = 9;   // высота строки шрифта
+        int textH = 9;
 
-        // По центру экрана
-        int startX = (screenWidth - textW) / 2;
-        int startY = SPLASH_Y;
+        int startX;
+        int startY;
 
-        // ===== 1. Подложка — с учётом fade-in alpha (УМНОЖАЕМ, не заменяем) =====
-        int origA = (BG_COLOR >> 24) & 0xFF;   // 0x80 = 128
+        double guiScale = Minecraft.getInstance().getWindow().getGuiScale();
+        boolean is4x = guiScale >= 4.0;
+
+        if (is4x && MainMenuLayout.is4x()) {
+            // ===== 4x: между лого и кнопками =====
+            startX = (screenWidth - textW) / 2;
+            startY = MainMenuLayout.getSplashY4x();
+        } else {
+            // ===== 1x–3x: как раньше =====
+            startX = (screenWidth - textW) / 2;
+            startY = SPLASH_Y_LEGACY;
+        }
+
+        // Подложка
+        int origA = (BG_COLOR >> 24) & 0xFF;
         int fadedA = (int) (origA * alpha) & 0xFF;
         int bgColor = (fadedA << 24) | (BG_COLOR & 0x00FFFFFF);
 
@@ -66,13 +74,11 @@ public class SplashRendererMixin {
                 bgColor
         );
 
-        // ===== 2. Анимированный градиентный текст (посимвольно) =====
+        // Анимированный градиентный текст
         int len = text.length();
-        // Время для анимации: 0..1 каждые 3000 мс
         float time = (System.currentTimeMillis() % 3000L) / 3000.0f;
 
         for (int i = 0; i < len; i++) {
-            // Градиент двигается: t = (i/len + time) % 1
             float t = ((float) i / len + time) % 1.0f;
             int color = gradientColor(t, alpha);
 
@@ -84,12 +90,6 @@ public class SplashRendererMixin {
         }
     }
 
-    /**
-     * Градиент по t ∈ [0, 1] с циклом через 3 цвета:
-     *   t ∈ [0, 0.33)  → F4A854 → C22828
-     *   t ∈ [0.33, 0.66) → C22828 → D9458D
-     *   t ∈ [0.66, 1]  → D9458D → F4A854
-     */
     private static int gradientColor(float t, float alpha) {
         int r, g, b;
         if (t < 0.33f) {

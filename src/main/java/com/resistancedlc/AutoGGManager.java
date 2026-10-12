@@ -7,28 +7,40 @@ import net.minecraft.client.Minecraft;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
- * AutoGGManager — авто-сообщение в чат после убийства игрока.
+ * AutoGGManager — авто-сообщение в чат после убийства ИГРОКА (PvP).
  *
- * Триггер: StatsTrackerManager.onChatMessage() → +1 kill → вызывает onPlayerKilled().
- * Отправка сообщения — через очередь (безопасно из Netty-потока).
+ * Триггеры:
+ *   1. StatsTrackerManager.onChatMessage() — если сервер пишет килл в чат.
+ *   2. ClientPacketListenerMixin — event 3 (ENTITY_DEATH) + KillTracker.
+ *
+ * Дедупликация по victim: если тот же victim в течение 3 сек — пропускаем.
  */
 public class AutoGGManager {
 
-    /** Очередь сообщений для отправки из рендер-потока. */
     private static final ConcurrentLinkedQueue<Long> PENDING_KILLS = new ConcurrentLinkedQueue<>();
 
-    /**
-     * Вызывается при подтверждённом убийстве игрока (из StatsTrackerManager).
-     * Запускает таймер задержки.
-     */
+    private static String lastVictim = "";
+    private static long lastVictimTime = 0;
+    private static final long DEDUP_VICTIM_MS = 3000L;
+
     public static void onPlayerKilled() {
         if (!ModConfig.autoGgEnabled) return;
-        PENDING_KILLS.offer(System.currentTimeMillis());
+
+        String victim = ModConfig.autoGgLastVictim;
+        long now = System.currentTimeMillis();
+
+        if (victim != null && !victim.isEmpty()
+                && victim.equals(lastVictim)
+                && (now - lastVictimTime) < DEDUP_VICTIM_MS) {
+            return; // дубликат — пропускаем молча
+        }
+
+        lastVictim = victim != null ? victim : "";
+        lastVictimTime = now;
+
+        PENDING_KILLS.offer(now);
     }
 
-    /**
-     * Тик — проверяет очередь и отправляет сообщения через нужную задержку.
-     */
     public static void tick() {
         if (PENDING_KILLS.isEmpty()) return;
         if (!ModConfig.autoGgEnabled) {
@@ -43,7 +55,7 @@ public class AutoGGManager {
         }
 
         long now = System.currentTimeMillis();
-        long delayMs = (long)(ModConfig.autoGgDelay * 1000L);
+        long delayMs = (long) (ModConfig.autoGgDelay * 1000L);
 
         Long killTime;
         while ((killTime = PENDING_KILLS.peek()) != null) {
@@ -56,21 +68,29 @@ public class AutoGGManager {
             String message;
             if (template.contains("%s")) {
                 String victimName = ModConfig.autoGgLastVictim;
-                if (victimName == null || victimName.isEmpty()) victimName = "?";
-                message = template.replace("%s", victimName);
+                if (victimName == null || victimName.isEmpty()) {
+                    message = template.replace("%s", "")
+                            .replaceAll("\\s+", " ")
+                            .trim();
+                } else {
+                    message = template.replace("%s", victimName);
+                }
             } else {
                 message = template;
             }
 
             try {
                 client.getConnection().sendChat(message);
+                ModConfig.autoGgLastVictim = "";
             } catch (Exception e) {
-                ResistanceDLC.LOGGER.error("AutoGG failed to send: " + e.getMessage());
+                ResistanceDLC.LOGGER.error("[AutoGG] Failed to send: " + e.getMessage());
             }
         }
     }
 
     public static void reset() {
         PENDING_KILLS.clear();
+        lastVictim = "";
+        lastVictimTime = 0;
     }
 }

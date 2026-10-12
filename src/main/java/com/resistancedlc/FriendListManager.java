@@ -13,6 +13,11 @@ import java.util.List;
  *   - Подсветки ников друзей в чате (FriendListMixin)
  *   - Подсветки ников друзей в табе (через HUD, не миксин)
  *   - Опционально: отдельный цвет в TargetESP (позже)
+ *
+ * v3.0.0 — фикс ложных срабатываний в чате:
+ *   textContainsFriend теперь матчит ТОЛЬКО префикс-ник
+ *   ("Notch: ...", "<Notch> ...", "[Notch] ...", "Notch » ..."),
+ *   а не любое вхождение подстроки.
  */
 public class FriendListManager {
 
@@ -95,15 +100,27 @@ public class FriendListManager {
     }
 
     /**
-     * Проверяет, содержит ли текст имя друга (для чата).
-     * Нужно, чтобы подсветить строку "FriendName: привет".
+     * Проверяет, является ли сообщение в чате сообщением от друга.
+     * Матчим ТОЛЬКО префикс-ник:
+     *   "Notch: привет"
+     *   "<Notch> привет"
+     *   "[Notch] привет"
+     *   "Notch » привет"
+     *   "Notch привет"
      */
     public static boolean textContainsFriend(String text) {
         if (text == null || text.isEmpty()) return false;
         if (!ModConfig.friendListEnabled) return false;
         String lower = text.toLowerCase();
         for (String f : getFriends()) {
-            if (lower.contains(f.toLowerCase())) return true;
+            String fl = f.toLowerCase();
+            if (lower.startsWith(fl + ":")
+                    || lower.startsWith("<" + fl + ">")
+                    || lower.startsWith("[" + fl + "]")
+                    || lower.startsWith(fl + " »")
+                    || lower.startsWith(fl + " ")) {
+                return true;
+            }
         }
         return false;
     }

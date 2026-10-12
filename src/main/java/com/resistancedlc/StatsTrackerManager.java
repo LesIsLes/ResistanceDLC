@@ -2,14 +2,19 @@ package com.resistancedlc;
 
 import com.resistancedlc.config.ModConfig;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * StatsTrackerManager — счётчик K/D (убийства/смерти).
+ *
+ * v3.0.0 — фикс AutoGG:
+ *   Теперь при матче KILL-паттерна извлекаем имя жертвы
+ *   и записываем в ModConfig.autoGgLastVictim.
  */
 public class StatsTrackerManager {
 
-    // KILL паттерны (мы убили кого-то) — 7 штук
+    // KILL паттерны (мы убили кого-то)
     private static final Pattern[] KILL_PATTERNS = {
             Pattern.compile("^You killed\\s+(.+?)\\.?$", Pattern.CASE_INSENSITIVE),
             Pattern.compile("^(.+?)\\s+was slain by you\\.?$", Pattern.CASE_INSENSITIVE),
@@ -21,7 +26,7 @@ public class StatsTrackerManager {
             Pattern.compile("^(.+?)\\s+убит тобой\\.?$", Pattern.CASE_INSENSITIVE),
     };
 
-    // DEATH паттерны (мы умерли) — 12 штук
+    // DEATH паттерны (мы умерли)
     private static final Pattern[] DEATH_PATTERNS = {
             Pattern.compile("^You died\\.?.*$", Pattern.CASE_INSENSITIVE),
             Pattern.compile("^(.+?)\\s+killed you\\.?$", Pattern.CASE_INSENSITIVE),
@@ -45,8 +50,8 @@ public class StatsTrackerManager {
         if (cleaned.isEmpty()) return;
 
         // DEATH первым (более специфично)
-        for (int i = 0; i < DEATH_PATTERNS.length; i++) {
-            if (DEATH_PATTERNS[i].matcher(cleaned).matches()) {
+        for (Pattern deathPattern : DEATH_PATTERNS) {
+            if (deathPattern.matcher(cleaned).matches()) {
                 ModConfig.statsDeaths++;
                 ConfigManager.save();
                 return;
@@ -54,12 +59,25 @@ public class StatsTrackerManager {
         }
 
         // KILL
-        for (int i = 0; i < KILL_PATTERNS.length; i++) {
-            if (KILL_PATTERNS[i].matcher(cleaned).matches()) {
+        for (Pattern killPattern : KILL_PATTERNS) {
+            Matcher matcher = killPattern.matcher(cleaned);
+            if (matcher.matches()) {
                 ModConfig.statsKills++;
                 ConfigManager.save();
 
-                // ⚠ Триггерим AutoGG через StatsTracker
+                // ⚠ Извлекаем имя жертвы и сохраняем для AutoGG
+                try {
+                    String victim = matcher.group(1);
+                    if (victim != null && !victim.isEmpty()) {
+                        ModConfig.autoGgLastVictim = victim.trim();
+                    } else {
+                        ModConfig.autoGgLastVictim = "";
+                    }
+                } catch (Exception ignored) {
+                    ModConfig.autoGgLastVictim = "";
+                }
+
+                // Триггерим AutoGG
                 if (ModConfig.autoGgEnabled) {
                     AutoGGManager.onPlayerKilled();
                 }
@@ -67,6 +85,7 @@ public class StatsTrackerManager {
             }
         }
     }
+
     private static String stripFormatting(String text) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < text.length(); i++) {

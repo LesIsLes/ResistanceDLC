@@ -9,10 +9,12 @@ import net.minecraft.resources.Identifier;
 /**
  * MusicPlayerHud — рендер HUD-виджета MusicPlayer.
  * Виджет НЕ обрабатывает клики — это делает MusicPlayerHudMixin.
+ *
+ * Все строки локализованы через LocalizationManager.
  */
 public class MusicPlayerHud {
 
-    // ===================== РАЗМЕРЫ (исправлены) =====================
+    // ===================== РАЗМЕРЫ =====================
     private static final int WIDGET_W = 270;
     private static final int WIDGET_H = 70;
 
@@ -112,11 +114,15 @@ public class MusicPlayerHud {
         int textX = x + VINYL_PADDING + VINYL_SIZE + 8;
 
         if (track == null) {
-            graphics.drawString(mc.font, "§7♪ Music Player",
+            // ✅ ЛОКАЛИЗАЦИЯ
+            graphics.drawString(mc.font,
+                    "§7♪ " + LocalizationManager.get("gui.resistancedlc.music_hud.title"),
                     textX, y + 10, 0xFFAAAAAA, false);
-            graphics.drawString(mc.font, "§8Плейлист пуст",
+            graphics.drawString(mc.font,
+                    "§8" + LocalizationManager.get("gui.resistancedlc.music_hud.empty"),
                     textX, y + 24, 0xFF666666, false);
-            graphics.drawString(mc.font, "§8Закинь .ogg в папку",
+            graphics.drawString(mc.font,
+                    "§8" + LocalizationManager.get("gui.resistancedlc.music_hud.hint"),
                     textX, y + 34, 0xFF666666, false);
             return;
         }
@@ -228,7 +234,6 @@ public class MusicPlayerHud {
         Minecraft mc = Minecraft.getInstance();
         graphics.drawString(mc.font, "🔊", sx - 14, sy - 3, 0xFFCCCCCC, false);
 
-        // Фикс: убрали %, оставили просто число
         String volText = String.valueOf((int)(ModConfig.musicVolume * 100));
         graphics.drawString(mc.font, volText,
                 sx + VOL_SLIDER_W + 4, sy - 3, 0xFFAAAAAA, false);

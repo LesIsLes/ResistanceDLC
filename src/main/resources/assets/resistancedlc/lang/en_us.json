@@ -550,5 +550,36 @@
   "gui.resistancedlc.panel.lyrics.current_color": "Current line color",
   "gui.resistancedlc.panel.lyrics.next_color": "Next line color",
 
+  "gui.resistancedlc.panel.voice.enable": "Enable Voice Commands",
+  "gui.resistancedlc.panel.voice.calibrated": "Calibrated: %.0f",
+  "gui.resistancedlc.panel.voice.not_calibrated": "Not calibrated",
+  "gui.resistancedlc.panel.voice.sensitivity": "Sensitivity: %.2f",
+  "gui.resistancedlc.panel.voice.match_threshold": "Match threshold: %.2f",
+  "gui.resistancedlc.panel.voice.recalibrate": "Recalibrate (10 sec silence)",
+  "gui.resistancedlc.panel.voice.manage": "Manage Commands...",
+  "gui.resistancedlc.panel.voice.open_folder": "Open voice folder",
+  "gui.resistancedlc.panel.voice.rescan": "Rescan .wav files",
+
+  "gui.resistancedlc.item.voice_commands.title": "Voice Commands [EXP]",
+  "gui.resistancedlc.item.voice_commands.desc": "§cExperimental §7· Control mod with voice",
+  "gui.resistancedlc.panel.voice.experimental": "§c⚠ Experimental feature. May be unstable.",
+  "gui.resistancedlc.voice.select.title": "Voice Commands",
+  "gui.resistancedlc.voice.select.desc": "Click an action to record or re-record",
+  "gui.resistancedlc.voice.record.title": "Record command",
+  "gui.resistancedlc.voice.record.recording": "§c● Recording...",
+  "gui.resistancedlc.voice.record.hint": "Press ▶ and say the command",
+  "gui.resistancedlc.voice.record.no_samples": "No audio captured",
+  "gui.resistancedlc.voice.record.saved": "Saved (%.1f sec)",
+  "gui.resistancedlc.voice.record.save_failed": "Save failed",
+  "gui.resistancedlc.voice.action.open_gui": "Open GUI",
+  "gui.resistancedlc.voice.action.hud_editor": "HUD Editor",
+  "gui.resistancedlc.voice.action.change_lang": "Change Language",
+  "gui.resistancedlc.voice.action.close_gui": "Close GUI",
+  "gui.resistancedlc.panel.cancel": "Cancel",
+
+  "gui.resistancedlc.music_hud.title": "Music Player",
+  "gui.resistancedlc.music_hud.empty": "Playlist is empty",
+  "gui.resistancedlc.music_hud.hint": "Drop .ogg into the folder",
+
   "key.category.resistancedlc.main": "ResistanceDLC"
 }

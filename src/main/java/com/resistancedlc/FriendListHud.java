@@ -4,7 +4,6 @@ import com.resistancedlc.config.ModConfig;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 
@@ -19,7 +18,10 @@ import java.util.List;
  *   - Онлайн/оффлайн (зелёный/серый кружок)
  *   - Если рядом (< 50 блоков) — расстояние
  *
- * Позиция настраивается через ModConfig.friendListHudX/Y (-1 = авто)
+ * v3.0.0 — фикс отображения онлайн-друзей:
+ *   Онлайн определяется через mc.level.players() (entity в мире),
+ *   а НЕ через mc.getConnection().getOnlinePlayers() (который
+ *   возвращает всех, кого видел клиент, включая вышедших).
  */
 public class FriendListHud {
 
@@ -45,23 +47,20 @@ public class FriendListHud {
             double distance = -1.0;
             int ping = 0;
 
-            // Проверяем online через tab list
-            if (mc.getConnection() != null) {
-                for (PlayerInfo info : mc.getConnection().getOnlinePlayers()) {
-                    String name = info.getProfile().name();
-                    if (name != null && name.equalsIgnoreCase(friendName)) {
-                        online = true;
-                        ping = info.getLatency();
-                        break;
-                    }
+            // Онлайн + дистанция — по entity в мире
+            for (Player p : mc.level.players()) {
+                if (p.getName().getString().equalsIgnoreCase(friendName)) {
+                    online = true;
+                    distance = mc.player.distanceTo(p);
+                    break;
                 }
             }
 
-            // Если онлайн — ищем entity для расстояния
-            if (online) {
-                for (Player p : mc.level.players()) {
-                    if (p.getName().getString().equalsIgnoreCase(friendName)) {
-                        distance = mc.player.distanceTo(p);
+            // Пинг — если онлайн и есть соединение, ищем через tab-list
+            if (online && mc.getConnection() != null) {
+                for (var info : mc.getConnection().getOnlinePlayers()) {
+                    if (info.getProfile().name().equalsIgnoreCase(friendName)) {
+                        ping = info.getLatency();
                         break;
                     }
                 }
@@ -73,7 +72,7 @@ public class FriendListHud {
         // Размер виджета
         int maxTextW = 0;
         for (FriendLine line : lines) {
-            String txt = buildLineText(line, mc);
+            String txt = buildLineText(line);
             int w = mc.font.width(txt);
             if (w > maxTextW) maxTextW = w;
         }
@@ -141,7 +140,7 @@ public class FriendListHud {
         }
     }
 
-    private static String buildLineText(FriendLine line, Minecraft mc) {
+    private static String buildLineText(FriendLine line) {
         return line.name + "     " + (line.online ? "999m" : "");
     }
 

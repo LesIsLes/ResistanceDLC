@@ -550,5 +550,36 @@
   "gui.resistancedlc.panel.lyrics.current_color": "Цвет текущей строки",
   "gui.resistancedlc.panel.lyrics.next_color": "Цвет следующей строки",
 
+  "gui.resistancedlc.panel.voice.enable": "Включить голосовые команды",
+  "gui.resistancedlc.panel.voice.calibrated": "Калибровка: %.0f",
+  "gui.resistancedlc.panel.voice.not_calibrated": "Не калибровано",
+  "gui.resistancedlc.panel.voice.sensitivity": "Чувствительность: %.2f",
+  "gui.resistancedlc.panel.voice.match_threshold": "Порог совпадения: %.2f",
+  "gui.resistancedlc.panel.voice.recalibrate": "Перекалибровать (10 сек тишины)",
+  "gui.resistancedlc.panel.voice.manage": "Управление командами...",
+  "gui.resistancedlc.panel.voice.open_folder": "Открыть папку команд",
+  "gui.resistancedlc.panel.voice.rescan": "Пересканировать .wav",
+
+  "gui.resistancedlc.item.voice_commands.title": "Голосовые команды [ЭКСП]",
+  "gui.resistancedlc.item.voice_commands.desc": "§cЭкспериментальная §7· Управление модом голосом",
+  "gui.resistancedlc.panel.voice.experimental": "§c⚠ Экспериментальная функция. Может работать нестабильно.",
+  "gui.resistancedlc.voice.select.title": "Голосовые команды",
+  "gui.resistancedlc.voice.select.desc": "Нажмите на действие для записи или перезаписи",
+  "gui.resistancedlc.voice.record.title": "Запись команды",
+  "gui.resistancedlc.voice.record.recording": "§c● Запись...",
+  "gui.resistancedlc.voice.record.hint": "Нажмите ▶ и произнесите команду",
+  "gui.resistancedlc.voice.record.no_samples": "Звук не записан",
+  "gui.resistancedlc.voice.record.saved": "Сохранено (%.1f сек)",
+  "gui.resistancedlc.voice.record.save_failed": "Ошибка сохранения",
+  "gui.resistancedlc.voice.action.open_gui": "Открыть GUI",
+  "gui.resistancedlc.voice.action.hud_editor": "Редактор HUD",
+  "gui.resistancedlc.voice.action.change_lang": "Сменить язык",
+  "gui.resistancedlc.voice.action.close_gui": "Закрыть GUI",
+  "gui.resistancedlc.panel.cancel": "Отмена",
+
+  "gui.resistancedlc.music_hud.title": "Музыкальный плеер",
+  "gui.resistancedlc.music_hud.empty": "Плейлист пуст",
+  "gui.resistancedlc.music_hud.hint": "Закинь .ogg в папку",
+
   "key.category.resistancedlc.main": "ResistanceDLC"
 }
