@@ -1120,7 +1120,18 @@ public class AccordionScreen extends Screen {
         );
         chItem.contentHeight = 214;
         visual.items.add(chItem);
-
+        AccordionItem atmItem = new AccordionItem(
+                "atmosphere",
+                LocalizationManager.get("gui.resistancedlc.item.atmosphere.title"),
+                LocalizationManager.get("gui.resistancedlc.item.atmosphere.desc"),
+                () -> ModConfig.atmosphereEnabled,
+                () -> {
+                    ModConfig.atmosphereEnabled = !ModConfig.atmosphereEnabled;
+                    ConfigManager.save();
+                }
+        );
+        atmItem.contentHeight = 270;
+        visual.items.add(atmItem);
         AccordionItem hbItem = new AccordionItem(
                 "custom_hitbox",
                 LocalizationManager.get("gui.resistancedlc.item.custom_hitbox.title"),
@@ -1174,7 +1185,18 @@ public class AccordionScreen extends Screen {
         );
         pbItem.contentHeight = 102;
         visual.items.add(pbItem);
-
+        AccordionItem fogItem = new AccordionItem(
+                "custom_fog",
+                LocalizationManager.get("gui.resistancedlc.item.custom_fog.title"),
+                LocalizationManager.get("gui.resistancedlc.item.custom_fog.desc"),
+                () -> ModConfig.customFogEnabled,
+                () -> {
+                    ModConfig.customFogEnabled = !ModConfig.customFogEnabled;
+                    ConfigManager.save();
+                }
+        );
+        fogItem.contentHeight = 250;
+        visual.items.add(fogItem);
         AccordionItem wpItem = new AccordionItem(
                 "waypoints",
                 LocalizationManager.get("gui.resistancedlc.item.waypoints.title"),
@@ -1198,7 +1220,18 @@ public class AccordionScreen extends Screen {
                     ConfigManager.save();
                 }
         );
-
+        AccordionItem clearLiqItem = new AccordionItem(
+                "clear_liquids",
+                LocalizationManager.get("gui.resistancedlc.item.clear_liquids.title"),
+                LocalizationManager.get("gui.resistancedlc.item.clear_liquids.desc"),
+                () -> ModConfig.clearLiquidsEnabled,
+                () -> {
+                    ModConfig.clearLiquidsEnabled = !ModConfig.clearLiquidsEnabled;
+                    ConfigManager.save();
+                }
+        );
+        clearLiqItem.contentHeight = 74;
+        visual.items.add(clearLiqItem);
         AccordionItem chmItem = new AccordionItem(
                 "crosshair_heatmap",
                 LocalizationManager.get("gui.resistancedlc.item.crosshair_heatmap.title"),
@@ -1343,7 +1376,47 @@ public class AccordionScreen extends Screen {
         );
         jcItem.contentHeight = 220;
         visual.items.add(jcItem);
+// ===== CLOUD CONTROL =====
+        AccordionItem cloudItem = new AccordionItem(
+                "cloud_control",
+                LocalizationManager.get("gui.resistancedlc.item.cloud_control.title"),
+                LocalizationManager.get("gui.resistancedlc.item.cloud_control.desc"),
+                () -> ModConfig.cloudControlEnabled,
+                () -> {
+                    ModConfig.cloudControlEnabled = !ModConfig.cloudControlEnabled;
+                    ConfigManager.save();
+                }
+        );
+        cloudItem.contentHeight = 186;
+        visual.items.add(cloudItem);
 
+// ===== TRAILS =====
+        AccordionItem trailsItem = new AccordionItem(
+                "trails",
+                LocalizationManager.get("gui.resistancedlc.item.trails.title"),
+                LocalizationManager.get("gui.resistancedlc.item.trails.desc"),
+                () -> ModConfig.trailsEnabled,
+                () -> {
+                    ModConfig.trailsEnabled = !ModConfig.trailsEnabled;
+                    ConfigManager.save();
+                }
+        );
+        trailsItem.contentHeight = 248;
+        visual.items.add(trailsItem);
+
+// ===== HIT PARTICLES =====
+        AccordionItem hitPartItem = new AccordionItem(
+                "hit_particles",
+                LocalizationManager.get("gui.resistancedlc.item.hit_particles.title"),
+                LocalizationManager.get("gui.resistancedlc.item.hit_particles.desc"),
+                () -> ModConfig.hitParticlesEnabled,
+                () -> {
+                    ModConfig.hitParticlesEnabled = !ModConfig.hitParticlesEnabled;
+                    ConfigManager.save();
+                }
+        );
+        hitPartItem.contentHeight = 220;
+        visual.items.add(hitPartItem);
         sections.add(visual);
 
         // MISC
@@ -1695,6 +1768,7 @@ public class AccordionScreen extends Screen {
             case "weather_change" -> buildWeatherChangePanel(widgets, innerX, innerY, innerRight);
             case "mod_logo" -> buildModLogoPanel(widgets, innerX, innerY, innerRight);
             case "freelook" -> buildFreelookPanel(widgets, innerX, innerY, innerRight);
+            case "clear_liquids" -> buildClearLiquidsPanel(widgets, innerX, innerY, innerRight);
             case "cooldowns" -> buildCoolDownsPanel(widgets, innerX, innerY, innerRight);
             case "time_change" -> buildTimeChangePanel(widgets, innerX, innerY, innerRight);
             case "combo" -> buildComboPanel(widgets, innerX, innerY, innerRight);
@@ -1707,12 +1781,17 @@ public class AccordionScreen extends Screen {
             case "ping_indicator" -> buildPingIndicatorPanel(widgets, innerX, innerY, innerRight);
             case "custom_hit_sounds" -> buildCustomHitSoundsPanel(widgets, innerX, innerY, innerRight);
             case "totem_log" -> buildTotemLogPanel(widgets, innerX, innerY, innerRight);
+            case "cloud_control" -> buildCloudControlPanel(widgets, innerX, innerY, innerRight);
+            case "trails" -> buildTrailsPanel(widgets, innerX, innerY, innerRight);
+            case "atmosphere" -> buildAtmospherePanel(widgets, innerX, innerY, innerRight);
+            case "hit_particles" -> buildHitParticlesPanel(widgets, innerX, innerY, innerRight);
             case "auto_swap" -> buildAutoSwapPanel(widgets, innerX, innerY, innerRight);
             case "pvp_safe" -> buildPvPSafePanel(widgets, innerX, innerY, innerRight);
             case "pickup_logger" -> buildPickUpLoggerPanel(widgets, innerX, innerY, innerRight);
             case "tape_mouse" -> buildTapeMousePanel(widgets, innerX, innerY, innerRight);
             case "item_scroller" -> buildItemScrollerPanel(widgets, innerX, innerY, innerRight);
             case "zoom" -> buildZoomPanel(widgets, innerX, innerY, innerRight);
+            case "custom_fog" -> buildCustomFogPanel(widgets, innerX, innerY, innerRight);
             case "crosshair" -> buildCrosshairPanel(widgets, innerX, innerY, innerRight);
             case "custom_hitbox" -> buildCustomHitboxPanel(widgets, innerX, innerY, innerRight);
             case "aspect_ratio" -> buildAspectRatioPanel(widgets, innerX, innerY, innerRight);
@@ -2279,6 +2358,7 @@ public class AccordionScreen extends Screen {
         int rowH = 22, rowGap = 6;
         int curY = y;
 
+        // ===== Режим =====
         String[] modes = {
                 LocalizationManager.get("gui.resistancedlc.panel.target_esp.mode_crystals"),
                 LocalizationManager.get("gui.resistancedlc.panel.target_esp.mode_cubes"),
@@ -2305,6 +2385,7 @@ public class AccordionScreen extends Screen {
                 .bounds(x, curY, w, 20).build());
         curY += rowH + rowGap;
 
+        // ===== Цвет =====
         EditBox hexField = new EditBox(this.font, x, curY, 80, 18,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.hex")));
         hexField.setMaxLength(7);
@@ -2335,15 +2416,17 @@ public class AccordionScreen extends Screen {
         }
         curY += rowH + rowGap;
 
+        // ===== Размер =====
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.size",
-                        String.format("%.2f", ModConfig.targetEspSize))),
+                        ModConfig.targetEspSize)),
                 (ModConfig.targetEspSize - 0.5f) / 1.5f
         ) {
             @Override
             protected void updateMessage() {
-                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.size",
-                        String.format("%.2f", ModConfig.targetEspSize))));
+                this.setMessage(Component.literal(LocalizationManager.get(
+                        "gui.resistancedlc.panel.target_esp.size",
+                        ModConfig.targetEspSize)));
             }
 
             @Override
@@ -2355,15 +2438,17 @@ public class AccordionScreen extends Screen {
         });
         curY += rowH + rowGap;
 
+        // ===== Вращение =====
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.rotation",
-                        String.format("%.2f", ModConfig.targetEspRotationSpeed))),
+                        ModConfig.targetEspRotationSpeed)),
                 ModConfig.targetEspRotationSpeed / 3.0f
         ) {
             @Override
             protected void updateMessage() {
-                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.rotation",
-                        String.format("%.2f", ModConfig.targetEspRotationSpeed))));
+                this.setMessage(Component.literal(LocalizationManager.get(
+                        "gui.resistancedlc.panel.target_esp.rotation",
+                        ModConfig.targetEspRotationSpeed)));
             }
 
             @Override
@@ -2375,15 +2460,17 @@ public class AccordionScreen extends Screen {
         });
         curY += rowH + rowGap;
 
+        // ===== Пульсация =====
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.pulse",
-                        String.format("%.2f", ModConfig.targetEspPulse))),
+                        ModConfig.targetEspPulse)),
                 ModConfig.targetEspPulse / 0.5f
         ) {
             @Override
             protected void updateMessage() {
-                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.pulse",
-                        String.format("%.2f", ModConfig.targetEspPulse))));
+                this.setMessage(Component.literal(LocalizationManager.get(
+                        "gui.resistancedlc.panel.target_esp.pulse",
+                        ModConfig.targetEspPulse)));
             }
 
             @Override
@@ -2395,6 +2482,7 @@ public class AccordionScreen extends Screen {
         });
         curY += rowH + rowGap;
 
+        // ===== Прозрачность =====
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.alpha", ModConfig.targetEspAlpha)),
                 ModConfig.targetEspAlpha / 255.0
@@ -2414,6 +2502,7 @@ public class AccordionScreen extends Screen {
         });
         curY += rowH + rowGap;
 
+        // ===== Hide hitboxes =====
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.hide_hitboxes")), this.font)
                 .pos(x, curY).selected(ModConfig.targetEspHideHitboxes)
@@ -2424,6 +2513,7 @@ public class AccordionScreen extends Screen {
                 .build());
         curY += rowH + rowGap;
 
+        // ===== Hurt =====
         widgets.add(Checkbox.builder(
                         Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_esp.hurt")), this.font)
                 .pos(x, curY).selected(ModConfig.targetEspHurt)
@@ -7803,5 +7893,507 @@ public class AccordionScreen extends Screen {
         protected void updateWidgetNarration(
                 net.minecraft.client.gui.narration.NarrationElementOutput narration) {
         }
+    }
+    // ===================== CLOUD CONTROL =====================
+    private void buildCloudControlPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        EditBox hexField = new EditBox(this.font, x, curY, 80, 18,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hex")));
+        hexField.setMaxLength(7);
+        hexField.setValue(String.format("#%06X", ModConfig.cloudColor & 0xFFFFFF));
+        widgets.add(hexField);
+
+        widgets.add(Button.builder(
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.apply")),
+                (b) -> {
+                    try {
+                        ModConfig.cloudColor = 0xFF000000 | Integer.parseInt(
+                                hexField.getValue().replace("#", "").trim(), 16);
+                        ConfigManager.save();
+                    } catch (Exception ignored) {}
+                }).bounds(x + 85, curY, 35, 18).build());
+
+        int presetX = x + 125;
+        int presetW = (right - presetX - 9) / 4;
+        String[] pn = {"R", "G", "B", "W"};
+        int[] pc = {0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 0xFFFFFFFF};
+        for (int i = 0; i < 4; i++) {
+            final int color = pc[i];
+            final String hex = String.format("#%06X", color & 0xFFFFFF);
+            widgets.add(Button.builder(Component.literal(pn[i]), (b) -> {
+                hexField.setValue(hex);
+                ModConfig.cloudColor = color;
+                ConfigManager.save();
+            }).bounds(presetX + i * (presetW + 3), curY, presetW, 18).build());
+        }
+        curY += rowH + rowGap;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha", ModConfig.cloudAlpha)),
+                ModConfig.cloudAlpha / 255.0
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha", ModConfig.cloudAlpha)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.cloudAlpha = (int) (this.value * 255);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.cloud.height", ModConfig.cloudHeight)),
+                (ModConfig.cloudHeight - 64.0f) / 192.0f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.cloud.height", ModConfig.cloudHeight)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.cloudHeight = 64.0f + (float) (this.value * 192.0f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.cloud.speed", ModConfig.cloudSpeed)),
+                (ModConfig.cloudSpeed - 0.1f) / 4.9f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.cloud.speed", ModConfig.cloudSpeed)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.cloudSpeed = 0.1f + (float) (this.value * 4.9f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+    }
+
+    // ===================== TRAILS =====================
+    private void buildTrailsPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        addColorRow(widgets, x, curY, right,
+                LocalizationManager.get("gui.resistancedlc.panel.trails.color1"),
+                () -> ModConfig.trailsColor1,
+                v -> ModConfig.trailsColor1 = v);
+        curY += 34 + rowGap;
+
+        addColorRow(widgets, x, curY, right,
+                LocalizationManager.get("gui.resistancedlc.panel.trails.color2"),
+                () -> ModConfig.trailsColor2,
+                v -> ModConfig.trailsColor2 = v);
+        curY += 34 + rowGap;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.trails.gradient")), this.font)
+                .pos(x, curY).selected(ModConfig.trailsGradient)
+                .onValueChange((c, v) -> {
+                    ModConfig.trailsGradient = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH + rowGap;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.trails.length", ModConfig.trailsLength)),
+                (ModConfig.trailsLength - 0.5f) / 9.5f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.trails.length", ModConfig.trailsLength)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.trailsLength = 0.5f + (float) (this.value * 9.5f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.trails.width", ModConfig.trailsWidth)),
+                (ModConfig.trailsWidth - 0.05f) / 1.95f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.trails.width", ModConfig.trailsWidth)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.trailsWidth = 0.05f + (float) (this.value * 1.95f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.trails.alpha", ModConfig.trailsAlpha)),
+                ModConfig.trailsAlpha
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.trails.alpha", ModConfig.trailsAlpha)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.trailsAlpha = (float) this.value;
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+    }
+
+    // ===================== HIT PARTICLES =====================
+    private void buildHitParticlesPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        String typeText = switch (ModConfig.hitParticlesType) {
+            case "crystal" -> LocalizationManager.get("gui.resistancedlc.panel.hitparticles.type_crystal");
+            case "snowflake" -> LocalizationManager.get("gui.resistancedlc.panel.hitparticles.type_snowflake");
+            case "pyramid" -> LocalizationManager.get("gui.resistancedlc.panel.hitparticles.type_pyramid");
+            default -> LocalizationManager.get("gui.resistancedlc.panel.hitparticles.type_star");
+        };
+        widgets.add(Button.builder(
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hitparticles.type") + ": " + typeText),
+                (b) -> {
+                    ModConfig.hitParticlesType = switch (ModConfig.hitParticlesType) {
+                        case "star" -> "crystal";
+                        case "crystal" -> "snowflake";
+                        case "snowflake" -> "pyramid";
+                        default -> "star";
+                    };
+                    ConfigManager.save();
+                    rebuildPanelTwoPass("hit_particles");
+                }
+        ).bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        addColorRow(widgets, x, curY, right,
+                LocalizationManager.get("gui.resistancedlc.panel.hitparticles.color"),
+                () -> ModConfig.hitParticlesColor,
+                v -> ModConfig.hitParticlesColor = v);
+        curY += 34 + rowGap;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hitparticles.count", ModConfig.hitParticlesCount)),
+                (ModConfig.hitParticlesCount - 1) / 31.0
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hitparticles.count", ModConfig.hitParticlesCount)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.hitParticlesCount = 1 + (int) (this.value * 31);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hitparticles.size", ModConfig.hitParticlesSize)),
+                (ModConfig.hitParticlesSize - 0.3f) / 2.7f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hitparticles.size", ModConfig.hitParticlesSize)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.hitParticlesSize = 0.3f + (float) (this.value * 2.7f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hitparticles.speed", ModConfig.hitParticlesSpeed)),
+                (ModConfig.hitParticlesSpeed - 0.2f) / 2.8f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hitparticles.speed", ModConfig.hitParticlesSpeed)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.hitParticlesSpeed = 0.2f + (float) (this.value * 2.8f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+    }
+    // ===================== CLEAR LIQUIDS =====================
+    private void buildClearLiquidsPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.clear_liquids.water")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.clearWaterEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.clearWaterEnabled = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH + rowGap;
+
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.clear_liquids.lava")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.clearLavaEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.clearLavaEnabled = v;
+                    ConfigManager.save();
+                })
+                .build());
+    }
+    // ===================== ATMOSPHERE =====================
+    private void buildAtmospherePanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        // Тип
+        String typeText = "snow".equals(ModConfig.atmosphereType)
+                ? LocalizationManager.get("gui.resistancedlc.panel.atmosphere.type_snow")
+                : LocalizationManager.get("gui.resistancedlc.panel.atmosphere.type_star");
+        widgets.add(Button.builder(
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.atmosphere.type") + ": " + typeText),
+                (b) -> {
+                    ModConfig.atmosphereType = "snow".equals(ModConfig.atmosphereType) ? "star" : "snow";
+                    ConfigManager.save();
+                    rebuildPanelTwoPass("atmosphere");
+                }
+        ).bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        // Цвет
+        addColorRow(widgets, x, curY, right,
+                LocalizationManager.get("gui.resistancedlc.panel.atmosphere.color"),
+                () -> ModConfig.atmosphereColor,
+                v -> ModConfig.atmosphereColor = v);
+        curY += 34 + rowGap;
+
+        // Альфа
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha", ModConfig.atmosphereAlpha)),
+                ModConfig.atmosphereAlpha / 255.0
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha", ModConfig.atmosphereAlpha)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.atmosphereAlpha = (int) (this.value * 255);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // Радиус
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.atmosphere.range", ModConfig.atmosphereRange)),
+                (ModConfig.atmosphereRange - 4.0f) / 28.0f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.atmosphere.range", ModConfig.atmosphereRange)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.atmosphereRange = 4.0f + (float) (this.value * 28.0f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // Количество
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.atmosphere.count", ModConfig.atmosphereCount)),
+                (ModConfig.atmosphereCount - 10) / 490.0
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.atmosphere.count", ModConfig.atmosphereCount)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.atmosphereCount = 10 + (int) (this.value * 490);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // Скорость падения
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.atmosphere.fall_speed", ModConfig.atmosphereFallSpeed)),
+                (ModConfig.atmosphereFallSpeed - 0.1f) / 2.9f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.atmosphere.fall_speed", ModConfig.atmosphereFallSpeed)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.atmosphereFallSpeed = 0.1f + (float) (this.value * 2.9f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // Размер
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.atmosphere.size", ModConfig.atmosphereSize)),
+                (ModConfig.atmosphereSize - 0.3f) / 2.7f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.atmosphere.size", ModConfig.atmosphereSize)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.atmosphereSize = 0.3f + (float) (this.value * 2.7f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // Вращение
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.atmosphere.rotate")), this.font)
+                .pos(x, curY).selected(ModConfig.atmosphereRotate)
+                .onValueChange((c, v) -> {
+                    ModConfig.atmosphereRotate = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH;
+
+        // Только на улице
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.atmosphere.outside")), this.font)
+                .pos(x, curY).selected(ModConfig.atmosphereOnlyOutside)
+                .onValueChange((c, v) -> {
+                    ModConfig.atmosphereOnlyOutside = v;
+                    ConfigManager.save();
+                })
+                .build());
+    }
+    // ===================== CUSTOM FOG =====================
+    private void buildCustomFogPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        // Режим
+        String modeText;
+        switch (ModConfig.customFogMode) {
+            case 1 -> modeText = LocalizationManager.get("gui.resistancedlc.panel.custom_fog.mode_atmospheric");
+            case 2 -> modeText = LocalizationManager.get("gui.resistancedlc.panel.custom_fog.mode_liquid");
+            default -> modeText = LocalizationManager.get("gui.resistancedlc.panel.custom_fog.mode_always");
+        }
+        widgets.add(Button.builder(
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.custom_fog.mode") + ": " + modeText),
+                (b) -> {
+                    ModConfig.customFogMode = (ModConfig.customFogMode + 1) % 3;
+                    ConfigManager.save();
+                    rebuildPanelTwoPass("custom_fog");
+                }
+        ).bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        // Цвет
+        addColorRow(widgets, x, curY, right,
+                LocalizationManager.get("gui.resistancedlc.panel.custom_fog.color"),
+                () -> ModConfig.customFogColor,
+                v -> ModConfig.customFogColor = v);
+        curY += 34 + rowGap;
+
+        // Start
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.custom_fog.start", ModConfig.customFogStart)),
+                ModConfig.customFogStart
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.custom_fog.start", ModConfig.customFogStart)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.customFogStart = (float) this.value;
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // End
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.custom_fog.end", ModConfig.customFogEnd)),
+                ModConfig.customFogEnd
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.custom_fog.end", ModConfig.customFogEnd)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.customFogEnd = (float) this.value;
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // Sky
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.custom_fog.affect_sky")), this.font)
+                .pos(x, curY).selected(ModConfig.customFogAffectSky)
+                .onValueChange((c, v) -> {
+                    ModConfig.customFogAffectSky = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH;
+
+        // Clouds
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.custom_fog.affect_clouds")), this.font)
+                .pos(x, curY).selected(ModConfig.customFogAffectClouds)
+                .onValueChange((c, v) -> {
+                    ModConfig.customFogAffectClouds = v;
+                    ConfigManager.save();
+                })
+                .build());
     }
 }

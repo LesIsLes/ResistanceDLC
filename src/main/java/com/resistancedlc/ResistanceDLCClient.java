@@ -6,6 +6,18 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.resistancedlc.lyrics.LyricsManager;
 import com.resistancedlc.lyrics.LyricsNotificationHud;
 import net.fabricmc.api.ClientModInitializer;
+import com.resistancedlc.environment.TrailsManager;
+import com.resistancedlc.particles.AtmosphereManager;
+import com.resistancedlc.particles.AtmosphereRenderer;
+import com.resistancedlc.particles.HitParticle;
+import com.resistancedlc.particles.HitParticlesManager;
+import com.resistancedlc.particles.HitParticlesRenderer;
+import com.resistancedlc.environment.TrailsRenderer;
+import com.resistancedlc.particles.ModParticles;
+import net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry;
+import net.fabricmc.fabric.api.client.particle.v1.FabricSpriteSet;
+import net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry;
+import net.fabricmc.fabric.api.client.particle.v1.FabricSpriteSet;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -41,6 +53,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.waypoints.TrackedWaypoint;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -90,7 +103,9 @@ public class ResistanceDLCClient implements ClientModInitializer {
             if (ModConfig.pvpSafeEnabled && entity instanceof Player && entity != player) {
                 PvPSafeManager.recordHit();
             }
-
+            if (ModConfig.hitParticlesEnabled && entity != null) {
+                HitParticlesManager.spawn(entity);
+            }
             if (ModConfig.targetEspEnabled && entity instanceof LivingEntity) {
                 com.resistancedlc.targetesp.TargetManagerHolder.MANAGER.setCurrentTarget(entity);
             }
@@ -194,6 +209,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
             KillTracker.clear();
             PvPSafeManager.reset();
             AutoGGManager.reset();
+            AtmosphereManager.reset();
+            HitParticlesManager.reset();
             FreelookManager.reset();
             StrikeRangeManager.reset();
             WeatherChangeManager.reset();
@@ -224,7 +241,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
             deathRecapCaptured = false;
         });
-
+// Регистрируем TRIANGLES-пайплайн
         // ===== КОМАНДЫ =====
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             // ===== WAYPOINTS COMMAND =====
@@ -566,6 +583,19 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 com.resistancedlc.voice.VoiceCommandListener.stop();
             }
         });
+        // Environment
+        ClientTickEvents.END_CLIENT_TICK.register(c -> TrailsManager.tick());
+
+// Trails рендер
+        net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.END_MAIN.register(
+                TrailsRenderer::render
+        );
+// Atmosphere
+        ClientTickEvents.END_CLIENT_TICK.register(c -> AtmosphereManager.tick());
+        LevelRenderEvents.END_MAIN.register(AtmosphereRenderer::render);
+        ClientTickEvents.END_CLIENT_TICK.register(c -> HitParticlesManager.tick());
+        LevelRenderEvents.END_MAIN.register(HitParticlesRenderer::render);
+
         // ===== DEATH COORDS =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) {

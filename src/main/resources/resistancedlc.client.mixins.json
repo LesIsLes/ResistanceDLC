@@ -39,7 +39,11 @@
     "FreelookMixin",
     "WeatherChangeMixin",
     "TimeChangeMixin",
-    "GammaFullbrightMixin"
+    "GammaFullbrightMixin",
+    "CloudControlMixin",
+    "LevelRandomFixMixin",
+    "ClearLiquidsMixin",
+    "CustomFogMixin"
   ],
   "injectors": {
     "defaultRequire": 1

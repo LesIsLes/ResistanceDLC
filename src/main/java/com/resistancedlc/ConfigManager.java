@@ -67,6 +67,30 @@ public class ConfigManager {
             json.addProperty("showPet", ModConfig.showPet);
             json.addProperty("searchHistoryRaw", ModConfig.searchHistoryRaw);
             json.addProperty("freelookDistance", ModConfig.freelookDistance);
+            // === CLOUD CONTROL ===
+            json.addProperty("cloudControlEnabled", ModConfig.cloudControlEnabled);
+            json.addProperty("cloudColor", ModConfig.cloudColor);
+            json.addProperty("cloudAlpha", ModConfig.cloudAlpha);
+            json.addProperty("cloudHeight", ModConfig.cloudHeight);
+            json.addProperty("cloudSpeed", ModConfig.cloudSpeed);
+
+// === TRAILS ===
+            json.addProperty("trailsEnabled", ModConfig.trailsEnabled);
+            json.addProperty("trailsColor1", ModConfig.trailsColor1);
+            json.addProperty("trailsColor2", ModConfig.trailsColor2);
+            json.addProperty("trailsLength", ModConfig.trailsLength);
+            json.addProperty("trailsWidth", ModConfig.trailsWidth);
+            json.addProperty("trailsAlpha", ModConfig.trailsAlpha);
+            json.addProperty("trailsSpeed", ModConfig.trailsSpeed);
+            json.addProperty("trailsGradient", ModConfig.trailsGradient);
+
+// === HIT PARTICLES ===
+            json.addProperty("hitParticlesEnabled", ModConfig.hitParticlesEnabled);
+            json.addProperty("hitParticlesType", ModConfig.hitParticlesType);
+            json.addProperty("hitParticlesColor", ModConfig.hitParticlesColor);
+            json.addProperty("hitParticlesCount", ModConfig.hitParticlesCount);
+            json.addProperty("hitParticlesSize", ModConfig.hitParticlesSize);
+            json.addProperty("hitParticlesSpeed", ModConfig.hitParticlesSpeed);
             // === ВИДИМОСТЬ ЭЛЕМЕНТОВ ===
             json.addProperty("showCoords", ModConfig.showCoords);
             json.addProperty("showBiome", ModConfig.showBiome);
@@ -378,7 +402,22 @@ public class ConfigManager {
             // === AUTO RESPAWN ===
             json.addProperty("autoRespawnEnabled", ModConfig.autoRespawnEnabled);
             json.addProperty("autoRespawnDelay", ModConfig.autoRespawnDelay);
+            json.addProperty("clearLiquidsEnabled", ModConfig.clearLiquidsEnabled);
+            json.addProperty("clearWaterEnabled", ModConfig.clearWaterEnabled);
+            json.addProperty("clearLavaEnabled", ModConfig.clearLavaEnabled);
+            json.addProperty("clearLiquidsCustomStart", ModConfig.clearLiquidsCustomStart);
+            json.addProperty("clearLiquidsCustomEnd", ModConfig.clearLiquidsCustomEnd);
 
+            json.addProperty("atmosphereEnabled", ModConfig.atmosphereEnabled);
+            json.addProperty("atmosphereType", ModConfig.atmosphereType);
+            json.addProperty("atmosphereColor", ModConfig.atmosphereColor);
+            json.addProperty("atmosphereAlpha", ModConfig.atmosphereAlpha);
+            json.addProperty("atmosphereRange", ModConfig.atmosphereRange);
+            json.addProperty("atmosphereCount", ModConfig.atmosphereCount);
+            json.addProperty("atmosphereFallSpeed", ModConfig.atmosphereFallSpeed);
+            json.addProperty("atmosphereSize", ModConfig.atmosphereSize);
+            json.addProperty("atmosphereRotate", ModConfig.atmosphereRotate);
+            json.addProperty("atmosphereOnlyOutside", ModConfig.atmosphereOnlyOutside);
             // === ARMOR ALERT ===
             json.addProperty("armorAlertEnabled", ModConfig.armorAlertEnabled);
             json.addProperty("armorAlertThreshold", ModConfig.armorAlertThreshold);
@@ -427,7 +466,14 @@ public class ConfigManager {
             json.addProperty("killStreakAlpha", ModConfig.killStreakAlpha);
             json.addProperty("killStreakFontSize", ModConfig.killStreakFontSize);
             json.addProperty("killStreakShowTimer", ModConfig.killStreakShowTimer);
-
+            json.addProperty("customFogEnabled", ModConfig.customFogEnabled);
+            json.addProperty("customFogColor", ModConfig.customFogColor);
+            json.addProperty("customFogAlpha", ModConfig.customFogAlpha);
+            json.addProperty("customFogStart", ModConfig.customFogStart);
+            json.addProperty("customFogEnd", ModConfig.customFogEnd);
+            json.addProperty("customFogAffectSky", ModConfig.customFogAffectSky);
+            json.addProperty("customFogAffectClouds", ModConfig.customFogAffectClouds);
+            json.addProperty("customFogMode", ModConfig.customFogMode);
             // === JUMP CIRCLES ===
             json.addProperty("jumpCirclesEnabled", ModConfig.jumpCirclesEnabled);
             json.addProperty("jumpCirclesStyle", ModConfig.jumpCirclesStyle);
@@ -550,7 +596,31 @@ public class ConfigManager {
             ModConfig.hudAlpha = getInt(json, "hudAlpha", ModConfig.hudAlpha);
             ModConfig.showPet = getBool(json, "showPet", ModConfig.showPet);
             ModConfig.searchHistoryRaw = getString(json, "searchHistoryRaw", ModConfig.searchHistoryRaw);
+            ModConfig.cloudControlEnabled = getBool(json, "cloudControlEnabled", ModConfig.cloudControlEnabled);
+            ModConfig.cloudColor = getInt(json, "cloudColor", ModConfig.cloudColor);
+            ModConfig.cloudAlpha = getInt(json, "cloudAlpha", ModConfig.cloudAlpha);
+            ModConfig.cloudHeight = getFloat(json, "cloudHeight", ModConfig.cloudHeight);
+            ModConfig.cloudSpeed = getFloat(json, "cloudSpeed", ModConfig.cloudSpeed);
 
+            ModConfig.trailsEnabled = getBool(json, "trailsEnabled", ModConfig.trailsEnabled);
+            ModConfig.trailsColor1 = getInt(json, "trailsColor1", ModConfig.trailsColor1);
+            ModConfig.trailsColor2 = getInt(json, "trailsColor2", ModConfig.trailsColor2);
+            ModConfig.trailsLength = getFloat(json, "trailsLength", ModConfig.trailsLength);
+            ModConfig.trailsWidth = getFloat(json, "trailsWidth", ModConfig.trailsWidth);
+            ModConfig.trailsAlpha = getFloat(json, "trailsAlpha", ModConfig.trailsAlpha);
+            ModConfig.trailsSpeed = getFloat(json, "trailsSpeed", ModConfig.trailsSpeed);
+            ModConfig.trailsGradient = getBool(json, "trailsGradient", ModConfig.trailsGradient);
+            ModConfig.clearLiquidsEnabled = getBool(json, "clearLiquidsEnabled", ModConfig.clearLiquidsEnabled);
+            ModConfig.clearWaterEnabled = getBool(json, "clearWaterEnabled", ModConfig.clearWaterEnabled);
+            ModConfig.clearLavaEnabled = getBool(json, "clearLavaEnabled", ModConfig.clearLavaEnabled);
+            ModConfig.clearLiquidsCustomStart = getFloat(json, "clearLiquidsCustomStart", ModConfig.clearLiquidsCustomStart);
+            ModConfig.clearLiquidsCustomEnd = getFloat(json, "clearLiquidsCustomEnd", ModConfig.clearLiquidsCustomEnd);
+            ModConfig.hitParticlesEnabled = getBool(json, "hitParticlesEnabled", ModConfig.hitParticlesEnabled);
+            ModConfig.hitParticlesType = getString(json, "hitParticlesType", ModConfig.hitParticlesType);
+            ModConfig.hitParticlesColor = getInt(json, "hitParticlesColor", ModConfig.hitParticlesColor);
+            ModConfig.hitParticlesCount = getInt(json, "hitParticlesCount", ModConfig.hitParticlesCount);
+            ModConfig.hitParticlesSize = getFloat(json, "hitParticlesSize", ModConfig.hitParticlesSize);
+            ModConfig.hitParticlesSpeed = getFloat(json, "hitParticlesSpeed", ModConfig.hitParticlesSpeed);
             ModConfig.freelookEnabled = getBool(json, "freelookEnabled", ModConfig.freelookEnabled);
             ModConfig.freelookSensitivity = getFloat(json, "freelookSensitivity", ModConfig.freelookSensitivity);
             ModConfig.freelookDistance = getFloat(json, "freelookDistance", ModConfig.freelookDistance);
@@ -847,14 +917,30 @@ public class ConfigManager {
             ModConfig.customHitboxRussian = getBool(json, "customHitboxRussian", ModConfig.customHitboxRussian);
             ModConfig.customHitboxColor = getInt(json, "customHitboxColor", ModConfig.customHitboxColor);
             ModConfig.customHitboxAlpha = getInt(json, "customHitboxAlpha", ModConfig.customHitboxAlpha);
-
+            ModConfig.atmosphereEnabled = getBool(json, "atmosphereEnabled", ModConfig.atmosphereEnabled);
+            ModConfig.atmosphereType = getString(json, "atmosphereType", ModConfig.atmosphereType);
+            ModConfig.atmosphereColor = getInt(json, "atmosphereColor", ModConfig.atmosphereColor);
+            ModConfig.atmosphereAlpha = getInt(json, "atmosphereAlpha", ModConfig.atmosphereAlpha);
+            ModConfig.atmosphereRange = getFloat(json, "atmosphereRange", ModConfig.atmosphereRange);
+            ModConfig.atmosphereCount = getInt(json, "atmosphereCount", ModConfig.atmosphereCount);
+            ModConfig.atmosphereFallSpeed = getFloat(json, "atmosphereFallSpeed", ModConfig.atmosphereFallSpeed);
+            ModConfig.atmosphereSize = getFloat(json, "atmosphereSize", ModConfig.atmosphereSize);
+            ModConfig.atmosphereRotate = getBool(json, "atmosphereRotate", ModConfig.atmosphereRotate);
+            ModConfig.atmosphereOnlyOutside = getBool(json, "atmosphereOnlyOutside", ModConfig.atmosphereOnlyOutside);
             // === ITEM SCROLLER ===
             ModConfig.itemScrollerEnabled = getBool(json, "itemScrollerEnabled", ModConfig.itemScrollerEnabled);
             ModConfig.itemScrollerRussian = getBool(json, "itemScrollerRussian", ModConfig.itemScrollerRussian);
             ModConfig.itemScrollerDelay = getInt(json, "itemScrollerDelay", ModConfig.itemScrollerDelay);
             ModConfig.itemScrollerShiftStack = getBool(json, "itemScrollerShiftStack", ModConfig.itemScrollerShiftStack);
             ModConfig.itemScrollerCtrlAll = getBool(json, "itemScrollerCtrlAll", ModConfig.itemScrollerCtrlAll);
-
+            ModConfig.customFogEnabled = getBool(json, "customFogEnabled", ModConfig.customFogEnabled);
+            ModConfig.customFogColor = getInt(json, "customFogColor", ModConfig.customFogColor);
+            ModConfig.customFogAlpha = getInt(json, "customFogAlpha", ModConfig.customFogAlpha);
+            ModConfig.customFogStart = getFloat(json, "customFogStart", ModConfig.customFogStart);
+            ModConfig.customFogEnd = getFloat(json, "customFogEnd", ModConfig.customFogEnd);
+            ModConfig.customFogAffectSky = getBool(json, "customFogAffectSky", ModConfig.customFogAffectSky);
+            ModConfig.customFogAffectClouds = getBool(json, "customFogAffectClouds", ModConfig.customFogAffectClouds);
+            ModConfig.customFogMode = getInt(json, "customFogMode", ModConfig.customFogMode);
             // === COOLDOWNS ===
             ModConfig.cooldownsEnabled = getBool(json, "cooldownsEnabled", ModConfig.cooldownsEnabled);
             ModConfig.cooldownsRussian = getBool(json, "cooldownsRussian", ModConfig.cooldownsRussian);

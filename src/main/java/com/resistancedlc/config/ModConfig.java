@@ -506,4 +506,60 @@ public class ModConfig {
     public static float voiceCommandThreshold = 0.35f;      // 0.20..0.95 (DTW порог)
     public static float voiceVadSensitivity = 1.0f;         // 0.3..3.0 (ручная чувствительность)
     public static float voiceVadCalibratedThreshold = 0f;   // 0 = не калибровано (СБРОШЕНО)
+
+    // ===================== CLOUD CONTROL =====================
+    public static boolean cloudControlEnabled = false;
+    public static int cloudColor = 0xFFFFFFFF;
+    public static int cloudAlpha = 255;
+    public static float cloudHeight = 128.0f;
+    public static float cloudSpeed = 1.0f;
+
+    // ===================== TRAILS =====================
+    public static boolean trailsEnabled = false;
+    public static int trailsColor1 = 0xFF00AAFF;
+    public static int trailsColor2 = 0xFFFFFFFF;
+    public static float trailsLength = 2.0f;         // секунды
+    public static float trailsWidth = 0.3f;          // блоки
+    public static float trailsAlpha = 0.7f;
+    public static float trailsSpeed = 1.0f;
+    public static boolean trailsGradient = true;     // градиент между цветами
+
+    // ===================== HIT PARTICLES =====================
+    public static boolean hitParticlesEnabled = false;
+    public static String hitParticlesType = "star";  // star / snow / triangles
+    public static int hitParticlesColor = 0xFFFFAA00;
+    public static int hitParticlesCount = 8;
+    public static float hitParticlesSize = 1.0f;
+    public static float hitParticlesSpeed = 1.0f;
+
+    // ===================== CLEAR LIQUIDS =====================
+    public static boolean clearLiquidsEnabled = false;
+    public static boolean clearWaterEnabled = true;
+    public static boolean clearLavaEnabled = true;
+    // Если false — туман не убирается, а заменяется кастомными значениями
+    public static float clearLiquidsCustomStart = Float.MAX_VALUE;
+    public static float clearLiquidsCustomEnd = Float.MAX_VALUE;
+
+    // ===================== ATMOSPHERE =====================
+    public static boolean atmosphereEnabled = false;
+    public static String atmosphereType = "star";      // "star" / "snow"
+    public static int atmosphereColor = 0xFFFFFFFF;
+    public static int atmosphereAlpha = 200;
+    public static float atmosphereRange = 16.0f;       // радиус вокруг игрока
+    public static int atmosphereCount = 50;            // одновременно частиц
+    public static float atmosphereFallSpeed = 1.0f;    // множитель скорости
+    public static float atmosphereSize = 1.0f;         // размер частиц
+    public static boolean atmosphereRotate = true;     // вращение звёзд/снежинок
+    public static boolean atmosphereOnlyOutside = true; // только под открытым небом
+
+    // ===================== CUSTOM FOG =====================
+    public static boolean customFogEnabled = false;
+    public static int customFogColor = 0xFFC0D8FF;         // цвет тумана
+    public static int customFogAlpha = 255;                 // альфа (0-255)
+    public static float customFogStart = 0.0f;             // environmentalStart (0..1)
+    public static float customFogEnd = 1.0f;               // environmentalEnd (0..1)
+    public static boolean customFogAffectSky = true;        // менять skyEnd
+    public static boolean customFogAffectClouds = true;     // менять cloudEnd
+    // Режим: применять всегда, только в атмосфере, только в воде/лаве?
+    public static int customFogMode = 0;                    // 0=always, 1=atmospheric, 2=liquid
 }
