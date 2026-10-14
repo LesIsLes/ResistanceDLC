@@ -3,7 +3,7 @@ package com.resistancedlc;
 import com.resistancedlc.config.ModConfig;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 
@@ -28,7 +28,7 @@ public class FriendListHud {
     private static final int PADDING = 4;
     private static final int ROW_H = 10;
 
-    public static void render(GuiGraphics graphics) {
+    public static void render(GuiGraphicsExtractor graphics) {
         if (!ModConfig.friendListEnabled) return;
         if (!ModConfig.friendListShowHud) return;
 
@@ -100,7 +100,7 @@ public class FriendListHud {
         // Заголовок
         String title = "§l★ " + LocalizationManager.get("gui.resistancedlc.hud.friend_list")
                 + " §7(" + lines.size() + ")";
-        graphics.drawString(mc.font, title, x + PADDING, y + PADDING,
+        graphics.text(mc.font, title, x + PADDING, y + PADDING,
                 ModConfig.friendListTabColor, true);
 
         // Строки
@@ -118,7 +118,7 @@ public class FriendListHud {
                     x + PADDING + 4, rowY + 7, dotColor);
 
             // Имя
-            graphics.drawString(mc.font, name,
+            graphics.text(mc.font, name,
                     x + PADDING + 8, rowY, nameColor, true);
 
             // Дистанция / пинг
@@ -132,7 +132,7 @@ public class FriendListHud {
             if (!info.isEmpty()) {
                 int infoW = mc.font.width(info);
                 int infoColor = line.online ? 0xFFAAAAAA : 0xFF666666;
-                graphics.drawString(mc.font, info,
+                graphics.text(mc.font, info,
                         x + widgetW - PADDING - infoW, rowY, infoColor, false);
             }
 

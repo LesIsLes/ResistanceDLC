@@ -1,7 +1,7 @@
 package com.resistancedlc.mixin;
 
 import com.resistancedlc.config.ModConfig;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.LevelLoadingScreen;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
@@ -24,8 +24,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(LevelLoadingScreen.class)
 public class LevelLoadingScreenMixin {
 
-    @Inject(method = "renderBackground", at = @At("HEAD"), cancellable = true)
-    private void onRenderBackground(GuiGraphics graphics, int mouseX, int mouseY,
+    @Inject(method = "extractBackground", at = @At("HEAD"), cancellable = true)
+    private void onRenderBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY,
                                     float delta, CallbackInfo ci) {
         if (!ModConfig.customLoadingScreenEnabled) return;
 

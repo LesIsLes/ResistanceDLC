@@ -3,7 +3,7 @@ package com.resistancedlc;
 import com.resistancedlc.config.ModConfig;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.resources.Identifier;
 
 /**
@@ -47,7 +47,7 @@ public class MusicPlayerHud {
 
     // ===================== РЕНДЕР =====================
 
-    public static void render(GuiGraphics graphics) {
+    public static void render(GuiGraphicsExtractor graphics) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
         if (!ModConfig.musicPlayerEnabled) return;
@@ -70,7 +70,7 @@ public class MusicPlayerHud {
         drawVolumeSlider(graphics, baseX, baseY);
     }
 
-    private static void drawBackground(GuiGraphics graphics, int x, int y) {
+    private static void drawBackground(GuiGraphicsExtractor graphics, int x, int y) {
         int alpha = ModConfig.musicHudAlpha;
         int bgColor = (alpha << 24) | 0x101010;
         graphics.fill(x, y, x + WIDGET_W, y + WIDGET_H, bgColor);
@@ -82,7 +82,7 @@ public class MusicPlayerHud {
         graphics.fill(x + WIDGET_W - 1, y, x + WIDGET_W, y + WIDGET_H, borderColor);
     }
 
-    private static void drawVinyl(GuiGraphics graphics, int x, int y) {
+    private static void drawVinyl(GuiGraphicsExtractor graphics, int x, int y) {
         int vx = x + VINYL_PADDING;
         int vy = y + (WIDGET_H - VINYL_SIZE) / 2 - 8;
 
@@ -107,7 +107,7 @@ public class MusicPlayerHud {
         graphics.pose().popMatrix();
     }
 
-    private static void drawText(GuiGraphics graphics, int x, int y) {
+    private static void drawText(GuiGraphicsExtractor graphics, int x, int y) {
         Minecraft mc = Minecraft.getInstance();
         MusicTrack track = MusicPlayerManager.getCurrentTrack();
 
@@ -115,13 +115,13 @@ public class MusicPlayerHud {
 
         if (track == null) {
             // ✅ ЛОКАЛИЗАЦИЯ
-            graphics.drawString(mc.font,
+            graphics.text(mc.font,
                     "§7♪ " + LocalizationManager.get("gui.resistancedlc.music_hud.title"),
                     textX, y + 10, 0xFFAAAAAA, false);
-            graphics.drawString(mc.font,
+            graphics.text(mc.font,
                     "§8" + LocalizationManager.get("gui.resistancedlc.music_hud.empty"),
                     textX, y + 24, 0xFF666666, false);
-            graphics.drawString(mc.font,
+            graphics.text(mc.font,
                     "§8" + LocalizationManager.get("gui.resistancedlc.music_hud.hint"),
                     textX, y + 34, 0xFF666666, false);
             return;
@@ -129,13 +129,13 @@ public class MusicPlayerHud {
 
         String name = track.displayName();
         if (name.length() > 28) name = name.substring(0, 26) + "…";
-        graphics.drawString(mc.font, "§l♪ " + name,
+        graphics.text(mc.font, "§l♪ " + name,
                 textX, y + 8, ModConfig.guiColor, true);
 
         String artist = track.displayArtist();
         if (!artist.isEmpty()) {
             if (artist.length() > 30) artist = artist.substring(0, 28) + "…";
-            graphics.drawString(mc.font, artist,
+            graphics.text(mc.font, artist,
                     textX, y + 22, 0xFFCCCCCC, false);
         }
 
@@ -145,22 +145,22 @@ public class MusicPlayerHud {
                 + " / " + MusicPlayerManager.formatTime(durSec);
 
         int timeColor = MusicPlayerManager.isPaused() ? 0xFFFFAA00 : 0xFF888888;
-        graphics.drawString(mc.font, timeStr, textX, y + 34, timeColor, false);
+        graphics.text(mc.font, timeStr, textX, y + 34, timeColor, false);
 
         if (MusicPlayerManager.isPaused()) {
             String status = "§e⏸";
             int sw = mc.font.width(status);
-            graphics.drawString(mc.font, status,
+            graphics.text(mc.font, status,
                     x + WIDGET_W - sw - 6, y + 6, 0xFFFFAA00, true);
         } else if (MusicPlayerManager.isPlaying()) {
             String status = "§a▶";
             int sw = mc.font.width(status);
-            graphics.drawString(mc.font, status,
+            graphics.text(mc.font, status,
                     x + WIDGET_W - sw - 6, y + 6, 0xFF00FF00, true);
         }
     }
 
-    private static void drawButtons(GuiGraphics graphics, int x, int y) {
+    private static void drawButtons(GuiGraphicsExtractor graphics, int x, int y) {
         Minecraft mc = Minecraft.getInstance();
 
         int startX = x + VINYL_PADDING;
@@ -197,7 +197,7 @@ public class MusicPlayerHud {
         btnRepeatY[0] = btnY;
     }
 
-    private static void drawButton(GuiGraphics graphics, Minecraft mc,
+    private static void drawButton(GuiGraphicsExtractor graphics, Minecraft mc,
                                    int x, int y, String icon, int color) {
         graphics.fill(x, y, x + BTN_SIZE, y + BTN_SIZE, 0x80000000);
         graphics.fill(x, y, x + BTN_SIZE, y + 1, color);
@@ -208,10 +208,10 @@ public class MusicPlayerHud {
         int iconW = mc.font.width(icon);
         int ix = x + (BTN_SIZE - iconW) / 2;
         int iy = y + (BTN_SIZE - 8) / 2;
-        graphics.drawString(mc.font, icon, ix, iy, 0xFFFFFFFF, false);
+        graphics.text(mc.font, icon, ix, iy, 0xFFFFFFFF, false);
     }
 
-    private static void drawVolumeSlider(GuiGraphics graphics, int x, int y) {
+    private static void drawVolumeSlider(GuiGraphicsExtractor graphics, int x, int y) {
         int sx = x + VOL_SLIDER_X_OFFSET;
         int sy = y + VOL_SLIDER_Y_OFFSET;
 
@@ -232,10 +232,10 @@ public class MusicPlayerHud {
         graphics.fill(sx + VOL_SLIDER_W - 1, sy, sx + VOL_SLIDER_W, sy + VOL_SLIDER_H, 0xFF505050);
 
         Minecraft mc = Minecraft.getInstance();
-        graphics.drawString(mc.font, "🔊", sx - 14, sy - 3, 0xFFCCCCCC, false);
+        graphics.text(mc.font, "🔊", sx - 14, sy - 3, 0xFFCCCCCC, false);
 
         String volText = String.valueOf((int)(ModConfig.musicVolume * 100));
-        graphics.drawString(mc.font, volText,
+        graphics.text(mc.font, volText,
                 sx + VOL_SLIDER_W + 4, sy - 3, 0xFFAAAAAA, false);
     }
 

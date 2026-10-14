@@ -3,7 +3,7 @@ package com.resistancedlc;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.resistancedlc.config.ModConfig;
-import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -25,7 +25,7 @@ public class PredictionsRenderer {
     /** Дистанция до near-plane камеры, ниже которой сегмент обрезается. */
     private static final double NEAR_PLANE = 0.05;
 
-    public static void render(WorldRenderContext context) {
+    public static void render(LevelRenderContext context) {
         if (!ModConfig.predictionsEnabled) return;
 
         Minecraft mc = Minecraft.getInstance();
@@ -42,11 +42,11 @@ public class PredictionsRenderer {
                 | (ModConfig.predictionsImpactColor & 0x00FFFFFF);
 
         MultiBufferSource.BufferSource bufferSource =
-                (MultiBufferSource.BufferSource) context.consumers();
+                (MultiBufferSource.BufferSource) context.bufferSource();
         if (bufferSource == null) return;
 
         VertexConsumer consumer = bufferSource.getBuffer(LINES_TYPE);
-        PoseStack poseStack = context.matrices();
+        PoseStack poseStack = context.poseStack();
         Vec3 cameraPos = mc.gameRenderer.getMainCamera().position();
 
         // ✅ ФИКС: forwardVector() возвращает Vector3fc — конвертим в Vec3

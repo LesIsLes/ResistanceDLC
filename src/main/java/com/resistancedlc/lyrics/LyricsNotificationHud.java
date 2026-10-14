@@ -1,7 +1,7 @@
 package com.resistancedlc.lyrics;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /**
  * LyricsNotificationHud — fade-in/out уведомление «No lyrics» в центре экрана.
@@ -21,7 +21,7 @@ public class LyricsNotificationHud {
         startTime = System.currentTimeMillis();
     }
 
-    public static void render(GuiGraphics graphics) {
+    public static void render(GuiGraphicsExtractor graphics) {
         if (message == null) return;
         long elapsed = System.currentTimeMillis() - startTime;
         if (elapsed > TOTAL_MS) {
@@ -52,7 +52,7 @@ public class LyricsNotificationHud {
         // подложка
         int bgA = (int) (160 * alpha);
         graphics.fill(x - 8, y - 6, x + textW + 8, y + 14, (bgA << 24));
-        graphics.drawString(mc.font, message, x, y, color, true);
+        graphics.text(mc.font, message, x, y, color, true);
     }
 
     public static void reset() {

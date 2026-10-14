@@ -75,7 +75,7 @@ public final class WeatherChangeManager {
         ClientLevel level = mc.level;
         if (level == null || mc.player == null) return;
 
-        RandomSource random = level.random;
+        RandomSource random = level.getRandom();
         double px = mc.player.getX();
         double py = mc.player.getY();
         double pz = mc.player.getZ();

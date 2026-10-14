@@ -5,7 +5,7 @@ import com.resistancedlc.config.ModConfig;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.PlayerTabOverlay;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,8 +18,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * PingIndicatorMixin — заменяет ванильную иконку пинга на свой
  * прогресс-бар + число ms, размещённый под ником.
  *
- * Инжектится в renderPingIcon(HEAD, cancellable).
- * Если фича выключена — ваниль работает как есть.
+ * В 26.1 renderPingIcon переименован в extractPingIcon.
+ * require = 0 — если метод не найдётся, мод не упадёт.
  */
 @Mixin(PlayerTabOverlay.class)
 public class PingIndicatorMixin {
@@ -29,8 +29,8 @@ public class PingIndicatorMixin {
     private static final int BAR_WIDTH = 40;
     private static final int BAR_HEIGHT = 2;
 
-    @Inject(method = "renderPingIcon", at = @At("HEAD"), cancellable = true)
-    private void onRenderPingIcon(GuiGraphics graphics, int colWidth, int x, int y,
+    @Inject(method = "extractPingIcon", at = @At("HEAD"), cancellable = true, require = 0)
+    private void onRenderPingIcon(GuiGraphicsExtractor graphics, int colWidth, int x, int y,
                                   PlayerInfo playerInfo, CallbackInfo ci) {
         if (!ModConfig.pingIndicatorEnabled) return;
 
@@ -68,7 +68,7 @@ public class PingIndicatorMixin {
             Font font = this.minecraft.font;
             String text = (ping < 0) ? "?" : (ping + "ms");
             int textColor = (ping < 0) ? 0xFF808080 : color;
-            graphics.drawString(font, text, barX + BAR_WIDTH + 2, barY - 3, textColor, true);
+            graphics.text(font, text, barX + BAR_WIDTH + 2, barY - 3, textColor, true);
         }
     }
 }

@@ -3,7 +3,7 @@ package com.resistancedlc.hud;
 import com.resistancedlc.config.ModConfig;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -310,7 +310,7 @@ public final class HudWidgetRegistry {
         }
 
         @Override
-        public int renderPreview(GuiGraphics graphics, int mouseX, int mouseY, float alpha) {
+        public int renderPreview(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float alpha) {
             Minecraft mc = Minecraft.getInstance();
             int textW = mc.font.width(previewText);
             int totalW = textW + (iconSize > 0 ? iconSize + 4 : 0);
@@ -324,10 +324,10 @@ public final class HudWidgetRegistry {
             int y = getEffectiveY(graphics.guiHeight());
 
             if (iconSize > 0) {
-                graphics.renderItem(new ItemStack(Items.PAPER), x, y - 4);
-                graphics.drawString(mc.font, previewText, x + iconSize + 4, y, color, true);
+                graphics.item(new ItemStack(Items.PAPER), x, y - 4);
+                graphics.text(mc.font, previewText, x + iconSize + 4, y, color, true);
             } else {
-                graphics.drawString(mc.font, previewText, x, y, color, true);
+                graphics.text(mc.font, previewText, x, y, color, true);
             }
             return totalW;
         }
@@ -391,7 +391,7 @@ public final class HudWidgetRegistry {
         }
 
         @Override
-        public int renderPreview(GuiGraphics graphics, int mouseX, int mouseY, float alpha) {
+        public int renderPreview(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float alpha) {
             Minecraft mc = Minecraft.getInstance();
             int a = (int) (alpha * 255);
             int frameColor = (a << 24) | 0x60A0FF;
@@ -405,8 +405,8 @@ public final class HudWidgetRegistry {
             graphics.fill(x, y, x + 1, y + h, frameColor);
             graphics.fill(x + w - 1, y, x + w, y + h, frameColor);
 
-            graphics.drawString(mc.font, "§l" + name, x + 4, y + 4, textColor, true);
-            graphics.drawString(mc.font, "§7" + w + "×" + h, x + 4, y + 16, (a << 24) | 0xAAAAAA, false);
+            graphics.text(mc.font, "§l" + name, x + 4, y + 4, textColor, true);
+            graphics.text(mc.font, "§7" + w + "×" + h, x + 4, y + 16, (a << 24) | 0xAAAAAA, false);
 
             return w;
         }

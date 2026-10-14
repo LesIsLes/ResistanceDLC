@@ -1,7 +1,7 @@
 package com.resistancedlc;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
@@ -49,78 +49,78 @@ public class KeyBindings {
         // ВСЕ РЕГИСТРАЦИИ — ТОЛЬКО ЗДЕСЬ, В register()
         // ============================================================
 
-        openGuiKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        openGuiKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.resistancedlc.open_gui", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_G, category));
 
-        zoomKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        zoomKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.resistancedlc.zoom", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_C, category));
 
-        tapeMouseKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        tapeMouseKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.resistancedlc.tape_mouse", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_R, category));
 
-        autoSwapKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        autoSwapKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.resistancedlc.auto_swap", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_H, category));
 
-        customHitSoundsKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        customHitSoundsKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.resistancedlc.custom_hit_sounds", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_J, category));
 
-        fastExpKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        fastExpKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.resistancedlc.fast_exp", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_K, category));
 
-        shiftTapKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        shiftTapKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.resistancedlc.shift_tap", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_L, category));
 
-        comboKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        comboKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.resistancedlc.combo", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_M, category));
 
-        effectWarningsKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        effectWarningsKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.resistancedlc.effect_warnings", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_N, category));
 
-        waypointsKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        waypointsKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.resistancedlc.waypoints", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_B, category));
 
-        totemLogKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        totemLogKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.resistancedlc.totem_log", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_O, category));
 
-        pickupLogKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        pickupLogKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.resistancedlc.pickup_log", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_P, category));
 
         // ===== MACROS =====
-        macro1Key = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        macro1Key = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.resistancedlc.macro1", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_F1, category));
-        macro2Key = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        macro2Key = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.resistancedlc.macro2", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_F2, category));
-        macro3Key = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        macro3Key = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.resistancedlc.macro3", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_F3, category));
-        macro4Key = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        macro4Key = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.resistancedlc.macro4", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_F4, category));
-        macro5Key = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        macro5Key = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.resistancedlc.macro5", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_F5, category));
 
         // ===== HUD EDITOR (F6) =====
-        hudEditorKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        hudEditorKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.resistancedlc.hud_editor", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_F6, category));
 
         // ===== FREELOOK (LCTRL) =====
-        freelookKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        freelookKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.resistancedlc.freelook", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_LEFT_CONTROL, category));
 

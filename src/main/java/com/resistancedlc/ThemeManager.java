@@ -1,7 +1,7 @@
 package com.resistancedlc;
 
 import com.resistancedlc.config.ModConfig;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /**
  * ThemeManager — анимированные темы HUD/GUI.
@@ -141,7 +141,7 @@ public class ThemeManager {
      * Рисует прямоугольную рамку с бегущей волной по периметру.
      * Шаг = 4 px для производительности.
      */
-    public static void drawAnimatedBorder(GuiGraphics g, int x1, int y1, int x2, int y2, int thickness) {
+    public static void drawAnimatedBorder(GuiGraphicsExtractor g, int x1, int y1, int x2, int y2, int thickness) {
         if (currentThemeIndex == 0 || !ModConfig.themeAnimationEnabled) {
             int color = ModConfig.guiColor;
             g.fill(x1, y1, x2, y1 + thickness, color);

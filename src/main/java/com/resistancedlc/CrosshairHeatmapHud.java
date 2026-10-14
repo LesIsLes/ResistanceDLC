@@ -3,7 +3,7 @@ package com.resistancedlc;
 import com.resistancedlc.config.ModConfig;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public final class CrosshairHeatmapHud {
 
     private CrosshairHeatmapHud() {}
 
-    public static void render(GuiGraphics graphics) {
+    public static void render(GuiGraphicsExtractor graphics) {
         if (!ModConfig.crosshairHeatmapEnabled) return;
 
         Minecraft mc = Minecraft.getInstance();

@@ -1,6 +1,6 @@
 package com.resistancedlc.hud;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /**
  * HudWidget — интерфейс одного перетаскиваемого HUD-модуля.
@@ -35,7 +35,7 @@ public interface HudWidget {
     /** Хит-тест: попадает ли точка (mouseX, mouseY) в виджет. */
     boolean hitTest(double mouseX, double mouseY, int screenWidth, int screenHeight);
 
-    int renderPreview(GuiGraphics graphics, int mouseX, int mouseY, float alpha);
+    int renderPreview(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float alpha);
 
     int getWidth();
     int getHeight();

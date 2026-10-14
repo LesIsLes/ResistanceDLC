@@ -3,7 +3,7 @@ package com.resistancedlc.mixin;
 import com.resistancedlc.SmartChatManager;
 import com.resistancedlc.config.ModConfig;
 
-import net.minecraft.client.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;

@@ -4,7 +4,7 @@ import com.resistancedlc.LocalizationManager;
 import com.resistancedlc.voice.VoiceCommandAction;
 import com.resistancedlc.voice.VoiceCommandManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -64,7 +64,7 @@ public class VoiceCommandSelectScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         // Затемнение фона
         graphics.fill(0, 0, this.width, this.height, 0x80000000);
 
@@ -79,16 +79,16 @@ public class VoiceCommandSelectScreen extends Screen {
         graphics.fill(panelX + PANEL_W - 2, panelY, panelX + PANEL_W, panelY + PANEL_H, borderColor);
 
         // Заголовок
-        graphics.drawString(this.font,
+        graphics.text(this.font,
                 "§l" + LocalizationManager.get("gui.resistancedlc.voice.select.title"),
                 panelX + 20, panelY + 20, borderColor, true);
 
         // Подзаголовок
-        graphics.drawString(this.font,
+        graphics.text(this.font,
                 "§7" + LocalizationManager.get("gui.resistancedlc.voice.select.desc"),
                 panelX + 20, panelY + 40, 0xFFFFFFFF, false);
 
-        super.render(graphics, mouseX, mouseY, delta);
+        super.extractRenderState(graphics, mouseX, mouseY, delta);
     }
 
     @Override

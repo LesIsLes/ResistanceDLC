@@ -1,77 +1,37 @@
 package com.resistancedlc.mixin;
 
 import com.resistancedlc.config.ModConfig;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.OptionInstance;
-import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.LightmapRenderStateExtractor;
+import net.minecraft.client.renderer.state.LightmapRenderState;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.lang.reflect.Field;
-
 /**
- * GammaFullbrightMixin — обход ограничения gamma в Minecraft [0.0, 1.0].
+ * GammaFullbrightMixin — fullbright в 26.1.
  *
- * В 1.21.11 LightTexture.updateLightTexture(float) вычисляет:
- *   float p = ((Double)this.minecraft.options.gamma().get()).floatValue();
- * и кладёт в uniform Math.max(0.0F, p - k).
+ * В 26.1 гамма читается в LightmapRenderStateExtractor.extract() и кладётся
+ * в LightmapRenderState.brightness. Шейдер lightmap использует:
+ *   - brightness
+ *   - nightVisionEffectIntensity
  *
- * Мы подменяем value OptionInstance.gamma() через рефлексию на время вызова
- * метода — визуальный эффект fullbright работает, а в options.txt
- * всегда остаётся безопасное 1.0.
- *
- * Правило 43: gamma в MC ограничена [0.0, 1.0] — обход только через рефлексию.
- * Правило 44: используем поле value, не initialValue.
+ * Мы подписываемся на RETURN и подменяем оба поля, если включён GammaUtil.
  */
-@Mixin(LightTexture.class)
+@Mixin(LightmapRenderStateExtractor.class)
 public class GammaFullbrightMixin {
 
-    @Unique
-    private static Field resistancedlc$gammaValueField = null;
-
-    @Inject(method = "updateLightTexture", at = @At("HEAD"))
-    private void onUpdateLightTextureHead(float partialTick, CallbackInfo ci) {
+    @Inject(method = "extract", at = @At("RETURN"))
+    private void onExtractReturn(LightmapRenderState renderState,
+                                 float partialTicks,
+                                 CallbackInfo ci) {
         if (!ModConfig.gammaUtilEnabled) return;
         if (ModConfig.gammaValue <= 1.0f) return;
 
-        applyGamma(ModConfig.gammaValue);
-    }
-
-    @Inject(method = "updateLightTexture", at = @At("RETURN"))
-    private void onUpdateLightTextureReturn(float partialTick, CallbackInfo ci) {
-        if (!ModConfig.gammaUtilEnabled) return;
-        if (ModConfig.gammaValue <= 1.0f) return;
-
-        applyGamma(1.0);
-    }
-
-    @Unique
-    private static void applyGamma(double value) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.options == null) return;
-
-        try {
-            OptionInstance<Double> gammaOption = mc.options.gamma();
-            if (resistancedlc$gammaValueField == null) {
-                try {
-                    resistancedlc$gammaValueField = OptionInstance.class.getDeclaredField("value");
-                } catch (NoSuchFieldException e) {
-                    for (Field f : OptionInstance.class.getDeclaredFields()) {
-                        String name = f.getName().toLowerCase();
-                        if (f.getType() == Object.class && !name.contains("initial")) {
-                            resistancedlc$gammaValueField = f;
-                            break;
-                        }
-                    }
-                }
-                if (resistancedlc$gammaValueField == null) return;
-                resistancedlc$gammaValueField.setAccessible(true);
-            }
-            resistancedlc$gammaValueField.set(gammaOption, value);
-        } catch (Exception ignored) {
-        }
+        // Fullbright: максимальная яркость lightmap.
+        // brightness — гамма (0..1), nightVisionEffectIntensity — night vision.
+        // Ставим оба в 1.0 — это даёт максимально яркий lightmap.
+        renderState.brightness = 1.0f;
+        renderState.nightVisionEffectIntensity = 1.0f;
     }
 }

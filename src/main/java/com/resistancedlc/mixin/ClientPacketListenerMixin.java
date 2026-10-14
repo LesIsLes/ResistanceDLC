@@ -70,7 +70,7 @@ public class ClientPacketListenerMixin {
         }
 
         String msg = "§c[PvP] §f" + attackerName + " §7снёс тотем §f" + victimName;
-        client.player.displayClientMessage(Component.literal(msg), false);
+        client.player.sendSystemMessage(Component.literal(msg));
 
         if (ModConfig.totemLogSound) {
             client.level.playLocalSound(

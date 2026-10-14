@@ -5,12 +5,13 @@ import com.resistancedlc.SmartChatCoordParser;
 import com.resistancedlc.SmartChatManager;
 import com.resistancedlc.config.ModConfig;
 
-import net.minecraft.client.GuiMessage;
-import net.minecraft.client.GuiMessageTag;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessageTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MessageSignature;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.client.multiplayer.chat.GuiMessageSource;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.client.gui.components.ChatComponent;
@@ -34,11 +35,11 @@ public class SmartChatMixin {
      * Инжектимся в addMessage(Component, MessageSignature, GuiMessageTag).
      */
     @Inject(
-            method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V",
+            method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V",
             at = @At("HEAD"),
             cancellable = true
     )
-    private void onAddMessage(Component message, MessageSignature sig, GuiMessageTag tag,
+    private void onAddMessage(Component message, MessageSignature sig, GuiMessageSource source, GuiMessageTag tag,
                               CallbackInfo ci) {
         if (!ModConfig.smartChatEnabled) return;
         if (!ModConfig.smartChatGroupingEnabled) return;
@@ -56,7 +57,7 @@ public class SmartChatMixin {
      * Модифицируем первый аргумент (Component).
      */
     @ModifyVariable(
-            method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V",
+            method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 1,

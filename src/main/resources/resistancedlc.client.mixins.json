@@ -1,7 +1,7 @@
 {
   "required": true,
   "package": "com.resistancedlc.mixin",
-  "compatibilityLevel": "JAVA_21",
+  "compatibilityLevel": "JAVA_25",
   "client": [
     "AbstractContainerScreenAccessor",
     "FOVMixin",
@@ -24,14 +24,12 @@
     "PvPSafeHurtMixin",
     "ClientPacketListenerMixin",
     "FriendListMixin",
-    "AspectRatioMixin",
     "LoadingOverlayMixin",
     "BetterBossBarMixin",
     "CustomTitleScreenMixin",
     "LogoRendererMixin",
     "SplashRendererMixin",
     "LevelLoadingScreenMixin",
-    "GammaFullbrightMixin",
     "SmartChatMixin",
     "GuiMessageLineMixin",
     "PingIndicatorMixin",
@@ -39,8 +37,9 @@
     "CameraInvoker",
     "CameraMixin",
     "FreelookMixin",
+    "WeatherChangeMixin",
     "TimeChangeMixin",
-    "WeatherChangeMixin"
+    "GammaFullbrightMixin"
   ],
   "injectors": {
     "defaultRequire": 1

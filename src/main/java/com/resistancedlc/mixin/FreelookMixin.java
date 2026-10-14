@@ -9,16 +9,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * FreelookMixin — перехватывает движение мыши при активном Freelook.
- *
- * В 1.21.11 MouseHandler.turnPlayer(double) принимает один double,
- * поэтому dx/dy ловим в onMove(long, double, double).
- *
- * При активном Freelook:
- *   - не даём ванилле вращать игрока (ci.cancel())
- *   - передаём дельты в FreelookManager для вращения камеры
- */
 @Mixin(MouseHandler.class)
 public class FreelookMixin {
 
@@ -30,21 +20,18 @@ public class FreelookMixin {
 
     @Inject(method = "onMove(JDD)V", at = @At("HEAD"), cancellable = true, require = 0)
     private void onMove(long window, double xpos, double ypos, CallbackInfo ci) {
-        // Если фича выключена — просто сбрасываем состояние и пропускаем
         if (!ModConfig.freelookEnabled) {
             resistancedlc$lastX = Double.NaN;
             resistancedlc$lastY = Double.NaN;
             return;
         }
 
-        // Если Freelook не активен — сбрасываем состояние и пропускаем
         if (!FreelookManager.isActive()) {
             resistancedlc$lastX = Double.NaN;
             resistancedlc$lastY = Double.NaN;
             return;
         }
 
-        // Первый кадр после активации — запоминаем точку, дельту не считаем
         if (Double.isNaN(resistancedlc$lastX) || Double.isNaN(resistancedlc$lastY)) {
             resistancedlc$lastX = xpos;
             resistancedlc$lastY = ypos;
@@ -56,10 +43,8 @@ public class FreelookMixin {
         resistancedlc$lastX = xpos;
         resistancedlc$lastY = ypos;
 
-        // Передаём дельты во FreelookManager (вращаем только камеру)
         FreelookManager.onMouseMove(dx, dy);
 
-        // Отменяем ванильный поворот игрока
         ci.cancel();
     }
 }

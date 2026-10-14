@@ -473,14 +473,34 @@ public class ModConfig {
 
     // ===================== LYRICS =====================
     public static boolean lyricsEnabled = false;
-    public static float lyricsDistance = 3.0f;          // 0.5..7.0
-    public static float lyricsFontSize = 1.4f;           // 0.8..2.0
+    public static float lyricsDistance = 5.0f;
+    public static float lyricsFontSize = 1.4f;
     public static int lyricsCurrentColor = 0xFFFFFFFF;
     public static int lyricsNextColor = 0xFFAAAAAA;
-    public static int lyricsAlpha = 255;                 // 0..255
-    public static int lyricsAngle = 15;          // было 30       // 10..60 (градусы)
+    public static int lyricsAlpha = 255;
+    public static float lyricsOffsetX = 0.0f;
     public static boolean lyricsShowNext = true;
 
+    // === Коммит 1 ===
+    public static float lyricsLineSpacing = 0.55f;
+    public static boolean lyricsFadeEnabled = true;
+    public static boolean lyricsPulseEnabled = true;
+    public static float lyricsPulseStrength = 0.15f;
+    public static boolean lyricsOutlineEnabled = true;
+    public static int lyricsOutlineColor = 0xFF000000;
+    public static int lyricsOutlineThickness = 1;
+    public static boolean lyricsGradientEnabled = false;
+    public static float lyricsGradientStrength = 0.3f;
+
+    // === Коммит 2 ===
+    public static boolean lyricsHolographic = true;
+    public static boolean lyricsEntranceEnabled = true;
+    public static boolean lyricsLrclibEnabled = true;
+
+    // === Коммит 3: Shake (тряска) ===
+    public static boolean lyricsShakeEnabled = false;
+    public static float lyricsShakeSpeed = 1.0f;    // 0.0..3.0
+    public static float lyricsShakeRadius = 0.5f;   // 0.0..3.0 (в блоках)
     // ===================== VOICE COMMANDS =====================
     public static boolean voiceCommandsEnabled = false;
     public static float voiceCommandThreshold = 0.35f;      // 0.20..0.95 (DTW порог)

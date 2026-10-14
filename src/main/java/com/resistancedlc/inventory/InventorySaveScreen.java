@@ -5,7 +5,7 @@ import com.resistancedlc.ConfigManager;
 import com.resistancedlc.LocalizationManager;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -83,17 +83,16 @@ public class InventorySaveScreen extends Screen {
         ConfigManager.save();
 
         if (mc.player != null) {
-            mc.player.displayClientMessage(Component.literal(
+            mc.player.sendSystemMessage(Component.literal(
                             "§a[Inventory] " + LocalizationManager.get(
-                                    "gui.resistancedlc.inventory.saved_msg", slotIndex)),
-                    true);
+                                    "gui.resistancedlc.inventory.saved_msg", slotIndex)));
         }
 
         this.onClose();
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         graphics.fill(0, 0, this.width, this.height, 0x80000000);
         graphics.fill(panelX, panelY, panelX + W, panelY + H, 0xC0000000);
         graphics.fill(panelX, panelY, panelX + W, panelY + 2, 0xFF60A0FF);
@@ -101,12 +100,12 @@ public class InventorySaveScreen extends Screen {
         graphics.fill(panelX, panelY, panelX + 2, panelY + H, 0xFF60A0FF);
         graphics.fill(panelX + W - 2, panelY, panelX + W, panelY + H, 0xFF60A0FF);
 
-        graphics.drawString(this.font,
+        graphics.text(this.font,
                 "§l" + LocalizationManager.get("gui.resistancedlc.inventory.save.title")
                         + " §7# " + slotIndex,
                 panelX + 15, panelY + 12, 0xFFFFFFFF, true);
 
-        super.render(graphics, mouseX, mouseY, delta);
+        super.extractRenderState(graphics, mouseX, mouseY, delta);
     }
 
     @Override

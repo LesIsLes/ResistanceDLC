@@ -3,8 +3,7 @@ package com.resistancedlc.mixin;
 import com.resistancedlc.FreelookManager;
 import com.resistancedlc.config.ModConfig;
 import net.minecraft.client.Camera;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.Level;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -14,26 +13,23 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * CameraMixin — override rotation и позиции камеры при активном Freelook.
  *
- * Сигнатура setup (official Mojang mappings, 1.21.11):
- *   setup(Level, Entity, boolean, boolean, float, CallbackInfo)
+ * Сигнатура update (official Mojang mappings, 26.1):
+ *   update(DeltaTracker, CallbackInfo)
  *
- * Используем raw значения yaw/pitch из мыши (без интерполяции),
- * а позицию берём от ИНТЕРПОЛИРОВАННОЙ позиции глаз игрока.
+ * partialTick берём из DeltaTracker.
  */
 @Mixin(Camera.class)
 public abstract class CameraMixin implements CameraInvoker {
 
-    @Inject(method = "setup", at = @At("RETURN"))
-    private void onSetupReturn(
-            Level level,
-            Entity entity,
-            boolean bl,
-            boolean bl2,
-            float partialTick,
+    @Inject(method = "update", at = @At("RETURN"))
+    private void onUpdateReturn(
+            DeltaTracker deltaTracker,
             CallbackInfo ci
     ) {
         if (!ModConfig.freelookEnabled) return;
         if (!FreelookManager.isActive()) return;
+
+        float partialTick = deltaTracker.getGameTimeDeltaPartialTick(true);
 
         // Rotation — raw yaw/pitch (мышь даёт малые дельты)
         float yaw = FreelookManager.getCameraYaw();

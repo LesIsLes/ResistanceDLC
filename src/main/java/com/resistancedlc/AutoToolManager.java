@@ -2,7 +2,7 @@ package com.resistancedlc;
 
 import com.resistancedlc.config.ModConfig;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -15,7 +15,7 @@ public class AutoToolManager {
         if (!ModConfig.autoToolEnabled) return;
 
         Minecraft client = Minecraft.getInstance();
-        LocalPlayer player = client.player;
+        net.minecraft.world.entity.player.Player player = client.player;
         if (player == null) return;
 
         int bestSlot = findBestToolSlot(player, state);
@@ -37,7 +37,7 @@ public class AutoToolManager {
         if (!ModConfig.autoToolSwitchBack) return;
 
         Minecraft client = Minecraft.getInstance();
-        LocalPlayer player = client.player;
+        net.minecraft.world.entity.player.Player player = client.player;
         if (player == null) return;
 
         if (previousSlot >= 0 && switchedSlot >= 0) {
@@ -47,7 +47,7 @@ public class AutoToolManager {
         switchedSlot = -1;
     }
 
-    private static int findBestToolSlot(LocalPlayer player, BlockState state) {
+    private static int findBestToolSlot(net.minecraft.world.entity.player.Player player, BlockState state) {
         int currentSlot = player.getInventory().getSelectedSlot();
         ItemStack currentStack = player.getInventory().getItem(currentSlot);
         float currentSpeed = currentStack.getDestroySpeed(state);

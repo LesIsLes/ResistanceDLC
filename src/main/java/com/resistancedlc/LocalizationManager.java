@@ -78,8 +78,12 @@ public class LocalizationManager {
     public static String get(String key, Object... args) {
         String template = get(key);
         try {
-            return String.format(template, args);
+            return String.format(java.util.Locale.ROOT, template, args);
         } catch (Exception e) {
+            ResistanceDLC.LOGGER.warn("[Localization] format failed: key=" + key
+                    + " template='" + template + "'"
+                    + " args=" + java.util.Arrays.toString(args)
+                    + " err=" + e.getClass().getSimpleName() + ": " + e.getMessage());
             return template;
         }
     }

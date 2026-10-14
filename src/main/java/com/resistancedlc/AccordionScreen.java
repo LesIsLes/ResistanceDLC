@@ -4,7 +4,7 @@ import com.resistancedlc.config.ModConfig;
 
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
@@ -1534,7 +1534,7 @@ public class AccordionScreen extends Screen {
                     ConfigManager.save();
                 }
         );
-        lyricsItem.contentHeight = 232;
+        lyricsItem.contentHeight = 500;
         music.items.add(lyricsItem);
 
         sections.add(music);
@@ -3940,14 +3940,14 @@ public class AccordionScreen extends Screen {
                     boolean added = WaypointManager.addWaypoint(px, py, pz);
                     if (added) {
                         int idx = WaypointManager.getWaypoints().size();
-                        mc.player.displayClientMessage(Component.literal(String.format(
+                        mc.player.sendSystemMessage(Component.literal(String.format(
                                 "§a[Waypoints] Добавлена метка §6WP%d§a: §e%d, %d, %d",
-                                idx, (int) px, (int) py, (int) pz)), true);
+                                idx, (int) px, (int) py, (int) pz)));
                         contentScroll = 0;
                         rebuildWaypointsPanel();
                     } else {
-                        mc.player.displayClientMessage(Component.literal(
-                                "§c[Waypoints] Достигнут лимит (" + ModConfig.waypointsMax + ")"), true);
+                        mc.player.sendSystemMessage(Component.literal(
+                                "§c[Waypoints] Достигнут лимит (" + ModConfig.waypointsMax + ")"));
                     }
                 }
         ).bounds(x, curY, w, 20).build());
@@ -3991,8 +3991,8 @@ public class AccordionScreen extends Screen {
                 widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.rename")), (b) -> {
                     Minecraft mc = Minecraft.getInstance();
                     if (mc.player != null) {
-                        mc.player.displayClientMessage(Component.literal(
-                                "§7Переименование: используйте команду §e/wp rename <старое> <новое>"), false);
+                        mc.player.sendSystemMessage(Component.literal(
+                                "§7Переименование: используйте команду §e/wp rename <старое> <новое>"));
                     }
                 }).bounds(x + w - 48, rowY, 22, 18).build());
 
@@ -4282,11 +4282,10 @@ public class AccordionScreen extends Screen {
                     InventorySnapshotManager.openFolder();
                     Minecraft mc = Minecraft.getInstance();
                     if (mc.player != null) {
-                        mc.player.displayClientMessage(Component.literal(
+                        mc.player.sendSystemMessage(Component.literal(
                                         "§a" + LocalizationManager.get(
                                                 "gui.resistancedlc.inventory.folder_opened",
-                                                InventorySnapshotManager.getDir().toAbsolutePath().toString())),
-                                false);
+                                                InventorySnapshotManager.getDir().toAbsolutePath().toString())));
                     }
                 }
         ).bounds(x, curY, w, 20).build());
@@ -4451,9 +4450,9 @@ public class AccordionScreen extends Screen {
                     ConfigManager.openFolder();
                     Minecraft mc = Minecraft.getInstance();
                     if (mc.player != null) {
-                        mc.player.displayClientMessage(Component.literal(
+                        mc.player.sendSystemMessage(Component.literal(
                                 "§a" + LocalizationManager.get("gui.resistancedlc.message.folder_opened",
-                                        ConfigManager.getConfigDirPath())), false);
+                                        ConfigManager.getConfigDirPath())));
                     }
                 }
         ).bounds(x, curY, w, 20).build());
@@ -4465,8 +4464,8 @@ public class AccordionScreen extends Screen {
                     ConfigManager.saveNow();
                     Minecraft mc = Minecraft.getInstance();
                     if (mc.player != null) {
-                        mc.player.displayClientMessage(Component.literal(
-                                "§a" + LocalizationManager.get("gui.resistancedlc.message.config_saved", "default")), true);
+                        mc.player.sendSystemMessage(Component.literal(
+                                "§a" + LocalizationManager.get("gui.resistancedlc.message.config_saved", "default")));
                     }
                 }
         ).bounds(x, curY, w, 20).build());
@@ -4478,16 +4477,16 @@ public class AccordionScreen extends Screen {
                     if (ConfigManager.loadFrom("default")) {
                         Minecraft mc = Minecraft.getInstance();
                         if (mc.player != null) {
-                            mc.player.displayClientMessage(Component.literal(
-                                    "§a" + LocalizationManager.get("gui.resistancedlc.message.config_loaded", "default")), true);
+                            mc.player.sendSystemMessage(Component.literal(
+                                    "§a" + LocalizationManager.get("gui.resistancedlc.message.config_loaded", "default")));
                         }
                         contentScroll = 0;
                         rebuildConfigManagerPanel();
                     } else {
                         Minecraft mc = Minecraft.getInstance();
                         if (mc.player != null) {
-                            mc.player.displayClientMessage(Component.literal(
-                                    "§c" + LocalizationManager.get("gui.resistancedlc.message.config_not_found", "default")), true);
+                            mc.player.sendSystemMessage(Component.literal(
+                                    "§c" + LocalizationManager.get("gui.resistancedlc.message.config_not_found", "default")));
                         }
                     }
                 }
@@ -4507,8 +4506,8 @@ public class AccordionScreen extends Screen {
                     if (ConfigManager.saveAs(name)) {
                         Minecraft mc = Minecraft.getInstance();
                         if (mc.player != null) {
-                            mc.player.displayClientMessage(Component.literal(
-                                    "§a" + LocalizationManager.get("gui.resistancedlc.message.config_saved", name)), true);
+                            mc.player.sendSystemMessage(Component.literal(
+                                    "§a" + LocalizationManager.get("gui.resistancedlc.message.config_saved", name)));
                         }
                         contentScroll = 0;
                         rebuildConfigManagerPanel();
@@ -5372,8 +5371,8 @@ public class AccordionScreen extends Screen {
                     com.resistancedlc.voice.VoiceCommandListener.startCalibration();
                     Minecraft mc = Minecraft.getInstance();
                     if (mc.player != null) {
-                        mc.player.displayClientMessage(Component.literal(
-                                "§e[Voice] Calibration started. Stay silent for 10 sec..."), true);
+                        mc.player.sendSystemMessage(Component.literal(
+                                "§e[Voice] Calibration started. Stay silent for 10 sec..."));
                     }
                 }
         ).bounds(x, curY, w, 20).build());
@@ -5410,10 +5409,10 @@ public class AccordionScreen extends Screen {
                     com.resistancedlc.voice.VoiceCommandManager.loadAll();
                     Minecraft mc = Minecraft.getInstance();
                     if (mc.player != null) {
-                        mc.player.displayClientMessage(Component.literal(
+                        mc.player.sendSystemMessage(Component.literal(
                                 "§a[Voice] Rescan done. Commands: "
                                         + com.resistancedlc.voice.VoiceCommandManager
-                                        .getAllMfcc().size()), true);
+                                        .getAllMfcc().size()));
                     }
                 }
         ).bounds(x, curY, w, 20).build());
@@ -5426,29 +5425,31 @@ public class AccordionScreen extends Screen {
     // ===================== LYRICS =====================
     private void buildLyricsPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int w = right - x;
-        int rowH = 22, rowGap = 6;
+        int rowH = 24, rowGap = 6;
+        int cbH = 26;
         int curY = y;
 
+        // ===== Distance =====
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.distance",
                         ModConfig.lyricsDistance)),
-                (ModConfig.lyricsDistance - 0.5f) / 6.5f
+                (ModConfig.lyricsDistance - 1.0f) / 14.0f
         ) {
             @Override
             protected void updateMessage() {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.distance",
                         ModConfig.lyricsDistance)));
             }
-
             @Override
             protected void applyValue() {
-                ModConfig.lyricsDistance = 0.5f + (float) (this.value * 6.5f);
+                ModConfig.lyricsDistance = 1.0f + (float) (this.value * 14.0f);
                 this.updateMessage();
                 ConfigManager.save();
             }
         });
         curY += rowH + rowGap;
 
+        // ===== Font size =====
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.font_size",
                         ModConfig.lyricsFontSize)),
@@ -5459,7 +5460,6 @@ public class AccordionScreen extends Screen {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.font_size",
                         ModConfig.lyricsFontSize)));
             }
-
             @Override
             protected void applyValue() {
                 ModConfig.lyricsFontSize = 0.8f + (float) (this.value * 1.2f);
@@ -5469,26 +5469,167 @@ public class AccordionScreen extends Screen {
         });
         curY += rowH + rowGap;
 
+        // ===== Line spacing =====
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
-                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.angle",
-                        ModConfig.lyricsAngle)),
-                (ModConfig.lyricsAngle - 10) / 50.0
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.line_spacing",
+                        (float) ModConfig.lyricsLineSpacing)),
+                (ModConfig.lyricsLineSpacing - 0.2f) / 1.3f
         ) {
             @Override
             protected void updateMessage() {
-                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.angle",
-                        ModConfig.lyricsAngle)));
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.line_spacing",
+                        (float) ModConfig.lyricsLineSpacing)));
             }
-
             @Override
             protected void applyValue() {
-                ModConfig.lyricsAngle = 10 + (int) (this.value * 50);
+                ModConfig.lyricsLineSpacing = 0.2f + (float) (this.value * 1.3f);
                 this.updateMessage();
                 ConfigManager.save();
             }
         });
         curY += rowH + rowGap;
 
+        // ===== Pulse strength =====
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.pulse_strength",
+                        (float) ModConfig.lyricsPulseStrength)),
+                ModConfig.lyricsPulseStrength / 0.5f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.pulse_strength",
+                        (float) ModConfig.lyricsPulseStrength)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.lyricsPulseStrength = (float) (this.value * 0.5f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // ===== Outline thickness =====
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.outline_thickness",
+                        ModConfig.lyricsOutlineThickness)),
+                (ModConfig.lyricsOutlineThickness - 1) / 2.0
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.outline_thickness",
+                        ModConfig.lyricsOutlineThickness)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.lyricsOutlineThickness = 1 + (int) (this.value * 2);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // ===== Gradient strength =====
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.gradient_strength",
+                        (float) ModConfig.lyricsGradientStrength)),
+                ModConfig.lyricsGradientStrength
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.gradient_strength",
+                        (float) ModConfig.lyricsGradientStrength)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.lyricsGradientStrength = (float) this.value;
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // ===== Checkbox: Pulse =====
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.pulse_enable")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.lyricsPulseEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.lyricsPulseEnabled = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += cbH;
+
+        // ===== Checkbox: LRCLIB =====
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.lrclib_enable")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.lyricsLrclibEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.lyricsLrclibEnabled = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += cbH;
+
+        // ===== Checkbox: Outline =====
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.outline_enable")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.lyricsOutlineEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.lyricsOutlineEnabled = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += cbH;
+
+        // ===== Checkbox: Holographic =====
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.holographic_enable")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.lyricsHolographic)
+                .onValueChange((c, v) -> {
+                    ModConfig.lyricsHolographic = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += cbH;
+
+        // ===== Checkbox: Entrance =====
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.entrance_enable")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.lyricsEntranceEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.lyricsEntranceEnabled = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += cbH + rowGap;
+
+        // ===== Angle =====
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.offset_x",
+                        String.format("%.2f", ModConfig.lyricsOffsetX))),
+                (ModConfig.lyricsOffsetX + 1.0f) / 2.0f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.offset_x",
+                        String.format("%.2f", ModConfig.lyricsOffsetX))));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.lyricsOffsetX = (float) (this.value * 2.0 - 1.0);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // ===== Alpha =====
         widgets.add(new AbstractSliderButton(x, curY, w, 20,
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.alpha", ModConfig.lyricsAlpha)),
                 ModConfig.lyricsAlpha / 255.0
@@ -5498,7 +5639,6 @@ public class AccordionScreen extends Screen {
                 this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.alpha",
                         ModConfig.lyricsAlpha)));
             }
-
             @Override
             protected void applyValue() {
                 ModConfig.lyricsAlpha = (int) (this.value * 255);
@@ -5508,16 +5648,69 @@ public class AccordionScreen extends Screen {
         });
         curY += rowH + rowGap;
 
+        // ===== Checkbox: Show next =====
         widgets.add(Checkbox.builder(
-                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.show_next")), this.font)
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.show_next")),
+                        this.font)
                 .pos(x, curY).selected(ModConfig.lyricsShowNext)
                 .onValueChange((c, v) -> {
                     ModConfig.lyricsShowNext = v;
                     ConfigManager.save();
                 })
                 .build());
+        curY += cbH + rowGap;
+        // ===== Checkbox: Shake =====
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.shake_enable")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.lyricsShakeEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.lyricsShakeEnabled = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += cbH;
+
+        // ===== Shake speed =====
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.shake_speed",
+                        String.format(java.util.Locale.ROOT, "%.2f", ModConfig.lyricsShakeSpeed))),
+                ModConfig.lyricsShakeSpeed / 3.0f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.shake_speed",
+                        String.format(java.util.Locale.ROOT, "%.2f", ModConfig.lyricsShakeSpeed))));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.lyricsShakeSpeed = (float) (this.value * 3.0);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
         curY += rowH + rowGap;
 
+        // ===== Shake radius =====
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.shake_radius",
+                        String.format(java.util.Locale.ROOT, "%.2f", ModConfig.lyricsShakeRadius))),
+                ModConfig.lyricsShakeRadius / 3.0f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.lyrics.shake_radius",
+                        String.format(java.util.Locale.ROOT, "%.2f", ModConfig.lyricsShakeRadius))));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.lyricsShakeRadius = (float) (this.value * 3.0);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+        // ===== Colors =====
         addColorRow(widgets, x, curY, right,
                 LocalizationManager.get("gui.resistancedlc.panel.lyrics.current_color"),
                 () -> ModConfig.lyricsCurrentColor,
@@ -6593,7 +6786,7 @@ public class AccordionScreen extends Screen {
 
     // ===================== РЕНДЕР =====================
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         tickAnimations(delta);
         ThemeManager.updateThemeIndexFromConfig();
 
@@ -6621,8 +6814,8 @@ public class AccordionScreen extends Screen {
         graphics.fill(panelX, panelY, panelX + PANEL_WIDTH, panelY + PANEL_HEIGHT, 0xC0000000);
 
         drawPanelBorders(graphics);
-        graphics.drawString(this.font, "§l" + LocalizationManager.get("gui.resistancedlc.title"),
-                panelX + 15, panelY + 11, ThemeManager.getCurrentGuiColor(), true);
+        graphics.text(this.font, "§l" + LocalizationManager.get("gui.resistancedlc.title"),
+                panelX + 15, panelY + 11, ThemeManager.getCurrentGuiColor());
 
         if (globalSearchOpen || globalSearchClosing) {
             drawGlobalSearchBackground(graphics);
@@ -6635,7 +6828,7 @@ public class AccordionScreen extends Screen {
             drawContent(graphics, mouseX, mouseY);
         }
 
-        super.render(graphics, mouseX, mouseY, delta);
+        super.extractRenderState(graphics, mouseX, mouseY, delta);
         updateWidgetsVisibility();
 
         drawThemeButtons(graphics, mouseX, mouseY);
@@ -6659,7 +6852,7 @@ public class AccordionScreen extends Screen {
             "Vanilla", "Dark", "Candy", "Neon", "Blood"
     };
 
-    private void drawThemeButtons(GuiGraphics graphics, int mouseX, int mouseY) {
+    private void drawThemeButtons(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         int themeBtnSize = 18;
         int themeBtnGap = 4;
         int themeBtnY = panelY + 6;
@@ -6715,7 +6908,7 @@ public class AccordionScreen extends Screen {
         }
     }
 
-    private void drawTooltip(GuiGraphics graphics, String text, int mouseX, int mouseY) {
+    private void drawTooltip(GuiGraphicsExtractor graphics, String text, int mouseX, int mouseY) {
         int w = this.font.width(text) + 8;
         int h = 14;
         int x = mouseX + 10;
@@ -6733,10 +6926,10 @@ public class AccordionScreen extends Screen {
         graphics.fill(x, y, x + 1, y + h, guiCol);
         graphics.fill(x + w - 1, y, x + w, y + h, guiCol);
 
-        graphics.drawString(this.font, text, x + 4, y + 3, 0xFFFFFFFF, false);
+        graphics.text(this.font, text, x + 4, y + 3, 0xFFFFFFFF, false);
     }
 
-    private void drawPanelBorders(GuiGraphics graphics) {
+    private void drawPanelBorders(GuiGraphicsExtractor graphics) {
         ThemeManager.drawAnimatedBorder(
                 graphics,
                 panelX, panelY,
@@ -6745,7 +6938,7 @@ public class AccordionScreen extends Screen {
         );
     }
 
-    private void drawColumn(GuiGraphics graphics, int mouseX, int mouseY) {
+    private void drawColumn(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         int colLeft = panelX + 2;
         int colTop = panelY + HEADER_HEIGHT;
         int colBottom = panelY + PANEL_HEIGHT - 2;
@@ -6795,16 +6988,16 @@ public class AccordionScreen extends Screen {
             graphics.pose().translate((float) iconX, (float) iconY);
             float scale = (iconSize == 32) ? 2.0f : 1.5f;
             graphics.pose().scale(scale, scale);
-            graphics.renderItem(section.icon, 0, 0);
+            graphics.item(section.icon, 0, 0);
             graphics.pose().popMatrix();
 
             if (columnWidth > 100) {
                 int textX = iconX + iconSize + 10;
                 int nameY = iconY + (iconSize - 8) / 2 - 6;
                 int nameColor = isActive ? ThemeManager.getCurrentGuiColor() : 0xFFEEEEEE;
-                graphics.drawString(this.font, "§l" + section.name, textX, nameY, nameColor, true);
+                graphics.text(this.font, "§l" + section.name, textX, nameY, nameColor, true);
                 if (columnWidth > 140) {
-                    graphics.drawString(this.font, "§7" + section.description,
+                    graphics.text(this.font, "§7" + section.description,
                             textX, nameY + 12, 0xFFAAAAAA, false);
                 }
             }
@@ -6840,22 +7033,22 @@ public class AccordionScreen extends Screen {
         graphics.pose().translate((float) searchIconX, (float) searchIconY);
         float searchScale = (iconSize == 32) ? 2.0f : 1.5f;
         graphics.pose().scale(searchScale, searchScale);
-        graphics.renderItem(new ItemStack(Items.SPYGLASS), 0, 0);
+        graphics.item(new ItemStack(Items.SPYGLASS), 0, 0);
         graphics.pose().popMatrix();
 
         if (columnWidth > 100) {
             int searchTextX = searchIconX + iconSize + 10;
             int searchNameY = searchIconY + (iconSize - 8) / 2 - 6;
-            graphics.drawString(this.font, "§l" + LocalizationManager.get("gui.resistancedlc.search"),
+            graphics.text(this.font, "§l" + LocalizationManager.get("gui.resistancedlc.search"),
                     searchTextX, searchNameY, 0xFFEEEEEE, true);
             if (columnWidth > 140) {
-                graphics.drawString(this.font, "§7" + LocalizationManager.get("gui.resistancedlc.search.all"),
+                graphics.text(this.font, "§7" + LocalizationManager.get("gui.resistancedlc.search.all"),
                         searchTextX, searchNameY + 12, 0xFFAAAAAA, false);
             }
         }
     }
 
-    private void drawContent(GuiGraphics graphics, int mouseX, int mouseY) {
+    private void drawContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         int contentLeft = getContentLeft();
         int contentTop = getContentTop();
         int contentRight = getContentRight();
@@ -6869,9 +7062,9 @@ public class AccordionScreen extends Screen {
         );
 
         Section active = sections.get(activeSectionIndex);
-        graphics.drawString(this.font, "§l▸ " + active.name,
+        graphics.text(this.font, "§l▸ " + active.name,
                 contentLeft + 15, contentTop + 8, ThemeManager.getCurrentGuiColor(), true);
-        graphics.drawString(this.font, "§7" + active.description,
+        graphics.text(this.font, "§7" + active.description,
                 contentLeft + 15, contentTop + 22, 0xFFAAAAAA, false);
 
         graphics.fill(contentLeft + 15, contentTop + 36,
@@ -6887,7 +7080,7 @@ public class AccordionScreen extends Screen {
         boolean searchActive = searchField != null && !searchField.getValue().trim().isEmpty();
         if (searchActive && filteredItems.isEmpty()) {
             String noResults = "§7" + LocalizationManager.get("gui.resistancedlc.search.nothing");
-            graphics.drawString(this.font, noResults,
+            graphics.text(this.font, noResults,
                     listLeft + 15, listTop + 10, 0xFFAAAAAA, false);
             maxContentScroll = 0;
             contentScroll = 0;
@@ -6957,7 +7150,7 @@ public class AccordionScreen extends Screen {
         }
     }
 
-    private void drawAccordionItemClipped(GuiGraphics graphics, AccordionItem item,
+    private void drawAccordionItemClipped(GuiGraphicsExtractor graphics, AccordionItem item,
                                           int left, int itemY, int right, int itemHeight,
                                           boolean isHover, int clipTop, int clipBottom) {
         int top = itemY;
@@ -6988,23 +7181,23 @@ public class AccordionScreen extends Screen {
 
         if (top + 8 >= clipTop && top + 8 <= clipBottom) {
             String arrow = item.expanded ? "▼" : "▶";
-            graphics.drawString(this.font, arrow, left + 8, top + 8, ThemeManager.getCurrentGuiColor(), true);
+            graphics.text(this.font, arrow, left + 8, top + 8, ThemeManager.getCurrentGuiColor(), true);
         }
         if (top + 3 >= clipTop && top + 3 <= clipBottom) {
-            graphics.drawString(this.font, "§l" + item.title, left + 22, top + 3, textColor, true);
+            graphics.text(this.font, "§l" + item.title, left + 22, top + 3, textColor, true);
         }
         if (top + 14 >= clipTop && top + 14 <= clipBottom) {
-            graphics.drawString(this.font, "§7" + item.description, left + 22, top + 14, descColor, false);
+            graphics.text(this.font, "§7" + item.description, left + 22, top + 14, descColor, false);
         }
         if (top + 6 >= clipTop && top + 6 <= clipBottom) {
             boolean status = item.statusGetter.get();
             String statusText = status ? "§a[ON]" : "§7[OFF]";
             int statusWidth = this.font.width(statusText);
-            graphics.drawString(this.font, statusText, right - statusWidth - 10, top + 6, textColor, true);
+            graphics.text(this.font, statusText, right - statusWidth - 10, top + 6, textColor, true);
         }
     }
 
-    private void drawItemPanelClipped(GuiGraphics graphics, AccordionItem item,
+    private void drawItemPanelClipped(GuiGraphicsExtractor graphics, AccordionItem item,
                                       int left, int panelY, int right,
                                       int clipTop, int clipBottom, int panelHeight) {
         int top = panelY;
@@ -7026,7 +7219,7 @@ public class AccordionScreen extends Screen {
         graphics.fill(right - 1, visibleTop, right, visibleBottom, 0xFF505050);
     }
 
-    private void drawAccordionItem(GuiGraphics graphics, AccordionItem item,
+    private void drawAccordionItem(GuiGraphicsExtractor graphics, AccordionItem item,
                                    int contentLeft, int itemY, int contentRight, int itemHeight,
                                    boolean isHover) {
         int left = contentLeft + 5;
@@ -7059,9 +7252,9 @@ public class AccordionScreen extends Screen {
         }
 
         String arrow = item.expanded ? "▼" : "▶";
-        graphics.drawString(this.font, arrow, left + 8, top + 8, ThemeManager.getCurrentGuiColor(), true);
-        graphics.drawString(this.font, "§l" + item.title, left + 22, top + 3, textColor, true);
-        graphics.drawString(this.font, "§7" + item.description, left + 22, top + 14, descColor, false);
+        graphics.text(this.font, arrow, left + 8, top + 8, ThemeManager.getCurrentGuiColor(), true);
+        graphics.text(this.font, "§l" + item.title, left + 22, top + 3, textColor, true);
+        graphics.text(this.font, "§7" + item.description, left + 22, top + 14, descColor, false);
 
         boolean showStatus = !"hud_editor".equals(item.id)
                 && !"death_recap".equals(item.id);
@@ -7070,12 +7263,12 @@ public class AccordionScreen extends Screen {
             boolean status = item.statusGetter.get();
             String statusText = status ? "§a[ON]" : "§7[OFF]";
             statusWidth = this.font.width(statusText);
-            graphics.drawString(this.font, statusText, right - statusWidth - 10, top + 6, textColor, true);
+            graphics.text(this.font, statusText, right - statusWidth - 10, top + 6, textColor, true);
         }
 
         if (isHover && !item.expanded) {
             int arrowX = right - statusWidth - 26;
-            graphics.drawString(this.font, "§7→", arrowX, top + 10, descColor, false);
+            graphics.text(this.font, "§7→", arrowX, top + 10, descColor, false);
         }
 
         if (isHighlightActive(item)) {
@@ -7102,7 +7295,7 @@ public class AccordionScreen extends Screen {
     }
 
     // ===================== OVERLAY =====================
-    private void drawGlobalSearchBackground(GuiGraphics graphics) {
+    private void drawGlobalSearchBackground(GuiGraphicsExtractor graphics) {
         int overlayX = panelX + (PANEL_WIDTH - OVERLAY_W) / 2;
         int overlayY = panelY + (PANEL_HEIGHT - OVERLAY_H) / 2;
 
@@ -7120,18 +7313,18 @@ public class AccordionScreen extends Screen {
         graphics.fill(overlayX, overlayY, overlayX + 2, overlayY + OVERLAY_H, borderColor);
         graphics.fill(overlayX + OVERLAY_W - 2, overlayY, overlayX + OVERLAY_W, overlayY + OVERLAY_H, borderColor);
 
-        graphics.drawString(this.font,
+        graphics.text(this.font,
                 "§l🔍 " + LocalizationManager.get("gui.resistancedlc.search.global"),
                 overlayX + 15, overlayY + 15, borderColor, true);
     }
 
-    private void drawGlobalSearchForeground(GuiGraphics graphics, int mouseX, int mouseY) {
+    private void drawGlobalSearchForeground(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         int overlayX = panelX + (PANEL_WIDTH - OVERLAY_W) / 2;
         int overlayY = panelY + (PANEL_HEIGHT - OVERLAY_H) / 2;
 
         int alpha = (int) (0xFF * globalSearchFadeProgress);
 
-        graphics.drawString(this.font,
+        graphics.text(this.font,
                 "§7" + LocalizationManager.get("gui.resistancedlc.search.found", globalSearchResults.size()),
                 overlayX + 15, overlayY + 70, (alpha << 24) | 0xAAAAAA, false);
 
@@ -7145,11 +7338,11 @@ public class AccordionScreen extends Screen {
         String query = globalSearchField != null ? globalSearchField.getValue().trim() : "";
 
         if (query.isEmpty()) {
-            graphics.drawString(this.font,
+            graphics.text(this.font,
                     "§7" + LocalizationManager.get("gui.resistancedlc.search.start"),
                     globalSearchListX + 5, globalSearchListY + 10, (alpha << 24) | 0x888888, false);
         } else if (globalSearchResults.isEmpty()) {
-            graphics.drawString(this.font,
+            graphics.text(this.font,
                     "§7" + LocalizationManager.get("gui.resistancedlc.search.nothing"),
                     globalSearchListX + 5, globalSearchListY + 10, (alpha << 24) | 0x888888, false);
         } else {
@@ -7176,16 +7369,16 @@ public class AccordionScreen extends Screen {
                 }
 
                 String text = "§f" + r[2] + " §7· §e" + sectionName;
-                graphics.drawString(this.font, text, globalSearchListX + 10, rowY + 6, (alpha << 24) | 0xFFFFFF, false);
+                graphics.text(this.font, text, globalSearchListX + 10, rowY + 6, (alpha << 24) | 0xFFFFFF, false);
 
                 String desc = r[3];
                 if (desc.length() > 40) desc = desc.substring(0, 40) + "...";
-                graphics.drawString(this.font, "§8" + desc,
+                graphics.text(this.font, "§8" + desc,
                         globalSearchListX + 10 + this.font.width(text) + 8, rowY + 6, (alpha << 24) | 0x888888, false);
             }
         }
 
-        graphics.drawString(this.font,
+        graphics.text(this.font,
                 "§7" + LocalizationManager.get("gui.resistancedlc.search.click"),
                 overlayX + 15, overlayY + OVERLAY_H - 18, (alpha << 24) | 0xAAAAAA, false);
     }
@@ -7464,9 +7657,9 @@ public class AccordionScreen extends Screen {
         }
 
         @Override
-        protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+        protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
             if (!stack.isEmpty()) {
-                graphics.renderItem(stack, getX(), getY());
+                graphics.item(stack, getX(), getY());
             }
         }
 
@@ -7486,8 +7679,8 @@ public class AccordionScreen extends Screen {
         }
 
         @Override
-        protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-            graphics.drawString(
+        protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+            graphics.text(
                     net.minecraft.client.Minecraft.getInstance().font,
                     text, getX(), getY(), 0xFFFFFFFF, false);
         }
@@ -7508,7 +7701,7 @@ public class AccordionScreen extends Screen {
         }
 
         @Override
-        protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+        protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
             int bx = getX(), by = getY();
             graphics.fill(bx, by, bx + 20, by + 20, 0xFF1A1A1A);
             graphics.fill(bx, by, bx + 20, by + 1, 0xFF555555);
@@ -7517,8 +7710,8 @@ public class AccordionScreen extends Screen {
             graphics.fill(bx + 19, by, bx + 20, by + 20, 0xFF555555);
 
             if (!stack.isEmpty()) {
-                graphics.renderItem(stack, bx + 2, by + 2);
-                graphics.renderItemDecorations(
+                graphics.item(stack, bx + 2, by + 2);
+                graphics.itemDecorations(
                         net.minecraft.client.Minecraft.getInstance().font,
                         stack, bx + 2, by + 2);
             }
@@ -7540,8 +7733,8 @@ public class AccordionScreen extends Screen {
         }
 
         @Override
-        protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-            graphics.drawString(
+        protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+            graphics.text(
                     net.minecraft.client.Minecraft.getInstance().font,
                     text, getX(), getY(), 0xFFFFFFFF, false);
         }
@@ -7562,7 +7755,7 @@ public class AccordionScreen extends Screen {
         }
 
         @Override
-        protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+        protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.player == null) return;
 
@@ -7590,7 +7783,7 @@ public class AccordionScreen extends Screen {
                 int y2 = getY() + getHeight();
 
                 net.minecraft.client.gui.screens.inventory.InventoryScreen
-                        .renderEntityInInventoryFollowsMouse(
+                        .extractEntityInInventoryFollowsMouse(
                                 graphics, x1, y1, x2, y2,
                                 30,
                                 0.0625F,

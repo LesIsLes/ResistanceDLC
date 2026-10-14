@@ -52,7 +52,7 @@ public class PickUpLogger {
 
         String msg;
         while ((msg = PENDING_MESSAGES.poll()) != null) {
-            client.player.displayClientMessage(Component.literal(msg), false);
+            client.player.sendSystemMessage(Component.literal(msg));
         }
     }
 

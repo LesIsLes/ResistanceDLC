@@ -8,7 +8,6 @@ import com.resistancedlc.lyrics.LyricsNotificationHud;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
@@ -21,7 +20,7 @@ import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -37,7 +36,6 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.waypoints.TrackedWaypoint;
@@ -181,8 +179,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 if (keyEvent.key() == 256) {
                     AutoReconnectManager.cancel();
                     if (client.player != null) {
-                        client.player.displayClientMessage(
-                                Component.literal("§c" + LocalizationManager.get("gui.resistancedlc.autoreconnect.cancelled")), true);
+                        client.player.sendSystemMessage(
+                                Component.literal("§c" + LocalizationManager.get("gui.resistancedlc.autoreconnect.cancelled")));
                     }
                     return false;
                 }
@@ -201,7 +199,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
             WeatherChangeManager.reset();
             com.resistancedlc.targetesp.TargetManagerHolder.MANAGER.reset();
             JumpCirclesManager.reset();
-            GammaUtilManager.reset();
             ZoomManager.reset();
             MusicPlayerManager.stop();
             lastHealth = -1.0f;
@@ -225,7 +222,6 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 MusicPlayerManager.play();
             }
 
-            GammaUtilManager.reset();
             deathRecapCaptured = false;
         });
 
@@ -233,13 +229,13 @@ public class ResistanceDLCClient implements ClientModInitializer {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             // ===== WAYPOINTS COMMAND =====
             dispatcher.register(
-                    ClientCommandManager.literal("wp")
-                            .then(ClientCommandManager.literal("add")
-                                    .then(ClientCommandManager.argument("x",
+                    net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("wp")
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("add")
+                                    .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument("x",
                                                     com.mojang.brigadier.arguments.IntegerArgumentType.integer())
-                                            .then(ClientCommandManager.argument("y",
+                                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument("y",
                                                             com.mojang.brigadier.arguments.IntegerArgumentType.integer())
-                                                    .then(ClientCommandManager.argument("z",
+                                                    .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument("z",
                                                                     com.mojang.brigadier.arguments.IntegerArgumentType.integer())
                                                             .executes(context -> {
                                                                 int x = com.mojang.brigadier.arguments.IntegerArgumentType
@@ -258,18 +254,18 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                                             })))))
             );
             dispatcher.register(
-                    ClientCommandManager.literal("cfg")
+                    net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("cfg")
                             .executes(context -> { showCfgHelp(); return 1; })
-                            .then(ClientCommandManager.literal("help")
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("help")
                                     .executes(context -> { showCfgHelp(); return 1; }))
-                            .then(ClientCommandManager.literal("dir")
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("dir")
                                     .executes(context -> {
                                         ConfigManager.openFolder();
                                         sendMessage("§a" + LocalizationManager.get("gui.resistancedlc.message.folder_opened",
                                                 ConfigManager.getConfigDirPath()));
                                         return 1;
                                     }))
-                            .then(ClientCommandManager.literal("list")
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("list")
                                     .executes(context -> {
                                         List<String> configs = ConfigManager.listConfigs();
                                         if (configs.isEmpty()) {
@@ -283,8 +279,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                         }
                                         return 1;
                                     }))
-                            .then(ClientCommandManager.literal("save")
-                                    .then(ClientCommandManager.argument("name", StringArgumentType.string())
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("save")
+                                    .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument("name", StringArgumentType.string())
                                             .executes(context -> {
                                                 String name = StringArgumentType.getString(context, "name");
                                                 if (ConfigManager.saveAs(name)) {
@@ -294,8 +290,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                                 }
                                                 return 1;
                                             })))
-                            .then(ClientCommandManager.literal("load")
-                                    .then(ClientCommandManager.argument("name", StringArgumentType.string())
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("load")
+                                    .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument("name", StringArgumentType.string())
                                             .executes(context -> {
                                                 String name = StringArgumentType.getString(context, "name");
                                                 if (ConfigManager.loadFrom(name)) {
@@ -308,8 +304,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                                 }
                                                 return 1;
                                             })))
-                            .then(ClientCommandManager.literal("remove")
-                                    .then(ClientCommandManager.argument("name", StringArgumentType.string())
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("remove")
+                                    .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument("name", StringArgumentType.string())
                                             .executes(context -> {
                                                 String name = StringArgumentType.getString(context, "name");
                                                 if (ConfigManager.remove(name)) {
@@ -321,7 +317,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                             })))
             );
             dispatcher.register(
-                    ClientCommandManager.literal("voicerecord")
+                    net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("voicerecord")
                             .executes(context -> {
                                 if (com.resistancedlc.voice.VoiceCommandRecorder.isRecording()) {
                                     sendMessage("§c[Voice] Already recording");
@@ -371,7 +367,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
                             })
             );
             dispatcher.register(
-                    ClientCommandManager.literal("chatfilter")
+                    net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("chatfilter")
                             .executes(context -> {
                                 sendMessage("§6§l" + LocalizationManager.get("gui.resistancedlc.command.chatfilter.title"));
                                 sendMessage("§e" + LocalizationManager.get("gui.resistancedlc.command.chatfilter.add"));
@@ -381,8 +377,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                 sendMessage("§6§l════════════════════════════════");
                                 return 1;
                             })
-                            .then(ClientCommandManager.literal("add")
-                                    .then(ClientCommandManager.argument("word", StringArgumentType.string())
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("add")
+                                    .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument("word", StringArgumentType.string())
                                             .executes(context -> {
                                                 String word = StringArgumentType.getString(context, "word");
                                                 if (ChatFilterManager.addWord(word)) {
@@ -392,8 +388,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                                 }
                                                 return 1;
                                             })))
-                            .then(ClientCommandManager.literal("remove")
-                                    .then(ClientCommandManager.argument("word", StringArgumentType.string())
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("remove")
+                                    .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument("word", StringArgumentType.string())
                                             .executes(context -> {
                                                 String word = StringArgumentType.getString(context, "word");
                                                 if (ChatFilterManager.removeWord(word)) {
@@ -403,7 +399,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                                 }
                                                 return 1;
                                             })))
-                            .then(ClientCommandManager.literal("list")
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("list")
                                     .executes(context -> {
                                         List<String> words = ChatFilterManager.getWords();
                                         if (words.isEmpty()) {
@@ -414,7 +410,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                         }
                                         return 1;
                                     }))
-                            .then(ClientCommandManager.literal("clear")
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("clear")
                                     .executes(context -> {
                                         ChatFilterManager.clearWords();
                                         sendMessage("§a" + LocalizationManager.get("gui.resistancedlc.command.chatfilter.cleared"));
@@ -423,13 +419,13 @@ public class ResistanceDLCClient implements ClientModInitializer {
             );
 
             dispatcher.register(
-                    ClientCommandManager.literal("dc")
+                    net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("dc")
                             .executes(context -> { DeathCoordsManager.showLastDeath(); return 1; })
-                            .then(ClientCommandManager.literal("last")
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("last")
                                     .executes(context -> { DeathCoordsManager.showLastDeath(); return 1; }))
-                            .then(ClientCommandManager.literal("clear")
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("clear")
                                     .executes(context -> { DeathCoordsManager.clearLastDeath(); return 1; }))
-                            .then(ClientCommandManager.literal("toggle")
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("toggle")
                                     .executes(context -> {
                                         ModConfig.deathCoordsEnabled = !ModConfig.deathCoordsEnabled;
                                         ConfigManager.save();
@@ -439,12 +435,12 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                         sendMessage("§6DeathCoords " + state);
                                         return 1;
                                     }))
-                            .then(ClientCommandManager.literal("help")
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("help")
                                     .executes(context -> { DeathCoordsManager.showHelp(); return 1; }))
             );
 
             dispatcher.register(
-                    ClientCommandManager.literal("cooldowns")
+                    net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("cooldowns")
                             .executes(context -> {
                                 ModConfig.cooldownsEnabled = !ModConfig.cooldownsEnabled;
                                 ConfigManager.save();
@@ -457,7 +453,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
             );
 
             dispatcher.register(
-                    ClientCommandManager.literal("music")
+                    net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("music")
                             .executes(context -> {
                                 ModConfig.musicPlayerEnabled = !ModConfig.musicPlayerEnabled;
                                 ConfigManager.save();
@@ -465,31 +461,31 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                 sendMessage("§6MusicPlayer " + state);
                                 return 1;
                             })
-                            .then(ClientCommandManager.literal("play")
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("play")
                                     .executes(context -> { MusicPlayerManager.play(); return 1; }))
-                            .then(ClientCommandManager.literal("pause")
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("pause")
                                     .executes(context -> { MusicPlayerManager.pause(); return 1; }))
-                            .then(ClientCommandManager.literal("stop")
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("stop")
                                     .executes(context -> { MusicPlayerManager.stop(); return 1; }))
-                            .then(ClientCommandManager.literal("next")
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("next")
                                     .executes(context -> { MusicPlayerManager.next(); return 1; }))
-                            .then(ClientCommandManager.literal("prev")
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("prev")
                                     .executes(context -> { MusicPlayerManager.prev(); return 1; }))
-                            .then(ClientCommandManager.literal("rescan")
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("rescan")
                                     .executes(context -> {
                                         MusicPlayerManager.rescan();
                                         sendMessage("§a[Music] Плейлист обновлён: §e"
                                                 + MusicPlayerManager.getPlaylist().size() + " §aтреков");
                                         return 1;
                                     }))
-                            .then(ClientCommandManager.literal("folder")
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("folder")
                                     .executes(context -> {
                                         MusicPlayerManager.openMusicFolder();
                                         sendMessage("§a[Music] Папка открыта: §e"
                                                 + MusicPlayerManager.getMusicDirPath());
                                         return 1;
                                     }))
-                            .then(ClientCommandManager.literal("list")
+                            .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("list")
                                     .executes(context -> {
                                         List<MusicTrack> tracks = MusicPlayerManager.getPlaylist();
                                         if (tracks.isEmpty()) {
@@ -711,7 +707,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     String state = ModConfig.tapeMouseEnabled
                             ? LocalizationManager.get("gui.resistancedlc.message.toggle_on")
                             : LocalizationManager.get("gui.resistancedlc.message.toggle_off");
-                    client.player.displayClientMessage(Component.literal("§6TapeMouse " + state), true);
+                    client.player.sendSystemMessage(Component.literal("§6TapeMouse " + state));
                 }
             }
         });
@@ -727,8 +723,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     String state = ModConfig.customHitSoundsEnabled
                             ? LocalizationManager.get("gui.resistancedlc.message.toggle_on")
                             : LocalizationManager.get("gui.resistancedlc.message.toggle_off");
-                    client.player.displayClientMessage(
-                            Component.literal("§6Custom Hit Sounds " + state), true);
+                    client.player.sendSystemMessage(
+                            Component.literal("§6Custom Hit Sounds " + state));
                 }
             }
 
@@ -739,8 +735,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     String state = ModConfig.fastExpEnabled
                             ? LocalizationManager.get("gui.resistancedlc.message.toggle_on")
                             : LocalizationManager.get("gui.resistancedlc.message.toggle_off");
-                    client.player.displayClientMessage(
-                            Component.literal("§6FastExp " + state), true);
+                    client.player.sendSystemMessage(
+                            Component.literal("§6FastExp " + state));
                 }
             }
 
@@ -751,8 +747,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     String state = ModConfig.shiftTapEnabled
                             ? LocalizationManager.get("gui.resistancedlc.message.toggle_on")
                             : LocalizationManager.get("gui.resistancedlc.message.toggle_off");
-                    client.player.displayClientMessage(
-                            Component.literal("§6ShiftTap " + state), true);
+                    client.player.sendSystemMessage(
+                            Component.literal("§6ShiftTap " + state));
                 }
             }
 
@@ -763,8 +759,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     String state = ModConfig.comboEnabled
                             ? LocalizationManager.get("gui.resistancedlc.message.toggle_on")
                             : LocalizationManager.get("gui.resistancedlc.message.toggle_off");
-                    client.player.displayClientMessage(
-                            Component.literal("§6Combo Counter " + state), true);
+                    client.player.sendSystemMessage(
+                            Component.literal("§6Combo Counter " + state));
                 }
             }
 
@@ -775,8 +771,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     String state = ModConfig.effectWarningsEnabled
                             ? LocalizationManager.get("gui.resistancedlc.message.toggle_on")
                             : LocalizationManager.get("gui.resistancedlc.message.toggle_off");
-                    client.player.displayClientMessage(
-                            Component.literal("§6Effect Warnings " + state), true);
+                    client.player.sendSystemMessage(
+                            Component.literal("§6Effect Warnings " + state));
                 }
             }
 
@@ -787,8 +783,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     String state = ModConfig.totemLogEnabled
                             ? LocalizationManager.get("gui.resistancedlc.message.toggle_on")
                             : LocalizationManager.get("gui.resistancedlc.message.toggle_off");
-                    client.player.displayClientMessage(
-                            Component.literal("§6Totem Log " + state), true);
+                    client.player.sendSystemMessage(
+                            Component.literal("§6Totem Log " + state));
                 }
             }
 
@@ -799,8 +795,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     String state = ModConfig.pickupLogEnabled
                             ? LocalizationManager.get("gui.resistancedlc.message.toggle_on")
                             : LocalizationManager.get("gui.resistancedlc.message.toggle_off");
-                    client.player.displayClientMessage(
-                            Component.literal("§6PickUpLogger " + state), true);
+                    client.player.sendSystemMessage(
+                            Component.literal("§6PickUpLogger " + state));
                 }
             }
         });
@@ -865,15 +861,15 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 boolean added = WaypointManager.addWaypoint(x, y, z);
                 if (added) {
                     int newIndex = WaypointManager.getWaypoints().size();
-                    client.player.displayClientMessage(
+                    client.player.sendSystemMessage(
                             Component.literal("§a" + String.format(
                                     LocalizationManager.get("gui.resistancedlc.waypoints.added_msg"),
                                     LocalizationManager.get("gui.resistancedlc.waypoints.wp_prefix") + newIndex,
-                                    (int) x, (int) y, (int) z)), true);
+                                    (int) x, (int) y, (int) z)));
                 } else {
-                    client.player.displayClientMessage(
+                    client.player.sendSystemMessage(
                             Component.literal("§c" + LocalizationManager.get(
-                                    "gui.resistancedlc.message.waypoints_limit", ModConfig.waypointsMax)), true);
+                                    "gui.resistancedlc.message.waypoints_limit", ModConfig.waypointsMax)));
                 }
             }
         });
@@ -940,13 +936,16 @@ public class ResistanceDLCClient implements ClientModInitializer {
             // Проверяем, есть ли лирика
             var lines = LyricsManager.loadFor(trackName);
             if (lines == null) {
+                // Не показываем уведомление, если запрос ЕЩЁ ИДЁТ (fuzzy-search / LRCLIB)
+                if (LyricsManager.isFetchPending(trackName)) {
+                    return;
+                }
                 if (LyricsManager.shouldNotifyNoLyrics(trackName)) {
                     LyricsNotificationHud.show("§7[Lyrics] §fНет текста для §e" + trackName);
                     if (client.player != null) {
-                        client.player.displayClientMessage(
+                        client.player.sendSystemMessage(
                                 net.minecraft.network.chat.Component.literal(
-                                        "§7[Lyrics] Текст песни не найден: §e" + trackName),
-                                false);
+                                        "§7[Lyrics] Текст песни не найден: §e" + trackName));
                     }
                 }
             }
@@ -1048,15 +1047,15 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "lyrics_notification_hud"),
                 (graphics, tickCounter) -> LyricsNotificationHud.render(graphics)
         );
-        net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_EXTRACTION.register(TARGET_ESP::extract);
-        net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_MAIN.register(TARGET_ESP::draw);
+        net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.END_EXTRACTION.register(TARGET_ESP::extract);
+        net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.END_MAIN.register(TARGET_ESP::draw);
 
-        net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_MAIN.register(
+        net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.END_MAIN.register(
                 PredictionsRenderer::render
         );
         ClientTickEvents.END_CLIENT_TICK.register(mc -> JumpCirclesManager.tick());
 
-        net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_MAIN.register(
+        net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.END_MAIN.register(
                 JumpCirclesManager::render
         );
 
@@ -1105,7 +1104,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
     }
 
     // ===== HUD =====
-    private static void renderHud(GuiGraphics graphics) {
+    private static void renderHud(GuiGraphicsExtractor graphics) {
         if (!ModConfig.showHud) return;
 
         Minecraft client = Minecraft.getInstance();
@@ -1195,14 +1194,14 @@ public class ResistanceDLCClient implements ClientModInitializer {
             graphics.pose().pushMatrix();
             graphics.pose().translate(ModConfig.comboX, ModConfig.comboY);
             graphics.pose().scale(scale, scale);
-            graphics.drawString(client.font, comboText, 0, 0, ModConfig.comboColor, true);
+            graphics.text(client.font, comboText, 0, 0, ModConfig.comboColor);
             graphics.pose().popMatrix();
         }
 
         if (ModConfig.pvpSafeEnabled && ModConfig.pvpSafeShowHud && PvPSafeManager.isInCombat()) {
             int remaining = PvPSafeManager.getRemainingSeconds();
             String text = "§c" + LocalizationManager.get("gui.resistancedlc.hud.pvp_safe", remaining);
-            graphics.drawString(client.font, text, ModConfig.pvpSafeHudX, ModConfig.pvpSafeHudY,
+            graphics.text(client.font, text, ModConfig.pvpSafeHudX, ModConfig.pvpSafeHudY,
                     ModConfig.pvpSafeHudColor, true);
         }
 
@@ -1222,7 +1221,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
         }
 
         if (ModConfig.showTime) {
-            long time = client.level.getDayTime() % 24000;
+            long time = client.level.getGameTime() % 24000;
             String timeStr = time < 12000
                     ? LocalizationManager.get("gui.resistancedlc.hud.day")
                     : LocalizationManager.get("gui.resistancedlc.hud.night");
@@ -1302,7 +1301,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
         if (AutoReconnectManager.isReconnecting() && ModConfig.autoReconnectShowHud) {
             int remaining = AutoReconnectManager.getRemainingSeconds();
             String text = "§c" + LocalizationManager.get("gui.resistancedlc.hud.auto_reconnect", remaining);
-            graphics.drawString(client.font, text,
+            graphics.text(client.font, text,
                     client.getWindow().getGuiScaledWidth() / 2 - client.font.width(text) / 2,
                     client.getWindow().getGuiScaledHeight() / 2 + 30, 0xFFFFFFFF, true);
         }
@@ -1375,10 +1374,10 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 }
                 if (ModConfig.effectWarningsShowName) {
                     String name = type.getDisplayName().getString();
-                    graphics.drawString(client.font, name, x, y + 5, alphaColor, true);
+                    graphics.text(client.font, name, x, y + 5, alphaColor, true);
                     x += client.font.width(name) + 4;
                 }
-                graphics.drawString(client.font, durationSec + "s", x, y + 5, finalColor, true);
+                graphics.text(client.font, durationSec + "s", x, y + 5, finalColor, true);
                 warnY += 20;
             }
         }
@@ -1394,19 +1393,19 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     int curX = cdX;
                     int curY = cdY;
                     if (ModConfig.cooldownsShowIcon) {
-                        graphics.renderItem(entry.stack, curX, curY);
+                        graphics.item(entry.stack, curX, curY);
                         int overlayAlpha = (int) (entry.percent * ModConfig.cooldownsIconDarkening);
                         if (overlayAlpha > 0) graphics.fill(curX, curY, curX + 16, curY + 16, (overlayAlpha << 24));
                         curX += 20;
                     }
                     if (ModConfig.cooldownsShowName) {
                         String name = entry.stack.getHoverName().getString();
-                        graphics.drawString(client.font, name, curX, curY + 1, cdColor, true);
+                        graphics.text(client.font, name, curX, curY + 1, cdColor, true);
                         curX += client.font.width(name) + 6;
                     }
                     if (ModConfig.cooldownsShowTime) {
                         String timeStr = CooldownsManager.formatTime(entry.remainingSeconds);
-                        graphics.drawString(client.font, timeStr, curX, curY + 1, cdColor, true);
+                        graphics.text(client.font, timeStr, curX, curY + 1, cdColor, true);
                     }
                     cdY += rowHeight;
                 }
@@ -1474,7 +1473,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
             graphics.pose().pushMatrix();
             graphics.pose().translate(lhaX, lhaY);
             graphics.pose().scale(lhaScale, lhaScale);
-            graphics.drawString(client.font, text, 0, 0, lhaColor, true);
+            graphics.text(client.font, text, 0, 0, lhaColor, true);
             graphics.pose().popMatrix();
         }
 
@@ -1494,7 +1493,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
                     : ModConfig.armorAlertY;
 
             int aaColor = (ModConfig.armorAlertAlpha << 24) | (ModConfig.armorAlertColor & 0x00FFFFFF);
-            graphics.drawString(client.font, text, aaX, aaY, aaColor, true);
+            graphics.text(client.font, text, aaX, aaY, aaColor, true);
         }
 
         if (ModConfig.killStreakEnabled && KillStreakManager.isActive()) {
@@ -1525,7 +1524,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
             graphics.pose().pushMatrix();
             graphics.pose().translate(ksX, ksY);
             graphics.pose().scale(scale, scale);
-            graphics.drawString(client.font, text, 0, 0, ksColor, true);
+            graphics.text(client.font, text, 0, 0, ksColor, true);
             graphics.pose().popMatrix();
         }
 
@@ -1554,7 +1553,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
             graphics.pose().pushMatrix();
             graphics.pose().translate(ModConfig.strikeRangeX, ModConfig.strikeRangeY);
             graphics.pose().scale(scale, scale);
-            graphics.drawString(client.font, sb.toString(), 0, 0, srColor, true);
+            graphics.text(client.font, sb.toString(), 0, 0, srColor, true);
             graphics.pose().popMatrix();
         }
     }
@@ -1574,7 +1573,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
         sendMessage("§6§l════════════════════════════════════");
     }
 
-    private static void renderWaypoints(GuiGraphics graphics) {
+    private static void renderWaypoints(GuiGraphicsExtractor graphics) {
         if (!ModConfig.waypointsEnabled) return;
         Minecraft client = Minecraft.getInstance();
         if (client.player == null || client.level == null) return;
@@ -1617,8 +1616,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 String distStr = String.format("%.0fm", dist);
                 int labelW = client.font.width(label);
                 int distW = client.font.width(distStr);
-                graphics.drawString(client.font, label, screenX - labelW / 2, screenY - 16, wpColor, true);
-                graphics.drawString(client.font, distStr, screenX - distW / 2, screenY + 8, wpColor, true);
+                graphics.text(client.font, label, screenX - labelW / 2, screenY - 16, wpColor, true);
+                graphics.text(client.font, distStr, screenX - distW / 2, screenY + 8, wpColor, true);
             } else {
                 boolean onLeft = ndcX < 0;
                 int arrowX = onLeft ? EDGE_MARGIN : screenW - EDGE_MARGIN;
@@ -1635,12 +1634,12 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 int textY = arrowY - 4;
                 textX = Math.max(4, Math.min(screenW - textW - 4, textX));
                 textY = Math.max(4, Math.min(screenH - 12, textY));
-                graphics.drawString(client.font, fullText, textX, textY, wpColor, true);
+                graphics.text(client.font, fullText, textX, textY, wpColor, true);
             }
         }
     }
 
-    private static void drawWaypointDiamond(GuiGraphics graphics, int cx, int cy, int radius, int color) {
+    private static void drawWaypointDiamond(GuiGraphicsExtractor graphics, int cx, int cy, int radius, int color) {
         for (int dy = -radius; dy <= 0; dy++) {
             int halfWidth = radius + dy;
             if (halfWidth < 0) halfWidth = 0;
@@ -1653,7 +1652,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
         }
     }
 
-    private static void drawWaypointArrow(GuiGraphics graphics, int cx, int cy, double dirX, int color) {
+    private static void drawWaypointArrow(GuiGraphicsExtractor graphics, int cx, int cy, double dirX, int color) {
         int arrowSize = 8;
         int baseWidth = 6;
         int tipX = cx + (int) Math.round(dirX * arrowSize);
@@ -1670,7 +1669,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
         }
     }
 
-    private static void drawTriangle(GuiGraphics graphics, int tipX, int tipY,
+    private static void drawTriangle(GuiGraphicsExtractor graphics, int tipX, int tipY,
                                      int size, int thick, int direction, int color) {
         int baseSize = Math.max(2, thick * 2);
         for (int i = 0; i < size; i++) {
@@ -1720,10 +1719,10 @@ public class ResistanceDLCClient implements ClientModInitializer {
         if (slotIndex == 40) return;
         ItemStack targetStack = client.player.getInventory().getItem(slotIndex);
         if (targetStack.isEmpty()) return;
-        client.gameMode.handleInventoryMouseClick(0, slotIndex, 40, ClickType.SWAP, client.player);
+        client.gameMode.handleInventoryButtonClick(40, 0);
     }
 
-    private static void drawHudString(GuiGraphics graphics, Font font, String text, int x, int y, int color) {
+    private static void drawHudString(GuiGraphicsExtractor graphics, Font font, String text, int x, int y, int color) {
         // Фон рисуется как раньше
         if (ModConfig.hudBackgroundEnabled) {
             int textWidth = font.width(text);
@@ -1736,7 +1735,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
         // Если анимация выключена или Vanilla → обычная отрисовка
         if (!ModConfig.themeAnimationEnabled || ThemeManager.getThemeIndex() == 0) {
-            graphics.drawString(font, text, x, y, color, true);
+            graphics.text(font, text, x, y, color, true);
             return;
         }
 
@@ -1746,13 +1745,13 @@ public class ResistanceDLCClient implements ClientModInitializer {
         for (int i = 0; i < total; i++) {
             int chColor = ThemeManager.getHudColorAt(i, total);
             String ch = String.valueOf(text.charAt(i));
-            graphics.drawString(font, ch, curX, y, chColor, true);
+            graphics.text(font, ch, curX, y, chColor, true);
             curX += font.width(ch);
         }
     }
 
-    private static void drawEquipmentSlot(GuiGraphics graphics, ItemStack stack, int x, int y) {
-        graphics.renderItem(stack, x, y);
+    private static void drawEquipmentSlot(GuiGraphicsExtractor graphics, ItemStack stack, int x, int y) {
+        graphics.item(stack, x, y);
         if (ModConfig.equipmentShowDurability && stack.isDamageableItem()) {
             int damage = stack.getDamageValue();
             int maxDamage = stack.getMaxDamage();
@@ -1780,7 +1779,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
     private static void sendMessage(String message) {
         Minecraft client = Minecraft.getInstance();
         if (client.player != null) {
-            client.player.displayClientMessage(Component.literal(message), false);
+            client.player.sendSystemMessage(Component.literal(message));
         }
     }
 

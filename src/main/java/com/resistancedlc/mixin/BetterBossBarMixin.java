@@ -3,7 +3,7 @@ package com.resistancedlc.mixin;
 import com.resistancedlc.config.BossBarStyle;
 import com.resistancedlc.config.ModConfig;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.BossHealthOverlay;
 import net.minecraft.client.gui.components.LerpingBossEvent;
 import net.minecraft.network.chat.Component;
@@ -22,12 +22,11 @@ public class BetterBossBarMixin {
 
     @Shadow @Final private Minecraft minecraft;
 
-    // БЕЗ модификатора доступа — как в ванили (package-private)
     @Shadow @Final
     Map<UUID, LerpingBossEvent> events;
 
-    @Inject(method = "render", at = @At("HEAD"), cancellable = true)
-    private void onRender(GuiGraphics graphics, CallbackInfo ci) {
+    @Inject(method = "extractRenderState", at = @At("HEAD"), cancellable = true, require = 0)
+    private void onRender(GuiGraphicsExtractor graphics, CallbackInfo ci) {
         if (!ModConfig.betterBossBarEnabled) return;
         if (events.isEmpty()) return;
 
@@ -35,7 +34,7 @@ public class BetterBossBarMixin {
         renderCustomBossBars(graphics);
     }
 
-    private void renderCustomBossBars(GuiGraphics graphics) {
+    private void renderCustomBossBars(GuiGraphicsExtractor graphics) {
         int screenWidth = graphics.guiWidth();
         int y = 12;
 
@@ -47,19 +46,17 @@ public class BetterBossBarMixin {
         }
     }
 
-    private void renderBar(GuiGraphics graphics, int screenWidth, int y, LerpingBossEvent event) {
+    private void renderBar(GuiGraphicsExtractor graphics, int screenWidth, int y, LerpingBossEvent event) {
         int barWidth = 182;
         int barHeight = 5;
         int x = screenWidth / 2 - barWidth / 2;
 
-        // Название
         Component name = event.getName();
         int nameWidth = minecraft.font.width(name);
         int nameX = screenWidth / 2 - nameWidth / 2;
         int nameY = y - 9;
-        graphics.drawString(minecraft.font, name, nameX, nameY, ModConfig.betterBossBarTextColor);
+        graphics.text(minecraft.font, name, nameX, nameY, ModConfig.betterBossBarTextColor);
 
-        // Прогресс
         int filledWidth = (int) (barWidth * event.getProgress());
 
         if (ModConfig.betterBossBarStyle == BossBarStyle.CLASSIC) {

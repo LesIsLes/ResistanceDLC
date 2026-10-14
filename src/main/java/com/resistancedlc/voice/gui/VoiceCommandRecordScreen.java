@@ -8,7 +8,7 @@ import com.resistancedlc.voice.VoiceCommandListener;
 import com.resistancedlc.voice.VoiceCommandManager;
 import com.resistancedlc.voice.VoiceCommandRecorder;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -142,7 +142,7 @@ public class VoiceCommandRecordScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         // Авто-стоп через MAX_RECORD_MS
         if (recording && System.currentTimeMillis() - recordStartTime > MAX_RECORD_MS) {
             stopRecording();
@@ -162,14 +162,14 @@ public class VoiceCommandRecordScreen extends Screen {
         graphics.fill(panelX + PANEL_W - 2, panelY, panelX + PANEL_W, panelY + PANEL_H, borderColor);
 
         // Заголовок
-        graphics.drawString(this.font,
+        graphics.text(this.font,
                 "§l" + LocalizationManager.get("gui.resistancedlc.voice.record.title"),
                 panelX + 20, panelY + 15, 0xFFFFFFFF, true);
 
         // Название действия
         String actionName = LocalizationManager.get(
                 "gui.resistancedlc.voice.action." + action.getId());
-        graphics.drawString(this.font, "§e" + actionName,
+        graphics.text(this.font, "§e" + actionName,
                 panelX + 20, panelY + 35, 0xFFFFAA00, false);
 
         // Визуализация
@@ -178,7 +178,7 @@ public class VoiceCommandRecordScreen extends Screen {
         // Статус
         if (!statusMessage.isEmpty()) {
             int textW = this.font.width(statusMessage);
-            graphics.drawString(this.font, statusMessage,
+            graphics.text(this.font, statusMessage,
                     panelX + PANEL_W / 2 - textW / 2,
                     panelY + PANEL_H - 105, 0xFFFFFFFF, false);
         }
@@ -187,15 +187,15 @@ public class VoiceCommandRecordScreen extends Screen {
         if (!recording && !saved) {
             String hint = "§7" + LocalizationManager.get("gui.resistancedlc.voice.record.hint");
             int textW = this.font.width(hint);
-            graphics.drawString(this.font, hint,
+            graphics.text(this.font, hint,
                     panelX + PANEL_W / 2 - textW / 2,
                     panelY + PANEL_H - 105, 0xFFFFAA00, false);
         }
 
-        super.render(graphics, mouseX, mouseY, delta);
+        super.extractRenderState(graphics, mouseX, mouseY, delta);
     }
 
-    private void drawVisualizer(GuiGraphics graphics) {
+    private void drawVisualizer(GuiGraphicsExtractor graphics) {
         int bx = panelX + (PANEL_W - BARS_WIDTH) / 2;
         int by = panelY + 70;
 

@@ -362,7 +362,7 @@ public class ConfigManager {
             json.addProperty("targetEspHurt", ModConfig.targetEspHurt);
             json.addProperty("targetEspHideHitboxes", ModConfig.targetEspHideHitboxes);
             json.addProperty("targetEspRussian", ModConfig.targetEspRussian);
-
+            json.addProperty("lyricsLrclibEnabled", ModConfig.lyricsLrclibEnabled);
             // === LOW HP ALERT ===
             json.addProperty("lowHpAlertEnabled", ModConfig.lowHpAlertEnabled);
             json.addProperty("lowHpAlertThreshold", ModConfig.lowHpAlertThreshold);
@@ -389,7 +389,9 @@ public class ConfigManager {
             json.addProperty("armorAlertAlpha", ModConfig.armorAlertAlpha);
             json.addProperty("armorAlertX", ModConfig.armorAlertX);
             json.addProperty("armorAlertY", ModConfig.armorAlertY);
-
+            json.addProperty("lyricsShakeEnabled", ModConfig.lyricsShakeEnabled);
+            json.addProperty("lyricsShakeSpeed", ModConfig.lyricsShakeSpeed);
+            json.addProperty("lyricsShakeRadius", ModConfig.lyricsShakeRadius);
             // === FRIEND LIST ===
             json.addProperty("friendListEnabled", ModConfig.friendListEnabled);
             json.addProperty("friendsRaw", ModConfig.friendsRaw);
@@ -491,8 +493,17 @@ public class ConfigManager {
             json.addProperty("lyricsCurrentColor", ModConfig.lyricsCurrentColor);
             json.addProperty("lyricsNextColor", ModConfig.lyricsNextColor);
             json.addProperty("lyricsAlpha", ModConfig.lyricsAlpha);
-            json.addProperty("lyricsAngle", ModConfig.lyricsAngle);
+            json.addProperty("lyricsOffsetX", ModConfig.lyricsOffsetX);
             json.addProperty("lyricsShowNext", ModConfig.lyricsShowNext);
+            json.addProperty("lyricsLineSpacing", ModConfig.lyricsLineSpacing);
+            json.addProperty("lyricsFadeEnabled", ModConfig.lyricsFadeEnabled);
+            json.addProperty("lyricsPulseEnabled", ModConfig.lyricsPulseEnabled);
+            json.addProperty("lyricsPulseStrength", ModConfig.lyricsPulseStrength);
+            json.addProperty("lyricsOutlineEnabled", ModConfig.lyricsOutlineEnabled);
+            json.addProperty("lyricsOutlineColor", ModConfig.lyricsOutlineColor);
+            json.addProperty("lyricsOutlineThickness", ModConfig.lyricsOutlineThickness);
+            json.addProperty("lyricsGradientEnabled", ModConfig.lyricsGradientEnabled);
+            json.addProperty("lyricsGradientStrength", ModConfig.lyricsGradientStrength);
 
             Path file = CONFIG_DIR.resolve(name + ".json");
             synchronized (GSON) {
@@ -796,7 +807,9 @@ public class ConfigManager {
             ModConfig.lastDeathZ = getInt(json, "lastDeathZ", ModConfig.lastDeathZ);
             ModConfig.lastDeathDimension = getString(json, "lastDeathDimension", ModConfig.lastDeathDimension);
             ModConfig.lastDeathTime = getLong(json, "lastDeathTime", ModConfig.lastDeathTime);
-
+            ModConfig.lyricsShakeEnabled = getBool(json, "lyricsShakeEnabled", ModConfig.lyricsShakeEnabled);
+            ModConfig.lyricsShakeSpeed = getFloat(json, "lyricsShakeSpeed", ModConfig.lyricsShakeSpeed);
+            ModConfig.lyricsShakeRadius = getFloat(json, "lyricsShakeRadius", ModConfig.lyricsShakeRadius);
             // === LYRICS ===
             ModConfig.lyricsEnabled = getBool(json, "lyricsEnabled", ModConfig.lyricsEnabled);
             ModConfig.lyricsDistance = getFloat(json, "lyricsDistance", ModConfig.lyricsDistance);
@@ -804,9 +817,19 @@ public class ConfigManager {
             ModConfig.lyricsCurrentColor = getInt(json, "lyricsCurrentColor", ModConfig.lyricsCurrentColor);
             ModConfig.lyricsNextColor = getInt(json, "lyricsNextColor", ModConfig.lyricsNextColor);
             ModConfig.lyricsAlpha = getInt(json, "lyricsAlpha", ModConfig.lyricsAlpha);
-            ModConfig.lyricsAngle = getInt(json, "lyricsAngle", ModConfig.lyricsAngle);
+            ModConfig.lyricsOffsetX = getFloat(json, "lyricsOffsetX", ModConfig.lyricsOffsetX);
             ModConfig.lyricsShowNext = getBool(json, "lyricsShowNext", ModConfig.lyricsShowNext);
-
+            ModConfig.lyricsLineSpacing = getFloat(json, "lyricsLineSpacing", ModConfig.lyricsLineSpacing);
+            ModConfig.lyricsFadeEnabled = getBool(json, "lyricsFadeEnabled", ModConfig.lyricsFadeEnabled);
+            ModConfig.lyricsPulseEnabled = getBool(json, "lyricsPulseEnabled", ModConfig.lyricsPulseEnabled);
+            ModConfig.lyricsPulseStrength = getFloat(json, "lyricsPulseStrength", ModConfig.lyricsPulseStrength);
+            ModConfig.lyricsOutlineEnabled = getBool(json, "lyricsOutlineEnabled", ModConfig.lyricsOutlineEnabled);
+            ModConfig.lyricsOutlineColor = getInt(json, "lyricsOutlineColor", ModConfig.lyricsOutlineColor);
+            ModConfig.lyricsOutlineThickness = getInt(json, "lyricsOutlineThickness", ModConfig.lyricsOutlineThickness);
+            ModConfig.lyricsGradientEnabled = getBool(json, "lyricsGradientEnabled", ModConfig.lyricsGradientEnabled);
+            ModConfig.lyricsGradientStrength = getFloat(json, "lyricsGradientStrength", ModConfig.lyricsGradientStrength);
+            json.addProperty("lyricsHolographic", ModConfig.lyricsHolographic);
+            json.addProperty("lyricsEntranceEnabled", ModConfig.lyricsEntranceEnabled);
             // === STRIKE RANGE ===
             ModConfig.strikeRangeEnabled = getBool(json, "strikeRangeEnabled", ModConfig.strikeRangeEnabled);
             ModConfig.strikeRangeX = getInt(json, "strikeRangeX", ModConfig.strikeRangeX);
@@ -960,7 +983,9 @@ public class ConfigManager {
             ModConfig.pingIndicatorRussian = getBool(json, "pingIndicatorRussian", ModConfig.pingIndicatorRussian);
             // === DEATH RECAP ===
             ModConfig.deathRecapRaw = getString(json, "deathRecapRaw", ModConfig.deathRecapRaw);
-
+            ModConfig.lyricsHolographic = getBool(json, "lyricsHolographic", ModConfig.lyricsHolographic);
+            ModConfig.lyricsEntranceEnabled = getBool(json, "lyricsEntranceEnabled", ModConfig.lyricsEntranceEnabled);
+            ModConfig.lyricsLrclibEnabled = getBool(json, "lyricsLrclibEnabled", ModConfig.lyricsLrclibEnabled);
             // === PREDICTIONS ===
             ModConfig.predictionsEnabled = getBool(json, "predictionsEnabled", ModConfig.predictionsEnabled);
             ModConfig.predictionsColor = getInt(json, "predictionsColor", ModConfig.predictionsColor);
@@ -993,7 +1018,13 @@ public class ConfigManager {
     }
 
     private static float getFloat(JsonObject json, String key, float def) {
-        return json.has(key) ? json.get(key).getAsFloat() : def;
+        if (!json.has(key)) return def;
+        try {
+            return json.get(key).getAsFloat();
+        } catch (Exception e) {
+            ResistanceDLC.LOGGER.warn("[Config] getFloat failed for '" + key + "': " + e.getMessage());
+            return def;
+        }
     }
 
     private static String getString(JsonObject json, String key, String def) {

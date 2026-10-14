@@ -2,7 +2,7 @@ package com.resistancedlc.mixin;
 
 import com.resistancedlc.config.ModConfig;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.LoadingOverlay;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
@@ -33,8 +33,8 @@ public class LoadingOverlayMixin {
 
     private static final long FADE_OUT_DURATION_MS = 1000L;
 
-    @Inject(method = "render", at = @At("HEAD"), cancellable = true)
-    private void onRender(GuiGraphics graphics, int mouseX, int mouseY,
+    @Inject(method = "extractRenderState", at = @At("HEAD"), cancellable = true)
+    private void onRender(GuiGraphicsExtractor graphics, int mouseX, int mouseY,
                           float delta, CallbackInfo ci) {
         if (!ModConfig.customLoadingScreenEnabled) return;
 

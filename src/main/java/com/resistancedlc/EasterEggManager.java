@@ -1,5 +1,6 @@
 package com.resistancedlc;
 
+import com.resistancedlc.config.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
@@ -15,7 +16,7 @@ import java.util.Random;
  * Логика:
  *   1. hint-кнопка по умолчанию показывает "Проверка совести…"
  *   2. При клике на "Установить модуль KillAura":
- *      - играется звук denied.ogg
+ *      - играется звук canceled.ogg (или canceled_ru.ogg — по языку мода)
  *      - hint-кнопка меняется на "Ты серьёзно думал, что мы читеры? 😐" (красный)
  *      - в чат летит рандомное сообщение
  *   3. Через 500 мс hint-кнопка возвращается к "Проверка совести…"
@@ -51,10 +52,10 @@ public class EasterEggManager {
             hintButton.setMessage(Component.literal("§c" + deniedText));
         }
 
-        playDeniedSound(mc);
+        playCanceledSound(mc);
 
         String msgKey = CHAT_MESSAGE_KEYS[RANDOM.nextInt(CHAT_MESSAGE_KEYS.length)];
-        mc.player.displayClientMessage(Component.literal(LocalizationManager.get(msgKey)), false);
+        mc.player.sendSystemMessage(Component.literal(LocalizationManager.get(msgKey)));
     }
 
     /**
@@ -72,18 +73,23 @@ public class EasterEggManager {
         }
     }
 
-    private static void playDeniedSound(Minecraft mc) {
+    /**
+     * Проигрывает звук отмены. Выбор файла — по языку мода (EN/RU).
+     */
+    private static void playCanceledSound(Minecraft mc) {
         if (mc.level == null || mc.player == null) return;
         try {
-            SoundEvent deniedSound = SoundEvent.createVariableRangeEvent(
-                    Identifier.fromNamespaceAndPath("resistancedlc", "denied")
+            // Выбор звука по языку мода (кнопка EN/RU в GUI)
+            String soundName = ModConfig.modLogoRussian ? "canceled_ru" : "canceled";
+            SoundEvent canceledSound = SoundEvent.createVariableRangeEvent(
+                    Identifier.fromNamespaceAndPath("resistancedlc", soundName)
             );
             mc.level.playLocalSound(
                     mc.player.getX(), mc.player.getY(), mc.player.getZ(),
-                    deniedSound, SoundSource.MASTER, 1.0f, 1.0f, false
+                    canceledSound, SoundSource.MASTER, 1.0f, 1.0f, false
             );
         } catch (Exception e) {
-            ResistanceDLC.LOGGER.error("EasterEgg: cannot play denied.ogg: " + e.getMessage());
+            ResistanceDLC.LOGGER.error("EasterEgg: cannot play canceled sound: " + e.getMessage());
         }
     }
 

@@ -3,21 +3,19 @@ package com.resistancedlc;
 import com.resistancedlc.config.ModConfig;
 
 /**
- * TimeChangeManager — визуальное изменение времени суток.
+ * TimeChangeManager — визуальное изменение времени суток (26.1).
  *
- * Client-side only: другие игроки видят настоящее время.
- * Плагин на сервер не нужен.
+ * Client-side only. Не влияет на сервер и других игроков.
  *
- * Значение хранится в ModConfig.timeChangeValue (0..24000 тиков).
- * Миксин TimeChangeMixin подменяет ClientLevel.getDayTime() и getTimeOfDay().
+ * Миксин TimeChangeMixin подменяет ClientClockManager.getTotalTicks().
  */
 public final class TimeChangeManager {
 
     private TimeChangeManager() {}
 
     /**
-     * Возвращает fake-время суток (0..24000).
-     * Если фича выключена — возвращает -1 (сигнал миксину, что override не нужен).
+     * Возвращает fake-время суток в тиках (0..24000) или -1,
+     * если override не нужен.
      */
     public static long getFakeDayTime() {
         if (!ModConfig.timeChangeEnabled) return -1L;
@@ -25,22 +23,7 @@ public final class TimeChangeManager {
     }
 
     /**
-     * Возвращает fake-время в виде float (0.0..1.0), где 0.0 = полночь, 0.5 = полдень.
-     * Используется для getTimeOfDay(float).
-     */
-    public static float getFakeTimeOfDay(float partialTick) {
-        if (!ModConfig.timeChangeEnabled) return -1.0f;
-        // getTimeOfDay возвращает [0..1) — долю суток
-        long dayTime = ModConfig.timeChangeValue;
-        return (float) (dayTime % 24000L) / 24000.0f;
-    }
-
-    /**
      * Форматирует тики в строку "HH:MM".
-     * В Minecraft: 0 = 06:00 (рассвет), 6000 = 12:00 (полдень),
-     *              12000 = 18:00 (закат), 18000 = 00:00 (полночь).
-     *
-     * Формула: (dayTime / 1000 + 6) % 24 = часы.
      */
     public static String formatTime(long dayTime) {
         long ticks = ((dayTime % 24000L) + 24000L) % 24000L;

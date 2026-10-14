@@ -3,8 +3,8 @@ package com.resistancedlc.targetesp;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.resistancedlc.config.ModConfig;
-import net.fabricmc.fabric.api.client.rendering.v1.world.WorldExtractionContext;
-import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionContext;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -36,9 +36,9 @@ public final class TargetESP {
         smoothInit = false;
     }
 
-    public void extract(WorldExtractionContext context) {}
+    public void extract(LevelExtractionContext context) {}
 
-    public void draw(WorldRenderContext context) {
+    public void draw(LevelRenderContext context) {
         if (!ModConfig.targetEspEnabled) return;
 
         LivingEntity target = targetManager.getLivingTarget();
@@ -84,11 +84,11 @@ public final class TargetESP {
         );
 
         MultiBufferSource.BufferSource bufferSource =
-                (MultiBufferSource.BufferSource) context.consumers();
+                (MultiBufferSource.BufferSource) context.bufferSource();
         if (bufferSource == null) return;
 
         VertexConsumer consumer = bufferSource.getBuffer(LINES_TYPE);
-        PoseStack poseStack = context.matrices();
+        PoseStack poseStack = context.poseStack();
         Vec3 cameraPos = Minecraft.getInstance()
                 .gameRenderer
                 .getMainCamera()

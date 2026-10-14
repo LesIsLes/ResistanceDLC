@@ -2,7 +2,7 @@ package com.resistancedlc;
 
 import com.resistancedlc.config.ModConfig;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -31,7 +31,7 @@ public class ArmorAlertManager {
         }
 
         Minecraft mc = Minecraft.getInstance();
-        LocalPlayer player = mc.player;
+        net.minecraft.world.entity.player.Player player = mc.player;
         if (player == null || mc.level == null) {
             alertActive = false;
             lowestPercent = 100;

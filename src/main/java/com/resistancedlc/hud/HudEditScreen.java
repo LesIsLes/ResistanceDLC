@@ -3,7 +3,7 @@ package com.resistancedlc.hud;
 import com.resistancedlc.ConfigManager;
 import com.resistancedlc.LocalizationManager;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -88,7 +88,7 @@ public class HudEditScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         // Затемнение
         graphics.fill(0, 0, this.width, this.height, 0x80000000);
 
@@ -103,12 +103,12 @@ public class HudEditScreen extends Screen {
         graphics.fill(px, PANEL_TOP, px + 1, pb, 0xFF60A0FF);
         graphics.fill(pr - 1, PANEL_TOP, pr, pb, 0xFF60A0FF);
 
-        graphics.drawString(this.font,
+        graphics.text(this.font,
                 "§l" + LocalizationManager.get("gui.resistancedlc.hud_editor.list_title"),
                 px + 6, PANEL_TOP + 6, 0xFFFFFFFF, true);
 
         // Заголовок сверху
-        graphics.drawString(this.font,
+        graphics.text(this.font,
                 "§lHUD Editor §7· ЛКМ — перетащить · ПКМ — сброс · Esc — закрыть",
                 10, 10, 0xFFFFFFFF, true);
 
@@ -146,11 +146,11 @@ public class HudEditScreen extends Screen {
                 int badgeY = wy - 8;
                 if (badgeY < 0) badgeY = wy + 2;
                 graphics.fill(badgeX, badgeY, badgeX + badgeW, badgeY + 10, 0xC0000000);
-                graphics.drawString(this.font, "§7OFF", badgeX + 2, badgeY + 1, 0xFFFFFFFF, false);
+                graphics.text(this.font, "§7OFF", badgeX + 2, badgeY + 1, 0xFFFFFFFF, false);
             }
         }
 
-        super.render(graphics, mouseX, mouseY, delta);
+        super.extractRenderState(graphics, mouseX, mouseY, delta);
     }
 
     @Override

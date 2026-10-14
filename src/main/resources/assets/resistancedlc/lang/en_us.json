@@ -544,7 +544,7 @@
   "gui.resistancedlc.panel.lyrics.enable": "Enable Lyrics",
   "gui.resistancedlc.panel.lyrics.distance": "Distance: %.1f blocks",
   "gui.resistancedlc.panel.lyrics.font_size": "Font size: %.2f",
-  "gui.resistancedlc.panel.lyrics.angle": "Angle: %s°",
+  "gui.resistancedlc.panel.lyrics.offset_x": "X offset: %s",
   "gui.resistancedlc.panel.lyrics.alpha": "Alpha: %s",
   "gui.resistancedlc.panel.lyrics.show_next": "Show next line",
   "gui.resistancedlc.panel.lyrics.current_color": "Current line color",
@@ -580,6 +580,25 @@
   "gui.resistancedlc.music_hud.title": "Music Player",
   "gui.resistancedlc.music_hud.empty": "Playlist is empty",
   "gui.resistancedlc.music_hud.hint": "Drop .ogg into the folder",
+
+  "gui.resistancedlc.panel.zoom_factor": "Zoom: %.1fx",
+
+  "gui.resistancedlc.panel.lyrics.line_spacing": "Line spacing: %.2f",
+  "gui.resistancedlc.panel.lyrics.pulse_strength": "Pulse strength: %.2f",
+  "gui.resistancedlc.panel.lyrics.outline_thickness": "Outline thickness: %s",
+  "gui.resistancedlc.panel.lyrics.gradient_strength": "Gradient: %.2f",
+  "gui.resistancedlc.panel.lyrics.pulse_enable": "Pulse on line change",
+  "gui.resistancedlc.panel.lyrics.outline_enable": "Text outline",
+  "gui.resistancedlc.panel.lyrics.gradient_enable": "Gradient color",
+
+  "gui.resistancedlc.panel.lyrics.holographic_enable": "Holographic (next line closer)",
+  "gui.resistancedlc.panel.lyrics.entrance_enable": "Scale-in on appear",
+
+  "gui.resistancedlc.panel.lyrics.lrclib_enable": "Fetch lyrics from LRCLIB",
+
+  "gui.resistancedlc.panel.lyrics.shake_enable": "Shake (depth wave)",
+  "gui.resistancedlc.panel.lyrics.shake_speed": "Shake speed: %s",
+  "gui.resistancedlc.panel.lyrics.shake_radius": "Shake radius: %s blocks",
 
   "key.category.resistancedlc.main": "ResistanceDLC"
 }

@@ -428,7 +428,7 @@ public class MusicPlayerManager {
     private static void sendChatMessage(String msg) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
-            mc.player.displayClientMessage(net.minecraft.network.chat.Component.literal(msg), false);
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal(msg));
         }
     }
 

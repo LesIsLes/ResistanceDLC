@@ -1,6 +1,9 @@
 package com.resistancedlc.lyrics;
 
 import com.resistancedlc.ResistanceDLC;
+import com.resistancedlc.MusicPlayerManager;
+import com.resistancedlc.MusicTrack;
+import com.resistancedlc.config.ModConfig;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
@@ -11,19 +14,21 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * LyricsManager — парсинг LRC-файлов и синхронизация с позицией трека.
  *
+ * Источники (в порядке приоритета):
+ *   1. Локальный .lrc файл в config/resistancedlc/lyrics/<track>.lrc
+ *   2. LRCLIB API (асинхронно, кэшируется)
+ *
  * Формат LRC:
  *   [mm:ss.xx] Текст
  *   [mm:ss.xxx] Текст
  *   [offset:+/-ms]
- *
- * Файлы: config/resistancedlc/lyrics/<track_name>.lrc
- * где <track_name> — имя .ogg без расширения.
  */
 public class LyricsManager {
 
@@ -45,13 +50,15 @@ public class LyricsManager {
         }
     }
 
-    /** Кэш: trackName -> lines (или null, если файла нет / не удалось распарсить). */
+    /** Кэш: trackName -> lines (или null, если не найдено). */
     private static final Map<String, List<LrcLine>> cache = new HashMap<>();
 
-    /** Кэш негативных результатов: trackName -> true (уже пытались, файла нет). */
+    /** Негативный кэш: trackName -> true (уже искали, не нашли). */
     private static final Map<String, Boolean> noLyricsCache = new HashMap<>();
 
-    /** Имя трека, для которого уже отправляли уведомление «No lyrics». */
+    /** Треки, для которых уже запущен запрос к LRCLIB (чтобы не дублировать). */
+    private static final Map<String, CompletableFuture<String>> pendingFetches = new HashMap<>();
+
     private static String lastNotifiedTrack = null;
 
     public static void init() {
@@ -67,15 +74,21 @@ public class LyricsManager {
     public static void reset() {
         cache.clear();
         noLyricsCache.clear();
+        pendingFetches.clear();
         lastNotifiedTrack = null;
     }
 
     /**
-     * Загрузить LRC для трека. Возвращает список строк или null, если файла нет.
+     * Загрузить LRC для трека.
+     * 1. Проверяет кэш.
+     * 2. Пробует локальный .lrc.
+     * 3. Если нет — ждёт, пока duration распарсится, и запрашивает LRCLIB.
+     * 4. Если запрос ещё не завершён — возвращает null (следующий вызов вернёт результат).
      */
     public static List<LrcLine> loadFor(String trackName) {
         if (trackName == null || trackName.isEmpty()) return null;
 
+        // 1. Кэш
         if (cache.containsKey(trackName)) {
             return cache.get(trackName);
         }
@@ -83,51 +96,100 @@ public class LyricsManager {
             return null;
         }
 
+        // 2. Локальный файл
         Path lrcPath = LYRICS_DIR.resolve(trackName + ".lrc");
-        if (!Files.exists(lrcPath)) {
+        if (Files.exists(lrcPath)) {
+            try {
+                List<LrcLine> lines = parseLrc(lrcPath);
+                if (!lines.isEmpty()) {
+                    cache.put(trackName, lines);
+                    ResistanceDLC.LOGGER.info("[Lyrics] Loaded " + lines.size()
+                            + " lines from local .lrc for '" + trackName + "'");
+                    return lines;
+                }
+            } catch (Exception e) {
+                ResistanceDLC.LOGGER.error("[Lyrics] Local parse failed for '"
+                        + trackName + "': " + e.getMessage());
+            }
+        }
+
+        // 3. LRCLIB
+        if (!ModConfig.lyricsLrclibEnabled) {
             noLyricsCache.put(trackName, true);
             return null;
         }
 
-        try {
-            List<LrcLine> lines = parseLrc(lrcPath);
-            if (lines.isEmpty()) {
+        // Уже запущен запрос?
+        if (pendingFetches.containsKey(trackName)) {
+            CompletableFuture<String> future = pendingFetches.get(trackName);
+            if (future.isDone()) {
+                pendingFetches.remove(trackName);
+                String lrc = future.join();
+                if (lrc != null) {
+                    List<LrcLine> lines = parseLrcString(lrc);
+                    if (!lines.isEmpty()) {
+                        cache.put(trackName, lines);
+                        ResistanceDLC.LOGGER.info("[Lyrics] Loaded " + lines.size()
+                                + " lines from LRCLIB for '" + trackName + "'");
+                        return lines;
+                    }
+                }
                 noLyricsCache.put(trackName, true);
                 return null;
             }
-            cache.put(trackName, lines);
-            ResistanceDLC.LOGGER.info("[Lyrics] Loaded " + lines.size()
-                    + " lines for '" + trackName + "'");
-            return lines;
-        } catch (Exception e) {
-            ResistanceDLC.LOGGER.error("[Lyrics] Parse failed for '" + trackName
-                    + "': " + e.getMessage());
-            noLyricsCache.put(trackName, true);
+            // Запрос ещё идёт — вернём null
             return null;
         }
+
+        // Собираем artist + duration + ЧИСТОЕ имя трека (без артиста)
+        String artist = "";
+        String cleanTrackName = trackName;
+        int duration = 0;
+        MusicTrack track = findTrackByName(trackName);
+        if (track != null) {
+            artist = track.displayArtist();
+            cleanTrackName = track.displayName();
+            duration = MusicPlayerManager.getDurationSeconds();
+        }
+
+        // Если duration ещё не готов — ждём следующий тик (OGG парсится 100-300 мс)
+        if (duration <= 0) {
+            ResistanceDLC.LOGGER.info("[Lyrics] Waiting for duration to be parsed for '"
+                    + trackName + "'...");
+            return null;
+        }
+
+        // Запускаем запрос
+        ResistanceDLC.LOGGER.info("[Lyrics] Fetching from LRCLIB: '"
+                + cleanTrackName + "' by '" + artist + "' duration=" + duration);
+        CompletableFuture<String> future =
+                LyricsFetcher.fetchAsync(cleanTrackName, artist, duration);
+        pendingFetches.put(trackName, future);
+
+        return null;
     }
 
     /**
-     * Парсит LRC-файл. Поддерживает несколько тегов времени на строку.
+     * Парсит LRC из строки (не из файла).
      */
-    private static List<LrcLine> parseLrc(Path path) throws IOException {
+    private static List<LrcLine> parseLrcString(String lrc) {
         List<LrcLine> lines = new ArrayList<>();
-        List<String> rawLines = Files.readAllLines(path, StandardCharsets.UTF_8);
+        if (lrc == null || lrc.isBlank()) return lines;
 
+        String[] rawLines = lrc.split("\\r?\\n");
         long offsetMs = 0;
 
-        // Первый проход — ищем offset
+        // Первый проход — offset
         for (String raw : rawLines) {
             Matcher m = OFFSET_TAG.matcher(raw);
             if (m.find()) {
                 try {
                     offsetMs = Long.parseLong(m.group(1));
-                } catch (NumberFormatException ignored) {
-                }
+                } catch (NumberFormatException ignored) {}
             }
         }
 
-        // Второй проход — парсим строки
+        // Второй проход — строки
         for (String raw : rawLines) {
             if (raw == null) continue;
             String trimmed = raw.trim();
@@ -144,15 +206,13 @@ public class LyricsManager {
                     long ms = 0;
                     if (m.group(3) != null) {
                         String msStr = m.group(3);
-                        // Нормализуем .xx, .xxx → ms
                         if (msStr.length() == 1) ms = Long.parseLong(msStr) * 100;
                         else if (msStr.length() == 2) ms = Long.parseLong(msStr) * 10;
                         else ms = Long.parseLong(msStr);
                     }
                     long total = min * 60_000 + sec * 1_000 + ms;
                     timestamps.add(total + offsetMs);
-                } catch (NumberFormatException ignored) {
-                }
+                } catch (NumberFormatException ignored) {}
                 lastEnd = m.end();
             }
 
@@ -171,9 +231,32 @@ public class LyricsManager {
     }
 
     /**
-     * Индекс текущей строки для позиции trackPositionMs.
-     * Возвращает -1, если позиция до первой строки.
+     * Ищет MusicTrack по имени (без расширения).
      */
+    private static MusicTrack findTrackByName(String trackName) {
+        for (MusicTrack t : MusicPlayerManager.getPlaylist()) {
+            String fileName = t.path().getFileName().toString();
+            int dot = fileName.lastIndexOf('.');
+            String nameNoExt = dot > 0 ? fileName.substring(0, dot) : fileName;
+            if (nameNoExt.equals(trackName)) {
+                return t;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Парсит LRC из файла.
+     */
+    private static List<LrcLine> parseLrc(Path path) throws IOException {
+        List<String> rawLines = Files.readAllLines(path, StandardCharsets.UTF_8);
+        StringBuilder sb = new StringBuilder();
+        for (String l : rawLines) {
+            sb.append(l).append('\n');
+        }
+        return parseLrcString(sb.toString());
+    }
+
     public static int getCurrentIndex(List<LrcLine> lines, long trackPositionMs) {
         if (lines == null || lines.isEmpty()) return -1;
         int idx = -1;
@@ -187,18 +270,12 @@ public class LyricsManager {
         return idx;
     }
 
-    /**
-     * Текущая строка (или null, если до первой).
-     */
     public static String getCurrentLine(List<LrcLine> lines, long trackPositionMs) {
         int idx = getCurrentIndex(lines, trackPositionMs);
         if (idx < 0 || idx >= lines.size()) return null;
         return lines.get(idx).text;
     }
 
-    /**
-     * Следующая строка (или null, если текущая — последняя).
-     */
     public static String getNextLine(List<LrcLine> lines, long trackPositionMs) {
         int idx = getCurrentIndex(lines, trackPositionMs);
         int next = idx + 1;
@@ -206,16 +283,21 @@ public class LyricsManager {
         return lines.get(next).text;
     }
 
-    /**
-     * Показать ли уведомление «No lyrics» для этого трека.
-     * Если трек тот же, что и в прошлый раз — не показывать повторно.
-     * Возвращает true, если уведомление нужно показать.
-     */
     public static boolean shouldNotifyNoLyrics(String trackName) {
         if (trackName == null) return false;
         if (trackName.equals(lastNotifiedTrack)) return false;
         lastNotifiedTrack = trackName;
         return true;
+    }
+
+    /**
+     * Проверяет, идёт ли сейчас запрос к LRCLIB для этого трека.
+     * Нужно, чтобы НЕ показывать «нет текста», пока fuzzy-search не отработал.
+     */
+    public static boolean isFetchPending(String trackName) {
+        if (trackName == null) return false;
+        CompletableFuture<String> future = pendingFetches.get(trackName);
+        return future != null && !future.isDone();
     }
 
     public static Path getLyricsDir() {

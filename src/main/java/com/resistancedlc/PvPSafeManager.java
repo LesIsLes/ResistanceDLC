@@ -91,10 +91,9 @@ public class PvPSafeManager {
         Minecraft client = Minecraft.getInstance();
         if (client.player == null) return;
         int remaining = getRemainingSeconds();
-        client.player.displayClientMessage(
+        client.player.sendSystemMessage(
                 Component.literal("§c" + LocalizationManager.get("gui.resistancedlc.pvp.blocked_command",
-                        command, remaining)),
-                true
+                        command, remaining))
         );
     }
 
@@ -102,10 +101,9 @@ public class PvPSafeManager {
         Minecraft client = Minecraft.getInstance();
         if (client.player == null) return;
         int remaining = getRemainingSeconds();
-        client.player.displayClientMessage(
+        client.player.sendSystemMessage(
                 Component.literal("§c" + LocalizationManager.get("gui.resistancedlc.pvp.blocked_quit",
-                        remaining)),
-                true
+                        remaining))
         );
     }
 }

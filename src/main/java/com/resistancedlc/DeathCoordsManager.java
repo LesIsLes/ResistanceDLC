@@ -36,7 +36,7 @@ public class DeathCoordsManager {
         String msg = "§c" + LocalizationManager.get("gui.resistancedlc.command.dc.death_saved",
                 ModConfig.lastDeathX, ModConfig.lastDeathY, ModConfig.lastDeathZ);
 
-        player.displayClientMessage(Component.literal(msg), false);
+        player.sendSystemMessage(Component.literal(msg));
     }
 
     private static String normalizeDimension(String path) {
@@ -93,7 +93,7 @@ public class DeathCoordsManager {
     private static void sendMsg(String message) {
         Minecraft client = Minecraft.getInstance();
         if (client.player != null) {
-            client.player.displayClientMessage(Component.literal(message), false);
+            client.player.sendSystemMessage(Component.literal(message));
         }
     }
 }

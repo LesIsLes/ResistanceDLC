@@ -544,7 +544,7 @@
   "gui.resistancedlc.panel.lyrics.enable": "Включить текст песен",
   "gui.resistancedlc.panel.lyrics.distance": "Дистанция: %.1f блоков",
   "gui.resistancedlc.panel.lyrics.font_size": "Размер шрифта: %.2f",
-  "gui.resistancedlc.panel.lyrics.angle": "Угол: %s°",
+  "gui.resistancedlc.panel.lyrics.offset_x": "Смещение по X: %s",
   "gui.resistancedlc.panel.lyrics.alpha": "Прозрачность: %s",
   "gui.resistancedlc.panel.lyrics.show_next": "Показывать след. строку",
   "gui.resistancedlc.panel.lyrics.current_color": "Цвет текущей строки",
@@ -580,6 +580,25 @@
   "gui.resistancedlc.music_hud.title": "Музыкальный плеер",
   "gui.resistancedlc.music_hud.empty": "Плейлист пуст",
   "gui.resistancedlc.music_hud.hint": "Закинь .ogg в папку",
+
+  "gui.resistancedlc.panel.zoom_factor": "Приближение: %.1fx",
+
+  "gui.resistancedlc.panel.lyrics.line_spacing": "Интервал строк: %.2f",
+  "gui.resistancedlc.panel.lyrics.pulse_strength": "Сила пульсации: %.2f",
+  "gui.resistancedlc.panel.lyrics.outline_thickness": "Толщина обводки: %s",
+  "gui.resistancedlc.panel.lyrics.gradient_strength": "Градиент: %.2f",
+  "gui.resistancedlc.panel.lyrics.pulse_enable": "Пульсация при смене строки",
+  "gui.resistancedlc.panel.lyrics.outline_enable": "Обводка текста",
+  "gui.resistancedlc.panel.lyrics.gradient_enable": "Градиент цвета",
+
+  "gui.resistancedlc.panel.lyrics.holographic_enable": "Голографический эффект (след. строка ближе)",
+  "gui.resistancedlc.panel.lyrics.entrance_enable": "Плавное появление (scale-in)",
+
+  "gui.resistancedlc.panel.lyrics.lrclib_enable": "Загружать тексты из LRCLIB",
+
+  "gui.resistancedlc.panel.lyrics.shake_enable": "Тряска (волна по глубине)",
+  "gui.resistancedlc.panel.lyrics.shake_speed": "Скорость тряски: %s",
+  "gui.resistancedlc.panel.lyrics.shake_radius": "Радиус тряски: %s блоков",
 
   "key.category.resistancedlc.main": "ResistanceDLC"
 }
