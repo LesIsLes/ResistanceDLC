@@ -1,12 +1,20 @@
 # Resistance DLC
 
-A lightweight **visual client mod** for Minecraft **1.21.11** (Fabric) with **48+ features** across 6 sections: HUD, PvP, PvE, Visual, Misc, and Music.
+A lightweight **visual client mod** for Minecraft **1.21.11 - 26.2** (Fabric) with **60+ features** across 6 sections: HUD, PvP, PvE, Visual, Misc, and Music.
 
 Everything is **100% client-side** - no server modifications, no packet manipulation, no anti-cheat bypass. Just visual quality-of-life improvements for your game.
 
 ---
 
 ## ✨ What's inside
+
+### 🎩 Headwear (NEW)
+- **3 hat types**: Chinese Hat, Cap, Top Hat
+- Procedurally rendered (no textures required)
+- Settings: type, color (HEX), alpha, scale, Y offset
+- Display on yourself and/or friends from FriendList
+- Hidden in first-person view, visible in third-person (F5)
+- Synchronized with player head rotation
 
 ### 🎯 PvP Tools
 - **PvPSafe** - blocks `/hub`, `/logout`, `/suicide` during combat
@@ -21,6 +29,11 @@ Everything is **100% client-side** - no server modifications, no packet manipula
 - **StatsTracker** - K/D counter parsed from chat (displayed in GUI)
 - **KillStreak** - consecutive kill counter + custom sounds (user-provided)
 - **TargetESP** - 4 variants (Crystals, Cubes, Ring, Ghosts) - 3D target highlight
+- **TargetHUD** - enemy info widget on screen
+  - Shows skin, name, HP bar with gradient
+  - Draggable position (F6 editor)
+  - Adjustable: background alpha, gradient colors, gradient speed
+  - Toggle skin / name / HP
 
 ### 🎨 Visual
 - **Zoom** - smooth zoom with keybind
@@ -41,6 +54,8 @@ Everything is **100% client-side** - no server modifications, no packet manipula
   - Statistics: hit %, miss %, winrate %, total shots
 
 ### 🖥️ HUD
+- **Main HUD Settings** - quick access to Coordinates, Biome, Time toggles
+  - Per-element position editors via gear button
 - Coordinates, biome, time, FPS, ping, TPS, BPS
 - Potion effects with icons and timers
 - Equipment HUD with durability
@@ -146,9 +161,10 @@ Language is auto-detected from the game settings. Switch anytime in the mod's GU
 ---
 
 ## 🛠️ Requirements
-- Minecraft **1.21.11**
-- Fabric Loader **0.19.5+**
-- [Fabric API](https://modrinth.com/mod/fabric-api)
+- Minecraft **26.2**
+- Fabric Loader **0.19.3+**
+- [Fabric API](https://modrinth.com/mod/fabric-api) **0.157.0+26.2**
+- Java **25+**
 
 ---
 
