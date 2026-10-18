@@ -1026,7 +1026,18 @@ public class AccordionScreen extends Screen {
         );
         targetEspItem.contentHeight = 252;
         pvp.items.add(targetEspItem);
-
+        AccordionItem thudItem = new AccordionItem(
+                "target_hud",
+                LocalizationManager.get("gui.resistancedlc.item.target_hud.title"),
+                LocalizationManager.get("gui.resistancedlc.item.target_hud.desc"),
+                () -> ModConfig.targetHudEnabled,
+                () -> {
+                    ModConfig.targetHudEnabled = !ModConfig.targetHudEnabled;
+                    ConfigManager.save();
+                }
+        );
+        thudItem.contentHeight = 110;
+        pvp.items.add(thudItem);
         sections.add(pvp);
 
         // PVE
@@ -1120,7 +1131,18 @@ public class AccordionScreen extends Screen {
         );
         chItem.contentHeight = 214;
         visual.items.add(chItem);
-
+        AccordionItem hwItem = new AccordionItem(
+                "headwear",
+                LocalizationManager.get("gui.resistancedlc.item.headwear.title"),
+                LocalizationManager.get("gui.resistancedlc.item.headwear.desc"),
+                () -> ModConfig.headwearEnabled,
+                () -> {
+                    ModConfig.headwearEnabled = !ModConfig.headwearEnabled;
+                    ConfigManager.save();
+                }
+        );
+        hwItem.contentHeight = 180;
+        visual.items.add(hwItem);
         AccordionItem hbItem = new AccordionItem(
                 "custom_hitbox",
                 LocalizationManager.get("gui.resistancedlc.item.custom_hitbox.title"),
@@ -1709,10 +1731,12 @@ public class AccordionScreen extends Screen {
             case "totem_log" -> buildTotemLogPanel(widgets, innerX, innerY, innerRight);
             case "auto_swap" -> buildAutoSwapPanel(widgets, innerX, innerY, innerRight);
             case "pvp_safe" -> buildPvPSafePanel(widgets, innerX, innerY, innerRight);
+            case "target_hud" -> buildTargetHudPanel(widgets, innerX, innerY, innerRight);
             case "pickup_logger" -> buildPickUpLoggerPanel(widgets, innerX, innerY, innerRight);
             case "tape_mouse" -> buildTapeMousePanel(widgets, innerX, innerY, innerRight);
             case "item_scroller" -> buildItemScrollerPanel(widgets, innerX, innerY, innerRight);
             case "zoom" -> buildZoomPanel(widgets, innerX, innerY, innerRight);
+            case "headwear" -> buildHeadwearPanel(widgets, innerX, innerY, innerRight);
             case "crosshair" -> buildCrosshairPanel(widgets, innerX, innerY, innerRight);
             case "custom_hitbox" -> buildCustomHitboxPanel(widgets, innerX, innerY, innerRight);
             case "aspect_ratio" -> buildAspectRatioPanel(widgets, innerX, innerY, innerRight);
@@ -6590,7 +6614,9 @@ public class AccordionScreen extends Screen {
     private void rebuildBetterBossBarPanel() {
         rebuildPanelTwoPass("better_bossbar");
     }
-
+    private void rebuildHeadwearPanel() {
+        rebuildPanelTwoPass("headwear");
+    }
     // ===================== РЕНДЕР =====================
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
@@ -7610,5 +7636,188 @@ public class AccordionScreen extends Screen {
         protected void updateWidgetNarration(
                 net.minecraft.client.gui.narration.NarrationElementOutput narration) {
         }
+    }
+    // ===================== HEADWEAR (v3.4.0) =====================
+    private void buildHeadwearPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        // Пресет (cycle button)
+        String[] presetIds   = {"top_hat", "chinese_hat", "jester_cap"};
+        String[] presetNames = {
+                LocalizationManager.get("gui.resistancedlc.headwear.preset.top_hat"),
+                LocalizationManager.get("gui.resistancedlc.headwear.preset.chinese_hat"),
+                LocalizationManager.get("gui.resistancedlc.headwear.preset.jester_cap")
+        };
+        int curIdx = 0;
+        for (int i = 0; i < presetIds.length; i++) {
+            if (presetIds[i].equals(ModConfig.headwearPreset)) { curIdx = i; break; }
+        }
+        final int ci = curIdx;
+
+        widgets.add(Button.builder(
+                Component.literal(LocalizationManager.get("gui.resistancedlc.headwear.preset",
+                        presetNames[ci])),
+                (b) -> {
+                    int next = (ci + 1) % presetIds.length;
+                    ModConfig.headwearPreset = presetIds[next];
+                    ConfigManager.save();
+                    rebuildHeadwearPanel();
+                }
+        ).bounds(x, curY, w, 20).build());
+        curY += rowH + rowGap;
+
+        // Размер
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.headwear.size",
+                        String.format(java.util.Locale.ROOT, "%.2f", ModConfig.headwearScale))),
+                (ModConfig.headwearScale - 0.5f) / 1.5f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.headwear.size",
+                        String.format(java.util.Locale.ROOT, "%.2f", ModConfig.headwearScale))));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.headwearScale = 0.5f + (float) (this.value * 1.5f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // Смещение по Y
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.headwear.offset",
+                        String.format(java.util.Locale.ROOT, "%.2f", ModConfig.headwearOffsetY))),
+                (ModConfig.headwearOffsetY + 0.3f) / 0.6f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.headwear.offset",
+                        String.format(java.util.Locale.ROOT, "%.2f", ModConfig.headwearOffsetY))));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.headwearOffsetY = -0.3f + (float) (this.value * 0.6f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // Прозрачность
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.headwear.alpha",
+                        ModConfig.headwearAlpha)),
+                ModConfig.headwearAlpha / 255.0
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.headwear.alpha",
+                        ModConfig.headwearAlpha)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.headwearAlpha = (int) (this.value * 255);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // Показывать друзьям
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.headwear.show_friends")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.headwearShowOnFriends)
+                .onValueChange((c, v) -> {
+                    ModConfig.headwearShowOnFriends = v;
+                    ConfigManager.save();
+                })
+                .build());
+    }
+    // ===================== TARGET HUD =====================
+    private void buildTargetHudPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        // Прозрачность фона
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha", ModConfig.targetHudAlpha)),
+                ModConfig.targetHudAlpha / 255.0
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha",
+                        ModConfig.targetHudAlpha)));
+            }
+
+            @Override
+            protected void applyValue() {
+                ModConfig.targetHudAlpha = (int) (this.value * 255);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // Цвет фона (Hex)
+        EditBox bgHex = new EditBox(this.font, x, curY, 80, 18,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hex")));
+        bgHex.setMaxLength(7);
+        bgHex.setValue(String.format("#%06X", ModConfig.targetHudBgColor & 0xFFFFFF));
+        widgets.add(bgHex);
+
+        widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.apply")), (b) -> {
+            try {
+                ModConfig.targetHudBgColor = 0xFF000000 | Integer.parseInt(
+                        bgHex.getValue().replace("#", "").trim(), 16);
+                ConfigManager.save();
+            } catch (Exception ignored) {}
+        }).bounds(x + 85, curY, 35, 18).build());
+
+        widgets.add(Button.builder(Component.literal("§0W"), (b) -> {
+            bgHex.setValue("#000000");
+            ModConfig.targetHudBgColor = 0xFF000000;
+            ConfigManager.save();
+        }).bounds(x + 125, curY, 22, 18).build());
+
+        curY += rowH + rowGap;
+
+        // Цвет рамки (Hex)
+        EditBox borderHex = new EditBox(this.font, x, curY, 80, 18,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.hex")));
+        borderHex.setMaxLength(7);
+        borderHex.setValue(String.format("#%06X", ModConfig.targetHudBorderColor & 0xFFFFFF));
+        widgets.add(borderHex);
+
+        widgets.add(Button.builder(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.apply")), (b) -> {
+            try {
+                ModConfig.targetHudBorderColor = 0xFF000000 | Integer.parseInt(
+                        borderHex.getValue().replace("#", "").trim(), 16);
+                ConfigManager.save();
+            } catch (Exception ignored) {}
+        }).bounds(x + 85, curY, 35, 18).build());
+
+        // Пресеты для рамки: Зеленый, Красный, Белый
+        int[] colors = {0x00FF00, 0xFF0000, 0xFFFFFF};
+        String[] labels = {"G", "R", "W"};
+        for (int i = 0; i < 3; i++) {
+            final int color = colors[i];
+            final String hex = String.format("#%06X", color);
+            widgets.add(Button.builder(Component.literal(labels[i]), (b) -> {
+                borderHex.setValue(hex);
+                ModConfig.targetHudBorderColor = 0xFF000000 | color;
+                ConfigManager.save();
+            }).bounds(x + 125 + i * 25, curY, 22, 18).build());
+        }
+    }
+
+    private void rebuildTargetHudPanel() {
+        rebuildPanelTwoPass("target_hud");
     }
 }

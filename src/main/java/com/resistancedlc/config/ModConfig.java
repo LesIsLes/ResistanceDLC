@@ -486,4 +486,20 @@ public class ModConfig {
     public static float voiceCommandThreshold = 0.35f;      // 0.20..0.95 (DTW порог)
     public static float voiceVadSensitivity = 1.0f;         // 0.3..3.0 (ручная чувствительность)
     public static float voiceVadCalibratedThreshold = 0f;   // 0 = не калибровано (СБРОШЕНО)
+
+    // ===================== HEADWEAR (v3.4.0) =====================
+    public static boolean headwearEnabled = false;
+    public static String headwearPreset = "top_hat";
+    public static float headwearScale = 1.0f;            // 0.5..2.0
+    public static float headwearOffsetY = 0.0f;          // -0.3..0.3
+    public static int headwearAlpha = 255;               // 0..255
+    public static boolean headwearShowOnFriends = false;
+
+    // ===================== TARGET HUD (v3.4.0) =====================
+    public static boolean targetHudEnabled = false;
+    public static int targetHudX = -1;                  // -1 = авто (справа от хотбара)
+    public static int targetHudY = -1;                  // -1 = авто (над хотбаром)
+    public static int targetHudAlpha = 220;
+    public static int targetHudBgColor = 0x80000000;
+    public static int targetHudBorderColor = 0xFF00FF00;
 }

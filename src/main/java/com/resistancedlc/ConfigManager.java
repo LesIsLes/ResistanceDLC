@@ -67,6 +67,7 @@ public class ConfigManager {
             json.addProperty("showPet", ModConfig.showPet);
             json.addProperty("searchHistoryRaw", ModConfig.searchHistoryRaw);
             json.addProperty("freelookDistance", ModConfig.freelookDistance);
+
             // === ВИДИМОСТЬ ЭЛЕМЕНТОВ ===
             json.addProperty("showCoords", ModConfig.showCoords);
             json.addProperty("showBiome", ModConfig.showBiome);
@@ -232,8 +233,13 @@ public class ConfigManager {
             // === ITEM PHYSICS ===
             json.addProperty("itemPhysicsEnabled", ModConfig.itemPhysicsEnabled);
             json.addProperty("itemPhysicsRussian", ModConfig.itemPhysicsRussian);
+
+            // === VOICE / VAD ===
             json.addProperty("voiceVadSensitivity", ModConfig.voiceVadSensitivity);
             json.addProperty("voiceVadCalibratedThreshold", ModConfig.voiceVadCalibratedThreshold);
+            json.addProperty("voiceCommandsEnabled", ModConfig.voiceCommandsEnabled);   // [v3.4.0 FIX]
+            json.addProperty("voiceCommandThreshold", ModConfig.voiceCommandThreshold); // [v3.4.0 FIX]
+
             // === PARTICLE BLOCKER ===
             json.addProperty("particleBlockerEnabled", ModConfig.particleBlockerEnabled);
             json.addProperty("particleBlockerFire", ModConfig.particleBlockerFire);
@@ -293,11 +299,28 @@ public class ConfigManager {
             json.addProperty("chatFilterWordsRaw", ModConfig.chatFilterWordsRaw);
             json.addProperty("chatFilterRussian", ModConfig.chatFilterRussian);
 
+            // === MACROS === [v3.4.0 FIX]
+            json.addProperty("macrosEnabled", ModConfig.macrosEnabled);
+            json.addProperty("macro1", ModConfig.macro1);
+            json.addProperty("macro2", ModConfig.macro2);
+            json.addProperty("macro3", ModConfig.macro3);
+            json.addProperty("macro4", ModConfig.macro4);
+            json.addProperty("macro5", ModConfig.macro5);
+
             // === AUTO RECONNECT ===
             json.addProperty("autoReconnectEnabled", ModConfig.autoReconnectEnabled);
             json.addProperty("autoReconnectDelay", ModConfig.autoReconnectDelay);
             json.addProperty("autoReconnectShowHud", ModConfig.autoReconnectShowHud);
             json.addProperty("autoReconnectRussian", ModConfig.autoReconnectRussian);
+
+            // === SMART CHAT === [v3.4.0 FIX]
+            json.addProperty("smartChatEnabled", ModConfig.smartChatEnabled);
+            json.addProperty("smartChatGroupingEnabled", ModConfig.smartChatGroupingEnabled);
+            json.addProperty("smartChatCoordClickEnabled", ModConfig.smartChatCoordClickEnabled);
+            json.addProperty("smartChatGroupWindowSec", ModConfig.smartChatGroupWindowSec);
+
+            // === EASTER EGG === [v3.4.0 FIX]
+            json.addProperty("killAuraEggEnabled", ModConfig.killAuraEggEnabled);
 
             // === DEATH COORDS ===
             json.addProperty("deathCoordsEnabled", ModConfig.deathCoordsEnabled);
@@ -332,6 +355,10 @@ public class ConfigManager {
             json.addProperty("itemScrollerShiftStack", ModConfig.itemScrollerShiftStack);
             json.addProperty("itemScrollerCtrlAll", ModConfig.itemScrollerCtrlAll);
 
+            // === AUTO TOOL === [v3.4.0 FIX]
+            json.addProperty("autoToolEnabled", ModConfig.autoToolEnabled);
+            json.addProperty("autoToolSwitchBack", ModConfig.autoToolSwitchBack);
+
             // === COOLDOWNS ===
             json.addProperty("cooldownsEnabled", ModConfig.cooldownsEnabled);
             json.addProperty("cooldownsRussian", ModConfig.cooldownsRussian);
@@ -346,7 +373,20 @@ public class ConfigManager {
             json.addProperty("cooldownsMaxItems", ModConfig.cooldownsMaxItems);
             json.addProperty("cooldownsFontSize", ModConfig.cooldownsFontSize);
             json.addProperty("cooldownsIconDarkening", ModConfig.cooldownsIconDarkening);
-
+            // === HEADWEAR ===
+            json.addProperty("headwearEnabled", ModConfig.headwearEnabled);
+            json.addProperty("headwearPreset", ModConfig.headwearPreset);
+            json.addProperty("headwearScale", ModConfig.headwearScale);
+            json.addProperty("headwearOffsetY", ModConfig.headwearOffsetY);
+            json.addProperty("headwearAlpha", ModConfig.headwearAlpha);
+            json.addProperty("headwearShowOnFriends", ModConfig.headwearShowOnFriends);
+            // === TARGET HUD ===
+            json.addProperty("targetHudEnabled", ModConfig.targetHudEnabled);
+            json.addProperty("targetHudX", ModConfig.targetHudX);
+            json.addProperty("targetHudY", ModConfig.targetHudY);
+            json.addProperty("targetHudAlpha", ModConfig.targetHudAlpha);
+            json.addProperty("targetHudBgColor", ModConfig.targetHudBgColor);
+            json.addProperty("targetHudBorderColor", ModConfig.targetHudBorderColor);
             // === GAMMA UTIL ===
             json.addProperty("gammaUtilEnabled", ModConfig.gammaUtilEnabled);
             json.addProperty("gammaValue", ModConfig.gammaValue);
@@ -459,13 +499,19 @@ public class ConfigManager {
             json.addProperty("timeChangeEnabled", ModConfig.timeChangeEnabled);
             json.addProperty("timeChangeValue", ModConfig.timeChangeValue);
 
+            // === WEATHER CHANGE === [v3.4.0 FIX]
+            json.addProperty("weatherChangeEnabled", ModConfig.weatherChangeEnabled);
+            json.addProperty("weatherChangeMode", ModConfig.weatherChangeMode);
+
             // === PING INDICATOR ===
             json.addProperty("pingIndicatorEnabled", ModConfig.pingIndicatorEnabled);
             json.addProperty("pingIndicatorShowMs", ModConfig.pingIndicatorShowMs);
             json.addProperty("pingIndicatorRussian", ModConfig.pingIndicatorRussian);
+
             // === DEATH RECAP ===
             json.addProperty("deathRecapRaw", ModConfig.deathRecapRaw);
 
+            // === FREELOOK ===
             json.addProperty("freelookEnabled", ModConfig.freelookEnabled);
             json.addProperty("freelookSensitivity", ModConfig.freelookSensitivity);
 
@@ -543,6 +589,7 @@ public class ConfigManager {
             ModConfig.freelookEnabled = getBool(json, "freelookEnabled", ModConfig.freelookEnabled);
             ModConfig.freelookSensitivity = getFloat(json, "freelookSensitivity", ModConfig.freelookSensitivity);
             ModConfig.freelookDistance = getFloat(json, "freelookDistance", ModConfig.freelookDistance);
+
             // === ВИДИМОСТЬ ЭЛЕМЕНТОВ ===
             ModConfig.showCoords = getBool(json, "showCoords", ModConfig.showCoords);
             ModConfig.showBiome = getBool(json, "showBiome", ModConfig.showBiome);
@@ -639,7 +686,13 @@ public class ConfigManager {
             // === WEATHER CHANGE ===
             ModConfig.weatherChangeEnabled = getBool(json, "weatherChangeEnabled", ModConfig.weatherChangeEnabled);
             ModConfig.weatherChangeMode = getInt(json, "weatherChangeMode", ModConfig.weatherChangeMode);
-
+            // === HEADWEAR ===
+            ModConfig.headwearEnabled = getBool(json, "headwearEnabled", ModConfig.headwearEnabled);
+            ModConfig.headwearPreset = getString(json, "headwearPreset", ModConfig.headwearPreset);
+            ModConfig.headwearScale = getFloat(json, "headwearScale", ModConfig.headwearScale);
+            ModConfig.headwearOffsetY = getFloat(json, "headwearOffsetY", ModConfig.headwearOffsetY);
+            ModConfig.headwearAlpha = getInt(json, "headwearAlpha", ModConfig.headwearAlpha);
+            ModConfig.headwearShowOnFriends = getBool(json, "headwearShowOnFriends", ModConfig.headwearShowOnFriends);
             // === ASPECT RATIO ===
             ModConfig.aspectRatioEnabled = getBool(json, "aspectRatioEnabled", ModConfig.aspectRatioEnabled);
             ModConfig.aspectRatioUsePreset = getBool(json, "aspectRatioUsePreset", ModConfig.aspectRatioUsePreset);
@@ -782,11 +835,28 @@ public class ConfigManager {
             ModConfig.chatFilterWordsRaw = getString(json, "chatFilterWordsRaw", ModConfig.chatFilterWordsRaw);
             ModConfig.chatFilterRussian = getBool(json, "chatFilterRussian", ModConfig.chatFilterRussian);
 
+            // === MACROS === [v3.4.0 FIX]
+            ModConfig.macrosEnabled = getBool(json, "macrosEnabled", ModConfig.macrosEnabled);
+            ModConfig.macro1 = getString(json, "macro1", ModConfig.macro1);
+            ModConfig.macro2 = getString(json, "macro2", ModConfig.macro2);
+            ModConfig.macro3 = getString(json, "macro3", ModConfig.macro3);
+            ModConfig.macro4 = getString(json, "macro4", ModConfig.macro4);
+            ModConfig.macro5 = getString(json, "macro5", ModConfig.macro5);
+
             // === AUTO RECONNECT ===
             ModConfig.autoReconnectEnabled = getBool(json, "autoReconnectEnabled", ModConfig.autoReconnectEnabled);
             ModConfig.autoReconnectDelay = getInt(json, "autoReconnectDelay", ModConfig.autoReconnectDelay);
             ModConfig.autoReconnectShowHud = getBool(json, "autoReconnectShowHud", ModConfig.autoReconnectShowHud);
             ModConfig.autoReconnectRussian = getBool(json, "autoReconnectRussian", ModConfig.autoReconnectRussian);
+
+            // === SMART CHAT === [v3.4.0 FIX]
+            ModConfig.smartChatEnabled = getBool(json, "smartChatEnabled", ModConfig.smartChatEnabled);
+            ModConfig.smartChatGroupingEnabled = getBool(json, "smartChatGroupingEnabled", ModConfig.smartChatGroupingEnabled);
+            ModConfig.smartChatCoordClickEnabled = getBool(json, "smartChatCoordClickEnabled", ModConfig.smartChatCoordClickEnabled);
+            ModConfig.smartChatGroupWindowSec = getInt(json, "smartChatGroupWindowSec", ModConfig.smartChatGroupWindowSec);
+
+            // === EASTER EGG === [v3.4.0 FIX]
+            ModConfig.killAuraEggEnabled = getBool(json, "killAuraEggEnabled", ModConfig.killAuraEggEnabled);
 
             // === DEATH COORDS ===
             ModConfig.deathCoordsEnabled = getBool(json, "deathCoordsEnabled", ModConfig.deathCoordsEnabled);
@@ -817,8 +887,13 @@ public class ConfigManager {
             ModConfig.strikeRangeShowTime = getInt(json, "strikeRangeShowTime", ModConfig.strikeRangeShowTime);
             ModConfig.strikeRangeShowBlocks = getBool(json, "strikeRangeShowBlocks", ModConfig.strikeRangeShowBlocks);
             ModConfig.strikeRangeShowTarget = getBool(json, "strikeRangeShowTarget", ModConfig.strikeRangeShowTarget);
+
+            // === VOICE / VAD ===
             ModConfig.voiceVadSensitivity = getFloat(json, "voiceVadSensitivity", ModConfig.voiceVadSensitivity);
             ModConfig.voiceVadCalibratedThreshold = getFloat(json, "voiceVadCalibratedThreshold", ModConfig.voiceVadCalibratedThreshold);
+            ModConfig.voiceCommandsEnabled = getBool(json, "voiceCommandsEnabled", ModConfig.voiceCommandsEnabled);      // [v3.4.0 FIX]
+            ModConfig.voiceCommandThreshold = getFloat(json, "voiceCommandThreshold", ModConfig.voiceCommandThreshold);  // [v3.4.0 FIX]
+
             // === CUSTOM HITBOX ===
             ModConfig.customHitboxEnabled = getBool(json, "customHitboxEnabled", ModConfig.customHitboxEnabled);
             ModConfig.customHitboxRussian = getBool(json, "customHitboxRussian", ModConfig.customHitboxRussian);
@@ -831,6 +906,10 @@ public class ConfigManager {
             ModConfig.itemScrollerDelay = getInt(json, "itemScrollerDelay", ModConfig.itemScrollerDelay);
             ModConfig.itemScrollerShiftStack = getBool(json, "itemScrollerShiftStack", ModConfig.itemScrollerShiftStack);
             ModConfig.itemScrollerCtrlAll = getBool(json, "itemScrollerCtrlAll", ModConfig.itemScrollerCtrlAll);
+
+            // === AUTO TOOL === [v3.4.0 FIX]
+            ModConfig.autoToolEnabled = getBool(json, "autoToolEnabled", ModConfig.autoToolEnabled);
+            ModConfig.autoToolSwitchBack = getBool(json, "autoToolSwitchBack", ModConfig.autoToolSwitchBack);
 
             // === COOLDOWNS ===
             ModConfig.cooldownsEnabled = getBool(json, "cooldownsEnabled", ModConfig.cooldownsEnabled);
@@ -915,7 +994,13 @@ public class ConfigManager {
             ModConfig.statsTrackerEnabled = getBool(json, "statsTrackerEnabled", ModConfig.statsTrackerEnabled);
             ModConfig.statsKills = getInt(json, "statsKills", ModConfig.statsKills);
             ModConfig.statsDeaths = getInt(json, "statsDeaths", ModConfig.statsDeaths);
-
+            // === TARGET HUD ===
+            ModConfig.targetHudEnabled     = getBool(json, "targetHudEnabled", ModConfig.targetHudEnabled);
+            ModConfig.targetHudX           = getInt(json, "targetHudX", ModConfig.targetHudX);
+            ModConfig.targetHudY           = getInt(json, "targetHudY", ModConfig.targetHudY);
+            ModConfig.targetHudAlpha       = getInt(json, "targetHudAlpha", ModConfig.targetHudAlpha);
+            ModConfig.targetHudBgColor     = getInt(json, "targetHudBgColor", ModConfig.targetHudBgColor);
+            ModConfig.targetHudBorderColor = getInt(json, "targetHudBorderColor", ModConfig.targetHudBorderColor);
             // === KILL STREAK ===
             ModConfig.killStreakEnabled = getBool(json, "killStreakEnabled", ModConfig.killStreakEnabled);
             ModConfig.killStreakSoundVolume = getFloat(json, "killStreakSoundVolume", ModConfig.killStreakSoundVolume);
@@ -954,10 +1039,12 @@ public class ConfigManager {
             ModConfig.crosshairHeatmapRussian = getBool(json, "crosshairHeatmapRussian", ModConfig.crosshairHeatmapRussian);
             ModConfig.crosshairHeatmapTotalHits = getInt(json, "crosshairHeatmapTotalHits", ModConfig.crosshairHeatmapTotalHits);
             ModConfig.crosshairHeatmapTotalMisses = getInt(json, "crosshairHeatmapTotalMisses", ModConfig.crosshairHeatmapTotalMisses);
+
             // === PING INDICATOR ===
             ModConfig.pingIndicatorEnabled = getBool(json, "pingIndicatorEnabled", ModConfig.pingIndicatorEnabled);
             ModConfig.pingIndicatorShowMs = getBool(json, "pingIndicatorShowMs", ModConfig.pingIndicatorShowMs);
             ModConfig.pingIndicatorRussian = getBool(json, "pingIndicatorRussian", ModConfig.pingIndicatorRussian);
+
             // === DEATH RECAP ===
             ModConfig.deathRecapRaw = getString(json, "deathRecapRaw", ModConfig.deathRecapRaw);
 
@@ -999,6 +1086,7 @@ public class ConfigManager {
     private static String getString(JsonObject json, String key, String def) {
         return json.has(key) ? json.get(key).getAsString() : def;
     }
+
     private static long getLong(JsonObject json, String key, long def) {
         return json.has(key) ? json.get(key).getAsLong() : def;
     }

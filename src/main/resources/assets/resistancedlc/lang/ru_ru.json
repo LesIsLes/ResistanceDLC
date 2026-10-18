@@ -581,5 +581,19 @@
   "gui.resistancedlc.music_hud.empty": "Плейлист пуст",
   "gui.resistancedlc.music_hud.hint": "Закинь .ogg в папку",
 
+  "gui.resistancedlc.item.headwear.title": "Головные уборы",
+  "gui.resistancedlc.item.headwear.desc": "3D-шапка над головой (вашей и друзей)",
+  "gui.resistancedlc.headwear.preset": "Стиль: %s",
+  "gui.resistancedlc.headwear.preset.top_hat": "Цилиндр",
+  "gui.resistancedlc.headwear.preset.chinese_hat": "Китайская шляпа",
+  "gui.resistancedlc.headwear.preset.jester_cap": "Колпак",
+  "gui.resistancedlc.headwear.size": "Размер: %.2f",
+  "gui.resistancedlc.headwear.offset": "Смещение Y: %.2f",
+  "gui.resistancedlc.headwear.alpha": "Прозрачность: %d",
+  "gui.resistancedlc.headwear.show_friends": "Показывать друзьям",
+
+  "gui.resistancedlc.item.target_hud.title": "Target HUD",
+  "gui.resistancedlc.item.target_hud.desc": "Показывает информацию о цели",
+
   "key.category.resistancedlc.main": "ResistanceDLC"
 }

@@ -240,6 +240,9 @@ public final class HudWidgetRegistry {
                 v -> { ModConfig.musicPlayerEnabled = v; ModConfig.musicShowHud = v; }
         ));
 
+        // ===================== TARGET HUD =====================
+        list.add(new TargetHudWidget());
+
         return list;
     }
 
@@ -279,7 +282,6 @@ public final class HudWidgetRegistry {
         public int getEffectiveX(int screenWidth) {
             int rx = getRawX();
             if (rx >= 0) return rx;
-            // -1 = центр по X (для low_hp / armor alert)
             return (screenWidth - lastWidth) / 2;
         }
 
@@ -287,7 +289,6 @@ public final class HudWidgetRegistry {
         public int getEffectiveY(int screenHeight) {
             int ry = getRawY();
             if (ry >= 0) return ry;
-            // -1 = центр по Y - 40 (как в renderHud)
             return (screenHeight / 2) - 40;
         }
 
@@ -303,7 +304,6 @@ public final class HudWidgetRegistry {
         public boolean hitTest(double mouseX, double mouseY, int screenWidth, int screenHeight) {
             int x = getEffectiveX(screenWidth);
             int y = getEffectiveY(screenHeight);
-            // Немного увеличим hitbox — 2 px по краям, чтобы легко схватить
             int pad = 2;
             return mouseX >= x - pad && mouseX <= x + lastWidth + pad
                     && mouseY >= y - pad && mouseY <= y + lastHeight + pad;
@@ -363,7 +363,6 @@ public final class HudWidgetRegistry {
         public int getEffectiveX(int screenWidth) {
             int rx = getRawX();
             if (rx >= 0) return rx;
-            // -1 = правый край (friend_list / music_player)
             return screenWidth - w - 6;
         }
 
@@ -410,6 +409,62 @@ public final class HudWidgetRegistry {
 
             return w;
         }
+    }
+
+    // ===================== TargetHudWidget =====================
+    public static class TargetHudWidget implements HudWidget {
+        @Override public String getId() { return "target_hud"; }
+        @Override public String getDisplayName() { return "Target HUD"; }
+        @Override public int getRawX() { return ModConfig.targetHudX; }
+        @Override public int getRawY() { return ModConfig.targetHudY; }
+
+        @Override
+        public int getEffectiveX(int screenWidth) {
+            return getRawX() < 0 ? (screenWidth + 182) / 2 + 10 : getRawX();
+        }
+
+        @Override
+        public int getEffectiveY(int screenHeight) {
+            return getRawY() < 0 ? screenHeight - 70 : getRawY();
+        }
+
+        @Override public void setPosition(int x, int y) { ModConfig.targetHudX = x; ModConfig.targetHudY = y; }
+        @Override public int getDefaultX() { return -1; }
+        @Override public int getDefaultY() { return -1; }
+        @Override public boolean isEnabled() { return ModConfig.targetHudEnabled; }
+        @Override public void setEnabled(boolean v) { ModConfig.targetHudEnabled = v; }
+
+        @Override
+        public boolean hitTest(double mouseX, double mouseY, int screenWidth, int screenHeight) {
+            int x = getEffectiveX(screenWidth);
+            int y = getEffectiveY(screenHeight);
+            return mouseX >= x && mouseX <= x + 140 && mouseY >= y && mouseY <= y + 46;
+        }
+
+        @Override
+        public int renderPreview(GuiGraphics graphics, int mouseX, int mouseY, float alpha) {
+            Minecraft mc = Minecraft.getInstance();
+            int x = getEffectiveX(graphics.guiWidth());
+            int y = getEffectiveY(graphics.guiHeight());
+            int a = (int) (alpha * 255);
+
+            graphics.fill(x, y, x + 140, y + 46, (a << 24) | 0x000000);
+            graphics.fill(x, y, x + 140, y + 1, (a << 24) | 0x00FF00);
+            graphics.fill(x, y + 45, x + 140, y + 46, (a << 24) | 0x00FF00);
+            graphics.fill(x, y, x + 1, y + 46, (a << 24) | 0x00FF00);
+            graphics.fill(x + 139, y, x + 140, y + 46, (a << 24) | 0x00FF00);
+
+            graphics.drawString(mc.font, "Steve", x + 40, y + 6, (a << 24) | 0xFFFFFF, true);
+            graphics.drawString(mc.font, "20.0", x + 40, y + 20, (a << 24) | 0x00FF00, true);
+
+            graphics.fill(x + 40, y + 32, x + 130, y + 36, (a << 24) | 0x400000);
+            graphics.fill(x + 40, y + 32, x + 130, y + 36, (a << 24) | 0x00FF00);
+
+            return 140;
+        }
+
+        @Override public int getWidth() { return 140; }
+        @Override public int getHeight() { return 46; }
     }
 
     // ===================== Функциональные интерфейсы =====================

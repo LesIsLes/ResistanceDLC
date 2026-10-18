@@ -581,5 +581,19 @@
   "gui.resistancedlc.music_hud.empty": "Playlist is empty",
   "gui.resistancedlc.music_hud.hint": "Drop .ogg into the folder",
 
+  "gui.resistancedlc.item.headwear.title": "Headwear",
+  "gui.resistancedlc.item.headwear.desc": "3D hat above your head (and friends')",
+  "gui.resistancedlc.headwear.preset": "Style: %s",
+  "gui.resistancedlc.headwear.preset.top_hat": "Top Hat",
+  "gui.resistancedlc.headwear.preset.chinese_hat": "Chinese Hat",
+  "gui.resistancedlc.headwear.preset.jester_cap": "Jester Cap",
+  "gui.resistancedlc.headwear.size": "Size: %.2f",
+  "gui.resistancedlc.headwear.offset": "Y offset: %.2f",
+  "gui.resistancedlc.headwear.alpha": "Alpha: %d",
+  "gui.resistancedlc.headwear.show_friends": "Show on friends",
+
+  "gui.resistancedlc.item.target_hud.title": "Target HUD",
+  "gui.resistancedlc.item.target_hud.desc": "Shows target's stats",
+
   "key.category.resistancedlc.main": "ResistanceDLC"
 }

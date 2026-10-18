@@ -83,12 +83,17 @@ public class ResistanceDLCClient implements ClientModInitializer {
             if (player == Minecraft.getInstance().player && entity != null) {
                 KillTracker.recordHit(entity.getUUID());
             }
+            if (ModConfig.targetHudEnabled && entity instanceof LivingEntity) {
+                com.resistancedlc.hud.TargetHudManager.onHit(entity);
+            }
             if (ModConfig.strikeRangeEnabled && entity != null) {
                 double dist = player.distanceTo(entity);
                 StrikeRangeManager.onHit(dist);
                 ModConfig.strikeRangeLastTarget = entity.getName().getString();
             }
-
+            if (ModConfig.targetHudEnabled && entity instanceof LivingEntity) {
+                com.resistancedlc.hud.TargetHudManager.onHit(entity);
+            }
             if (ModConfig.pvpSafeEnabled && entity instanceof Player && entity != player) {
                 PvPSafeManager.recordHit();
             }
@@ -198,6 +203,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
             AutoGGManager.reset();
             FreelookManager.reset();
             StrikeRangeManager.reset();
+            com.resistancedlc.hud.TargetHudManager.reset();
             WeatherChangeManager.reset();
             com.resistancedlc.targetesp.TargetManagerHolder.MANAGER.reset();
             JumpCirclesManager.reset();
@@ -897,7 +903,15 @@ public class ResistanceDLCClient implements ClientModInitializer {
             if (!ModConfig.autoSprintEnabled) return;
             if (client.player == null) return;
             if (client.screen != null) return;
-            if (client.options.keyUp.isDown()) {
+
+            boolean canSprint =
+                    client.player.getFoodData().getFoodLevel() > 6
+                            && !client.player.isShiftKeyDown()
+                            && !client.options.keyDown.isDown()
+                            && !client.player.isUsingItem()
+                            && client.options.keyUp.isDown();
+
+            if (canSprint) {
                 client.player.setSprinting(true);
             }
         });
@@ -1030,6 +1044,11 @@ public class ResistanceDLCClient implements ClientModInitializer {
         );
         HudElementRegistry.attachElementBefore(
                 VanillaHudElements.CHAT,
+                Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "target_hud"),
+                (graphics, tickCounter) -> com.resistancedlc.hud.TargetHud.render(graphics)
+        );
+        HudElementRegistry.attachElementBefore(
+                VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "music_hud"),
                 (graphics, tickCounter) -> MusicPlayerHud.render(graphics)
         );
@@ -1059,7 +1078,10 @@ public class ResistanceDLCClient implements ClientModInitializer {
         net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_MAIN.register(
                 JumpCirclesManager::render
         );
-
+        // Вместо HeadwearRenderer::render
+        net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.END_MAIN.register(
+                ctx -> com.resistancedlc.headwear.HeadwearRenderer.render(ctx)
+        );
         ClientTickEvents.END_CLIENT_TICK.register(client -> PingIndicatorManager.tick());
 
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {

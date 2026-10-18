@@ -147,135 +147,42 @@ public class KeyBindings {
     }
 
     // ============================================================
+    // [v3.4.0 FIX] ЕДИНАЯ ТОЧКА ПРИМЕНЕНИЯ БИНДА
+    //
+    // В 1.21.11 setKey() НЕ сбрасывает внутренний кеш маппинга.
+    // Без KeyMapping.resetMapping() новый бинд вступит в силу только
+    // после перезапуска клиента (или смены языка).
+    // ============================================================
+
+    private static void applyBinding(KeyMapping mapping, int keyCode) {
+        if (mapping == null) return;
+        mapping.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+        KeyMapping.resetMapping();
+        saveOptions();
+    }
+
+    // ============================================================
     // СЕТТЕРЫ (для binding в GUI)
     // ============================================================
 
-    public static void setKey(int keyCode) {
-        if (openGuiKey != null) {
-            openGuiKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            saveOptions();
-        }
-    }
-
-    public static void setZoomKey(int keyCode) {
-        if (zoomKey != null) {
-            zoomKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            saveOptions();
-        }
-    }
-
-    public static void setTapeMouseKey(int keyCode) {
-        if (tapeMouseKey != null) {
-            tapeMouseKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            saveOptions();
-        }
-    }
-
-    public static void setAutoSwapKey(int keyCode) {
-        if (autoSwapKey != null) {
-            autoSwapKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            saveOptions();
-        }
-    }
-
-    public static void setCustomHitSoundsKey(int keyCode) {
-        if (customHitSoundsKey != null) {
-            customHitSoundsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            saveOptions();
-        }
-    }
-
-    public static void setFastExpKey(int keyCode) {
-        if (fastExpKey != null) {
-            fastExpKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            saveOptions();
-        }
-    }
-
-    public static void setShiftTapKey(int keyCode) {
-        if (shiftTapKey != null) {
-            shiftTapKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            saveOptions();
-        }
-    }
-
-    public static void setComboKey(int keyCode) {
-        if (comboKey != null) {
-            comboKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            saveOptions();
-        }
-    }
-
-    public static void setEffectWarningsKey(int keyCode) {
-        if (effectWarningsKey != null) {
-            effectWarningsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            saveOptions();
-        }
-    }
-
-    public static void setWaypointsKey(int keyCode) {
-        if (waypointsKey != null) {
-            waypointsKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            saveOptions();
-        }
-    }
-
-    public static void setTotemLogKey(int keyCode) {
-        if (totemLogKey != null) {
-            totemLogKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            saveOptions();
-        }
-    }
-
-    public static void setPickupLogKey(int keyCode) {
-        if (pickupLogKey != null) {
-            pickupLogKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            saveOptions();
-        }
-    }
-
-    public static void setMacro1Key(int keyCode) {
-        if (macro1Key != null) {
-            macro1Key.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            saveOptions();
-        }
-    }
-
-    public static void setMacro2Key(int keyCode) {
-        if (macro2Key != null) {
-            macro2Key.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            saveOptions();
-        }
-    }
-
-    public static void setMacro3Key(int keyCode) {
-        if (macro3Key != null) {
-            macro3Key.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            saveOptions();
-        }
-    }
-
-    public static void setMacro4Key(int keyCode) {
-        if (macro4Key != null) {
-            macro4Key.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            saveOptions();
-        }
-    }
-
-    public static void setMacro5Key(int keyCode) {
-        if (macro5Key != null) {
-            macro5Key.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            saveOptions();
-        }
-    }
-
-    // ===== FREELOOK =====
-    public static void setFreelookKey(int keyCode) {
-        if (freelookKey != null) {
-            freelookKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
-            saveOptions();
-        }
-    }
+    public static void setKey(int keyCode)              { applyBinding(openGuiKey, keyCode); }
+    public static void setZoomKey(int keyCode)          { applyBinding(zoomKey, keyCode); }
+    public static void setTapeMouseKey(int keyCode)     { applyBinding(tapeMouseKey, keyCode); }
+    public static void setAutoSwapKey(int keyCode)      { applyBinding(autoSwapKey, keyCode); }
+    public static void setCustomHitSoundsKey(int k)     { applyBinding(customHitSoundsKey, k); }
+    public static void setFastExpKey(int keyCode)       { applyBinding(fastExpKey, keyCode); }
+    public static void setShiftTapKey(int keyCode)      { applyBinding(shiftTapKey, keyCode); }
+    public static void setComboKey(int keyCode)         { applyBinding(comboKey, keyCode); }
+    public static void setEffectWarningsKey(int k)      { applyBinding(effectWarningsKey, k); }
+    public static void setWaypointsKey(int keyCode)     { applyBinding(waypointsKey, keyCode); }
+    public static void setTotemLogKey(int keyCode)      { applyBinding(totemLogKey, keyCode); }
+    public static void setPickupLogKey(int keyCode)     { applyBinding(pickupLogKey, keyCode); }
+    public static void setMacro1Key(int keyCode)        { applyBinding(macro1Key, keyCode); }
+    public static void setMacro2Key(int keyCode)        { applyBinding(macro2Key, keyCode); }
+    public static void setMacro3Key(int keyCode)        { applyBinding(macro3Key, keyCode); }
+    public static void setMacro4Key(int keyCode)        { applyBinding(macro4Key, keyCode); }
+    public static void setMacro5Key(int keyCode)        { applyBinding(macro5Key, keyCode); }
+    public static void setFreelookKey(int keyCode)      { applyBinding(freelookKey, keyCode); }
 
     private static void saveOptions() {
         Minecraft.getInstance().options.save();
