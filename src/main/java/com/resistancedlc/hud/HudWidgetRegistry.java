@@ -240,6 +240,16 @@ public final class HudWidgetRegistry {
                 v -> { ModConfig.musicPlayerEnabled = v; ModConfig.musicShowHud = v; }
         ));
 
+        // ===================== TARGET HUD =====================
+        list.add(new FramedWidget(
+                "target_hud", "Target HUD",
+                () -> ModConfig.targetHudX, () -> ModConfig.targetHudY,
+                (x, y) -> { ModConfig.targetHudX = x; ModConfig.targetHudY = y; },
+                -1, -1, 130, 40,
+                () -> ModConfig.targetHudEnabled,
+                v -> ModConfig.targetHudEnabled = v
+        ));
+
         return list;
     }
 
@@ -279,7 +289,6 @@ public final class HudWidgetRegistry {
         public int getEffectiveX(int screenWidth) {
             int rx = getRawX();
             if (rx >= 0) return rx;
-            // -1 = центр по X (для low_hp / armor alert)
             return (screenWidth - lastWidth) / 2;
         }
 
@@ -287,7 +296,6 @@ public final class HudWidgetRegistry {
         public int getEffectiveY(int screenHeight) {
             int ry = getRawY();
             if (ry >= 0) return ry;
-            // -1 = центр по Y - 40 (как в renderHud)
             return (screenHeight / 2) - 40;
         }
 
@@ -303,7 +311,6 @@ public final class HudWidgetRegistry {
         public boolean hitTest(double mouseX, double mouseY, int screenWidth, int screenHeight) {
             int x = getEffectiveX(screenWidth);
             int y = getEffectiveY(screenHeight);
-            // Немного увеличим hitbox — 2 px по краям, чтобы легко схватить
             int pad = 2;
             return mouseX >= x - pad && mouseX <= x + lastWidth + pad
                     && mouseY >= y - pad && mouseY <= y + lastHeight + pad;

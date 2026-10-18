@@ -56,7 +56,7 @@ public class LyricsHud {
         Vec3 curAnchor = LyricsRenderer.getCurrentAnchorWorld();
         Vec3 nextAnchor = LyricsRenderer.getNextAnchorWorld();
 
-        Vec3 camPos = mc.gameRenderer.getMainCamera().position();
+        Vec3 camPos = mc.gameRenderer.mainCamera().position();
         float baseScale = ModConfig.lyricsFontSize;
 
         // ===== Current =====

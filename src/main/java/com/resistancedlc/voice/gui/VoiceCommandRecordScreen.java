@@ -244,7 +244,7 @@ public class VoiceCommandRecordScreen extends Screen {
             VoiceCommandRecorder.stop();
         }
         if (this.minecraft != null) {
-            this.minecraft.setScreen(parent);
+            this.minecraft.gui.setScreen(parent);
         }
     }
 }

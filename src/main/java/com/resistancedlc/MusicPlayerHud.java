@@ -52,7 +52,7 @@ public class MusicPlayerHud {
         if (mc.player == null) return;
         if (!ModConfig.musicPlayerEnabled) return;
         if (!ModConfig.musicShowHud) return;
-        if (mc.screen instanceof AccordionScreen) return;
+        if (mc.gui.screen() instanceof AccordionScreen) return;
 
         int screenW = graphics.guiWidth();
         int baseX = (ModConfig.musicHudX < 0)

@@ -62,7 +62,7 @@ public final class WeatherChangeManager {
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
-        if (mc.screen != null) return; // не спавним при открытых экранах
+        if (mc.gui.screen() != null) return; // не спавним при открытых экранах
 
         tickCounter++;
         if (tickCounter < SNOW_SPAWN_INTERVAL) return;

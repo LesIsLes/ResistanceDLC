@@ -1,13 +1,12 @@
 package com.resistancedlc.targetesp;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.resistancedlc.config.ModConfig;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionContext;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.world.entity.LivingEntity;
@@ -83,27 +82,26 @@ public final class TargetESP {
                 smoothX + halfWidth, smoothY + height, smoothZ + halfWidth
         );
 
-        MultiBufferSource.BufferSource bufferSource =
-                (MultiBufferSource.BufferSource) context.bufferSource();
-        if (bufferSource == null) return;
+        SubmitNodeCollector buf = context.submitNodeCollector();
+        if (buf == null) return;
 
+        PoseStack poseStack = context.poseStack();
         Vec3 cameraPos = Minecraft.getInstance()
                 .gameRenderer
-                .getMainCamera()
+                .mainCamera()
                 .position();
 
         switch (variant) {
-            case CRYSTALS -> drawCrystalsFilled(box, argb, bufferSource, cameraPos);
-            case RING     -> drawRingFilled(box, argb, bufferSource, cameraPos);
-            case CUBES    -> drawCubesFilled(box, argb, bufferSource, cameraPos);
-            case GHOSTS   -> drawGhostsFilled(box, argb, bufferSource, cameraPos);
+            case CRYSTALS -> drawCrystalsFilled(box, argb, buf, poseStack, cameraPos);
+            case RING     -> drawRingFilled(box, argb, buf, poseStack, cameraPos);
+            case CUBES    -> drawCubesFilled(box, argb, buf, poseStack, cameraPos);
+            case GHOSTS   -> drawGhostsFilled(box, argb, buf, poseStack, cameraPos);
             default -> {}
         }
     }
 
-    // ================ CRYSTALS (заливка) ================
     private void drawCrystalsFilled(AABB box, int color,
-                                    MultiBufferSource.BufferSource buf,
+                                    SubmitNodeCollector buf, PoseStack poseStack,
                                     Vec3 cameraPos) {
         double cx = (box.minX + box.maxX) / 2;
         double cz = (box.minZ + box.maxZ) / 2;
@@ -123,8 +121,6 @@ public final class TargetESP {
         double pulseGlobal = 1.0 + Math.sin(timeSec * 3.0) * pulseAmt;
         double spiralRotation = timeSec * rotationMul * 0.8;
 
-        VertexConsumer consumer = buf.getBuffer(FILL_TYPE);
-
         for (int i = 0; i < count; i++) {
             double t = (double) i / (count - 1);
             double angle = spiralRotation + t * totalTurns * Math.PI * 2;
@@ -135,14 +131,13 @@ public final class TargetESP {
             double pulseLocal = 1.0 + Math.sin(timeSec * 4.0 + i * 1.2) * pulseAmt;
             double size = 0.12 * sizeMul * pulseGlobal * pulseLocal;
             double spin = timeSec * 40.0 + i * 47.0;
-            drawOctahedronFilled(px, py, pz, size, spin, color, consumer, cameraPos);
+            drawOctahedronFilled(px, py, pz, size, spin, color, buf, poseStack, cameraPos);
         }
-
-        buf.endBatch(FILL_TYPE);
     }
 
     private void drawOctahedronFilled(double x, double y, double z, double size,
-                                      double spin, int color, VertexConsumer c,
+                                      double spin, int color,
+                                      SubmitNodeCollector buf, PoseStack poseStack,
                                       Vec3 cam) {
         double[][] v = {
                 { 0, -size * 1.5, 0 },
@@ -166,15 +161,13 @@ public final class TargetESP {
                 {1, 4, 2}, {1, 3, 4}, {1, 5, 3}, {1, 2, 5},
         };
         for (int[] f : faces) {
-            vertexTri(c, r[f[0]], r[f[1]], r[f[2]], x, y, z, color, cam);
-            // + обратная сторона (для двусторонности)
-            vertexTri(c, r[f[2]], r[f[1]], r[f[0]], x, y, z, color, cam);
+            vertexTri(buf, poseStack, r[f[0]], r[f[1]], r[f[2]], x, y, z, color, cam);
+            vertexTri(buf, poseStack, r[f[2]], r[f[1]], r[f[0]], x, y, z, color, cam);
         }
     }
 
-    // ================ RING (заливка) ================
     private void drawRingFilled(AABB box, int color,
-                                MultiBufferSource.BufferSource buf,
+                                SubmitNodeCollector buf, PoseStack poseStack,
                                 Vec3 cameraPos) {
         double cx = (box.minX + box.maxX) / 2;
         double cz = (box.minZ + box.maxZ) / 2;
@@ -187,7 +180,6 @@ public final class TargetESP {
         double thickness = 0.15;
 
         int segments = 48;
-        VertexConsumer consumer = buf.getBuffer(FILL_TYPE);
 
         for (int i = 0; i < segments; i++) {
             double a1 = i * Math.PI * 2 / segments;
@@ -205,20 +197,17 @@ public final class TargetESP {
             double x2i = cx + Math.cos(a2) * rInner;
             double z2i = cz + Math.sin(a2) * rInner;
 
-            quad(consumer,
+            quad(buf, poseStack,
                     (float)(x1o - cameraPos.x), (float)(ringY - cameraPos.y), (float)(z1o - cameraPos.z),
                     (float)(x2o - cameraPos.x), (float)(ringY - cameraPos.y), (float)(z2o - cameraPos.z),
                     (float)(x2i - cameraPos.x), (float)(ringY - cameraPos.y), (float)(z2i - cameraPos.z),
                     (float)(x1i - cameraPos.x), (float)(ringY - cameraPos.y), (float)(z1i - cameraPos.z),
                     color);
         }
-
-        buf.endBatch(FILL_TYPE);
     }
 
-    // ================ CUBES (заливка) ================
     private void drawCubesFilled(AABB box, int color,
-                                 MultiBufferSource.BufferSource buf,
+                                 SubmitNodeCollector buf, PoseStack poseStack,
                                  Vec3 cameraPos) {
         double cx = (box.minX + box.maxX) / 2;
         double cy = (box.minY + box.maxY) / 2;
@@ -234,86 +223,79 @@ public final class TargetESP {
         float pulseAmt = ModConfig.targetEspPulse;
         double pulseGlobal = 1.0 + Math.sin(timeSec * 3.0) * pulseAmt;
 
-        VertexConsumer consumer = buf.getBuffer(FILL_TYPE);
-
         for (int i = 0; i < count; i++) {
             double angle = timeSec * rotationMul + i * Math.PI * 2 / count;
             double px = cx + Math.cos(angle) * radius;
             double pz = cz + Math.sin(angle) * radius;
             double py = cy + Math.sin(timeSec * 0.5 + i) * 0.6;
             double size = 0.10 * sizeMul * pulseGlobal;
-            drawFilledCube(px, py, pz, size, color, consumer, cameraPos);
+            drawFilledCube(px, py, pz, size, color, buf, poseStack, cameraPos);
         }
-
-        buf.endBatch(FILL_TYPE);
     }
 
     private void drawFilledCube(double x, double y, double z, double size, int color,
-                                VertexConsumer c, Vec3 cam) {
+                                SubmitNodeCollector buf, PoseStack poseStack, Vec3 cam) {
         double x0 = x - size, x1 = x + size;
         double y0 = y - size, y1 = y + size;
         double z0 = z - size, z1 = z + size;
 
-        // 6 граней куба (каждая — двусторонняя)
-        // Front (+z)
-        quad(c, (float)(x0-cam.x), (float)(y0-cam.y), (float)(z1-cam.z),
+        quad(buf, poseStack, (float)(x0-cam.x), (float)(y0-cam.y), (float)(z1-cam.z),
                 (float)(x1-cam.x), (float)(y0-cam.y), (float)(z1-cam.z),
                 (float)(x1-cam.x), (float)(y1-cam.y), (float)(z1-cam.z),
                 (float)(x0-cam.x), (float)(y1-cam.y), (float)(z1-cam.z), color);
-        quad(c, (float)(x0-cam.x), (float)(y1-cam.y), (float)(z1-cam.z),
+        quad(buf, poseStack, (float)(x0-cam.x), (float)(y1-cam.y), (float)(z1-cam.z),
                 (float)(x1-cam.x), (float)(y1-cam.y), (float)(z1-cam.z),
                 (float)(x1-cam.x), (float)(y0-cam.y), (float)(z1-cam.z),
                 (float)(x0-cam.x), (float)(y0-cam.y), (float)(z1-cam.z), color);
-        // Back (-z)
-        quad(c, (float)(x1-cam.x), (float)(y0-cam.y), (float)(z0-cam.z),
+
+        quad(buf, poseStack, (float)(x1-cam.x), (float)(y0-cam.y), (float)(z0-cam.z),
                 (float)(x0-cam.x), (float)(y0-cam.y), (float)(z0-cam.z),
                 (float)(x0-cam.x), (float)(y1-cam.y), (float)(z0-cam.z),
                 (float)(x1-cam.x), (float)(y1-cam.y), (float)(z0-cam.z), color);
-        quad(c, (float)(x1-cam.x), (float)(y1-cam.y), (float)(z0-cam.z),
+        quad(buf, poseStack, (float)(x1-cam.x), (float)(y1-cam.y), (float)(z0-cam.z),
                 (float)(x0-cam.x), (float)(y1-cam.y), (float)(z0-cam.z),
                 (float)(x0-cam.x), (float)(y0-cam.y), (float)(z0-cam.z),
                 (float)(x1-cam.x), (float)(y0-cam.y), (float)(z0-cam.z), color);
-        // Top (+y)
-        quad(c, (float)(x0-cam.x), (float)(y1-cam.y), (float)(z1-cam.z),
+
+        quad(buf, poseStack, (float)(x0-cam.x), (float)(y1-cam.y), (float)(z1-cam.z),
                 (float)(x1-cam.x), (float)(y1-cam.y), (float)(z1-cam.z),
                 (float)(x1-cam.x), (float)(y1-cam.y), (float)(z0-cam.z),
                 (float)(x0-cam.x), (float)(y1-cam.y), (float)(z0-cam.z), color);
-        quad(c, (float)(x0-cam.x), (float)(y1-cam.y), (float)(z0-cam.z),
+        quad(buf, poseStack, (float)(x0-cam.x), (float)(y1-cam.y), (float)(z0-cam.z),
                 (float)(x1-cam.x), (float)(y1-cam.y), (float)(z0-cam.z),
                 (float)(x1-cam.x), (float)(y1-cam.y), (float)(z1-cam.z),
                 (float)(x0-cam.x), (float)(y1-cam.y), (float)(z1-cam.z), color);
-        // Bottom (-y)
-        quad(c, (float)(x0-cam.x), (float)(y0-cam.y), (float)(z0-cam.z),
+
+        quad(buf, poseStack, (float)(x0-cam.x), (float)(y0-cam.y), (float)(z0-cam.z),
                 (float)(x1-cam.x), (float)(y0-cam.y), (float)(z0-cam.z),
                 (float)(x1-cam.x), (float)(y0-cam.y), (float)(z1-cam.z),
                 (float)(x0-cam.x), (float)(y0-cam.y), (float)(z1-cam.z), color);
-        quad(c, (float)(x0-cam.x), (float)(y0-cam.y), (float)(z1-cam.z),
+        quad(buf, poseStack, (float)(x0-cam.x), (float)(y0-cam.y), (float)(z1-cam.z),
                 (float)(x1-cam.x), (float)(y0-cam.y), (float)(z1-cam.z),
                 (float)(x1-cam.x), (float)(y0-cam.y), (float)(z0-cam.z),
                 (float)(x0-cam.x), (float)(y0-cam.y), (float)(z0-cam.z), color);
-        // Right (+x)
-        quad(c, (float)(x1-cam.x), (float)(y0-cam.y), (float)(z1-cam.z),
+
+        quad(buf, poseStack, (float)(x1-cam.x), (float)(y0-cam.y), (float)(z1-cam.z),
                 (float)(x1-cam.x), (float)(y0-cam.y), (float)(z0-cam.z),
                 (float)(x1-cam.x), (float)(y1-cam.y), (float)(z0-cam.z),
                 (float)(x1-cam.x), (float)(y1-cam.y), (float)(z1-cam.z), color);
-        quad(c, (float)(x1-cam.x), (float)(y1-cam.y), (float)(z1-cam.z),
+        quad(buf, poseStack, (float)(x1-cam.x), (float)(y1-cam.y), (float)(z1-cam.z),
                 (float)(x1-cam.x), (float)(y1-cam.y), (float)(z0-cam.z),
                 (float)(x1-cam.x), (float)(y0-cam.y), (float)(z0-cam.z),
                 (float)(x1-cam.x), (float)(y0-cam.y), (float)(z1-cam.z), color);
-        // Left (-x)
-        quad(c, (float)(x0-cam.x), (float)(y0-cam.y), (float)(z0-cam.z),
+
+        quad(buf, poseStack, (float)(x0-cam.x), (float)(y0-cam.y), (float)(z0-cam.z),
                 (float)(x0-cam.x), (float)(y0-cam.y), (float)(z1-cam.z),
                 (float)(x0-cam.x), (float)(y1-cam.y), (float)(z1-cam.z),
                 (float)(x0-cam.x), (float)(y1-cam.y), (float)(z0-cam.z), color);
-        quad(c, (float)(x0-cam.x), (float)(y1-cam.y), (float)(z0-cam.z),
+        quad(buf, poseStack, (float)(x0-cam.x), (float)(y1-cam.y), (float)(z0-cam.z),
                 (float)(x0-cam.x), (float)(y1-cam.y), (float)(z1-cam.z),
                 (float)(x0-cam.x), (float)(y0-cam.y), (float)(z1-cam.z),
                 (float)(x0-cam.x), (float)(y0-cam.y), (float)(z0-cam.z), color);
     }
 
-    // ================ GHOSTS (заливка маленьких кубиков со шлейфом) ================
     private void drawGhostsFilled(AABB box, int color,
-                                  MultiBufferSource.BufferSource buf,
+                                  SubmitNodeCollector buf, PoseStack poseStack,
                                   Vec3 cameraPos) {
         double cx = (box.minX + box.maxX) / 2;
         double cy = (box.minY + box.maxY) / 2;
@@ -331,8 +313,6 @@ public final class TargetESP {
         int ghostCount = 3;
         int segments = 12;
 
-        VertexConsumer consumer = buf.getBuffer(FILL_TYPE);
-
         for (int ghost = 0; ghost < ghostCount; ghost++) {
             double ghostBaseAngle = ghost * Math.PI * 2 / ghostCount;
 
@@ -349,34 +329,44 @@ public final class TargetESP {
                 double pz = cz + Math.sin(angle) * currentRadius;
                 double py = cy + 0.7 - t * 0.7 + Math.sin(timeSec * 0.8 + t * 2.5) * 0.1;
 
-                drawFilledCube(px, py, pz, size, color, consumer, cameraPos);
+                drawFilledCube(px, py, pz, size, color, buf, poseStack, cameraPos);
             }
         }
-
-        buf.endBatch(FILL_TYPE);
     }
 
-    // ================ ХЕЛПЕРЫ ================
-
-    private static void vertexTri(VertexConsumer c,
+    private static void vertexTri(SubmitNodeCollector buf, PoseStack poseStack,
                                   double[] v1, double[] v2, double[] v3,
                                   double ox, double oy, double oz,
                                   int color, Vec3 cam) {
-        c.addVertex((float)(ox + v1[0] - cam.x), (float)(oy + v1[1] - cam.y), (float)(oz + v1[2] - cam.z)).setColor(color);
-        c.addVertex((float)(ox + v2[0] - cam.x), (float)(oy + v2[1] - cam.y), (float)(oz + v2[2] - cam.z)).setColor(color);
-        c.addVertex((float)(ox + v3[0] - cam.x), (float)(oy + v3[1] - cam.y), (float)(oz + v3[2] - cam.z)).setColor(color);
-        c.addVertex((float)(ox + v3[0] - cam.x), (float)(oy + v3[1] - cam.y), (float)(oz + v3[2] - cam.z)).setColor(color);
+        final float x1 = (float)(ox + v1[0] - cam.x);
+        final float y1 = (float)(oy + v1[1] - cam.y);
+        final float z1 = (float)(oz + v1[2] - cam.z);
+        final float x2 = (float)(ox + v2[0] - cam.x);
+        final float y2 = (float)(oy + v2[1] - cam.y);
+        final float z2 = (float)(oz + v2[2] - cam.z);
+        final float x3 = (float)(ox + v3[0] - cam.x);
+        final float y3 = (float)(oy + v3[1] - cam.y);
+        final float z3 = (float)(oz + v3[2] - cam.z);
+
+        buf.submitCustomGeometry(poseStack, FILL_TYPE, (pose, c) -> {
+            c.addVertex(pose, x1, y1, z1).setColor(color);
+            c.addVertex(pose, x2, y2, z2).setColor(color);
+            c.addVertex(pose, x3, y3, z3).setColor(color);
+            c.addVertex(pose, x3, y3, z3).setColor(color);
+        });
     }
 
-    private static void quad(VertexConsumer c,
+    private static void quad(SubmitNodeCollector buf, PoseStack poseStack,
                              float x1, float y1, float z1,
                              float x2, float y2, float z2,
                              float x3, float y3, float z3,
                              float x4, float y4, float z4,
                              int color) {
-        c.addVertex(x1, y1, z1).setColor(color);
-        c.addVertex(x2, y2, z2).setColor(color);
-        c.addVertex(x3, y3, z3).setColor(color);
-        c.addVertex(x4, y4, z4).setColor(color);
+        buf.submitCustomGeometry(poseStack, FILL_TYPE, (pose, c) -> {
+            c.addVertex(pose, x1, y1, z1).setColor(color);
+            c.addVertex(pose, x2, y2, z2).setColor(color);
+            c.addVertex(pose, x3, y3, z3).setColor(color);
+            c.addVertex(pose, x4, y4, z4).setColor(color);
+        });
     }
 }

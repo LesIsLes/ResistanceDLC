@@ -66,7 +66,7 @@ public class AutoReconnectManager {
 
         // 🚫 Бан — не реконнектимся.
         // Класс BanScreen в 1.21.11 мог быть переименован, проверяем через имя класса.
-        if (mc.screen != null && isBanScreen(mc.screen)) {
+        if (mc.gui.screen() != null && isBanScreen(mc.gui.screen())) {
             ResistanceDLC.LOGGER.info("[AutoReconnect] Banned, skipping reconnect");
             return;
         }

@@ -193,7 +193,7 @@ public class VoiceCommandListener {
 
                 // ✅ НЕ слушаем только если нет игрока или открыт ЧАТ
                 //    (при открытом GUI — слушаем, чтобы CLOSE_GUI работал)
-                if (mc.player == null || mc.screen instanceof ChatScreen) {
+                if (mc.player == null || mc.gui.screen() instanceof ChatScreen) {
                     Thread.sleep(50);
                     continue;
                 }
@@ -403,13 +403,13 @@ public class VoiceCommandListener {
 
         switch (action) {
             case OPEN_GUI -> {
-                if (!(mc.screen instanceof AccordionScreen)) {
-                    mc.setScreen(new AccordionScreen());
+                if (!(mc.gui.screen() instanceof AccordionScreen)) {
+                    mc.gui.setScreen(new AccordionScreen());
                 }
             }
             case HUD_EDITOR -> {
-                if (!(mc.screen instanceof HudEditScreen)) {
-                    mc.setScreen(new HudEditScreen());
+                if (!(mc.gui.screen() instanceof HudEditScreen)) {
+                    mc.gui.setScreen(new HudEditScreen());
                 }
             }
             case CHANGE_LANG -> {
@@ -419,17 +419,17 @@ public class VoiceCommandListener {
 
                 // ✅ Если открыт AccordionScreen — пересоздаём,
                 //    чтобы все строки обновились сразу.
-                if (mc.screen instanceof AccordionScreen oldAccordion) {
+                if (mc.gui.screen() instanceof AccordionScreen oldAccordion) {
                     oldAccordion.saveExpanded();
-                    mc.setScreen(new AccordionScreen());
+                    mc.gui.setScreen(new AccordionScreen());
                     ResistanceDLC.LOGGER.info("[Voice] Rebuilt AccordionScreen after language change");
                 }
             }
             case CLOSE_GUI -> {
-                if (mc.screen != null) {
+                if (mc.gui.screen() != null) {
                     ResistanceDLC.LOGGER.info("[Voice] Closing screen: "
-                            + mc.screen.getClass().getSimpleName());
-                    mc.setScreen(null);
+                            + mc.gui.screen().getClass().getSimpleName());
+                    mc.gui.setScreen(null);
                 } else {
                     ResistanceDLC.LOGGER.info("[Voice] CLOSE_GUI: no screen to close");
                 }

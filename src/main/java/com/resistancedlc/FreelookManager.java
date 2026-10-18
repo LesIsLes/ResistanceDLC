@@ -45,7 +45,7 @@ public final class FreelookManager {
         }
 
         // Отключаем при открытых экранах (чат, GUI)
-        if (mc.screen != null) {
+        if (mc.gui.screen() != null) {
             if (active) setActive(false);
             return;
         }
@@ -129,11 +129,9 @@ public final class FreelookManager {
         if (!active) return null;
 
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) return null;
+        if (mc.player == null || mc.level == null) return null;
 
-        // Интерполированная позиция глаз игрока
         Vec3 eye = mc.player.getEyePosition(partialTick);
-
         double distance = ModConfig.freelookDistance;
 
         double yawRad = Math.toRadians(cameraYaw);
@@ -143,11 +141,30 @@ public final class FreelookManager {
         double lookY = -Math.sin(pitchRad);
         double lookZ = Math.cos(yawRad) * Math.cos(pitchRad);
 
-        double camX = eye.x - lookX * distance;
-        double camY = eye.y - lookY * distance;
-        double camZ = eye.z - lookZ * distance;
+        Vec3 desired = new Vec3(
+                eye.x - lookX * distance,
+                eye.y - lookY * distance,
+                eye.z - lookZ * distance
+        );
 
-        return new Vec3(camX, camY, camZ);
+        // Коллизия с блоками: рейкаст от глаз до желаемой позиции
+        net.minecraft.world.level.ClipContext ctx =
+                new net.minecraft.world.level.ClipContext(
+                        eye, desired,
+                        net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                        net.minecraft.world.level.ClipContext.Fluid.NONE,
+                        mc.player
+                );
+        net.minecraft.world.phys.BlockHitResult hit = mc.level.clip(ctx);
+
+        if (hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
+            // Отступаем от блока на 0.15 в сторону игрока
+            Vec3 hitPos = hit.getLocation();
+            Vec3 toEye = eye.subtract(hitPos).normalize();
+            return hitPos.add(toEye.scale(0.15));
+        }
+
+        return desired;
     }
 
     public static void reset() {

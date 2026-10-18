@@ -22,7 +22,7 @@ public final class CrosshairHeatmapHud {
         if (!ModConfig.crosshairHeatmapEnabled) return;
 
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.options.hideGui) return;
+        if (mc.player == null || mc.gui.hud.isHidden()) return;
         if (mc.gameRenderer == null) return;
 
         List<CrosshairHeatmapManager.Mark> marks = CrosshairHeatmapManager.getActiveMarks();

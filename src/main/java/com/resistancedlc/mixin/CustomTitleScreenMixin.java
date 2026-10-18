@@ -25,7 +25,7 @@ public class CustomTitleScreenMixin {
         if (!ModConfig.customMainMenuEnabled) return;
 
         Minecraft mc = Minecraft.getInstance();
-        Screen screen = mc.screen;
+        Screen screen = mc.gui.screen();
         if (screen == null) return;
 
         // ❌ НЕ заменяем фон в игровых экранах

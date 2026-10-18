@@ -41,7 +41,7 @@ public final class ZoomManager {
      */
     public static void updatePerFrame(float tickDelta) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.screen != null) {
+        if (mc.player == null || mc.gui.screen() != null) {
             // В меню/чате — плавно возвращаем к 1.0
             target = 1.0f;
         } else {

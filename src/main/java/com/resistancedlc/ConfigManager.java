@@ -342,7 +342,14 @@ public class ConfigManager {
             json.addProperty("strikeRangeShowTime", ModConfig.strikeRangeShowTime);
             json.addProperty("strikeRangeShowBlocks", ModConfig.strikeRangeShowBlocks);
             json.addProperty("strikeRangeShowTarget", ModConfig.strikeRangeShowTarget);
-
+            json.addProperty("headwearEnabled", ModConfig.headwearEnabled);
+            json.addProperty("headwearType", ModConfig.headwearType);
+            json.addProperty("headwearColor", ModConfig.headwearColor);
+            json.addProperty("headwearAlpha", ModConfig.headwearAlpha);
+            json.addProperty("headwearScale", ModConfig.headwearScale);
+            json.addProperty("headwearOffsetY", ModConfig.headwearOffsetY);
+            json.addProperty("headwearShowFriends", ModConfig.headwearShowFriends);
+            json.addProperty("headwearSelfEnabled", ModConfig.headwearSelfEnabled);
             // === CUSTOM HITBOX ===
             json.addProperty("customHitboxEnabled", ModConfig.customHitboxEnabled);
             json.addProperty("customHitboxRussian", ModConfig.customHitboxRussian);
@@ -531,7 +538,6 @@ public class ConfigManager {
             // === THEME ANIMATION ===
             json.addProperty("themeAnimationEnabled", ModConfig.themeAnimationEnabled);
             json.addProperty("themeAnimationSpeed", ModConfig.themeAnimationSpeed);
-
             // === LYRICS ===
             json.addProperty("lyricsEnabled", ModConfig.lyricsEnabled);
             json.addProperty("lyricsDistance", ModConfig.lyricsDistance);
@@ -761,7 +767,14 @@ public class ConfigManager {
             ModConfig.comboResetTime = getInt(json, "comboResetTime", ModConfig.comboResetTime);
             ModConfig.comboFontSize = getInt(json, "comboFontSize", ModConfig.comboFontSize);
             ModConfig.comboRussian = getBool(json, "comboRussian", ModConfig.comboRussian);
-
+            ModConfig.headwearEnabled = getBool(json, "headwearEnabled", ModConfig.headwearEnabled);
+            ModConfig.headwearType = getString(json, "headwearType", ModConfig.headwearType);
+            ModConfig.headwearColor = getInt(json, "headwearColor", ModConfig.headwearColor);
+            ModConfig.headwearAlpha = getInt(json, "headwearAlpha", ModConfig.headwearAlpha);
+            ModConfig.headwearScale = getFloat(json, "headwearScale", ModConfig.headwearScale);
+            ModConfig.headwearOffsetY = getFloat(json, "headwearOffsetY", ModConfig.headwearOffsetY);
+            ModConfig.headwearShowFriends = getBool(json, "headwearShowFriends", ModConfig.headwearShowFriends);
+            ModConfig.headwearSelfEnabled = getBool(json, "headwearSelfEnabled", ModConfig.headwearSelfEnabled);
             // === EFFECT WARNINGS ===
             ModConfig.effectWarningsEnabled = getBool(json, "effectWarningsEnabled", ModConfig.effectWarningsEnabled);
             ModConfig.effectWarningsX = getInt(json, "effectWarningsX", ModConfig.effectWarningsX);
@@ -898,8 +911,7 @@ public class ConfigManager {
             ModConfig.lyricsOutlineThickness = getInt(json, "lyricsOutlineThickness", ModConfig.lyricsOutlineThickness);
             ModConfig.lyricsGradientEnabled = getBool(json, "lyricsGradientEnabled", ModConfig.lyricsGradientEnabled);
             ModConfig.lyricsGradientStrength = getFloat(json, "lyricsGradientStrength", ModConfig.lyricsGradientStrength);
-            json.addProperty("lyricsHolographic", ModConfig.lyricsHolographic);
-            json.addProperty("lyricsEntranceEnabled", ModConfig.lyricsEntranceEnabled);
+
             // === STRIKE RANGE ===
             ModConfig.strikeRangeEnabled = getBool(json, "strikeRangeEnabled", ModConfig.strikeRangeEnabled);
             ModConfig.strikeRangeX = getInt(json, "strikeRangeX", ModConfig.strikeRangeX);

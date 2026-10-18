@@ -657,5 +657,35 @@
   "gui.resistancedlc.panel.custom_fog.affect_sky": "Влиять на небо",
   "gui.resistancedlc.panel.custom_fog.affect_clouds": "Влиять на облака",
 
+  "gui.resistancedlc.item.main_hud_settings.title": "Основные настройки HUD",
+  "gui.resistancedlc.item.main_hud_settings.desc": "Координаты, биом, время",
+  "gui.resistancedlc.panel.hud.coords": "Координаты",
+  "gui.resistancedlc.panel.hud.biome": "Биом",
+  "gui.resistancedlc.panel.hud.time": "Время",
+
+  "gui.resistancedlc.item.target_hud.title": "TargetHUD",
+  "gui.resistancedlc.item.target_hud.desc": "Информация о цели на экране",
+  "gui.resistancedlc.panel.target_hud.bg_alpha": "Прозрачность фона: %d",
+  "gui.resistancedlc.panel.target_hud.color1": "Цвет 1",
+  "gui.resistancedlc.panel.target_hud.color2": "Цвет 2",
+  "gui.resistancedlc.panel.target_hud.gradient_speed": "Скорость градиента: %.2f",
+  "gui.resistancedlc.panel.target_hud.show_skin": "Показывать скин",
+  "gui.resistancedlc.panel.target_hud.show_name": "Показывать имя",
+  "gui.resistancedlc.panel.target_hud.show_hp": "Показывать HP",
+
+  "gui.resistancedlc.item.headwear.title": "Шляпы",
+  "gui.resistancedlc.item.headwear.desc": "Декоративные шляпы для себя и друзей",
+  "gui.resistancedlc.headwear.type.none": "Нет",
+  "gui.resistancedlc.headwear.type.chinese_hat": "Китайская шляпа",
+  "gui.resistancedlc.headwear.type.cap": "Колпак",
+  "gui.resistancedlc.headwear.type.top_hat": "Цилиндр",
+  "gui.resistancedlc.panel.headwear.scale": "Масштаб: %s",
+  "gui.resistancedlc.panel.headwear.offset_y": "Смещение Y: %s",
+  "gui.resistancedlc.panel.headwear.show_self": "Показывать себе",
+  "gui.resistancedlc.panel.headwear.show_friends": "Показывать друзьям",
+
+  "gui.resistancedlc.item.gui_key.title": "Клавиша GUI",
+  "gui.resistancedlc.item.gui_key.desc": "Открыть меню мода по своей клавише",
+
   "key.category.resistancedlc.main": "ResistanceDLC"
 }

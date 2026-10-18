@@ -657,5 +657,35 @@
   "gui.resistancedlc.panel.custom_fog.affect_sky": "Affect sky",
   "gui.resistancedlc.panel.custom_fog.affect_clouds": "Affect clouds",
 
+  "gui.resistancedlc.item.main_hud_settings.title": "Main HUD Settings",
+  "gui.resistancedlc.item.main_hud_settings.desc": "Coords, biome, time",
+  "gui.resistancedlc.panel.hud.coords": "Coordinates",
+  "gui.resistancedlc.panel.hud.biome": "Biome",
+  "gui.resistancedlc.panel.hud.time": "Time",
+
+  "gui.resistancedlc.item.target_hud.title": "Target HUD",
+  "gui.resistancedlc.item.target_hud.desc": "Enemy info on screen",
+  "gui.resistancedlc.panel.target_hud.bg_alpha": "BG alpha: %d",
+  "gui.resistancedlc.panel.target_hud.color1": "Color 1",
+  "gui.resistancedlc.panel.target_hud.color2": "Color 2",
+  "gui.resistancedlc.panel.target_hud.gradient_speed": "Gradient speed: %.2f",
+  "gui.resistancedlc.panel.target_hud.show_skin": "Show skin",
+  "gui.resistancedlc.panel.target_hud.show_name": "Show name",
+  "gui.resistancedlc.panel.target_hud.show_hp": "Show HP",
+
+  "gui.resistancedlc.item.headwear.title": "Headwear",
+  "gui.resistancedlc.item.headwear.desc": "Decorative hats for you and friends",
+  "gui.resistancedlc.headwear.type.none": "None",
+  "gui.resistancedlc.headwear.type.chinese_hat": "Chinese Hat",
+  "gui.resistancedlc.headwear.type.cap": "Cap",
+  "gui.resistancedlc.headwear.type.top_hat": "Top Hat",
+  "gui.resistancedlc.panel.headwear.scale": "Scale: %s",
+  "gui.resistancedlc.panel.headwear.offset_y": "Offset Y: %s",
+  "gui.resistancedlc.panel.headwear.show_self": "Show on self",
+  "gui.resistancedlc.panel.headwear.show_friends": "Show on friends",
+
+  "gui.resistancedlc.item.gui_key.title": "GUI Key",
+  "gui.resistancedlc.item.gui_key.desc": "Open mod GUI with a custom key",
+
   "key.category.resistancedlc.main": "ResistanceDLC"
 }

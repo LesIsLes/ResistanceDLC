@@ -99,7 +99,7 @@ public class PredictionsManager {
         // Направление берём от ТЕЛА (player.getLookAngle()) — снаряд летит
         // туда, куда смотрит тело, даже если камера отдельно.
         Minecraft mc = Minecraft.getInstance();
-        Camera cam = mc.gameRenderer.getMainCamera();
+        Camera cam = mc.gameRenderer.mainCamera();
 
         Vec3 pos = cam.position();
         Vec3 look = player.getLookAngle();

@@ -65,7 +65,7 @@ public class LoadingOverlayMixin {
             // Fade-out завершён — убираем overlay
             if (t >= 1.0f && !resistancedlc$overlayCleared) {
                 resistancedlc$overlayCleared = true;
-                Minecraft.getInstance().execute(() -> Minecraft.getInstance().setOverlay(null));
+                Minecraft.getInstance().execute(() -> Minecraft.getInstance().gui.setOverlay(null));
                 return;
             }
         }

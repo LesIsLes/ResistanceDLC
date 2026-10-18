@@ -34,8 +34,8 @@ public class FriendListHud {
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
-        if (mc.screen instanceof AccordionScreen) return;
-        if (mc.options.hideGui) return;
+        if (mc.gui.screen() instanceof AccordionScreen) return;
+        if (mc.gui.hud.isHidden()) return;
 
         List<String> friends = FriendListManager.getFriends();
         if (friends.isEmpty()) return;

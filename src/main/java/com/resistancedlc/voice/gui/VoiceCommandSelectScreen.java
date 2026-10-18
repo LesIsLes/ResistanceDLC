@@ -47,7 +47,7 @@ public class VoiceCommandSelectScreen extends Screen {
 
             Button btn = Button.builder(
                             Component.literal(status + " §f" + name),
-                            (b) -> Minecraft.getInstance().setScreen(
+                            (b) -> Minecraft.getInstance().gui.setScreen(
                                     new VoiceCommandRecordScreen(this, action)))
                     .bounds(panelX + 20, y, PANEL_W - 40, btnH)
                     .build();
@@ -99,7 +99,7 @@ public class VoiceCommandSelectScreen extends Screen {
     @Override
     public void onClose() {
         if (this.minecraft != null) {
-            this.minecraft.setScreen(parent);
+            this.minecraft.gui.setScreen(parent);
         }
     }
 }

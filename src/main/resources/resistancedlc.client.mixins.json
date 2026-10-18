@@ -14,7 +14,6 @@
     "ItemEntityRendererMixin",
     "ItemScrollerMixin",
     "LowFireMixin",
-    "LowShieldMixin",
     "MusicPlayerHudMixin",
     "NoBobbingMixin",
     "NoHurtCamMixin",
@@ -43,7 +42,9 @@
     "CloudControlMixin",
     "LevelRandomFixMixin",
     "ClearLiquidsMixin",
-    "CustomFogMixin"
+    "KeybindCaptureMixin",
+    "CustomFogMixin",
+    "FrustumMixin"
   ],
   "injectors": {
     "defaultRequire": 1

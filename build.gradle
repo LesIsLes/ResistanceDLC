@@ -1,5 +1,5 @@
 plugins {
-    id 'net.fabricmc.fabric-loom' version '1.15-SNAPSHOT' // [1] Новый ID для необфусцированных версий
+    id 'net.fabricmc.fabric-loom' version '1.17-SNAPSHOT' // [1] Loom 1.17 для 26.2
     id 'maven-publish'
 }
 
@@ -52,10 +52,10 @@ configurations {
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    // [2] Строка mappings УДАЛЕНА — в 26.1 игра не обфусцирована
 
-    implementation "net.fabricmc:fabric-loader:${project.loader_version}" // [3] modImplementation -> implementation
-    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}" // [3] modImplementation -> implementation
+    // ✅ include — Fabric Loader увидит их как моды в dev-режиме
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
     // === OGG-библиотека (вшивается в .jar через jar { from { ... } }) ===
     oggLibs files('libs/java-vorbis-support-1.2.1.jar')
@@ -71,7 +71,7 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-    it.options.release = 25 // [4] Java 21 -> 25
+    it.options.release = 25 // [4] Java 25 для 26.x
 }
 
 java {

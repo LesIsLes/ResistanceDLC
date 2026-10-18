@@ -562,4 +562,30 @@ public class ModConfig {
     public static boolean customFogAffectClouds = true;     // менять cloudEnd
     // Режим: применять всегда, только в атмосфере, только в воде/лаве?
     public static int customFogMode = 0;                    // 0=always, 1=atmospheric, 2=liquid
+
+    // ===================== TARGET HUD =====================
+    public static boolean targetHudEnabled = false;
+    public static int targetHudX = -1;                    // -1 = авто (справа)
+    public static int targetHudY = -1;                    // -1 = screenHeight/2 + 40
+    public static int targetHudBgAlpha = 180;             // 0..255
+    public static int targetHudColor1 = 0xFF00FFFF;       // градиент
+    public static int targetHudColor2 = 0xFFFF00FF;
+    public static float targetHudGradientSpeed = 1.0f;    // 0.1..5.0
+    public static int targetHudWidth = 130;
+    public static int targetHudHeight = 40;
+    public static boolean targetHudShowSkin = true;
+    public static boolean targetHudShowHp = true;
+    public static boolean targetHudShowName = true;
+    public static boolean targetHudRussian = false;
+
+
+    // ===================== HEADWEAR =====================
+    public static boolean headwearEnabled = false;
+    public static String headwearType = "chinese_hat"; // none / chinese_hat / cap / top_hat
+    public static int headwearColor = 0xFFFF3333;
+    public static int headwearAlpha = 220;
+    public static float headwearScale = 1.0f;          // 0.5..2.0
+    public static float headwearOffsetY = 0.0f;        // -0.5..0.5
+    public static boolean headwearSelfEnabled = true;  // показывать себе
+    public static boolean headwearShowFriends = true;  // показывать друзьям
 }

@@ -16,8 +16,6 @@ import com.resistancedlc.environment.TrailsRenderer;
 import com.resistancedlc.particles.ModParticles;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry;
 import net.fabricmc.fabric.api.client.particle.v1.FabricSpriteSet;
-import net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry;
-import net.fabricmc.fabric.api.client.particle.v1.FabricSpriteSet;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -27,8 +25,8 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import com.resistancedlc.KillTracker;  // если KillTracker в другом пакете — поправь
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -241,6 +239,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
 
             deathRecapCaptured = false;
         });
+
 // Регистрируем TRIANGLES-пайплайн
         // ===== КОМАНДЫ =====
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
@@ -313,8 +312,8 @@ public class ResistanceDLCClient implements ClientModInitializer {
                                                 String name = StringArgumentType.getString(context, "name");
                                                 if (ConfigManager.loadFrom(name)) {
                                                     sendMessage("§a" + LocalizationManager.get("gui.resistancedlc.message.config_loaded", name));
-                                                    if (Minecraft.getInstance().screen instanceof AccordionScreen) {
-                                                        Minecraft.getInstance().setScreen(new AccordionScreen());
+                                                    if (Minecraft.getInstance().gui.screen() instanceof AccordionScreen) {
+                                                        Minecraft.getInstance().gui.setScreen(new AccordionScreen());
                                                     }
                                                 } else {
                                                     sendMessage("§c" + LocalizationManager.get("gui.resistancedlc.message.config_not_found", name));
@@ -573,7 +572,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
             }
             // ✅ Работает даже при открытом GUI (чтобы CLOSE_GUI работал).
             //    Исключение — чат (пользователь печатает).
-            boolean chatOpen = client.screen
+            boolean chatOpen = client.gui.screen()
                     instanceof net.minecraft.client.gui.screens.ChatScreen;
             if (ModConfig.voiceCommandsEnabled
                     && client.player != null
@@ -595,7 +594,10 @@ public class ResistanceDLCClient implements ClientModInitializer {
         LevelRenderEvents.END_MAIN.register(AtmosphereRenderer::render);
         ClientTickEvents.END_CLIENT_TICK.register(c -> HitParticlesManager.tick());
         LevelRenderEvents.END_MAIN.register(HitParticlesRenderer::render);
-
+        // ===== HEADWEAR =====
+        LevelRenderEvents.END_MAIN.register(
+                com.resistancedlc.headwear.HeadwearRenderer::render
+        );
         // ===== DEATH COORDS =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) {
@@ -633,14 +635,14 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 deathRecapCaptured = false;
                 return;
             }
-            boolean onDeathScreen = client.screen instanceof net.minecraft.client.gui.screens.DeathScreen;
+            boolean onDeathScreen = client.gui.screen() instanceof net.minecraft.client.gui.screens.DeathScreen;
             if (!onDeathScreen) { deathRecapCaptured = false; return; }
             if (deathRecapCaptured) return;
             deathRecapCaptured = true;
 
             try {
                 net.minecraft.client.gui.screens.DeathScreen ds =
-                        (net.minecraft.client.gui.screens.DeathScreen) client.screen;
+                        (net.minecraft.client.gui.screens.DeathScreen) client.gui.screen();
 
                 Component deathMsg = ((com.resistancedlc.mixin.DeathScreenAccessor) ds).getCauseOfDeath();
                 String reason = deathMsg != null ? deathMsg.getString() : "";
@@ -710,7 +712,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 crosshairHeatmapAttackWasDown = false;
                 return;
             }
-            if (client.screen != null) {
+            if (client.gui.screen() != null) {
                 crosshairHeatmapAttackWasDown = client.options.keyAttack.isDown();
                 return;
             }
@@ -837,7 +839,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
             while (KeyBindings.autoSwapKey.consumeClick()) {
                 if (!ModConfig.autoSwapEnabled) return;
                 if (client.player == null || client.level == null) return;
-                if (client.screen != null) return;
+                if (client.gui.screen() != null) return;
                 if (ModConfig.autoSwapInProgress) return;
                 long now = System.currentTimeMillis();
                 if (now - ModConfig.autoSwapLastTime < ModConfig.autoSwapCooldown) return;
@@ -861,7 +863,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
             long now = System.currentTimeMillis();
             if (now < ModConfig.autoSwapNextActionTime) return;
             if (ModConfig.autoSwapStage == 0) {
-                client.setScreen(new InventoryScreen(client.player));
+                client.gui.setScreen(new InventoryScreen(client.player));
                 ModConfig.autoSwapStage = 1;
                 ModConfig.autoSwapNextActionTime = now + 75;
             } else if (ModConfig.autoSwapStage == 1) {
@@ -872,7 +874,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 ModConfig.autoSwapStage = 2;
                 ModConfig.autoSwapNextActionTime = now + 75;
             } else if (ModConfig.autoSwapStage == 2) {
-                client.setScreen(null);
+                client.gui.setScreen(null);
                 ModConfig.autoSwapInProgress = false;
                 ModConfig.autoSwapStage = 0;
                 ModConfig.autoSwapSlotToSwap = -1;
@@ -908,7 +910,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!ModConfig.fastExpEnabled) return;
             if (client.player == null || client.level == null) return;
-            if (client.screen != null) return;
+            if (client.gui.screen() != null) return;
             ItemStack mainHand = client.player.getMainHandItem();
             if (!mainHand.is(Items.EXPERIENCE_BOTTLE)) return;
             if (client.options.keyUse.isDown()) {
@@ -918,21 +920,37 @@ public class ResistanceDLCClient implements ClientModInitializer {
             }
         });
 
-        // ===== AUTOSPRINT =====
+        // ===== AUTOSPRINT (respects vanilla sprint conditions) =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!ModConfig.autoSprintEnabled) return;
             if (client.player == null) return;
-            if (client.screen != null) return;
-            if (client.options.keyUp.isDown()) {
-                client.player.setSprinting(true);
-            }
+            if (client.gui.screen() != null) return;
+
+            var player = client.player;
+
+            // Не спринтим при использовании предмета (еда, лук, щит)
+            if (player.isUsingItem()) return;
+
+            // Не спринтим в приседе
+            if (player.isShiftKeyDown()) return;
+
+            // Только при движении вперёд, и не одновременно назад
+            if (!client.options.keyUp.isDown()) return;
+            if (client.options.keyDown.isDown()) return;
+
+            // Ванильное условие: food > 6 (или креатив/флай)
+            boolean hasFood = player.getFoodData().getFoodLevel() > 6
+                    || player.getAbilities().mayfly;
+            if (!hasFood) return;
+
+            player.setSprinting(true);
         });
 
         // ===== SHIFTTAP =====
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!ModConfig.shiftTapEnabled) return;
             if (client.player == null) return;
-            if (client.screen != null) return;
+            if (client.gui.screen() != null) return;
             long now = System.currentTimeMillis();
             if (ModConfig.shiftTapActive) {
                 if (now - ModConfig.shiftTapReleaseTime >= 50) {
@@ -984,7 +1002,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!ModConfig.tapeMouseEnabled) return;
             if (client.player == null || client.level == null) return;
-            if (client.screen != null) return;
+            if (client.gui.screen() != null) return;
 
             if (ModConfig.tapeMouseButton == 1) {
                 if (ModConfig.tapeMouseHoldRight) return;
@@ -1032,7 +1050,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
             boolean shouldHold = ModConfig.tapeMouseEnabled
                     && ModConfig.tapeMouseButton == 1
                     && ModConfig.tapeMouseHoldRight
-                    && client.screen == null;
+                    && client.gui.screen() == null;
             if (shouldHold) {
                 if (!tapeMouseWeHeldRMB) {
                     client.options.keyUse.setDown(true);
@@ -1066,6 +1084,11 @@ public class ResistanceDLCClient implements ClientModInitializer {
                 VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "friend_list_hud"),
                 (graphics, tickCounter) -> FriendListHud.render(graphics)
+        );
+        HudElementRegistry.attachElementBefore(
+                VanillaHudElements.CHAT,
+                Identifier.fromNamespaceAndPath(ResistanceDLC.MOD_ID, "target_hud"),
+                (graphics, tickCounter) -> TargetHud.render(graphics)
         );
         HudElementRegistry.attachElementBefore(
                 VanillaHudElements.CHAT,
@@ -1138,7 +1161,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
         if (!ModConfig.showHud) return;
 
         Minecraft client = Minecraft.getInstance();
-        if (client.player == null || client.options.hideGui) return;
+        if (client.player == null || client.gui.hud.isHidden()) return;
 
         int alpha = ModConfig.hudAlpha;
         int baseColor = ThemeManager.getCurrentHudColor();
@@ -1607,7 +1630,7 @@ public class ResistanceDLCClient implements ClientModInitializer {
         if (!ModConfig.waypointsEnabled) return;
         Minecraft client = Minecraft.getInstance();
         if (client.player == null || client.level == null) return;
-        if (client.options.hideGui) return;
+        if (client.gui.hud.isHidden()) return;
 
         List<Waypoint> waypoints = WaypointManager.getWaypoints();
         if (waypoints.isEmpty()) return;

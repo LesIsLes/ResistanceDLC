@@ -60,12 +60,12 @@ public class AccordionScreen extends Screen {
     private float lastColumnWidthForWidgets = COLUMN_COLLAPSED;
 
     private final Map<String, List<AbstractWidget>> panelWidgets = new HashMap<>();
-    private boolean keybindListenerRegistered = false;
 
     private int contentScroll = 0;
     private int maxContentScroll = 0;
 
     private int activeExtraHudSetting = -1;
+    private int activeMainHudSetting = -1;
     private int activeEnchantSetting = -1;
     private int activeDeathRecapIndex = -1;
     private static final Map<String, Boolean> savedExpanded = new HashMap<>();
@@ -218,46 +218,6 @@ public class AccordionScreen extends Screen {
         }
         this.addRenderableWidget(this.searchField);
 
-        if (!keybindListenerRegistered) {
-            keybindListenerRegistered = true;
-            ScreenKeyboardEvents.allowKeyPress(this).register((screen, keyEvent) -> {
-                if (!ModConfig.isBindingKey) return true;
-                int keyCode = keyEvent.key();
-
-                if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-                    ModConfig.isBindingKey = false;
-                    ModConfig.bindingTarget = 0;
-                    Minecraft.getInstance().execute(this::rebuildWidgetsPreservingState);
-                    return false;
-                }
-
-                switch (ModConfig.bindingTarget) {
-                    case 0 -> KeyBindings.setKey(keyCode);
-                    case 1 -> KeyBindings.setZoomKey(keyCode);
-                    case 2 -> KeyBindings.setTapeMouseKey(keyCode);
-                    case 3 -> KeyBindings.setAutoSwapKey(keyCode);
-                    case 4 -> KeyBindings.setCustomHitSoundsKey(keyCode);
-                    case 5 -> KeyBindings.setFastExpKey(keyCode);
-                    case 6 -> KeyBindings.setShiftTapKey(keyCode);
-                    case 7 -> KeyBindings.setComboKey(keyCode);
-                    case 8 -> KeyBindings.setEffectWarningsKey(keyCode);
-                    case 9 -> KeyBindings.setWaypointsKey(keyCode);
-                    case 10 -> KeyBindings.setTotemLogKey(keyCode);
-                    case 11 -> KeyBindings.setPickupLogKey(keyCode);
-                    case 12 -> KeyBindings.setMacro1Key(keyCode);
-                    case 13 -> KeyBindings.setMacro2Key(keyCode);
-                    case 14 -> KeyBindings.setMacro3Key(keyCode);
-                    case 15 -> KeyBindings.setMacro4Key(keyCode);
-                    case 16 -> KeyBindings.setMacro5Key(keyCode);
-                    case 17 -> KeyBindings.setFreelookKey(keyCode);
-                }
-                ModConfig.isBindingKey = false;
-                ModConfig.bindingTarget = 0;
-                Minecraft.getInstance().execute(this::rebuildWidgetsPreservingState);
-                return false;
-            });
-        }
-
         restoreExpanded();
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
@@ -321,7 +281,11 @@ public class AccordionScreen extends Screen {
         }
         savedActiveSectionIndex = activeSectionIndex;
     }
-
+    /** Публичный доступ для Mixin: пересобрать виджеты после смены бинда. */
+    public void refreshAfterKeybind() {
+        saveExpanded();
+        this.rebuildWidgets();
+    }
     private void restoreExpanded() {
         for (Section s : sections) {
             for (AccordionItem it : s.items) {
@@ -665,7 +629,7 @@ public class AccordionScreen extends Screen {
                 LocalizationManager.get("gui.resistancedlc.item.hud_editor.desc"),
                 () -> true,
                 () -> {
-                    Minecraft.getInstance().setScreen(
+                    Minecraft.getInstance().gui.setScreen(
                             new com.resistancedlc.hud.HudEditScreen());
                 }
         );
@@ -836,7 +800,22 @@ public class AccordionScreen extends Screen {
         );
         aaItem.contentHeight = 192;
         hud.items.add(aaItem);
-
+        // ===== ОСНОВНЫЕ НАСТРОЙКИ HUD =====
+        AccordionItem mainHudItem = new AccordionItem(
+                "main_hud_settings",
+                LocalizationManager.get("gui.resistancedlc.item.main_hud_settings.title"),
+                LocalizationManager.get("gui.resistancedlc.item.main_hud_settings.desc"),
+                () -> ModConfig.showCoords || ModConfig.showBiome || ModConfig.showTime,
+                () -> {
+                    boolean any = ModConfig.showCoords || ModConfig.showBiome || ModConfig.showTime;
+                    ModConfig.showCoords = !any;
+                    ModConfig.showBiome = !any;
+                    ModConfig.showTime = !any;
+                    ConfigManager.save();
+                }
+        );
+        mainHudItem.contentHeight = 130;
+        hud.items.add(mainHudItem);
         sections.add(hud);
 
         // PVP
@@ -1026,7 +1005,19 @@ public class AccordionScreen extends Screen {
         );
         targetEspItem.contentHeight = 252;
         pvp.items.add(targetEspItem);
-
+        // ===== TARGET HUD =====
+        AccordionItem targetHudItem = new AccordionItem(
+                "target_hud",
+                LocalizationManager.get("gui.resistancedlc.item.target_hud.title"),
+                LocalizationManager.get("gui.resistancedlc.item.target_hud.desc"),
+                () -> ModConfig.targetHudEnabled,
+                () -> {
+                    ModConfig.targetHudEnabled = !ModConfig.targetHudEnabled;
+                    ConfigManager.save();
+                }
+        );
+        targetHudItem.contentHeight = 210;
+        pvp.items.add(targetHudItem);
         sections.add(pvp);
 
         // PVE
@@ -1130,8 +1121,10 @@ public class AccordionScreen extends Screen {
                     ConfigManager.save();
                 }
         );
+
         atmItem.contentHeight = 270;
         visual.items.add(atmItem);
+
         AccordionItem hbItem = new AccordionItem(
                 "custom_hitbox",
                 LocalizationManager.get("gui.resistancedlc.item.custom_hitbox.title"),
@@ -1232,6 +1225,18 @@ public class AccordionScreen extends Screen {
         );
         clearLiqItem.contentHeight = 74;
         visual.items.add(clearLiqItem);
+        AccordionItem headwearItem = new AccordionItem(
+                "headwear",
+                LocalizationManager.get("gui.resistancedlc.item.headwear.title"),
+                LocalizationManager.get("gui.resistancedlc.item.headwear.desc"),
+                () -> ModConfig.headwearEnabled,
+                () -> {
+                    ModConfig.headwearEnabled = !ModConfig.headwearEnabled;
+                    ConfigManager.save();
+                }
+        );
+        headwearItem.contentHeight = 260;
+        visual.items.add(headwearItem);
         AccordionItem chmItem = new AccordionItem(
                 "crosshair_heatmap",
                 LocalizationManager.get("gui.resistancedlc.item.crosshair_heatmap.title"),
@@ -1548,7 +1553,16 @@ public class AccordionScreen extends Screen {
         );
         cfgItem.contentHeight = calcConfigManagerHeight();
         misc.items.add(cfgItem);
-
+        AccordionItem guiKeyItem = new AccordionItem(
+                "gui_key",
+                LocalizationManager.get("gui.resistancedlc.item.gui_key.title"),
+                LocalizationManager.get("gui.resistancedlc.item.gui_key.desc"),
+                () -> true,
+                () -> {
+                }
+        );
+        guiKeyItem.contentHeight = 46;
+        misc.items.add(guiKeyItem);
         AccordionItem voiceItem = new AccordionItem(
                 "voice_commands",
                 LocalizationManager.get("gui.resistancedlc.item.voice_commands.title"),
@@ -1769,6 +1783,7 @@ public class AccordionScreen extends Screen {
             case "mod_logo" -> buildModLogoPanel(widgets, innerX, innerY, innerRight);
             case "freelook" -> buildFreelookPanel(widgets, innerX, innerY, innerRight);
             case "clear_liquids" -> buildClearLiquidsPanel(widgets, innerX, innerY, innerRight);
+            case "headwear" -> buildHeadwearPanel(widgets, innerX, innerY, innerRight);
             case "cooldowns" -> buildCoolDownsPanel(widgets, innerX, innerY, innerRight);
             case "time_change" -> buildTimeChangePanel(widgets, innerX, innerY, innerRight);
             case "combo" -> buildComboPanel(widgets, innerX, innerY, innerRight);
@@ -1778,11 +1793,13 @@ public class AccordionScreen extends Screen {
             case "smart_chat" -> buildSmartChatPanel(widgets, innerX, innerY, innerRight);
             case "effect_warnings" -> buildEffectWarningsPanel(widgets, innerX, innerY, innerRight);
             case "extra_hud" -> buildExtraHudPanel(widgets, innerX, innerY, innerRight);
+            case "main_hud_settings" -> buildMainHudSettingsPanel(widgets, innerX, innerY, innerRight);
             case "ping_indicator" -> buildPingIndicatorPanel(widgets, innerX, innerY, innerRight);
             case "custom_hit_sounds" -> buildCustomHitSoundsPanel(widgets, innerX, innerY, innerRight);
             case "totem_log" -> buildTotemLogPanel(widgets, innerX, innerY, innerRight);
             case "cloud_control" -> buildCloudControlPanel(widgets, innerX, innerY, innerRight);
             case "trails" -> buildTrailsPanel(widgets, innerX, innerY, innerRight);
+            case "target_hud" -> buildTargetHudPanel(widgets, innerX, innerY, innerRight);
             case "atmosphere" -> buildAtmospherePanel(widgets, innerX, innerY, innerRight);
             case "hit_particles" -> buildHitParticlesPanel(widgets, innerX, innerY, innerRight);
             case "auto_swap" -> buildAutoSwapPanel(widgets, innerX, innerY, innerRight);
@@ -1807,6 +1824,7 @@ public class AccordionScreen extends Screen {
             case "config_manager" -> buildConfigManagerPanel(widgets, innerX, innerY, innerRight);
             case "voice_commands" -> buildVoiceCommandsPanel(widgets, innerX, innerY, innerRight);
             case "inventory_manager" -> buildInventoryManagerPanel(widgets, innerX, innerY, innerRight);
+            case "gui_key" -> buildGuiKeyPanel(widgets, innerX, innerY, innerRight);
             case "auto_gg" -> buildAutoGGPanel(widgets, innerX, innerY, innerRight);
             case "strike_range" -> buildStrikeRangePanel(widgets, innerX, innerY, innerRight);
             case "crosshair_heatmap" -> buildCrosshairHeatmapPanel(widgets, innerX, innerY, innerRight);
@@ -2118,7 +2136,106 @@ public class AccordionScreen extends Screen {
     private void rebuildExtraHudPanel() {
         rebuildPanelTwoPass("extra_hud");
     }
+    private void buildMainHudSettingsPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int curY = y;
+        int rowH = 22, rowGap = 4;
+        int cbW = (w - 6) / 3;
+        int gearSize = 16;
 
+        String[] names = {
+                LocalizationManager.get("gui.resistancedlc.panel.hud.coords"),
+                LocalizationManager.get("gui.resistancedlc.panel.hud.biome"),
+                LocalizationManager.get("gui.resistancedlc.panel.hud.time")
+        };
+        Supplier<Boolean>[] getters = new Supplier[]{
+                (Supplier<Boolean>) () -> ModConfig.showCoords,
+                (Supplier<Boolean>) () -> ModConfig.showBiome,
+                (Supplier<Boolean>) () -> ModConfig.showTime
+        };
+        java.util.function.Consumer<Boolean>[] setters = new java.util.function.Consumer[]{
+                (java.util.function.Consumer<Boolean>) v -> ModConfig.showCoords = v,
+                (java.util.function.Consumer<Boolean>) v -> ModConfig.showBiome = v,
+                (java.util.function.Consumer<Boolean>) v -> ModConfig.showTime = v
+        };
+
+        for (int i = 0; i < 3; i++) {
+            final int idx = i;
+            int col = i % 3;
+            int row = i / 3;
+            int cbX = x + col * (cbW + 3);
+            int cbY = curY + row * rowH;
+
+            widgets.add(Checkbox.builder(
+                            Component.literal(names[i]), this.font)
+                    .pos(cbX, cbY)
+                    .selected(getters[i].get())
+                    .onValueChange((c, v) -> {
+                        setters[idx].accept(v);
+                        ConfigManager.save();
+                    })
+                    .build());
+
+            final int gearIdx = i;
+            int gearX = cbX + cbW - gearSize - 2;
+            int gearY = cbY + 1;
+
+            widgets.add(Button.builder(
+                    Component.literal("§6" + LocalizationManager.get("gui.resistancedlc.panel.gear")),
+                    (b) -> {
+                        activeMainHudSetting = (activeMainHudSetting == gearIdx) ? -1 : gearIdx;
+                        rebuildMainHudSettingsPanel();
+                    }
+            ).bounds(gearX, gearY, gearSize, gearSize).build());
+        }
+        curY += rowH + rowGap;
+
+        if (activeMainHudSetting >= 0) {
+            final int idx = activeMainHudSetting;
+            String settingName = names[idx];
+
+            Button labelBtn = Button.builder(
+                    Component.literal("§e" + LocalizationManager.get("gui.resistancedlc.panel.setting", settingName)),
+                    (b) -> {
+                    }
+            ).bounds(x, curY, w, 18).build();
+            labelBtn.active = false;
+            widgets.add(labelBtn);
+            curY += 18 + 4;
+
+            final int finalIdx = idx;
+            Supplier<Integer> getX = () -> {
+                switch (finalIdx) {
+                    case 0: return ModConfig.coordsX;
+                    case 1: return ModConfig.biomeX;
+                    default: return ModConfig.timeX;
+                }
+            };
+            Supplier<Integer> getY = () -> {
+                switch (finalIdx) {
+                    case 0: return ModConfig.coordsY;
+                    case 1: return ModConfig.biomeY;
+                    default: return ModConfig.timeY;
+                }
+            };
+            java.util.function.BiConsumer<Integer, Integer> setXY = (nx, ny) -> {
+                switch (finalIdx) {
+                    case 0 -> { ModConfig.coordsX = nx; ModConfig.coordsY = ny; }
+                    case 1 -> { ModConfig.biomeX = nx; ModConfig.biomeY = ny; }
+                    default -> { ModConfig.timeX = nx; ModConfig.timeY = ny; }
+                }
+            };
+            int[] defaults = {10, 35, 10, 50, 10, 65};
+            int defX = defaults[finalIdx * 2];
+            int defY = defaults[finalIdx * 2 + 1];
+
+            addPosEditorRow(widgets, x, curY, right, getX, getY, setXY, defX, defY);
+        }
+    }
+
+    private void rebuildMainHudSettingsPanel() {
+        rebuildPanelTwoPass("main_hud_settings");
+    }
     private void buildPingIndicatorPanel(List<AbstractWidget> widgets, int x, int y, int right) {
         int rowH = 22, rowGap = 6;
         int curY = y;
@@ -4403,7 +4520,7 @@ public class AccordionScreen extends Screen {
             final int finalSlotIndex = slotIndex;
             widgets.add(Button.builder(
                     Component.literal(labelText),
-                    (b) -> Minecraft.getInstance().setScreen(
+                    (b) -> Minecraft.getInstance().gui.setScreen(
                             new com.resistancedlc.inventory.InventorySaveScreen(
                                     finalSlotIndex, this))
             ).bounds(x, rowY, w - 25, 20).build());
@@ -4476,7 +4593,7 @@ public class AccordionScreen extends Screen {
         widgets.add(Button.builder(
                 Component.literal("§a" + LocalizationManager.get(
                         "gui.resistancedlc.inventory.btn.save")),
-                (b) -> Minecraft.getInstance().setScreen(
+                (b) -> Minecraft.getInstance().gui.setScreen(
                         new com.resistancedlc.inventory.InventorySaveScreen(
                                 finalSlotIndex, this))
         ).bounds(x, btnY, btnW, 20).build());
@@ -4484,7 +4601,7 @@ public class AccordionScreen extends Screen {
         widgets.add(Button.builder(
                 Component.literal("§6" + LocalizationManager.get(
                         "gui.resistancedlc.inventory.btn.rename")),
-                (b) -> Minecraft.getInstance().setScreen(
+                (b) -> Minecraft.getInstance().gui.setScreen(
                         new com.resistancedlc.inventory.InventoryRenameScreen(
                                 finalSlotIndex, this))
         ).bounds(x + btnW + 4, btnY, btnW, 20).build());
@@ -5470,9 +5587,9 @@ public class AccordionScreen extends Screen {
 
         widgets.add(Button.builder(
                 Component.literal(LocalizationManager.get("gui.resistancedlc.panel.voice.manage")),
-                (b) -> Minecraft.getInstance().setScreen(
+                (b) -> Minecraft.getInstance().gui.setScreen(
                         new com.resistancedlc.voice.gui.VoiceCommandSelectScreen(
-                                Minecraft.getInstance().screen))
+                                Minecraft.getInstance().gui.screen()))
         ).bounds(x, curY, w, 20).build());
         curY += rowH + rowGap;
 
@@ -7347,7 +7464,10 @@ public class AccordionScreen extends Screen {
         graphics.text(this.font, "§7" + item.description, left + 22, top + 14, descColor, false);
 
         boolean showStatus = !"hud_editor".equals(item.id)
-                && !"death_recap".equals(item.id);
+                && !"death_recap".equals(item.id)
+                && !"gui_key".equals(item.id)
+                && !"config_manager".equals(item.id)
+                && !"inventory_manager".equals(item.id);
         int statusWidth = 0;
         if (showStatus) {
             boolean status = item.statusGetter.get();
@@ -7712,6 +7832,41 @@ public class AccordionScreen extends Screen {
     // ===================== КЛАВИШИ =====================
     @Override
     public boolean keyPressed(KeyEvent event) {
+        // Перехват бинда на уровне GUI (страховка)
+        if (ModConfig.isBindingKey) {
+            int key = event.key();
+            int target = ModConfig.bindingTarget;
+
+            ModConfig.isBindingKey = false;
+            ModConfig.bindingTarget = 0;
+
+            if (key != GLFW.GLFW_KEY_ESCAPE) {
+                switch (target) {
+                    case 0 -> KeyBindings.setKey(key);
+                    case 1 -> KeyBindings.setZoomKey(key);
+                    case 2 -> KeyBindings.setTapeMouseKey(key);
+                    case 3 -> KeyBindings.setAutoSwapKey(key);
+                    case 4 -> KeyBindings.setCustomHitSoundsKey(key);
+                    case 5 -> KeyBindings.setFastExpKey(key);
+                    case 6 -> KeyBindings.setShiftTapKey(key);
+                    case 7 -> KeyBindings.setComboKey(key);
+                    case 8 -> KeyBindings.setEffectWarningsKey(key);
+                    case 9 -> KeyBindings.setWaypointsKey(key);
+                    case 10 -> KeyBindings.setTotemLogKey(key);
+                    case 11 -> KeyBindings.setPickupLogKey(key);
+                    case 12 -> KeyBindings.setMacro1Key(key);
+                    case 13 -> KeyBindings.setMacro2Key(key);
+                    case 14 -> KeyBindings.setMacro3Key(key);
+                    case 15 -> KeyBindings.setMacro4Key(key);
+                    case 16 -> KeyBindings.setMacro5Key(key);
+                    case 17 -> KeyBindings.setFreelookKey(key);
+                }
+            }
+
+            Minecraft.getInstance().execute(this::refreshAfterKeybind);
+            return true;
+        }
+
         if (globalSearchOpen) {
             if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
                 closeGlobalSearch();
@@ -7730,7 +7885,23 @@ public class AccordionScreen extends Screen {
         return mouseX >= colLeft && mouseX <= colRight
                 && mouseY >= colTop && mouseY <= colBottom;
     }
-
+    // ===================== GUI KEY =====================
+    private void buildGuiKeyPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        String keyName = KeyBindings.openGuiKey != null
+                ? KeyBindings.openGuiKey.getTranslatedKeyMessage().getString() : "G";
+        widgets.add(Button.builder(
+                Component.literal(ModConfig.isBindingKey && ModConfig.bindingTarget == 0
+                        ? LocalizationManager.get("gui.resistancedlc.panel.press_key")
+                        : LocalizationManager.get("gui.resistancedlc.panel.key", keyName)),
+                (b) -> {
+                    ModConfig.isBindingKey = true;
+                    ModConfig.bindingTarget = 0;
+                    b.setMessage(Component.literal(
+                            LocalizationManager.get("gui.resistancedlc.panel.press_key")));
+                }
+        ).bounds(x, y, w, 20).build());
+    }
     @Override
     public boolean isPauseScreen() {
         return false;
@@ -8392,6 +8563,247 @@ public class AccordionScreen extends Screen {
                 .pos(x, curY).selected(ModConfig.customFogAffectClouds)
                 .onValueChange((c, v) -> {
                     ModConfig.customFogAffectClouds = v;
+                    ConfigManager.save();
+                })
+                .build());
+    }
+    // ===================== TARGET HUD =====================
+    private void buildTargetHudPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        // Прозрачность фона
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_hud.bg_alpha", ModConfig.targetHudBgAlpha)),
+                ModConfig.targetHudBgAlpha / 255.0
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_hud.bg_alpha", ModConfig.targetHudBgAlpha)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.targetHudBgAlpha = (int) (this.value * 255);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // Градиент — цвет 1
+        addColorRow(widgets, x, curY, right,
+                LocalizationManager.get("gui.resistancedlc.panel.target_hud.color1"),
+                () -> ModConfig.targetHudColor1,
+                v -> ModConfig.targetHudColor1 = v);
+        curY += 34 + rowGap;
+
+        // Градиент — цвет 2
+        addColorRow(widgets, x, curY, right,
+                LocalizationManager.get("gui.resistancedlc.panel.target_hud.color2"),
+                () -> ModConfig.targetHudColor2,
+                v -> ModConfig.targetHudColor2 = v);
+        curY += 34 + rowGap;
+
+        // Скорость градиента
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_hud.gradient_speed", ModConfig.targetHudGradientSpeed)),
+                (ModConfig.targetHudGradientSpeed - 0.1f) / 4.9f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_hud.gradient_speed", ModConfig.targetHudGradientSpeed)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.targetHudGradientSpeed = 0.1f + (float) (this.value * 4.9f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // Показывать скин
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_hud.show_skin")), this.font)
+                .pos(x, curY).selected(ModConfig.targetHudShowSkin)
+                .onValueChange((c, v) -> {
+                    ModConfig.targetHudShowSkin = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH;
+
+        // Показывать имя
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_hud.show_name")), this.font)
+                .pos(x, curY).selected(ModConfig.targetHudShowName)
+                .onValueChange((c, v) -> {
+                    ModConfig.targetHudShowName = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH;
+
+        // Показывать HP
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.target_hud.show_hp")), this.font)
+                .pos(x, curY).selected(ModConfig.targetHudShowHp)
+                .onValueChange((c, v) -> {
+                    ModConfig.targetHudShowHp = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH + rowGap;
+
+        // Позиция
+        addPosEditorRow(widgets, x, curY, right,
+                () -> ModConfig.targetHudX, () -> ModConfig.targetHudY,
+                (nx, ny) -> {
+                    ModConfig.targetHudX = nx;
+                    ModConfig.targetHudY = ny;
+                },
+                -1, -1);
+    }
+    // ===================== HEADWEAR =====================
+    private void buildHeadwearPanel(List<AbstractWidget> widgets, int x, int y, int right) {
+        int w = right - x;
+        int rowH = 22, rowGap = 6;
+        int curY = y;
+
+        // ===== Выбор типа шляпы =====
+        com.resistancedlc.headwear.HeadwearType[] types = {
+                com.resistancedlc.headwear.HeadwearType.CHINESE_HAT,
+                com.resistancedlc.headwear.HeadwearType.CAP,
+                com.resistancedlc.headwear.HeadwearType.TOP_HAT
+        };
+        com.resistancedlc.headwear.HeadwearType current =
+                com.resistancedlc.headwear.HeadwearType.fromId(ModConfig.headwearType);
+
+        int btnW = (w - 6) / 3;
+        for (int i = 0; i < types.length; i++) {
+            final com.resistancedlc.headwear.HeadwearType t = types[i];
+            boolean active = (t == current);
+            String label = (active ? "§a✓ " : "") + t.displayName().getString();
+            widgets.add(Button.builder(Component.literal(label), (b) -> {
+                ModConfig.headwearType = t.id();
+                ConfigManager.save();
+                rebuildPanelTwoPass("headwear");
+            }).bounds(x + i * (btnW + 3), curY, btnW, 20).build());
+        }
+        curY += rowH + rowGap;
+
+        // ===== Цвет =====
+        EditBox hexField = new EditBox(this.font, x, curY, 80, 18,
+                Component.literal("#RRGGBB"));
+        hexField.setMaxLength(7);
+        hexField.setValue(String.format("#%06X", ModConfig.headwearColor & 0xFFFFFF));
+        widgets.add(hexField);
+
+        widgets.add(Button.builder(Component.literal("OK"), (b) -> {
+            try {
+                ModConfig.headwearColor = 0xFF000000 | Integer.parseInt(
+                        hexField.getValue().replace("#", "").trim(), 16);
+                ConfigManager.save();
+            } catch (Exception ignored) {}
+        }).bounds(x + 85, curY, 35, 18).build());
+
+        int presetX = x + 125;
+        int presetW = (right - presetX - 9) / 4;
+        if (presetW < 15) presetW = 15;
+        String[] pn = {"R", "G", "B", "W"};
+        int[] pc = {0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 0xFFFFFFFF};
+        for (int i = 0; i < 4; i++) {
+            final int color = pc[i];
+            final String hx = String.format("#%06X", color & 0xFFFFFF);
+            widgets.add(Button.builder(Component.literal(pn[i]), (b) -> {
+                hexField.setValue(hx);
+                ModConfig.headwearColor = color;
+                ConfigManager.save();
+            }).bounds(presetX + i * (presetW + 3), curY, presetW, 18).build());
+        }
+        curY += rowH + rowGap;
+
+        // ===== Alpha =====
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.alpha", ModConfig.headwearAlpha)),
+                ModConfig.headwearAlpha / 255.0
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get(
+                        "gui.resistancedlc.panel.alpha", ModConfig.headwearAlpha)));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.headwearAlpha = (int) (this.value * 255);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // ===== Scale =====
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.headwear.scale",
+                        String.format(java.util.Locale.ROOT, "%.2f", ModConfig.headwearScale))),
+                (ModConfig.headwearScale - 0.5f) / 1.5f
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get(
+                        "gui.resistancedlc.panel.headwear.scale",
+                        String.format(java.util.Locale.ROOT, "%.2f", ModConfig.headwearScale))));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.headwearScale = 0.5f + (float) (this.value * 1.5f);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // ===== Offset Y =====
+        widgets.add(new AbstractSliderButton(x, curY, w, 20,
+                Component.literal(LocalizationManager.get("gui.resistancedlc.panel.headwear.offset_y",
+                        String.format(java.util.Locale.ROOT, "%.2f", ModConfig.headwearOffsetY))),
+                (ModConfig.headwearOffsetY + 0.5f)
+        ) {
+            @Override
+            protected void updateMessage() {
+                this.setMessage(Component.literal(LocalizationManager.get(
+                        "gui.resistancedlc.panel.headwear.offset_y",
+                        String.format(java.util.Locale.ROOT, "%.2f", ModConfig.headwearOffsetY))));
+            }
+            @Override
+            protected void applyValue() {
+                ModConfig.headwearOffsetY = (float) (this.value * 1.0 - 0.5);
+                this.updateMessage();
+                ConfigManager.save();
+            }
+        });
+        curY += rowH + rowGap;
+
+        // ===== Self enabled =====
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.headwear.show_self")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.headwearSelfEnabled)
+                .onValueChange((c, v) -> {
+                    ModConfig.headwearSelfEnabled = v;
+                    ConfigManager.save();
+                })
+                .build());
+        curY += rowH;
+
+        // ===== Friends =====
+        widgets.add(Checkbox.builder(
+                        Component.literal(LocalizationManager.get("gui.resistancedlc.panel.headwear.show_friends")),
+                        this.font)
+                .pos(x, curY).selected(ModConfig.headwearShowFriends)
+                .onValueChange((c, v) -> {
+                    ModConfig.headwearShowFriends = v;
                     ConfigManager.save();
                 })
                 .build());

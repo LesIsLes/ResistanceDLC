@@ -1,12 +1,11 @@
 package com.resistancedlc.particles;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.resistancedlc.config.ModConfig;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.world.phys.Vec3;
@@ -28,15 +27,11 @@ public final class AtmosphereRenderer {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
-        MultiBufferSource.BufferSource bufferSource =
-                (MultiBufferSource.BufferSource) context.bufferSource();
-        if (bufferSource == null) return;
+        SubmitNodeCollector buf = context.submitNodeCollector();
+        if (buf == null) return;
 
         PoseStack poseStack = context.poseStack();
-        PoseStack.Pose pose = poseStack.last();
-        Vec3 cameraPos = mc.gameRenderer.getMainCamera().position();
-
-        VertexConsumer consumer = bufferSource.getBuffer(DROP_TYPE);
+        Vec3 cameraPos = mc.gameRenderer.mainCamera().position();
 
         long now = System.currentTimeMillis();
         int baseColor = ModConfig.atmosphereColor;
@@ -46,7 +41,6 @@ public final class AtmosphereRenderer {
         boolean isSnow = "snow".equals(ModConfig.atmosphereType);
 
         for (AtmosphereManager.Drop d : drops) {
-            // Fade-in первые 10%, fade-out последние 20%
             long age = now - d.spawnTime;
             float life = (float) age / d.lifetimeMs;
             float alphaFactor;
@@ -68,17 +62,14 @@ public final class AtmosphereRenderer {
             double rotation = rotate ? d.rotation : 0.0;
 
             if (isSnow) {
-                drawSnowflake(consumer, pose, px, py, pz, size, rotation, argb);
+                drawSnowflake(buf, poseStack, px, py, pz, size, rotation, argb);
             } else {
-                drawStar(consumer, pose, px, py, pz, size, rotation, argb);
+                drawStar(buf, poseStack, px, py, pz, size, rotation, argb);
             }
         }
-
-        bufferSource.endBatch(DROP_TYPE);
     }
 
-    // ==================== STAR ====================
-    private static void drawStar(VertexConsumer c, PoseStack.Pose pose,
+    private static void drawStar(SubmitNodeCollector buf, PoseStack poseStack,
                                  float x, float y, float z,
                                  float size, double spin, int color) {
         int points = 5;
@@ -99,7 +90,7 @@ public final class AtmosphereRenderer {
 
         for (int i = 0; i < points * 2; i++) {
             int j = (i + 1) % (points * 2);
-            triAsQuad(c, pose,
+            triAsQuad(buf, poseStack,
                     x, y, z,
                     x + verts[i][0], y + verts[i][1], z,
                     x + verts[j][0], y + verts[j][1], z,
@@ -107,8 +98,7 @@ public final class AtmosphereRenderer {
         }
     }
 
-    // ==================== SNOWFLAKE ====================
-    private static void drawSnowflake(VertexConsumer c, PoseStack.Pose pose,
+    private static void drawSnowflake(SubmitNodeCollector buf, PoseStack poseStack,
                                       float x, float y, float z,
                                       float size, double spin, int color) {
         double cosA = Math.cos(spin), sinA = Math.sin(spin);
@@ -117,22 +107,22 @@ public final class AtmosphereRenderer {
         float bigHalfW = size * 0.18f;
         float bigArmOffset = size * 0.15f;
 
-        drawPlusArm(c, pose, x, y, z, bigLen, bigHalfW, bigArmOffset, 0.0, cosA, sinA, color);
-        drawPlusArm(c, pose, x, y, z, bigLen, bigHalfW, bigArmOffset, Math.PI, cosA, sinA, color);
-        drawPlusArm(c, pose, x, y, z, bigLen, bigHalfW, bigArmOffset, Math.PI / 2, cosA, sinA, color);
-        drawPlusArm(c, pose, x, y, z, bigLen, bigHalfW, bigArmOffset, -Math.PI / 2, cosA, sinA, color);
+        drawPlusArm(buf, poseStack, x, y, z, bigLen, bigHalfW, bigArmOffset, 0.0, cosA, sinA, color);
+        drawPlusArm(buf, poseStack, x, y, z, bigLen, bigHalfW, bigArmOffset, Math.PI, cosA, sinA, color);
+        drawPlusArm(buf, poseStack, x, y, z, bigLen, bigHalfW, bigArmOffset, Math.PI / 2, cosA, sinA, color);
+        drawPlusArm(buf, poseStack, x, y, z, bigLen, bigHalfW, bigArmOffset, -Math.PI / 2, cosA, sinA, color);
 
         float smallLen = size * 1.3f;
         float smallHalfW = size * 0.12f;
         float smallArmOffset = size * 0.1f;
 
-        drawPlusArm(c, pose, x, y, z, smallLen, smallHalfW, smallArmOffset,  Math.PI / 4, cosA, sinA, color);
-        drawPlusArm(c, pose, x, y, z, smallLen, smallHalfW, smallArmOffset,  Math.PI * 3 / 4, cosA, sinA, color);
-        drawPlusArm(c, pose, x, y, z, smallLen, smallHalfW, smallArmOffset, -Math.PI / 4, cosA, sinA, color);
-        drawPlusArm(c, pose, x, y, z, smallLen, smallHalfW, smallArmOffset, -Math.PI * 3 / 4, cosA, sinA, color);
+        drawPlusArm(buf, poseStack, x, y, z, smallLen, smallHalfW, smallArmOffset,  Math.PI / 4, cosA, sinA, color);
+        drawPlusArm(buf, poseStack, x, y, z, smallLen, smallHalfW, smallArmOffset,  Math.PI * 3 / 4, cosA, sinA, color);
+        drawPlusArm(buf, poseStack, x, y, z, smallLen, smallHalfW, smallArmOffset, -Math.PI / 4, cosA, sinA, color);
+        drawPlusArm(buf, poseStack, x, y, z, smallLen, smallHalfW, smallArmOffset, -Math.PI * 3 / 4, cosA, sinA, color);
     }
 
-    private static void drawPlusArm(VertexConsumer c, PoseStack.Pose pose,
+    private static void drawPlusArm(SubmitNodeCollector buf, PoseStack poseStack,
                                     float cx, float cy, float cz,
                                     float length, float halfW, float offset,
                                     double angle, double cosRot, double sinRot,
@@ -153,7 +143,7 @@ public final class AtmosphereRenderer {
             r[i * 2 + 1] = (float) (px * sinRot + py * cosRot);
         }
 
-        quad(c, pose,
+        quad(buf, poseStack,
                 cx + r[0], cy + r[1], cz,
                 cx + r[2], cy + r[3], cz,
                 cx + r[4], cy + r[5], cz,
@@ -161,27 +151,30 @@ public final class AtmosphereRenderer {
                 color);
     }
 
-    // ==================== ХЕЛПЕРЫ ====================
-    private static void triAsQuad(VertexConsumer c, PoseStack.Pose pose,
+    private static void triAsQuad(SubmitNodeCollector buf, PoseStack poseStack,
                                   float x1, float y1, float z1,
                                   float x2, float y2, float z2,
                                   float x3, float y3, float z3,
                                   int color) {
-        c.addVertex(pose, x1, y1, z1).setColor(color);
-        c.addVertex(pose, x2, y2, z2).setColor(color);
-        c.addVertex(pose, x3, y3, z3).setColor(color);
-        c.addVertex(pose, x3, y3, z3).setColor(color);
+        buf.submitCustomGeometry(poseStack, DROP_TYPE, (pose, c) -> {
+            c.addVertex(pose, x1, y1, z1).setColor(color);
+            c.addVertex(pose, x2, y2, z2).setColor(color);
+            c.addVertex(pose, x3, y3, z3).setColor(color);
+            c.addVertex(pose, x3, y3, z3).setColor(color);
+        });
     }
 
-    private static void quad(VertexConsumer c, PoseStack.Pose pose,
+    private static void quad(SubmitNodeCollector buf, PoseStack poseStack,
                              float x1, float y1, float z1,
                              float x2, float y2, float z2,
                              float x3, float y3, float z3,
                              float x4, float y4, float z4,
                              int color) {
-        c.addVertex(pose, x1, y1, z1).setColor(color);
-        c.addVertex(pose, x2, y2, z2).setColor(color);
-        c.addVertex(pose, x3, y3, z3).setColor(color);
-        c.addVertex(pose, x4, y4, z4).setColor(color);
+        buf.submitCustomGeometry(poseStack, DROP_TYPE, (pose, c) -> {
+            c.addVertex(pose, x1, y1, z1).setColor(color);
+            c.addVertex(pose, x2, y2, z2).setColor(color);
+            c.addVertex(pose, x3, y3, z3).setColor(color);
+            c.addVertex(pose, x4, y4, z4).setColor(color);
+        });
     }
 }

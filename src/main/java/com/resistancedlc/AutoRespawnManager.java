@@ -9,11 +9,11 @@ import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
  * AutoRespawnManager — авто-respawn через отправку пакета PERFORM_RESPAWN.
  *
  * ВАЖНО (1.21.11):
- *   mc.setScreen(null) НЕ респавнит! Он только закрывает экран,
+ *   mc.gui.setScreen(null) НЕ респавнит! Он только закрывает экран,
  *   и DeathScreen открывается заново через тик — получается бесконечный цикл.
  *
  * Правильный путь: отправить ServerboundClientCommandPacket(PERFORM_RESPAWN)
- * и закрыть экран через mc.setScreen(null).
+ * и закрыть экран через mc.gui.setScreen(null).
  */
 public class AutoRespawnManager {
 
@@ -28,7 +28,7 @@ public class AutoRespawnManager {
 
         Minecraft mc = Minecraft.getInstance();
 
-        boolean onDeathScreen = mc.screen instanceof DeathScreen;
+        boolean onDeathScreen = mc.gui.screen() instanceof DeathScreen;
 
         if (!onDeathScreen) {
             if (pending) reset();
@@ -65,7 +65,7 @@ public class AutoRespawnManager {
 
             // Закрываем экран смерти (ванильный клиент после respawn сам закроет,
             // но на всякий случай)
-            mc.setScreen(null);
+            mc.gui.setScreen(null);
             reset();
         }
     }

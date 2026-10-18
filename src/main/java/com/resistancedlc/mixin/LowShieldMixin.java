@@ -16,14 +16,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ItemInHandRenderer.class)
 public class LowShieldMixin {
 
-    @Inject(method = "renderArmWithItem", at = @At("HEAD"))
-    private void onRenderArmWithItem(AbstractClientPlayer abstractClientPlayer,
-                                     float f, float g,
-                                     InteractionHand interactionHand,
-                                     float h, ItemStack itemStack, float i,
+    @Inject(method = "submitArmWithItem", at = @At("HEAD"))
+    private void onRenderArmWithItem(AbstractClientPlayer player,
+                                     float frameInterp, float xRot,
+                                     InteractionHand hand,
+                                     float attack, ItemStack itemStack, float inverseArmHeight,
                                      PoseStack poseStack,
                                      SubmitNodeCollector submitNodeCollector,
-                                     int j,
+                                     int lightCoords,
                                      CallbackInfo ci) {
         if (ModConfig.lowShieldEnabled) {
             poseStack.translate(0.0, -ModConfig.lowShieldOffset, 0.0);

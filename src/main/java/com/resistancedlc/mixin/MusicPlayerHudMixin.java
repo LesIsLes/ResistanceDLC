@@ -41,7 +41,7 @@ public class MusicPlayerHudMixin {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
         // Разрешаем клики поверх чата, но не поверх других экранов
-        if (mc.screen != null && !(mc.screen instanceof net.minecraft.client.gui.screens.ChatScreen)) return;
+        if (mc.gui.screen() != null && !(mc.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen)) return;
 
         int button = buttonInfo.button();
 
@@ -112,7 +112,7 @@ public class MusicPlayerHudMixin {
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
-        if (mc.screen != null && !(mc.screen instanceof net.minecraft.client.gui.screens.ChatScreen)) {
+        if (mc.gui.screen() != null && !(mc.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen)) {
             draggingVolume = false;
             return;
         }
@@ -157,6 +157,6 @@ public class MusicPlayerHudMixin {
         com.resistancedlc.AccordionScreen.pendingJumpToSection = "music";
         com.resistancedlc.AccordionScreen.pendingJumpToItem = "music_player";
 
-        mc.setScreen(new com.resistancedlc.AccordionScreen());
+        mc.gui.setScreen(new com.resistancedlc.AccordionScreen());
     }
 }

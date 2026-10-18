@@ -125,9 +125,9 @@ public class InventorySaveScreen extends Screen {
     public void onClose() {
         Minecraft mc = Minecraft.getInstance();
         if (parent != null) {
-            mc.setScreen(parent);
+            mc.gui.setScreen(parent);
         } else {
-            mc.setScreen(null);
+            mc.gui.setScreen(null);
         }
     }
 
